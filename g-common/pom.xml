@@ -7,6 +7,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>g-common</artifactId>
+    <name>g-common</name>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
@@ -23,33 +24,6 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <extensions>
-      <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-ssh-external</artifactId>
-        <version>1.0</version>
-      </extension>
-        </extensions>
-    </build>
-<distributionManagement>
-		<repository>
-			<id>sics-release-repository</id>
-			<name>SICS Repository</name>
-			<url>scpexe://kompics.i.sics.se/home/maven/repository</url>
-		</repository>
-		<snapshotRepository>
-			<id>sics-snapshot-repository</id>
-			<name>SICS Snapshot Repository</name>
-			<url>scpexe://kompics.i.sics.se/home/maven/snapshotrepository</url>
-		</snapshotRepository>
-		<site>
-			<id>kompics-site</id>
-			<url>scpexe://kompics.i.sics.se/var/www/kompics/report/trunk</url>
-		</site>
-		<downloadUrl>http://kompics.i.sics.se/maven/repository</downloadUrl>
-</distributionManagement>
-
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
@@ -58,5 +32,76 @@
         <kompics.version>0.6.0-SNAPSHOT</kompics.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>        
     </properties>
-    <name>g-common</name>
+    
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <source>${java.compiler.version}</source>
+                    <target>${java.compiler.version}</target>
+                    <debug>true</debug>
+                    <optimize>true</optimize>
+                    <showDeprecations>true</showDeprecations>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.6.1</version>
+                <executions>
+                    <execution>
+                        <id>aggregate</id>
+                        <goals>
+                            <goal>aggregate</goal>
+                        </goals>
+                        <phase>site</phase>
+                        <configuration>
+                            <breakiterator>true</breakiterator>
+                            <charset>${project.build.sourceEncoding}</charset>
+                            <docencoding>${project.build.sourceEncoding}</docencoding>
+                            <windowtitle>
+                                Common ${project.version} API Documentation
+                            </windowtitle>
+                            <doctitle>
+                                Common ${project.version} API Documentation
+                            </doctitle>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                            <links>
+                                <link>http://java.sun.com/javase/6/docs/api/</link>
+                                <link>http://www.slf4j.org/api/</link>
+                            </links>
+                            <groups>
+                                <group>
+                                    <title>Common</title>
+                                    <packages>se.kth.co</packages>
+                                </group>
+                            </groups>
+                            <locale>en_GB</locale>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
