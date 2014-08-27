@@ -23,7 +23,7 @@ public class FailureDetectorPort extends PortType {
     
     public static class FailureDetectorEvent extends Event{
     
-        private HashSet<VodAddress> suspectedNodes = new HashSet<>();
+        private HashSet<VodAddress> suspectedNodes = new HashSet<VodAddress>();
 
         public FailureDetectorEvent(VodAddress suspectedNode){
             
