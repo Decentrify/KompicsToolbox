@@ -20,18 +20,18 @@ package se.sics.p2ptoolbox.croupier.core.net;
 
 import io.netty.buffer.ByteBuf;
 import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
-import se.sics.p2ptoolbox.croupier.api.net.CroupierContext;
+import se.sics.p2ptoolbox.croupier.core.net.adapters.CroupierLocalContext;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface CroupierAdapter<E extends CroupierMsg.Base> {
 
-    public E decode(CroupierContext context, ByteBuf buffer);
+    public E decode(CroupierLocalContext context, ByteBuf buffer);
 
-    public ByteBuf encode(CroupierContext context, E object, ByteBuf buffer);
+    public ByteBuf encode(CroupierLocalContext context, E object, ByteBuf buffer);
 
-    public int getEncodedSize(CroupierContext context, E object);
+    public int getEncodedSize(CroupierLocalContext context, E object);
 
     public static interface Request<E extends CroupierMsg.Request> extends CroupierAdapter<E> {
 

@@ -16,37 +16,49 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.croupier.api;
 
 import static org.junit.Assert.*;
-import se.sics.p2ptoolbox.croupier.api.net.CroupierContext;
+import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierSetup {
 
-    public static byte CROUPIER_NET_REQUEST = 0x00;
-    public static byte CROUPIER_NET_RESPONSE = 0x00;
-    
-    public static void setupCroupierNetMsgs(byte croupierNetRequest, byte croupierNetResponse) {
-        assertThat(
-        if(CROUPIER_NET_REQUEST != 0x00 || CROUPIER_NET_RESPONSE !=0x00) {
-            throw new RuntimeException("CroupierRegistry should only initialize net codes once");
-        }
-        CROUPIER_NET_REQUEST = croupierNetRequest;
-        CROUPIER_NET_RESPONSE = croupierNetResponse;
+    public final byte CROUPIER_NET_REQ;
+    public final byte CROUPIER_NET_RESP;
+    public final PeerViewAdapter pwAdapter;
+
+    private CroupierSetup(byte croupierNetReq, byte croupierNetResp, PeerViewAdapter pwAdapter) {
+        this.CROUPIER_NET_REQ = croupierNetReq;
+        this.CROUPIER_NET_RESP = croupierNetResp;
+        this.pwAdapter = pwAdapter;
     }
     
-    public static void checkRegisteredCroupierNetMsgs() {
-        if(CROUPIER_NET_REQUEST == 0x00 || CROUPIER_NET_RESPONSE ==0x00) {
-            throw new RuntimeException("CroupierRegistry not properly initialized");
+    public static class CroupierSetupBuilder {
+        private Byte croupierNetReq = null;
+        private Byte croupierNetResp = null;
+        
+        private PeerViewAdapter pwAdapter = null;
+        
+        public CroupierSetupBuilder setCroupierNetCodes(byte croupierNetReq, byte croupierNetResp) {
+            this.croupierNetReq = croupierNetReq;
+            this.croupierNetResp = croupierNetResp;
+            return this;
+        }
+        
+        public CroupierSetupBuilder setPeerViewAdapter(PeerViewAdapter pwAdapter) {
+            this.pwAdapter = pwAdapter;
+            return this;
+        }
+        
+        public CroupierSetup finalise() {
+            assertNotNull(croupierNetReq);
+            assertNotNull(croupierNetResp);
+            assertNotNull(pwAdapter);
+            
+            return new CroupierSetup(croupierNetReq, croupierNetResp, pwAdapter);
         }
     }
-    
-    private static CroupierContext croupierContexts = null;
-//    public static void setupContext(CroupierContext) {
-//        crou
-//    }
 }

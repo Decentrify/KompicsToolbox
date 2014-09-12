@@ -27,7 +27,7 @@ import se.sics.gvod.net.msgs.RewriteableMsg;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
 import se.sics.p2ptoolbox.croupier.core.net.CroupierAdapter;
-import se.sics.p2ptoolbox.croupier.core.net.CroupierRegistry;
+import se.sics.p2ptoolbox.croupier.core.net.CroupierContext;
 import se.sics.p2ptoolbox.croupier.core.net.nettyadapters.NetworkNettyAdapter;
 
 /**
@@ -56,9 +56,9 @@ public class CroupierNettyAdapter {
         @Override
         protected DirectMsg process(ByteBuf buffer) throws MessageDecodingException {
             byte opCode = buffer.readByte();
-            byte overlayId = buffer.readInt();
-            CroupierAdapter currentAdapter = CroupierRegistry.getAdapter(opCode);
-            CroupierMsg.Request payload = (CroupierMsg.Request) currentAdapter.decode(CroupierRegistry.getContext(buffer);
+            int overlayId = buffer.readInt();
+            CroupierAdapter currentAdapter = CroupierContext.getAdapter(opCode);
+            CroupierMsg.Request payload = (CroupierMsg.Request) currentAdapter.decode(CroupierContext.getContext(buffer);
             return new GvodNetMsg.Request(vodSrc, vodDest, payload);
         }
     }

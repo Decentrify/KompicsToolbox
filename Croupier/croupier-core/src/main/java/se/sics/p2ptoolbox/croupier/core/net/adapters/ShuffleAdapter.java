@@ -22,7 +22,6 @@ import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import se.sics.p2ptoolbox.croupier.api.net.CroupierContext;
 import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
@@ -38,12 +37,11 @@ public class ShuffleAdapter {
     public static class Request implements CroupierAdapter.Request<Shuffle.Request> {
 
         @Override
-        public Shuffle.Request decode(CroupierContext context, ByteBuf buffer) {
+        public Shuffle.Request decode(CroupierLocalContext context, ByteBuf buffer) {
             UUID id = NetUtil.decodeUUID(buffer);
             int overlayId = buffer.readInt();
 
-            byte regCode = buffer.readByte();
-            PeerViewAdapter adapter = context.getPPViewAdapter(regCode);
+            PeerViewAdapter adapter = context.pwAdapter;
 
             int publicNSize = buffer.readInt();
             List<PeerView> publicNodes = new ArrayList<PeerView>();
@@ -63,12 +61,11 @@ public class ShuffleAdapter {
         }
 
         @Override
-        public ByteBuf encode(CroupierContext context, Shuffle.Request req, ByteBuf buffer) {
+        public ByteBuf encode(CroupierLocalContext context, Shuffle.Request req, ByteBuf buffer) {
             NetUtil.encodeUUID(buffer, req.id);
             buffer.writeInt(req.croupierId);
 
-            buffer.writeByte(context.getPPViewReqCode(req.self));
-            PeerViewAdapter adapter = context.getPPViewAdapter(req.self);
+            PeerViewAdapter adapter = context.pwAdapter;
 
             buffer.writeInt(req.publicNodes.size());
             for (PeerView ppView : req.publicNodes) {
@@ -86,12 +83,11 @@ public class ShuffleAdapter {
         }
 
         @Override
-        public int getEncodedSize(CroupierContext context, Shuffle.Request req) {
-            PeerViewAdapter adapter = context.getPPViewAdapter(req.self);
+        public int getEncodedSize(CroupierLocalContext context, Shuffle.Request req) {
+            PeerViewAdapter adapter = context.pwAdapter;
             int size = 0;
             size += NetUtil.getUUIDEncodedSize();
             size += 4; //overlayId
-            size += 1; //PeerPublicView regCode
             size += 4; //publicNode size
             for (PeerView ppView : req.publicNodes) {
                 size += req.publicNodes.size() * adapter.getEncodedSize(ppView);
@@ -109,12 +105,11 @@ public class ShuffleAdapter {
     public static class Response implements CroupierAdapter.Response<Shuffle.Response> {
 
         @Override
-        public Shuffle.Response decode(CroupierContext context, ByteBuf buffer) {
+        public Shuffle.Response decode(CroupierLocalContext context, ByteBuf buffer) {
             UUID id = NetUtil.decodeUUID(buffer);
             int overlayId = buffer.readInt();
 
-            byte regCode = buffer.readByte();
-            PeerViewAdapter adapter = context.getPPViewAdapter(regCode);
+            PeerViewAdapter adapter = context.pwAdapter;
 
             int publicNSize = buffer.readInt();
             List<PeerView> publicNodes = new ArrayList<PeerView>();
@@ -134,12 +129,11 @@ public class ShuffleAdapter {
         }
 
         @Override
-        public ByteBuf encode(CroupierContext context, Shuffle.Response resp, ByteBuf buffer) {
+        public ByteBuf encode(CroupierLocalContext context, Shuffle.Response resp, ByteBuf buffer) {
             NetUtil.encodeUUID(buffer, resp.id);
             buffer.writeInt(resp.croupierId);
 
-            buffer.writeByte(context.getPPViewReqCode(resp.self));
-            PeerViewAdapter adapter = context.getPPViewAdapter(resp.self);
+            PeerViewAdapter adapter = context.pwAdapter;
 
             buffer.writeInt(resp.publicNodes.size());
             for (PeerView ppView : resp.publicNodes) {
@@ -157,12 +151,11 @@ public class ShuffleAdapter {
         }
 
         @Override
-        public int getEncodedSize(CroupierContext context, Shuffle.Response resp) {
-            PeerViewAdapter adapter = context.getPPViewAdapter(resp.self);
+        public int getEncodedSize(CroupierLocalContext context, Shuffle.Response resp) {
+            PeerViewAdapter adapter = context.pwAdapter;
             int size = 0;
             size += NetUtil.getUUIDEncodedSize();
             size += 4; //overlayId
-            size += 1; //PeerPublicView regCode
             size += 4; //publicNode size
             for (PeerView ppView : resp.publicNodes) {
                 size += resp.publicNodes.size() * adapter.getEncodedSize(ppView);

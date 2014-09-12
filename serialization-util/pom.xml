@@ -16,21 +16,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
-        <netty.version>1.2-SNAPSHOT</netty.version>
+        <network.version>1.2-SNAPSHOT</network.version>
     </properties>
     
     <dependencies>
         <dependency>
             <groupId>se.sics.net</groupId>
             <artifactId>netty</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.javatuples</groupId>
-            <artifactId>javatuples</artifactId>
-            <version>1.2</version>
-            <type>jar</type>
+            <version>${network.version}</version>
         </dependency>
     </dependencies>
 </project>

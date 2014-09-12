@@ -21,25 +21,27 @@ package se.sics.p2ptoolbox.croupier.core.net;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
-import se.sics.p2ptoolbox.croupier.api.net.CroupierContext;
+import se.sics.p2ptoolbox.croupier.api.CroupierSetup;
+import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
 import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
 import se.sics.p2ptoolbox.croupier.core.net.adapters.ShuffleAdapter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierRegistry {
-
+public class CroupierContext {
+    
+    private final Map<Class<?>, Adapter<?>>
+    
     public static final byte SHUFFLE_REQUEST = 0x01;
     public static final byte SHUFFLE_RESPONSE = 0x02;
-
+    
     private static final Map<Byte, CroupierAdapter> croupierAdapters = new HashMap<Byte, CroupierAdapter>();
     {
         croupierAdapters.put(SHUFFLE_REQUEST, new ShuffleAdapter.Request());
         croupierAdapters.put(SHUFFLE_RESPONSE, new ShuffleAdapter.Response());
     }
-
-
+    
     public static CroupierAdapter getAdapter(byte regCode) {
         return croupierAdapters.get(regCode);
     }
@@ -61,19 +63,14 @@ public class CroupierRegistry {
         return adapter;
     }
 
-    public static CroupierContext getContext(int overlayId) {
-        CroupierContext context = croupierContexts.get(overlayId);
-        if(context == null) {
-            throw new RuntimeException(new NullPointerException("unregistered context for croupier with overlayId " + overlayId));
-        }
-        return context;
-    }
+    //***************************************************************************************************
+    public final byte CROUPIER_NET_REQ;
+    public final byte CROUPIER_NET_RESP;
+    public final PeerViewAdapter pwAdapter;
     
-    public static void registerContext(int overlayId, CroupierContext context) {
-        if(croupierContexts.containsKey(overlayId)) {
-            throw new RuntimeException("context already registered for overlay " + overlayId);
-        }
-        croupierContexts.put(overlayId, context);
+    public CroupierContext(CroupierSetup setup) {
+        this.CROUPIER_NET_REQ = setup.CROUPIER_NET_REQ;
+        this.CROUPIER_NET_RESP = setup.CROUPIER_NET_RESP;
+        this.pwAdapter = setup.pwAdapter;
     }
-    
 }

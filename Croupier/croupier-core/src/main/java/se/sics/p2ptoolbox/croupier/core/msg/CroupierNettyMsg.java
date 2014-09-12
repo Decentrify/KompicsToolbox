@@ -24,20 +24,25 @@ import io.netty.buffer.ByteBuf;
 import se.sics.gvod.common.msgs.DirectMsgNetty;
 import se.sics.gvod.common.msgs.MessageEncodingException;
 import se.sics.gvod.net.VodAddress;
+import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
+import se.sics.p2ptoolbox.croupier.core.net.CroupierAdapter;
+import se.sics.p2ptoolbox.croupier.core.net.CroupierContext;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierNettyMsg {
     public static class Request<E extends CroupierMsg.Request> extends DirectMsgNetty.Request {
-
+        private final CroupierContext context;
         public E payload;
 
-        public Request(VodAddress vodSrc, VodAddress vodDest, E payload) {
+        public Request(CroupierContext context, VodAddress vodSrc, VodAddress vodDest, E payload) {
             super(vodSrc, vodDest);
             //TODO ALEX fix later
             setTimeoutId(se.sics.gvod.timer.UUID.nextUUID());
             //fix
+            
+            this.context = context;
             this.payload = payload;
         }
         
@@ -52,32 +57,32 @@ public class CroupierNettyMsg {
 
         @Override
         public int getSize() {
-            CroupierAdapter<E> adapter = CroupierRegistry.getAdapter(payload);
-            return getHeaderSize() + adapter.getEncodedSize(CroupierRegistry.getContext(payload.croupierId), payload);
+            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            return getHeaderSize() + adapter.getEncodedSize(context.pwAdapter, payload);
         }
 
         @Override
         public Request<E> copy() {
-            return new Request<E>(vodSrc, vodDest, (E) payload.copy());
+            return new Request<E>(context, vodSrc, vodDest, (E) payload.copy());
         }
 
         @Override
         public ByteBuf toByteArray() throws MessageEncodingException {
             ByteBuf buffer = createChannelBufferWithHeader();
-            CroupierAdapter<E> adapter = CroupierRegistry.getAdapter(payload);
-            adapter.encode(CroupierRegistry.getContext(payload.croupierId), payload, buffer);
+            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            adapter.encode(context.pwAdapter, payload, buffer);
             return buffer;
         }
 
         @Override
         public byte getOpcode() {
-            return CroupierRegistry.CROUPIER_NET_REQUEST;
+            return context.CROUPIER_NET_REQ;
         }
-        
+
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 53 * hash + Objects.hashCode(this.payload);
+            hash = 47 * hash + java.util.Objects.hashCode(this.payload);
             return hash;
         }
 
@@ -89,8 +94,8 @@ public class CroupierNettyMsg {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final Request<E> other = (Request<E>) obj;
-            if (!Objects.equal(this.payload, other.payload)) {
+            final Request<?> other = (Request<?>) obj;
+            if (!java.util.Objects.equals(this.payload, other.payload)) {
                 return false;
             }
             return true;
@@ -99,6 +104,7 @@ public class CroupierNettyMsg {
 
     public static class Response<E extends CroupierMsg.Response> extends DirectMsgNetty.Response {
 
+        private final CroupierContext context;
         public final E payload;
 
         public Response(VodAddress vodSrc, VodAddress vodDest, E payload) {
@@ -116,8 +122,8 @@ public class CroupierNettyMsg {
 
         @Override
         public int getSize() {
-            CroupierAdapter<E> adapter = CroupierRegistry.getAdapter(payload);
-            return getHeaderSize() + adapter.getEncodedSize(CroupierRegistry.getContext(payload.croupierId), payload);
+            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            return getHeaderSize() + adapter.getEncodedSize(CroupierContext.getContext(payload.croupierId), payload);
         }
 
         @Override
@@ -128,14 +134,14 @@ public class CroupierNettyMsg {
         @Override
         public ByteBuf toByteArray() throws MessageEncodingException {
             ByteBuf buffer = createChannelBufferWithHeader();
-            CroupierAdapter<E> adapter = CroupierRegistry.getAdapter(payload);
-            adapter.encode(CroupierRegistry.getContext(payload.croupierId), payload, buffer);
+            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            adapter.encode(CroupierContext.getContext(payload.croupierId), payload, buffer);
             return buffer;
         }
 
         @Override
         public byte getOpcode() {
-            return CroupierRegistry.CROUPIER_NET_RESPONSE;
+            return CroupierContext.CROUPIER_NET_RESPONSE;
         }
         
         @Override

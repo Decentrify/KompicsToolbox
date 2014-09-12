@@ -16,18 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.api.net;
 
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+package se.sics.p2ptoolbox.croupier.core.net.adapters;
+
+import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface PeerViewRegistry {
-
-    public PeerViewAdapter getAdapter(byte regCode);
-
-    public <E extends PeerView> byte getReqCode(E msg);
-
-    public <E extends PeerView> PeerViewAdapter getAdapter(E msg);
+public class CroupierLocalContext {
+    public final PeerViewAdapter pwAdapter;
+    
+    public CroupierLocalContext(PeerViewAdapter pwAdapter) {
+        this.pwAdapter = pwAdapter;
+    }
 }
