@@ -10,4 +10,11 @@
     <name>Croupier API</name>
     <packaging>jar</packaging>
     
+    <dependencies>
+         <dependency>
+            <groupId>se.sics.p2ptoolbox</groupId>
+            <artifactId>serialization-util</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

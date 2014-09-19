@@ -18,8 +18,9 @@
  */
 package se.sics.p2ptoolbox.croupier.api;
 
+import org.javatuples.Pair;
 import static org.junit.Assert.*;
-import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
+import se.sics.p2ptoolbox.croupier.api.net.PeerViewSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -28,19 +29,20 @@ public class CroupierSetup {
 
     public final byte CROUPIER_NET_REQ;
     public final byte CROUPIER_NET_RESP;
-    public final PeerViewAdapter pwAdapter;
+    public final SerializationContext;
+    public final Pair<Byte, Byte> peerViewSerializerId;
 
-    private CroupierSetup(byte croupierNetReq, byte croupierNetResp, PeerViewAdapter pwAdapter) {
+    private CroupierSetup(byte croupierNetReq, byte croupierNetResp, Pair<Byte, Byte> peerViewSerializerId) {
         this.CROUPIER_NET_REQ = croupierNetReq;
         this.CROUPIER_NET_RESP = croupierNetResp;
-        this.pwAdapter = pwAdapter;
+        this.peerViewSerializerId = peerViewSerializerId;
     }
     
     public static class CroupierSetupBuilder {
         private Byte croupierNetReq = null;
         private Byte croupierNetResp = null;
         
-        private PeerViewAdapter pwAdapter = null;
+        private Pair<Byte, Byte> peerViewSerializerId = null;
         
         public CroupierSetupBuilder setCroupierNetCodes(byte croupierNetReq, byte croupierNetResp) {
             this.croupierNetReq = croupierNetReq;
@@ -48,17 +50,17 @@ public class CroupierSetup {
             return this;
         }
         
-        public CroupierSetupBuilder setPeerViewAdapter(PeerViewAdapter pwAdapter) {
-            this.pwAdapter = pwAdapter;
+        public CroupierSetupBuilder setPeerViewAdapter(Pair<Byte, Byte> peerViewSerializerId) {
+            this.peerViewSerializerId = peerViewSerializerId;
             return this;
         }
         
         public CroupierSetup finalise() {
             assertNotNull(croupierNetReq);
             assertNotNull(croupierNetResp);
-            assertNotNull(pwAdapter);
+            assertNotNull(peerViewSerializerId);
             
-            return new CroupierSetup(croupierNetReq, croupierNetResp, pwAdapter);
+            return new CroupierSetup(croupierNetReq, croupierNetResp, peerViewSerializerId);
         }
     }
 }

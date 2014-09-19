@@ -16,18 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.p2ptoolbox.croupier.api.net;
 
-package se.sics.p2ptoolbox.croupier.core.net.adapters;
-
-import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
+import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+import se.sics.p2ptoolbox.serialization.SerializationContext;
+import se.sics.p2ptoolbox.serialization.Serializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierLocalContext {
-    public final PeerViewAdapter pwAdapter;
-    
-    public CroupierLocalContext(PeerViewAdapter pwAdapter) {
-        this.pwAdapter = pwAdapter;
-    }
+public interface PeerViewSerializer<E extends PeerView> extends Serializer<E> {
+
+    public int getEncodedSize(SerializationContext context, E object);
 }

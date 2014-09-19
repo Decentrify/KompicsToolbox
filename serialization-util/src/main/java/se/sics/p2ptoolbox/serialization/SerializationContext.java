@@ -16,15 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.kth.co.serialization.util;
-
-import io.netty.buffer.ByteBuf;
+package se.sics.p2ptoolbox.serialization;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Serializer<E extends Object> {
-    public void encode(ByteBuf buf, E obj);
-    public void decode()
+public interface SerializationContext<E extends Object> {
+    public  void register(byte sCategory, byte sCode, Class<E> serializedClass, Serializer<E> classSerializer) throws DuplicateException;
+    public Serializer<E> getSerializer(byte category, byte sCode);
+    public Serializer<E> getSerializer(Class<E> serializedClass);
+    
+    public static class DuplicateException extends Exception {
+        public DuplicateException() {
+            super();
+        }
+    }
 }

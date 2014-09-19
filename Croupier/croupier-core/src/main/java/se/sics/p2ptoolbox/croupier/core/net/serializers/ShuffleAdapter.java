@@ -16,16 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.core.net.adapters;
+package se.sics.p2ptoolbox.croupier.core.net.serializers;
 
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
+import se.sics.p2ptoolbox.serialization.SerializationContext;
+import se.sics.p2ptoolbox.croupier.api.net.PeerViewSerializer;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
-import se.sics.p2ptoolbox.croupier.core.net.CroupierAdapter;
+import se.sics.p2ptoolbox.croupier.core.net.CroupierSerializer;
 import se.sics.p2ptoolbox.croupier.core.net.util.NetUtil;
 
 /**
@@ -34,14 +35,14 @@ import se.sics.p2ptoolbox.croupier.core.net.util.NetUtil;
  */
 public class ShuffleAdapter {
 
-    public static class Request implements CroupierAdapter.Request<Shuffle.Request> {
+    public static class Request implements CroupierSerializer.Request<Shuffle.Request> {
 
         @Override
-        public Shuffle.Request decode(CroupierLocalContext context, ByteBuf buffer) {
+        public Shuffle.Request decode(SerializationContext context, ByteBuf buffer) {
             UUID id = NetUtil.decodeUUID(buffer);
             int overlayId = buffer.readInt();
 
-            PeerViewAdapter adapter = context.pwAdapter;
+            PeerViewSerializer adapter = context.pwAdapterget;
 
             int publicNSize = buffer.readInt();
             List<PeerView> publicNodes = new ArrayList<PeerView>();
@@ -65,7 +66,7 @@ public class ShuffleAdapter {
             NetUtil.encodeUUID(buffer, req.id);
             buffer.writeInt(req.croupierId);
 
-            PeerViewAdapter adapter = context.pwAdapter;
+            PeerViewSerializer adapter = context.pwAdapter;
 
             buffer.writeInt(req.publicNodes.size());
             for (PeerView ppView : req.publicNodes) {
@@ -84,7 +85,7 @@ public class ShuffleAdapter {
 
         @Override
         public int getEncodedSize(CroupierLocalContext context, Shuffle.Request req) {
-            PeerViewAdapter adapter = context.pwAdapter;
+            PeerViewSerializer adapter = context.pwAdapter;
             int size = 0;
             size += NetUtil.getUUIDEncodedSize();
             size += 4; //overlayId
@@ -102,14 +103,14 @@ public class ShuffleAdapter {
         }
     }
 
-    public static class Response implements CroupierAdapter.Response<Shuffle.Response> {
+    public static class Response implements CroupierSerializer.Response<Shuffle.Response> {
 
         @Override
         public Shuffle.Response decode(CroupierLocalContext context, ByteBuf buffer) {
             UUID id = NetUtil.decodeUUID(buffer);
             int overlayId = buffer.readInt();
 
-            PeerViewAdapter adapter = context.pwAdapter;
+            PeerViewSerializer adapter = context.pwAdapter;
 
             int publicNSize = buffer.readInt();
             List<PeerView> publicNodes = new ArrayList<PeerView>();
@@ -133,7 +134,7 @@ public class ShuffleAdapter {
             NetUtil.encodeUUID(buffer, resp.id);
             buffer.writeInt(resp.croupierId);
 
-            PeerViewAdapter adapter = context.pwAdapter;
+            PeerViewSerializer adapter = context.pwAdapter;
 
             buffer.writeInt(resp.publicNodes.size());
             for (PeerView ppView : resp.publicNodes) {
@@ -152,7 +153,7 @@ public class ShuffleAdapter {
 
         @Override
         public int getEncodedSize(CroupierLocalContext context, Shuffle.Response resp) {
-            PeerViewAdapter adapter = context.pwAdapter;
+            PeerViewSerializer adapter = context.pwAdapter;
             int size = 0;
             size += NetUtil.getUUIDEncodedSize();
             size += 4; //overlayId

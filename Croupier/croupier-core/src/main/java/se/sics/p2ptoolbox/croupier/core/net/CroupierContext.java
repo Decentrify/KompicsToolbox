@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
 import se.sics.p2ptoolbox.croupier.api.CroupierSetup;
-import se.sics.p2ptoolbox.croupier.api.net.PeerViewAdapter;
+import se.sics.p2ptoolbox.croupier.api.net.PeerViewSerializer;
 import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
-import se.sics.p2ptoolbox.croupier.core.net.adapters.ShuffleAdapter;
+import se.sics.p2ptoolbox.croupier.core.net.serializers.ShuffleAdapter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -36,13 +36,13 @@ public class CroupierContext {
     public static final byte SHUFFLE_REQUEST = 0x01;
     public static final byte SHUFFLE_RESPONSE = 0x02;
     
-    private static final Map<Byte, CroupierAdapter> croupierAdapters = new HashMap<Byte, CroupierAdapter>();
+    private static final Map<Byte, CroupierSerializer> croupierAdapters = new HashMap<Byte, CroupierSerializer>();
     {
         croupierAdapters.put(SHUFFLE_REQUEST, new ShuffleAdapter.Request());
         croupierAdapters.put(SHUFFLE_RESPONSE, new ShuffleAdapter.Response());
     }
     
-    public static CroupierAdapter getAdapter(byte regCode) {
+    public static CroupierSerializer getAdapter(byte regCode) {
         return croupierAdapters.get(regCode);
     }
 
@@ -55,8 +55,8 @@ public class CroupierContext {
         throw new RuntimeException("no opcode translation");
     }
 
-    public static <E extends CroupierMsg.Base> CroupierAdapter<E> getAdapter(E msg) {
-        CroupierAdapter<E> adapter = getAdapter(getRegCode(msg));
+    public static <E extends CroupierMsg.Base> CroupierSerializer<E> getAdapter(E msg) {
+        CroupierSerializer<E> adapter = getAdapter(getRegCode(msg));
         if (adapter == null) {
             throw new RuntimeException(new NullPointerException("unregistered adapter for msg" + msg.getClass()));
         }
@@ -66,7 +66,7 @@ public class CroupierContext {
     //***************************************************************************************************
     public final byte CROUPIER_NET_REQ;
     public final byte CROUPIER_NET_RESP;
-    public final PeerViewAdapter pwAdapter;
+    public final PeerViewSerializer pwAdapter;
     
     public CroupierContext(CroupierSetup setup) {
         this.CROUPIER_NET_REQ = setup.CROUPIER_NET_REQ;

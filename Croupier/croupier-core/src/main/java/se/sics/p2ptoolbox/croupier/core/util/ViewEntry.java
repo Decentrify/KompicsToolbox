@@ -30,7 +30,6 @@ public class ViewEntry {
 
     public final PeerView peerView;
     private int age;
-    //TODO Alex do we really need this
     private final Set<VodAddress> sentTo; 
     private long sentAt;
     private final long addedAt;

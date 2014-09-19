@@ -27,9 +27,9 @@ public interface PeerView {
 
     public int getOverlayId();
 
-    public PeerView copy();
+    public VodAddress getAddress();
 
     public int getAge();
 
-    public VodAddress getAddress();
+    public PeerView copy();
 }

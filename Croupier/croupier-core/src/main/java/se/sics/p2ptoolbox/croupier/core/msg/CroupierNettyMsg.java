@@ -25,7 +25,7 @@ import se.sics.gvod.common.msgs.DirectMsgNetty;
 import se.sics.gvod.common.msgs.MessageEncodingException;
 import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
-import se.sics.p2ptoolbox.croupier.core.net.CroupierAdapter;
+import se.sics.p2ptoolbox.croupier.core.net.CroupierSerializer;
 import se.sics.p2ptoolbox.croupier.core.net.CroupierContext;
 
 /**
@@ -57,7 +57,7 @@ public class CroupierNettyMsg {
 
         @Override
         public int getSize() {
-            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            CroupierSerializer<E> adapter = CroupierContext.getAdapter(payload);
             return getHeaderSize() + adapter.getEncodedSize(context.pwAdapter, payload);
         }
 
@@ -69,7 +69,7 @@ public class CroupierNettyMsg {
         @Override
         public ByteBuf toByteArray() throws MessageEncodingException {
             ByteBuf buffer = createChannelBufferWithHeader();
-            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            CroupierSerializer<E> adapter = CroupierContext.getAdapter(payload);
             adapter.encode(context.pwAdapter, payload, buffer);
             return buffer;
         }
@@ -122,7 +122,7 @@ public class CroupierNettyMsg {
 
         @Override
         public int getSize() {
-            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            CroupierSerializer<E> adapter = CroupierContext.getAdapter(payload);
             return getHeaderSize() + adapter.getEncodedSize(CroupierContext.getContext(payload.croupierId), payload);
         }
 
@@ -134,7 +134,7 @@ public class CroupierNettyMsg {
         @Override
         public ByteBuf toByteArray() throws MessageEncodingException {
             ByteBuf buffer = createChannelBufferWithHeader();
-            CroupierAdapter<E> adapter = CroupierContext.getAdapter(payload);
+            CroupierSerializer<E> adapter = CroupierContext.getAdapter(payload);
             adapter.encode(CroupierContext.getContext(payload.croupierId), payload, buffer);
             return buffer;
         }

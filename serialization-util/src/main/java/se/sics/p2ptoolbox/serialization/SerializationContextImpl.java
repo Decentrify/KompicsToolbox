@@ -28,100 +28,49 @@ import org.javatuples.Pair;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SerializationContextImpl implements SerializationContext {
+public class SerializationContextImpl<E extends Object> implements SerializationContext<E> {
 
-    private final ReentrantReadWriteLock rwLock;
+    private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private final Map<Class<?>, Serializer<?>> serializers;
-    private final Map<Pair<Byte, Byte>, Class<?>> classMapping;
-    private final Map<CatMarker, Byte> categoryMapping;
-    byte nextCat;
+    private final Map<Pair<Byte, Byte>, Serializer<E>> serializers;
+    private final Map<Class<E>, Pair<Byte, Byte>> classMapping;
 
-    public SerializationContextImpl() {
-        this.rwLock = new ReentrantReadWriteLock();
-
-        this.serializers = new HashMap<Class<?>, Serializer<?>>();
-        this.classMapping = new HashMap<Pair<Byte, Byte>, Class<?>>();
-        this.categoryMapping = new HashMap<CatMarker, Byte>();
-        this.nextCat = 0x00;
+    private SerializationContextImpl() {
+        this.serializers = new HashMap<Pair<Byte, Byte>, Serializer<E>>();
+        this.classMapping = new HashMap<Class<E>, Pair<Byte, Byte>>();
     }
 
     @Override
-    public <E extends Object> SerializationContextImpl registerSerializer(Class<E> serializedClass, Serializer<E> classSerializer) throws DuplicateException {
+    public void register(byte sCategory, byte sCode, Class<E> serializedClass, Serializer<E> classSerializer) throws DuplicateException {
         rwLock.writeLock().lock();
         try {
-            if (serializers.containsKey(serializedClass)) {
+            Pair<Byte, Byte> serializerId = Pair.with(sCategory, sCode);
+            if (serializers.containsKey(serializerId)) {
                 throw new DuplicateException();
             }
-            serializers.put(serializedClass, classSerializer);
-            return this;
+            serializers.put(serializerId, classSerializer);
+            classMapping.put(serializedClass, serializerId);
         } finally {
             rwLock.writeLock().unlock();
         }
     }
 
     @Override
-    public SerializationContext registerCategory(CatMarker marker, byte category) throws DuplicateException {
-        rwLock.writeLock().lock();
-        try {
-            if (categoryMapping.containsKey(marker)) {
-                throw new DuplicateException();
-            }
-            categoryMapping.put(marker, category);
-            return this;
-        } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public SerializationContext registerOpcode(CatMarker marker, byte opcode, Class<?> serializedClass) throws DuplicateException {
-        rwLock.writeLock().lock();
-        try {
-            byte category = categoryMapping.get(marker);
-            Pair<Byte, Byte> id = Pair.with(category, opcode);
-            if (classMapping.containsKey(id) || classMapping.containsValue(serializedClass)) {
-                throw new DuplicateException();
-            }
-            classMapping.put(id, serializedClass);
-            return this;
-        } finally {
-            rwLock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public <E extends Object> Serializer<E> getSerializer(Class<E> serializedClass) {
+    public Serializer<E> getSerializer(byte sCategory, byte sCode) {
         rwLock.readLock().lock();
         try {
-            return (Serializer<E>) serializers.get(serializedClass);
+            return serializers.get(Pair.with(sCategory, sCode));
         } finally {
             rwLock.readLock().unlock();
         }
     }
 
     @Override
-    public <E extends Object> Class<? extends E> getSerializedClass(CatMarker marker, byte opcode) {
+    public Serializer<E> getSerializer(Class<E> serializedClass) {
         rwLock.readLock().lock();
         try {
-            Pair<Byte, Byte> id = Pair.with(categoryMapping.get(marker), opcode);
-            return (Class<? extends E>) classMapping.get(id);
-        } finally {
-            rwLock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public Byte getOpcode(CatMarker marker, Class<?> serializedClass) {
-        rwLock.readLock().lock();
-        try {
-            byte category = categoryMapping.get(marker);
-            for (Map.Entry<Pair<Byte, Byte>, Class<?>> e : classMapping.entrySet()) {
-                if (e.getKey().getValue0() == category && serializedClass.equals(e.getValue())) {
-                    return e.getKey().getValue1();
-                }
-            }
-            return null;
+            Pair<Byte, Byte> serializerId = classMapping.get(serializedClass);
+            return serializers.get(serializerId);
         } finally {
             rwLock.readLock().unlock();
         }
