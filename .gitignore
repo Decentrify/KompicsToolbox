@@ -37,3 +37,4 @@ lib
 
 # log files
 *.log*
+/simulator/target/

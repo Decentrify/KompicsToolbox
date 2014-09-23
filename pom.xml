@@ -8,6 +8,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>g-common</module>
+        <module>simulator</module>
     </modules>
    
     <distributionManagement>
