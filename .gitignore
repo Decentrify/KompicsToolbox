@@ -38,3 +38,5 @@ lib
 # log files
 *.log*
 /simulator/target/
+/serialization-util/target/
+/netty-test/target/
