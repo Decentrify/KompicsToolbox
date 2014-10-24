@@ -11,6 +11,7 @@
         <module>simulator</module>
         <module>netty-test</module>
         <module>serialization-util</module>
+        <module>chunk-manager</module>
     </modules>
    
     <distributionManagement>
