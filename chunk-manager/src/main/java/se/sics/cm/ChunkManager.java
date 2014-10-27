@@ -60,6 +60,7 @@ public class ChunkManager extends ComponentDefinition {
         }
     }
 
+
     Handler<DirectMsg> handleMessageToSend = new Handler<DirectMsg>() {
         @Override
         public void handle(DirectMsg msg) {
@@ -69,14 +70,17 @@ public class ChunkManager extends ComponentDefinition {
                         + "make this class implement Encodable: " + msg.getClass());
 
             ByteBuf buffer;
+            //int readableBytes = 0;
             try {
 
                 buffer = ((Encodable) msg).toByteArray();
 
+                /*readableBytes = buffer.readableBytes();
+
                 //extract the bytes that actually contain data.
-                ByteBuf trimmedBuffer = Unpooled.buffer(buffer.readableBytes());
-                buffer.readBytes(trimmedBuffer, 0, buffer.readableBytes());
-                buffer = trimmedBuffer;
+                ByteBuf trimmedBuffer = Unpooled.buffer(readableBytes);
+                buffer.readBytes(trimmedBuffer, 0, readableBytes);
+                buffer = trimmedBuffer;*/
 
             } catch (MessageEncodingException ex) {
                 logger.warn("Problem trying to send msg of type: "
@@ -101,7 +105,8 @@ public class ChunkManager extends ComponentDefinition {
 
 
             if (buffer.readableBytes() > actualThreshold) {
-                byte[] msgBytes = buffer.array();
+                byte [] msgBytes = new byte[buffer.readableBytes()];
+                buffer.getBytes(0, msgBytes, 0, buffer.readableBytes());
 
                 ArrayList<byte[]> fragmentedBytesList = Fragmenter.getFragmentedByteArray(msgBytes,
                         actualThreshold);
