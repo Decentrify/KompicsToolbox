@@ -30,7 +30,7 @@ public class MsgProcessor {
     private final HashMap<Class<? extends KompicsEvent>, Handler<? extends KompicsEvent>> subscribedHandlers;
 
     public MsgProcessor() {
-        this.subscribedHandlers = new HashMap<Class<? extends KompicsEvent>, Handler<? extends KompicsEvent>>();
+        this.subscribedHandlers = new HashMap<>();
     }
 
     public <E extends KompicsEvent> void subscribe(Handler<E> handler) {
