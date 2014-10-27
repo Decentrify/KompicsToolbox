@@ -1,6 +1,7 @@
 package se.sics.cm;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.cm.events.ChunkedMessage;
@@ -69,7 +70,14 @@ public class ChunkManager extends ComponentDefinition {
 
             ByteBuf buffer;
             try {
+
                 buffer = ((Encodable) msg).toByteArray();
+
+                //extract the bytes that actually contain data.
+                ByteBuf trimmedBuffer = Unpooled.buffer(buffer.readableBytes());
+                buffer.readBytes(trimmedBuffer, 0, buffer.readableBytes());
+                buffer = trimmedBuffer;
+
             } catch (MessageEncodingException ex) {
                 logger.warn("Problem trying to send msg of type: "
                         + msg.getClass().getCanonicalName() + " with src address: "
@@ -79,11 +87,24 @@ public class ChunkManager extends ComponentDefinition {
                 return;
             }
 
-            if (buffer.capacity() > config.getFragmentThreshold()) {
+            //we have to accommodate the headers info of the chunked message as well.
+            int actualThreshold = config.getFragmentThreshold() -
+                    ChunkedMessage.getOverhead(msg.getVodSource(), msg.getVodDestination());
+
+            //not possible to make chunks. This is a check to prevent things from going wrong if the fragment
+            //threshold size is given too low.
+            if(actualThreshold <=0 ) {
+
+                trigger(msg, networkPort);
+                return;
+            }
+
+
+            if (buffer.readableBytes() > actualThreshold) {
                 byte[] msgBytes = buffer.array();
 
                 ArrayList<byte[]> fragmentedBytesList = Fragmenter.getFragmentedByteArray(msgBytes,
-                        config.getFragmentThreshold());
+                        actualThreshold);
 
                 UUID chunkedMessageUUID = UUID.randomUUID();
                 int chunkID = 0;

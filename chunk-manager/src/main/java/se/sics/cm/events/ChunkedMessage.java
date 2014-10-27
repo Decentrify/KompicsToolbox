@@ -30,10 +30,25 @@ public class ChunkedMessage extends DirectMsgNetty.Oneway {
         this.chunkData = chunkData;
     }
 
+    public static int getOverhead(VodAddress source, VodAddress destination) {
+
+        /*source and destination are just placeholders. We need to get header size and it can only be fetched from the
+        instance of the class and the constructor requires source and destination, otherwise exception will be thrown.
+        byte[] chunkData is not included the overhead, since it is the actual fragmented bytes that needs to be
+        transported as chunks*/
+        int headerSize =  new ChunkedMessage(source, destination, null, 0, 0, null).getHeaderSize();
+        int currentMessageSize = (/*message ID*/ Integer.SIZE +
+        /*chunk ID*/ Long.SIZE * 2 +
+         /*total chunks*/ Integer.SIZE +
+         /*opcode*/ Byte.SIZE)/8;
+
+        return headerSize + currentMessageSize;
+    }
 
     @Override
     public int getSize() {
-        return getHeaderSize();
+        return getHeaderSize() + (Long.SIZE * 2 /*message ID*/ + Integer.SIZE /*chunk ID*/  +
+        /*total chunks*/Integer.SIZE)/8 + chunkData.length;
     }
 
     @Override
