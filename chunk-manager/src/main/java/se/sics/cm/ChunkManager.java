@@ -10,6 +10,7 @@ import se.sics.cm.model.ChunkContainer;
 import se.sics.cm.ports.ChunkManagerPort;
 import se.sics.cm.timeout.ChunkedMessageReceiveTimeout;
 import se.sics.cm.utils.Fragmenter;
+import se.sics.gvod.common.msgs.DirectMsgNettyFactory;
 import se.sics.gvod.common.msgs.Encodable;
 import se.sics.gvod.common.msgs.MessageEncodingException;
 import se.sics.gvod.net.MsgFrameDecoder;
@@ -55,6 +56,7 @@ public class ChunkManager extends ComponentDefinition {
         config = init.getConfig();
         try {
             msgDecoder = (MsgFrameDecoder)init.getMsgDecoderClass().newInstance();
+            DirectMsgNettyFactory.Base.setMsgFrameDecoder(init.getMsgDecoderClass());
         } catch (Exception e) {
             logger.warn("Message decoder passed to chunk manager is invalid: Exception: " + e.getMessage());
         }
@@ -111,6 +113,9 @@ public class ChunkManager extends ComponentDefinition {
                 ArrayList<byte[]> fragmentedBytesList = Fragmenter.getFragmentedByteArray(msgBytes,
                         actualThreshold);
 
+                logger.trace("ChunkManager created " + fragmentedBytesList.size() +
+                        " fragments for " + msg.getClass());
+
                 UUID chunkedMessageUUID = UUID.randomUUID();
                 int chunkID = 0;
 
@@ -122,42 +127,49 @@ public class ChunkManager extends ComponentDefinition {
                 }
             }
             else {
+
+                //logger.trace("ChunkManager created no chunks. " + msg.getClass() + " is small");
+
                 trigger(msg, networkPort);
             }
         }
     };
 
-    Handler<DirectMsg> handleIncomingMessage = new Handler<DirectMsg>() {
+    Handler<ChunkedMessage> handleIncomingMessage = new Handler<ChunkedMessage>() {
         @Override
-        public void handle(DirectMsg msg) {
+        public void handle(ChunkedMessage msg) {
 
-            if(msg instanceof ChunkedMessage) {
-                ChunkedMessage chunkedMessage = (ChunkedMessage) msg;
-                ChunkContainer chunkContainer = addChunkToReceivedMessages(chunkedMessage);
+            ChunkContainer chunkContainer = addChunkToReceivedMessages(msg);
 
-                if (chunkContainer.isComplete()) {
+            logger.trace("Chunk #" + msg.getChunkID() + " for message # " +
+                    msg.getMessageID() + ". " + chunkContainer.getChunks().size() + " out of " +
+                    msg.getTotalChunks() + " received.");
 
-                    cancelTimeout(chunkContainer.getTimeoutId());
-                    removeStateForChunkContainer(chunkContainer);
+            if (chunkContainer.isComplete()) {
 
-                    try {
-                        ByteBuf fullMessageBytes = chunkContainer.getCombinedBytesOfChunks();
+                cancelTimeout(chunkContainer.getTimeoutId());
+                removeStateForChunkContainer(chunkContainer);
 
-                        DirectMsg defragmentedMessage = convertBytesToMessage(fullMessageBytes);
+                try {
+                    ByteBuf fullMessageBytes = chunkContainer.getCombinedBytesOfChunks();
 
-                        if (defragmentedMessage != null)
-                            trigger(defragmentedMessage, chunkManagerPort);
-                        else
-                            logger.warn("Unable to convert bytes into a message. Bytes might be corrupted or there is some" +
-                                    "issue in the Frame Decoder");
+                    DirectMsg defragmentedMessage = convertBytesToMessage(fullMessageBytes);
 
-                    } catch (Exception e) {
-                        logger.warn("Problem while combining chunks of the fragmented message: Exception : " + e.getMessage());
+                    if (defragmentedMessage != null) {
+
+                        logger.trace("ChunkManager combined " + chunkContainer.getChunks().size() +
+                                " fragments to create " + defragmentedMessage.getClass());
+
+                        trigger(defragmentedMessage, chunkManagerPort);
                     }
+                    else {
+                        logger.warn("Unable to convert bytes into a message. Bytes might be corrupted or there is some" +
+                                "issue in the Frame Decoder");
+                    }
+
+                } catch (Exception e) {
+                    logger.warn("Problem while combining chunks of the fragmented message: Exception : " + e.getMessage());
                 }
-            }
-            else {
-                trigger(msg, chunkManagerPort);
             }
         }
     };

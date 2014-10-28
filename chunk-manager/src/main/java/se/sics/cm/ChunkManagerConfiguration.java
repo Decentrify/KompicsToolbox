@@ -37,4 +37,8 @@ public class ChunkManagerConfiguration
     public void setReceiveMessageTimeout(int receiveMessageTimeout) {
         this.receiveMessageTimeout = receiveMessageTimeout;
     }
+
+    public static ChunkManagerConfiguration build() {
+        return new ChunkManagerConfiguration();
+    }
 }
