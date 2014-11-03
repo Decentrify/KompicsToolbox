@@ -40,3 +40,4 @@ lib
 /simulator/target/
 /serialization-util/target/
 /netty-test/target/
+/chunk-manager/target/
