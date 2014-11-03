@@ -18,9 +18,10 @@
  */
 package se.sics.p2ptoolbox.nettytest.msg;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+
+import com.google.common.base.Objects;
 import se.sics.p2ptoolbox.serialization.api.Payload;
 
 /**
@@ -58,7 +59,7 @@ public class MsgA {
                 return false;
             }
             final Request other = (Request) obj;
-            if (!Objects.equals(this.id, other.id)) {
+            if (!Objects.equal(this.id, other.id)) {
                 return false;
             }
             if (this.a != other.a) {
@@ -98,10 +99,10 @@ public class MsgA {
                 return false;
             }
             final Response other = (Response) obj;
-            if (!Objects.equals(this.id, other.id)) {
+            if (!Objects.equal(this.id, other.id)) {
                 return false;
             }
-            if (!Objects.equals(this.b, other.b)) {
+            if (!Objects.equal(this.b, other.b)) {
                 return false;
             }
             return true;
