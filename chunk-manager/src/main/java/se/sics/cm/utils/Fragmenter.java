@@ -23,8 +23,7 @@ public class Fragmenter {
                 break;
 
             if(len < fragmentSizeInBytes) { //last chunk
-                buf = new byte[len];
-                Arrays.copyOfRange(buf, 0, len);
+                buf = Arrays.copyOfRange(buf, 0, len);
             }
 
             fragmentList.add(buf);
