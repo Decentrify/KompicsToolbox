@@ -152,6 +152,8 @@ public class ChunkManager extends ComponentDefinition {
                     ByteBuf fullMessageBytes = chunkContainer.getCombinedBytesOfChunks();
 
                     DirectMsg defragmentedMessage = convertBytesToMessage(fullMessageBytes);
+                    defragmentedMessage.rewritePublicSource(msg.getSource());
+                    defragmentedMessage.rewriteDestination(msg.getDestination());
 
                     if (defragmentedMessage != null) {
 
