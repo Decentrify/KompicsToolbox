@@ -106,9 +106,11 @@ public class ChunkManager extends ComponentDefinition {
             }
 
 
-            if (buffer.capacity() > actualThreshold) {
+            if (buffer.readableBytes() > actualThreshold) {
+                byte [] msgBytes = new byte[buffer.readableBytes()];
+                buffer.getBytes(0, msgBytes, 0, buffer.readableBytes());
 
-                ArrayList<byte[]> fragmentedBytesList = Fragmenter.getFragmentedByteArray(buffer.array(),
+                ArrayList<byte[]> fragmentedBytesList = Fragmenter.getFragmentedByteArray(msgBytes,
                         actualThreshold);
 
                 logger.trace("ChunkManager created " + fragmentedBytesList.size() +
