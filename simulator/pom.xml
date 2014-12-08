@@ -27,7 +27,7 @@
     <dependency>
       <groupId>se.sics.kompics.p2p</groupId>
       <artifactId>kompics-experiment-scenario-dsl</artifactId>
-      <version>0.6.0-SNAPSHOT</version>
+      <version>0.6.1-SNAPSHOT</version>
       <type>jar</type>
     </dependency>
     <dependency>
