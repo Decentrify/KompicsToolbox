@@ -171,7 +171,7 @@ public class Croupier extends ComponentDefinition {
             if (bootstrapNodes.isEmpty() && publicView.isEmpty()) {
                 log.warn("{} disconnected", croupierLogPrefix);
                 trigger(new CroupierDisconnected(UUID.randomUUID(), overlayId), croupierControlPort);
-                cancelShuffleCycle();
+//                cancelShuffleCycle();
                 return;
             }
             VodAddress peer = selectPeerToShuffleWith();
