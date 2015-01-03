@@ -19,6 +19,9 @@
   </modules>
     
     <properties>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <java.compiler.version>1.6</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kompics.version>0.6.1-SNAPSHOT</kompics.version>
         <network.version>1.2.1-SNAPSHOT</network.version>

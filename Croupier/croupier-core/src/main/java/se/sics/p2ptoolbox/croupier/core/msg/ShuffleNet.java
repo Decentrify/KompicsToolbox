@@ -60,10 +60,10 @@ public class ShuffleNet {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 37 * hash + java.util.Objects.hashCode(this.content);
-            hash = 37 * hash + java.util.Objects.hashCode(this.header);
-            hash = 37 * hash + java.util.Objects.hashCode(this.vodSrc);
-            hash = 37 * hash + java.util.Objects.hashCode(this.vodDest);
+            hash = 37 * hash + Objects.hashCode(this.content);
+            hash = 37 * hash + Objects.hashCode(this.header);
+            hash = 37 * hash + Objects.hashCode(this.vodSrc);
+            hash = 37 * hash + Objects.hashCode(this.vodDest);
             return hash;
         }
 
@@ -116,10 +116,10 @@ public class ShuffleNet {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 37 * hash + java.util.Objects.hashCode(this.content);
-            hash = 37 * hash + java.util.Objects.hashCode(this.header);
-            hash = 37 * hash + java.util.Objects.hashCode(this.vodSrc);
-            hash = 37 * hash + java.util.Objects.hashCode(this.vodDest);
+            hash = 37 * hash + Objects.hashCode(this.content);
+            hash = 37 * hash + Objects.hashCode(this.header);
+            hash = 37 * hash + Objects.hashCode(this.vodSrc);
+            hash = 37 * hash + Objects.hashCode(this.vodDest);
             return hash;
         }
 

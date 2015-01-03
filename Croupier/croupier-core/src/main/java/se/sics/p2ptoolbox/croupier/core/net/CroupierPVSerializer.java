@@ -56,11 +56,11 @@ public class CroupierPVSerializer implements Serializer<CroupierPeerView> {
 
     public int getSize(SerializationContext context, CroupierPeerView obj) throws SerializerException, SerializationContext.MissingException {
         int size = 0;
-        size += 2 * Byte.BYTES / 8; //pv code
+        size += 2 * Byte.SIZE / 8; //pv code
         Serializer pvS = context.getSerializer(obj.pv.getClass());
         size += pvS.getSize(context, obj.pv);
         size += context.getSerializer(VodAddress.class).getSize(context, obj.src);
-        size += Integer.BYTES /8; //age
+        size += Integer.SIZE /8; //age
         return size;
     }
 }

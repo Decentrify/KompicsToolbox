@@ -73,16 +73,16 @@ public class ShuffleSerializer implements Serializer<Shuffle> {
         int size = 0;
         
         if(obj.publicNodes.isEmpty() && obj.privateNodes.isEmpty()) {
-            size += Integer.BYTES/8;
+            size += Integer.SIZE/8;
             return size;
         }
         Serializer serializer = context.getSerializer(obj.publicNodes.isEmpty() ? obj.privateNodes.get(0).getClass() : obj.publicNodes.get(0).getClass());
 
-        size += Integer.BYTES/8;
+        size += Integer.SIZE/8;
         for (CroupierPeerView cpv : obj.publicNodes) {
             size += serializer.getSize(context, cpv);
         }
-        size += Integer.BYTES/8;
+        size += Integer.SIZE/8;
         for (CroupierPeerView cpv : obj.privateNodes) {
             size += serializer.getSize(context, cpv);
         }

@@ -39,6 +39,6 @@ public class PeerViewBSerializer implements Serializer<PeerViewB> {
     }
 
     public int getSize(SerializationContext context, PeerViewB obj) throws SerializerException, SerializationContext.MissingException {
-        return Integer.BYTES / 8;
+        return Integer.SIZE / 8;
     }
 }
