@@ -44,3 +44,5 @@ lib
 /chunk-manager/target/
 /Croupier/croupier-api/target/
 /serialization-util/target/
+/Croupier/croupier-core/target/
+/Croupier/croupier-example/target/

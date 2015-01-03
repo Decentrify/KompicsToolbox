@@ -18,17 +18,36 @@
  */
 package se.sics.p2ptoolbox.serialization;
 
+import java.util.Set;
+import org.javatuples.Pair;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface SerializationContext<E extends Object> {
-    public  void register(byte sCategory, byte sCode, Class<E> serializedClass, Serializer<E> classSerializer) throws DuplicateException;
-    public Serializer<E> getSerializer(byte category, byte sCode);
-    public Serializer<E> getSerializer(Class<E> serializedClass);
+public interface SerializationContext {
+    public <E extends Object> SerializationContext registerSerializer(Class<E> serializedClass, Serializer<E> classSerializer) throws DuplicateException;
+    public SerializationContext registerAlias(Class aliasedClass, String alias, Byte aliasCode) throws DuplicateException;
+    public SerializationContext multiplexAlias(String alias, Class multiplexClass, Byte multiplexCode) throws DuplicateException, MissingException;
     
+    public boolean containsAliases(Set<String> aliases);
+    public Byte getAliasCode(String alias) throws MissingException;
+    public <E extends Object> Serializer<E> getSerializer(Class<E> serializedClass) throws MissingException;
+    public Serializer getSerializer(Class aliasedClass, byte aliasCode, byte multiplexCode) throws MissingException;
+    public Pair<Byte, Byte> getCode(Class serializedClass) throws MissingException;
+            
     public static class DuplicateException extends Exception {
         public DuplicateException() {
             super();
+        }
+    }
+    
+    public static class MissingException extends Exception {
+        public MissingException() {
+            super();
+        }
+        
+        public MissingException(String msg) {
+            super(msg);
         }
     }
 }

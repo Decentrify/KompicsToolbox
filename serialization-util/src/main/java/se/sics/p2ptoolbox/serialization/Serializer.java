@@ -25,6 +25,24 @@ import io.netty.buffer.ByteBuf;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface Serializer<E extends Object> {
-    public void encode(SerializationContext<E> context, ByteBuf buf, E obj);
-    public E decode(SerializationContext<E> context, ByteBuf buf);
+
+    public ByteBuf encode(SerializationContext context, ByteBuf buf, E obj) throws SerializerException, SerializationContext.MissingException;
+
+    public E decode(SerializationContext context, ByteBuf buf) throws SerializerException, SerializationContext.MissingException;
+    
+    public int getSize(SerializationContext context, E obj) throws SerializerException, SerializationContext.MissingException;
+
+    public static class SerializerException extends Exception {
+        public SerializerException(String msg) {
+            super(msg);
+        }
+        
+        public SerializerException(Throwable cause) {
+            super(cause);
+        }
+        
+        public SerializerException(String msg, Throwable cause) {
+            super(msg, cause);
+        }
+    }
 }
