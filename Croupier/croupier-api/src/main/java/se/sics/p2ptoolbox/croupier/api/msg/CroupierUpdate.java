@@ -19,25 +19,22 @@
 
 package se.sics.p2ptoolbox.croupier.api.msg;
 
-import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
+import java.util.UUID;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
-import se.sics.p2ptoolbox.croupier.api.util.PublicViewFilter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierUpdate extends CroupierMsg.OneWay {
     public final PeerView selfView;
-    public final PublicViewFilter.Base filter;
     
-    public CroupierUpdate(int croupierId, PeerView selfView, PublicViewFilter.Base filter) {
-        super(croupierId);
-        this.selfView = selfView.copy();
-        this.filter = filter.copy();
+    public CroupierUpdate(UUID id, PeerView selfView) {
+        super(id);
+        this.selfView = selfView.deepCopy();
     }
 
     @Override
-    public CroupierUpdate copy() {
-        return new CroupierUpdate(croupierId, selfView, filter);
+    public String toString() {
+        return "UPDATE";
     }
 }

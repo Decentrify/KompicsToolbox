@@ -16,30 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.api.msg;
 
-import java.util.List;
-import java.util.UUID;
-import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
+package se.sics.p2ptoolbox.croupier.api.util;
+
+import se.sics.gvod.net.VodAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierSample extends CroupierMsg.OneWay {
-
-    public final int overlayId;
-    public final List<CroupierPeerView> publicSample;
-    public final List<CroupierPeerView> privateSample;
+public class CroupierPeerView {
+    public final PeerView pv;
+    public final VodAddress src;
+    private int age;
     
-    public CroupierSample(UUID id, int overlayId, List<CroupierPeerView> publicSample, List<CroupierPeerView> privateSample) {
-        super(id);
-        this.overlayId = overlayId;
-        this.publicSample = publicSample;
-        this.privateSample = privateSample;
+    public CroupierPeerView(PeerView pv, VodAddress src) {
+        this.pv = pv;
+        this.src = src;
+        this.age = 0;
     }
-
-    @Override
-    public String toString() {
-        return "SAMPLE";
+    
+    public CroupierPeerView(PeerView pv, VodAddress src, int age) {
+        this.pv = pv;
+        this.src = src;
+        this.age = age;
+    }
+    
+    public void incrementAge() {
+        age++;
+    }
+    
+    public int getAge() {
+        return age;
     }
 }

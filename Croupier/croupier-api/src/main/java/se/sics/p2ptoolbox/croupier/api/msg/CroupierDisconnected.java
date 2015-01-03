@@ -19,18 +19,20 @@
 
 package se.sics.p2ptoolbox.croupier.api.msg;
 
-import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
+import java.util.UUID;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierDisconnected extends CroupierMsg.OneWay {
-    public CroupierDisconnected(int croupierId) {
-        super(croupierId);
+    public final int overlayId;
+    public CroupierDisconnected(UUID id, int overlayId) {
+        super(id);
+        this.overlayId = overlayId;
     }
 
     @Override
-    public CroupierDisconnected copy() {
-        return new CroupierDisconnected(croupierId);
+    public String toString() {
+        return "DISCONNECTED";
     }
 }

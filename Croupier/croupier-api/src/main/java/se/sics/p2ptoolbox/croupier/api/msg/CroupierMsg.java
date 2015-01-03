@@ -16,21 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.api.util;
+package se.sics.p2ptoolbox.croupier.api.msg;
+
+import java.util.UUID;
+import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class PublicViewFilter {
-    public static interface Base<E extends PeerView> {
-        public <E extends Base> E copy();
-    }
-    
-    public static interface Simple<E extends PeerView> extends Base<E> {
-        public boolean apply(E peer);
-    }
-    
-    public static interface CompareToSelf<E extends PeerView> extends Base<E> {
-        public boolean apply(E self, E peer);
+public class CroupierMsg {
+
+    public static abstract class OneWay implements KompicsEvent {
+
+        public final UUID id;
+
+        public OneWay(UUID id) {
+            this.id = id;
+        }
     }
 }

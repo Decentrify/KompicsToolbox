@@ -20,8 +20,8 @@ package se.sics.p2ptoolbox.croupier.api.msg;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import se.sics.gvod.net.VodAddress;
-import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -30,13 +30,13 @@ public class CroupierJoin extends CroupierMsg.OneWay {
 
     public final Set<VodAddress> peers;
 
-    public CroupierJoin(int croupierId, Set<VodAddress> peers) {
-        super(croupierId);
+    public CroupierJoin(UUID id, Set<VodAddress> peers) {
+        super(id);
         this.peers = new HashSet<VodAddress>(peers);
     }
 
     @Override
-    public CroupierJoin copy() {
-        return new CroupierJoin(croupierId, peers);
+    public String toString() {
+        return "JOIN";
     }
 }

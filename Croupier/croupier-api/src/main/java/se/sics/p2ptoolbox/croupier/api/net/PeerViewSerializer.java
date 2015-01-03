@@ -19,13 +19,10 @@
 package se.sics.p2ptoolbox.croupier.api.net;
 
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
-import se.sics.p2ptoolbox.serialization.SerializationContext;
 import se.sics.p2ptoolbox.serialization.Serializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface PeerViewSerializer<E extends PeerView> extends Serializer<E> {
-
-    public int getEncodedSize(SerializationContext context, E object);
 }

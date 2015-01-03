@@ -18,18 +18,9 @@
  */
 package se.sics.p2ptoolbox.croupier.api.util;
 
-import se.sics.gvod.net.VodAddress;
-
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface PeerView {
-
-    public int getOverlayId();
-
-    public VodAddress getAddress();
-
-    public int getAge();
-
-    public PeerView copy();
+    public <E extends PeerView> E deepCopy();
 }
