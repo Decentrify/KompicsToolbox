@@ -17,28 +17,23 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.core.net.util;
+package se.sics.p2ptoolbox.croupier.example.core;
 
-import io.netty.buffer.ByteBuf;
-import java.util.UUID;
+import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class NetUtil {
-     public static ByteBuf encodeUUID(ByteBuf buffer, UUID id) {
-        buffer.writeLong(id.getMostSignificantBits());
-        buffer.writeLong(id.getLeastSignificantBits());
-        return buffer;
+public class PeerViewB implements PeerView {
+    public final int counter;
+    public PeerViewB(int counter) {
+        this.counter = counter;
     }
-
-    public static UUID decodeUUID(ByteBuf buffer) {
-        Long uuidMSB = buffer.readLong();
-        Long uuidLSB = buffer.readLong();
-        return new UUID(uuidMSB, uuidLSB);
+    public PeerViewB deepCopy() {
+        return new PeerViewB(counter);
     }
-
-    public static int getUUIDEncodedSize() {
-        return 8 + 8; //2 longs
+    @Override
+    public String toString() {
+        return "" + counter;
     }
 }

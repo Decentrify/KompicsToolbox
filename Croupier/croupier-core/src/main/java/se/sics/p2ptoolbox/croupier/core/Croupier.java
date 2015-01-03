@@ -1,130 +1,154 @@
-/*
+/**
+ * This file is part of the Kompics P2P Framework.
+ *
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * Kompics is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 package se.sics.p2ptoolbox.croupier.core;
 
-import se.sics.p2ptoolbox.croupier.api.CroupierControlPort;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.croupier.CroupierConfig;
-import se.sics.gvod.croupier.CroupierPort;
-import se.sics.gvod.croupier.msg.intern.CroupierNettyMsg;
-import se.sics.gvod.croupier.msg.intern.Shuffle;
-import se.sics.gvod.croupier.msg.intern.ShuffleCycle;
-import se.sics.gvod.croupier.pub.msg.CroupierDisconnected;
-import se.sics.gvod.croupier.pub.msg.CroupierJoin;
-import se.sics.gvod.croupier.pub.util.PeerView;
-import se.sics.gvod.croupier.pub.util.PublicViewFilter;
-import se.sics.gvod.croupier.util.View;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.VodNetwork;
+import se.sics.gvod.timer.CancelPeriodicTimeout;
+import se.sics.gvod.timer.CancelTimeout;
 import se.sics.gvod.timer.SchedulePeriodicTimeout;
+import se.sics.gvod.timer.ScheduleTimeout;
+import se.sics.gvod.timer.TimeoutId;
 import se.sics.gvod.timer.Timer;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
+import se.sics.kompics.Stop;
+import se.sics.p2ptoolbox.croupier.api.CroupierControlPort;
+import se.sics.p2ptoolbox.croupier.api.CroupierPort;
+import se.sics.p2ptoolbox.croupier.api.msg.CroupierDisconnected;
+import se.sics.p2ptoolbox.croupier.api.msg.CroupierJoin;
+import se.sics.p2ptoolbox.croupier.api.msg.CroupierSample;
+import se.sics.p2ptoolbox.croupier.api.msg.CroupierUpdate;
+import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
+import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
+import se.sics.p2ptoolbox.croupier.core.msg.ShuffleCycle;
+import se.sics.p2ptoolbox.croupier.core.msg.ShuffleNet;
+import se.sics.p2ptoolbox.croupier.core.msg.ShuffleTimeout;
+import se.sics.p2ptoolbox.croupier.core.util.CroupierStats;
+import se.sics.p2ptoolbox.croupier.core.util.CroupierView;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
  */
 public class Croupier extends ComponentDefinition {
 
-    private static final Logger logger = LoggerFactory.getLogger(Croupier.class);
+    private final static Logger log = LoggerFactory.getLogger(Croupier.class);
 
-    Negative<CroupierControlPort> croupierControlPort = provides(CroupierControlPort.class);
-    Negative<CroupierPort> croupierPort = provides(CroupierPort.class);
+    private final CroupierConfig config;
+    private final String croupierLogPrefix;
+    private final VodAddress selfAddress;
+    private final int overlayId;
+
+    Negative<CroupierControlPort> croupierControlPort = negative(CroupierControlPort.class);
+    Negative<CroupierPort> croupierPort = negative(CroupierPort.class);
     Positive<VodNetwork> network = requires(VodNetwork.class);
     Positive<Timer> timer = requires(Timer.class);
 
-    private final CroupierConfig config;
-    private final int croupierId;
-    private final String compName;
-    private final PublicViewFilter.Base isPublicView;
-    private PeerView self;
-
-    private final View publicView;
-    private final View privateView;
-
-    private boolean firstSuccessfulShuffle = false;
-
-    private Map<Integer, Long> shuffleTimes = new HashMap<Integer, Long>();
-
     private final List<VodAddress> bootstrapNodes;
+    private PeerView selfView;
+    private CroupierView publicView;
+    private CroupierView privateView;
+
+    private TimeoutId shuffleCycleId;
+    private TimeoutId shuffleTimeoutId;
 
     public Croupier(CroupierInit init) {
-
         this.config = init.config;
-        this.croupierId = init.overlayId;
-        this.self = init.self;
-        this.isPublicView = init.isPublicView;
+        this.selfAddress = init.selfAddress;
+        this.overlayId = init.overlayId;
+        this.croupierLogPrefix = "CROUPIER<oid:" + overlayId + ",nid:" + selfAddress.getId() + ">";
 
-        this.compName = "(" + self.getAddress().getId() + ", " + self.getOverlayId() + ") ";
-        this.publicView = new View(self, config.rand, config.viewSize);
-        this.privateView = new View(self, config.rand, config.viewSize);
+        log.info("{} creating...", croupierLogPrefix);
         this.bootstrapNodes = new ArrayList<VodAddress>();
+        this.selfView = null;
+        this.publicView = new CroupierView(selfAddress, config.viewSize, init.rand);
+        this.privateView = new CroupierView(selfAddress, config.viewSize, init.rand);
+        CroupierStats.addNode(selfAddress);
 
+        subscribe(handleStop, control);
         subscribe(handleJoin, croupierControlPort);
+        subscribe(handleUpdate, croupierPort);
     }
+
+    Handler<Stop> handleStop = new Handler<Stop>() {
+
+        @Override
+        public void handle(Stop event) {
+            stopShuffle();
+            log.info("{} stopped", croupierLogPrefix);
+        }
+
+    };
 
     Handler<CroupierJoin> handleJoin = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
-            logger.debug("{} joining using nodes:{}", compName, join.peers.size());
+            log.info("{} {}", croupierLogPrefix, join);
+            log.debug("{} joining using nodes:{}", croupierLogPrefix, join.peers);
 
-            if (!initializeCaches(join.peers)) {
-                logger.warn("{} no insiders, not shuffling", compName);
-                return;
-            } else {
-                logger.trace("{} initiate periodic shuffle", compName);
-                SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
-                spt.setTimeoutEvent(new ShuffleCycle(spt, self.getOverlayId()));
-                trigger(spt, timer);
+            bootstrapNodes.addAll(join.peers);
+            if (bootstrapNodes.contains(selfAddress)) {
+                log.warn("{} trying to bootstrap with myself", new Object[]{croupierLogPrefix, overlayId});
+                bootstrapNodes.remove(selfAddress);
+            }
+
+            tryInitiateShuffle();
+        }
+    };
+
+    Handler<CroupierUpdate> handleUpdate = new Handler<CroupierUpdate>() {
+        @Override
+        public void handle(CroupierUpdate update) {
+            log.info("{} updating selfView:{}", new Object[]{croupierLogPrefix, update.selfView});
+
+            selfView = (update.selfView == null ? selfView : update.selfView);
+
+            if (shuffleCycleId == null) {
+                tryInitiateShuffle();
             }
         }
     };
 
-    private boolean initializeCaches(Set<VodAddress> bootstrapNodes) {
-        if (bootstrapNodes == null || bootstrapNodes.isEmpty()) {
-            return false;
+    Handler<ShuffleTimeout> handleTimeout = new Handler<ShuffleTimeout>() {
+        @Override
+        public void handle(ShuffleTimeout timeout) {
+            log.debug("{} shuffle to {} timed out", new Object[]{croupierLogPrefix, timeout.dest});
+            publicView.timedOut(timeout.dest);
+            privateView.timedOut(timeout.dest);
         }
-        for (VodAddress peer : bootstrapNodes) {
-            if (self.getAddress().equals(peer)) {
-                logger.warn("{} Trying to bootstrap with myself: {}", compName, self.getAddress());
-            } else {
-                bootstrapNodes.add(peer);
-            }
-        }
-        return true;
-    }
+    };
 
     private VodAddress selectPeerToShuffleWith() {
-        VodAddress node = null;
         if (!bootstrapNodes.isEmpty()) {
-            node = bootstrapNodes.remove(0);
-        } else if (!publicView.isEmpty()) {
+            return bootstrapNodes.remove(0);
+        }
+        VodAddress node = null;
+        if (!publicView.isEmpty()) {
             node = publicView.selectPeerToShuffleWith(config.policy, true, 0.75d);
         } else if (!privateView.isEmpty()) {
             node = privateView.selectPeerToShuffleWith(config.policy, true, 0.85d);
@@ -132,177 +156,198 @@ public class Croupier extends ComponentDefinition {
         return node;
     }
 
-    private void shuffle(int shuffleSize, VodAddress node) {
-        Assert.assertFalse(node == null);
-        Assert.assertNotEquals(, this);
-        
-        List<PeerView> publicDescriptors = publicView.selectToSendAtInitiator(shuffleSize, node);
-        List<PeerView> privateDescriptors = privateView.selectToSendAtInitiator(shuffleSize, node);
-
-        if (isPublic(self)) {
-            publicDescriptors.add(self);
-        } else {
-            privateDescriptors.add(self);
-        }
-
-        Shuffle.Request req = new Shuffle.Request(UUID.randomUUID(), croupierId, publicDescriptors, privateDescriptors, self);
-        CroupierNettyMsg.Request<Shuffle.Request> netReq = new CroupierNettyMsg.Request<Shuffle.Request>(self.getAddress(), node, req);
-
-        logger.debug("{} sending {}", compName, netReq);
-        trigger(netReq, network);
-    }
-
-    private boolean isPublic(PeerView peer) {
-        if (isPublicView instanceof PublicViewFilter.Simple) {
-            PublicViewFilter.Simple simpleFilter = (PublicViewFilter.Simple) isPublicView;
-            return simpleFilter.apply(peer);
-        } else if (isPublicView instanceof PublicViewFilter.CompareToSelf) {
-            PublicViewFilter.CompareToSelf compareToSelf = (PublicViewFilter.CompareToSelf) isPublicView;
-            return compareToSelf.apply(self, peer);
-        }
-        throw new RuntimeException("unknown filter type");
-    }
-
-    Handler<ShuffleCycle> handleCycle = new Handler<ShuffleCycle>() {
+    Handler<ShuffleCycle> handleShuffleCycle = new Handler<ShuffleCycle>() {
         @Override
         public void handle(ShuffleCycle event) {
-            logger.trace("{} shuffle time - current public view size:{}, private view size:{}",
-                    new Object[]{compName, publicView.size(), privateView.size()});
+            log.debug("{} public view size:{}, private view size:{}", new Object[]{croupierLogPrefix, publicView.size(), privateView.size()});
 
-            VodAddress peer = selectPeerToShuffleWith();
-            if (peer == null) {
-                logger.warn("{} croupier {} disconnected", compName, croupierId);
-                trigger(new CroupierDisconnected(croupierId), croupierControlPort);
+            if (!publicView.isEmpty() || !privateView.isEmpty()) {
+                CroupierSample cs = new CroupierSample(UUID.randomUUID(), overlayId, publicView.getAll(), privateView.getAll());
+                log.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{croupierLogPrefix, cs.publicSample, cs.privateSample});
+                trigger(cs, croupierPort);
+            }
+            // If I don't have any references to any public nodes and I am a global Croupier
+            // disconnect
+            if (bootstrapNodes.isEmpty() && publicView.isEmpty()) {
+                log.warn("{} disconnected", croupierLogPrefix);
+                trigger(new CroupierDisconnected(UUID.randomUUID(), overlayId), croupierControlPort);
+                cancelShuffleCycle();
                 return;
             }
+            VodAddress peer = selectPeerToShuffleWith();
+            if (peer == null || peer.equals(selfAddress)) {
+                throw new RuntimeException("Error selecting peer");
+            }
 
+            if (!peer.isOpen()) {
+                log.debug("{} did not pick a public node for shuffling - public view size:{}", new Object[]{croupierLogPrefix, publicView.getAll().size()});
+            }
+
+            CroupierStats.instance(selfAddress).incSelectedTimes();
             shuffle(config.shuffleLength, peer);
+            scheduleShuffleTimeout(peer);
+            //TODO Alex - is it correct to increment descriptors here only? 
             publicView.incrementDescriptorAges();
             privateView.incrementDescriptorAges();
+
         }
     };
 
-    /**
-     * handle requests to shuffle
-     */
-    Handler<ShuffleMsg.Request> handleShuffleRequest = new Handler<ShuffleMsg.Request>() {
+    Handler<ShuffleNet.Request> handleShuffleRequest = new Handler<ShuffleNet.Request>() {
         @Override
-        public void handle(ShuffleMsg.Request msg) {
-            logger.debug(compName + "shuffle_req recvd by {} from {} with timeoutId: " + msg.getTimeoutId(),
-                    msg.getVodDestination(),
-                    msg.getDesc().getVodAddress());
+        public void handle(ShuffleNet.Request req) {
+            log.debug("{} received {}", new Object[]{croupierLogPrefix, req});
+            log.trace("{} received from:{} \n public nodes:{} \n private nodes:{}",
+                    new Object[]{croupierLogPrefix, req.getVodSource(), req.content.publicNodes, req.content.privateNodes});
 
-            if (msg.getVodSource().getId() == self.getId()) {
-                logger.warn("Tried to shuffle with myself");
+            if (selfAddress.equals(req.getVodSource())) {
+                log.warn("{} Tried to shuffle with myself", croupierLogPrefix);
                 return;
             }
 
-            VodAddress srcAddress = msg.getDesc().getVodAddress();
-            CroupierStats.instance(self).incShuffleRecvd(msg.getVodSource());
-            DescriptorBuffer recBuffer = msg.getBuffer();
-            List<VodDescriptor> recPublicDescs = recBuffer.getPublicDescriptors();
-            List<VodDescriptor> recPrivateDescs = recBuffer.getPublicDescriptors();
-            List<VodDescriptor> toSendPublicDescs = publicView.selectToSendAtReceiver(
-                    recPublicDescs.size(), srcAddress);
-            List<VodDescriptor> toSendPrivateDescs = privateView.selectToSendAtReceiver(
-                    recPrivateDescs.size(), srcAddress);
+            CroupierStats.instance(selfAddress).incShuffleRecvd(req.getVodSource());
+            List<CroupierPeerView> toSendPublicDescs = publicView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
+            List<CroupierPeerView> toSendPrivateDescs = privateView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
+            ShuffleNet.Response resp = req.getResponse(new Shuffle(toSendPublicDescs, toSendPrivateDescs));
 
-            DescriptorBuffer toSendBuffer
-                    = new DescriptorBuffer(self.getAddress(), toSendPublicDescs, toSendPrivateDescs);
+            publicView.selectToKeep(req.getVodSource(), req.content.publicNodes);
+            privateView.selectToKeep(req.getVodSource(), req.content.privateNodes);
 
-            publicView.selectToKeep(srcAddress, recBuffer.getPublicDescriptors());
-            privateView.selectToKeep(srcAddress, recBuffer.getPrivateDescriptors());
+            log.debug("{} sending {}", croupierLogPrefix, resp);
+            log.trace("{} sending to:{} \n public nodes:{} \n private nodes:{}",
+                    new Object[]{croupierLogPrefix, resp.getVodDestination(), resp.content.publicNodes, resp.content.privateNodes});
 
-            logger.trace(compName + "SHUFFLE_REQ from {}. r={} public + {} private s={} public + {} private", new Object[]{srcAddress.getId(),
-                recPublicDescs.size(), recPrivateDescs.size(), toSendPublicDescs.size(), toSendPrivateDescs.size()});
-
-            logger.trace(compName + " Next dest is: " + msg.getNextDest());
-
-            ShuffleMsg.Response response = new ShuffleMsg.Response(self.getAddress(),
-                    msg.getVodSource(), msg.getClientId(), msg.getRemoteId(),
-                    msg.getNextDest(), msg.getTimeoutId(), RelayMsgNetty.Status.OK,
-                    toSendBuffer, self.getDescriptor());
-
-            logger.trace(compName + "sending ShuffleMsg.Response");
-
-            delegator.doTrigger(response, network);
-
-            publishSample();
-
+            trigger(resp, network);
         }
     };
-    /**
-     * handle the response to a shuffle with the partial view of the other node
-     */
-    Handler<ShuffleMsg.Response> handleShuffleResponse = new Handler<ShuffleMsg.Response>() {
+
+    Handler<ShuffleNet.Response> handleShuffleResponse = new Handler<ShuffleNet.Response>() {
         @Override
-        public void handle(ShuffleMsg.Response event) {
-            logger.trace(compName + "shuffle_res from {} with ID {}", event.getVodSource().getId(),
-                    event.getTimeoutId());
-            if (delegator.doCancelRetry(event.getTimeoutId())) {
+        public void handle(ShuffleNet.Response resp) {
+            if (shuffleTimeoutId == null) {
+                log.debug("{} received {}, but it already timed out", new Object[]{croupierLogPrefix, resp});
+                return;
+            } else {
+                log.debug("{} received {}", new Object[]{croupierLogPrefix, resp});
+                log.trace("{} received from:{} \n public nodes:{} \n private nodes:{}",
+                        new Object[]{croupierLogPrefix, resp.getVodSource(), resp.content.publicNodes, resp.content.privateNodes});
+                cancelShuffleTimeout();
+            }
 
-                if (self.getAddress() == null) {
-                    logger.warn(compName + "self is null, not handling Shuffle Response");
-                    return;
-                }
+            CroupierStats.instance(selfAddress).incShuffleResp();
 
-                CroupierStats.instance(self).incShuffleResp();
+            publicView.selectToKeep(resp.getVodSource(), resp.content.publicNodes);
+            privateView.selectToKeep(resp.getVodSource(), resp.content.privateNodes);
+        }
+    };
+    Handler<ShuffleTimeout> handleShuffleTimeout = new Handler<ShuffleTimeout>() {
+        @Override
+        public void handle(ShuffleTimeout timeout) {
+            log.info("{} node: {} timed out", croupierLogPrefix, timeout.dest);
+            CroupierStats.instance(selfAddress).incShuffleTimeout();
 
-                Long timeStarted = shuffleTimes.get(event.getTimeoutId().getId());
-                if (timeStarted != null) {
-                    RTTStore.addSample(self.getId(), event.getVodSource(), System.currentTimeMillis() - timeStarted);
-                    logger.debug(compName + "Adding a RTT sample. TimeoutId: {}. Rtt={}", event.getTimeoutId().getId(), timeStarted);
-                } else {
-                    logger.warn(compName + "Time started was null when trying to add a RTT sample. TimeoutId: {}",
-                            event.getTimeoutId().getId());
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(compName).append("Existing timestamp ids: ");
-                    for (Integer k : shuffleTimes.keySet()) {
-                        sb.append(k).append(", ");
-                    }
-                    logger.warn(sb.toString());
-                }
-                shuffleTimes.remove(event.getTimeoutId().getId());
-                if (!firstSuccessfulShuffle) {
-                    firstSuccessfulShuffle = true;
-                    delegator.doTrigger(new CroupierJoinCompleted(), croupierControlPort);
-                }
-
-                VodDescriptor srcDesc = event.getDesc();
-                DescriptorBuffer recBuffer = event.getBuffer();
-                List<VodDescriptor> recPublicDescs = recBuffer.getPublicDescriptors();
-                List<VodDescriptor> recPrivateDescs = recBuffer.getPrivateDescriptors();
-
-                publicView.selectToKeep(srcDesc.getVodAddress(), recPublicDescs);
-                privateView.selectToKeep(srcDesc.getVodAddress(), recPrivateDescs);
-
-                // If I don't have a RTT for new public descriptors, add one to the RTTStore
-                // with a default RTO for the descriptor.
-                for (VodDescriptor vd : recPublicDescs) {
-                    if (!RTTStore.containsPublicSample(self.getId(), vd.getVodAddress())) {
-                        RTTStore.addSample(self.getId(), vd.getVodAddress(),
-                                config.getRto());
-                    }
-                }
-
-                // send the new samples to other components
-                publishSample();
+            if (timeout.dest.isOpen()) {
+                publicView.timedOut(timeout.dest);
+            } else {
+                privateView.timedOut(timeout.dest);
             }
         }
     };
+
+    private void tryInitiateShuffle() {
+        if (selfView == null) {
+            log.info("{} no self view - not shuffling", new Object[]{croupierLogPrefix, overlayId});
+            return;
+        }
+        if (bootstrapNodes.isEmpty()) {
+            log.info("{} no insiders - not shuffling", new Object[]{croupierLogPrefix, overlayId});
+            return;
+        }
+        log.info("{} initiating shuffle", new Object[]{croupierLogPrefix});
+        scheduleShuffleCycle();
+
+        subscribe(handleShuffleRequest, network);
+        subscribe(handleShuffleResponse, network);
+        subscribe(handleShuffleCycle, timer);
+        subscribe(handleTimeout, timer);
+    }
+
+    private void stopShuffle() {
+        if (shuffleTimeoutId != null) {
+            cancelShuffleTimeout();
+        }
+        if (shuffleCycleId != null) {
+            cancelShuffleCycle();
+        }
+        log.info("{} stopping shuffle", new Object[]{croupierLogPrefix});
+        unsubscribe(handleShuffleRequest, network);
+        unsubscribe(handleShuffleResponse, network);
+        unsubscribe(handleShuffleCycle, timer);
+        unsubscribe(handleTimeout, timer);
+    }
+
+    private void shuffle(int shuffleSize, VodAddress node) {
+        List<CroupierPeerView> publicDescriptors = publicView.selectToSendAtInitiator(shuffleSize, node);
+        List<CroupierPeerView> privateDescriptors = privateView.selectToSendAtInitiator(shuffleSize, node);
+
+        if (selfAddress.isOpen()) {
+            publicDescriptors.add(new CroupierPeerView(selfView, selfAddress));
+        } else {
+            privateDescriptors.add(new CroupierPeerView(selfView, selfAddress));
+        }
+
+        Shuffle content = new Shuffle(publicDescriptors, privateDescriptors);
+        ShuffleNet.Request req = new ShuffleNet.Request(selfAddress, node, UUID.randomUUID(), overlayId, content);
+        log.debug("{} sending {}", croupierLogPrefix, req);
+        trigger(req, network);
+    }
+
+    private void scheduleShuffleTimeout(VodAddress dest) {
+        ScheduleTimeout spt = new ScheduleTimeout(config.shufflePeriod/2);
+        ShuffleTimeout sc = new ShuffleTimeout(spt, overlayId, dest);
+        spt.setTimeoutEvent(sc);
+        shuffleTimeoutId = sc.getTimeoutId();
+
+        log.debug("{} scheduling {}", new Object[]{croupierLogPrefix, sc});
+        trigger(spt, timer);
+    }
+
+    private void cancelShuffleTimeout() {
+        log.debug("{} canceling shuffle timeout", new Object[]{croupierLogPrefix});
+        CancelTimeout cpt = new CancelTimeout(shuffleTimeoutId);
+        trigger(cpt, timer);
+        shuffleTimeoutId = null;
+    }
+
+    private void scheduleShuffleCycle() {
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
+        ShuffleCycle sc = new ShuffleCycle(spt, overlayId);
+        spt.setTimeoutEvent(sc);
+        shuffleCycleId = sc.getTimeoutId();
+
+        log.debug("{} scheduling {} with period:{}", new Object[]{croupierLogPrefix, sc, config.shufflePeriod});
+        trigger(spt, timer);
+    }
+
+    private void cancelShuffleCycle() {
+        log.debug("{} canceling shuffle cycle", new Object[]{croupierLogPrefix});
+        CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
+        trigger(cpt, timer);
+        shuffleCycleId = null;
+    }
 
     public static class CroupierInit extends Init<Croupier> {
 
+        public final Random rand;
         public final CroupierConfig config;
         public final int overlayId;
-        public final PeerView self;
-        public final PublicViewFilter.Base isPublicView;
+        public final VodAddress selfAddress;
 
-        public CroupierInit(CroupierConfig config, PeerView self, PublicViewFilter.Base isPublicView, int overlayId) {
+        public CroupierInit(CroupierConfig config, Random rand, int overlayId, VodAddress selfAddress) {
             this.config = config;
+            this.rand = rand;
             this.overlayId = overlayId;
-            this.self = self;
-            this.isPublicView = isPublicView;
+            this.selfAddress = selfAddress;
         }
     }
 }

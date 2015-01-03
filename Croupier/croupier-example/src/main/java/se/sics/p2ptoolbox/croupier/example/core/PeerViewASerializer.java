@@ -17,40 +17,28 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.api.util;
+package se.sics.p2ptoolbox.croupier.example.core;
 
-import se.sics.gvod.net.VodAddress;
+import io.netty.buffer.ByteBuf;
+import se.sics.p2ptoolbox.serialization.SerializationContext;
+import se.sics.p2ptoolbox.serialization.Serializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierPeerView {
-    public final PeerView pv;
-    public final VodAddress src;
-    private int age;
-    
-    public CroupierPeerView(PeerView pv, VodAddress src) {
-        this.pv = pv;
-        this.src = src;
-        this.age = 0;
+public class PeerViewASerializer implements Serializer<PeerViewA> {
+
+    public ByteBuf encode(SerializationContext context, ByteBuf buf, PeerViewA obj) throws SerializerException, SerializationContext.MissingException {
+        buf.writeByte(obj.flag?0x00:0x01);
+        return buf;
     }
-    
-    public CroupierPeerView(PeerView pv, VodAddress src, int age) {
-        this.pv = pv;
-        this.src = src;
-        this.age = age;
+
+    public PeerViewA decode(SerializationContext context, ByteBuf buf) throws SerializerException, SerializationContext.MissingException {
+        byte byteF = buf.readByte();
+        return new PeerViewA(byteF == 0x00 ? true : false);
     }
-    
-    public void incrementAge() {
-        age++;
-    }
-    
-    public int getAge() {
-        return age;
-    }
-    
-    @Override
-    public String toString() {
-        return "<" + src + "," + age + "> " + pv;
+
+    public int getSize(SerializationContext context, PeerViewA obj) throws SerializerException, SerializationContext.MissingException {
+        return Byte.BYTES / 8;
     }
 }

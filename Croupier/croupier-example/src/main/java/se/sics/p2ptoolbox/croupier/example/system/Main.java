@@ -17,40 +17,36 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.api.util;
+package se.sics.p2ptoolbox.croupier.example.system;
 
-import se.sics.gvod.net.VodAddress;
+import se.sics.kompics.Kompics;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierPeerView {
-    public final PeerView pv;
-    public final VodAddress src;
-    private int age;
+
+public class Main {
     
-    public CroupierPeerView(PeerView pv, VodAddress src) {
-        this.pv = pv;
-        this.src = src;
-        this.age = 0;
+    public static void main(String[] args) {
+        if(args.length == 3) {
+            Launcher.setArgs(Integer.valueOf(args[0]), args[1], Integer.valueOf(args[2]));
+        }
+        start();
+        try {
+            Kompics.waitForTermination();
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
     }
-    
-    public CroupierPeerView(PeerView pv, VodAddress src, int age) {
-        this.pv = pv;
-        this.src = src;
-        this.age = age;
+
+    public static void start() {
+        if (Kompics.isOn()) {
+            Kompics.shutdown();
+        }
+        Kompics.createAndStart(Launcher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
     }
-    
-    public void incrementAge() {
-        age++;
-    }
-    
-    public int getAge() {
-        return age;
-    }
-    
-    @Override
-    public String toString() {
-        return "<" + src + "," + age + "> " + pv;
+
+    public static void stop() {
+        Kompics.shutdown();
     }
 }

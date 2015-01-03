@@ -19,61 +19,45 @@
 package se.sics.p2ptoolbox.croupier.core.msg;
 
 import java.util.List;
-import java.util.UUID;
-import se.sics.p2ptoolbox.croupier.api.CroupierMsg;
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+import se.sics.gvod.net.VodAddress;
+import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 
 /**
- * immutable
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Shuffle {
+        
+        public final List<CroupierPeerView> publicNodes;
+        public final List<CroupierPeerView> privateNodes;
 
-    public static class Request extends CroupierMsg.Request {
-
-        public final List<PeerView> publicNodes;
-        public final List<PeerView> privateNodes;
-        public final PeerView self;
-
-        public Request(UUID id, int overlayId, List<PeerView> publicNodes, List<PeerView> privateNodes, PeerView self) {
-            super(id, overlayId);
+        public Shuffle(List<CroupierPeerView> publicNodes, List<CroupierPeerView> privateNodes) {
             this.publicNodes = publicNodes;
             this.privateNodes = privateNodes;
-            this.self = self;
         }
 
-        @Override
-        public Request copy() {
-            return new Request(id, croupierId, publicNodes, privateNodes, self);
-        }
-
-        @Override
-        public String toString() {
-            return "ShuffleRequest<" + croupierId + "> " + id;
-        }
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 41 * hash + (this.publicNodes != null ? this.publicNodes.hashCode() : 0);
+        hash = 41 * hash + (this.privateNodes != null ? this.privateNodes.hashCode() : 0);
+        return hash;
     }
 
-    public static class Response extends CroupierMsg.Response {
-
-        public final List<PeerView> publicNodes;
-        public final List<PeerView> privateNodes;
-        public final PeerView self;
-
-        public Response(UUID id, int overlayId, List<PeerView> publicNodes, List<PeerView> privateNodes, PeerView self) {
-            super(id, overlayId);
-            this.publicNodes = publicNodes;
-            this.privateNodes = privateNodes;
-            this.self = self;
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
         }
-
-        @Override
-        public Response copy() {
-            return new Response(id, croupierId, publicNodes, privateNodes, self);
+        if (getClass() != obj.getClass()) {
+            return false;
         }
-
-        @Override
-        public String toString() {
-            return "ShuffleResponse<" + croupierId + ">" + id;
+        final Shuffle other = (Shuffle) obj;
+        if (this.publicNodes != other.publicNodes && (this.publicNodes == null || !this.publicNodes.equals(other.publicNodes))) {
+            return false;
         }
+        if (this.privateNodes != other.privateNodes && (this.privateNodes == null || !this.privateNodes.equals(other.privateNodes))) {
+            return false;
+        }
+        return true;
     }
 }
