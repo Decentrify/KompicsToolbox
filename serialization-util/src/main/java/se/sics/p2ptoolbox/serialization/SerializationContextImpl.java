@@ -18,14 +18,13 @@
  */
 package se.sics.p2ptoolbox.serialization;
 
-import se.sics.p2ptoolbox.serialization.api.SerializationContext;
-import se.sics.p2ptoolbox.serialization.api.Serializer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
+import se.sics.p2ptoolbox.serialization.SerializationContext.MissingException;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

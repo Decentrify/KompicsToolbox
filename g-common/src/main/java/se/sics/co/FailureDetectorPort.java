@@ -8,7 +8,7 @@ package se.sics.co;
 
 import java.util.HashSet;
 import se.sics.gvod.net.VodAddress;
-import se.sics.kompics.Event;
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.PortType;
 
 /**
@@ -21,7 +21,7 @@ public class FailureDetectorPort extends PortType {
         indication(FailureDetectorEvent.class);
     }
     
-    public static class FailureDetectorEvent extends Event{
+    public static class FailureDetectorEvent implements KompicsEvent {
     
         private HashSet<VodAddress> suspectedNodes = new HashSet<VodAddress>();
 

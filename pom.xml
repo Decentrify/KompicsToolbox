@@ -13,7 +13,6 @@
         <module>serialization-util</module>
         <module>chunk-manager</module>
         <module>Croupier</module>
-        <module>serialization-util</module>
     </modules>
    
     <distributionManagement>
