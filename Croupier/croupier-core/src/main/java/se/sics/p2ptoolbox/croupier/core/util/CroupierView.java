@@ -172,8 +172,15 @@ public class CroupierView {
                 CroupierViewEntry entry = d2e.get(descriptor.src);
                 if (entry.getDescriptor().getAge() > descriptor.getAge()) {
                     // we keep the lowest age descriptor
+                    CroupierViewEntry newCVE = new CroupierViewEntry(descriptor);
+                    
+                    int index = entriesSentToThisPeer.indexOf(entry);
+                    if(index != -1) {
+                        entriesSentToThisPeer.set(index, newCVE);
+                    }
+                    
                     removeEntry(entry);
-                    addEntry(new CroupierViewEntry(descriptor));
+                    addEntry(newCVE);
                 }
                 continue;
             }
