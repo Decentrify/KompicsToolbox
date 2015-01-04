@@ -38,7 +38,7 @@ public class NetContentMsgSerializer {
             serializer.encode(context, buf, obj.content);
             return buf;
         }
-
+        
         @Override
         public int getSize(SerializationContext context, E obj) throws SerializerException, SerializationContext.MissingException {
             int size = sizeAbsRequest(context, obj);
