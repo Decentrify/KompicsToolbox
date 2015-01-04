@@ -51,6 +51,7 @@ import se.sics.p2ptoolbox.croupier.core.msg.ShuffleNet;
 import se.sics.p2ptoolbox.croupier.core.msg.ShuffleTimeout;
 import se.sics.p2ptoolbox.croupier.core.util.CroupierStats;
 import se.sics.p2ptoolbox.croupier.core.util.CroupierView;
+import se.sics.p2ptoolbox.serialization.msg.OverlayHeaderField;
 
 /**
  *
@@ -196,6 +197,11 @@ public class Croupier extends ComponentDefinition {
     Handler<ShuffleNet.Request> handleShuffleRequest = new Handler<ShuffleNet.Request>() {
         @Override
         public void handle(ShuffleNet.Request req) {
+            int reqOverlayId = ((OverlayHeaderField) req.header.get("overlay")).overlayId;
+            if(reqOverlayId != overlayId) {
+                log.error("{} mixing croupier overlays {} and {}", new Object[]{croupierLogPrefix, reqOverlayId, overlayId});
+                throw new RuntimeException("mixing croupiers overlays");
+            }
             log.debug("{} received {}", new Object[]{croupierLogPrefix, req});
             log.trace("{} received from:{} \n public nodes:{} \n private nodes:{}",
                     new Object[]{croupierLogPrefix, req.getVodSource(), req.content.publicNodes, req.content.privateNodes});
@@ -224,6 +230,11 @@ public class Croupier extends ComponentDefinition {
     Handler<ShuffleNet.Response> handleShuffleResponse = new Handler<ShuffleNet.Response>() {
         @Override
         public void handle(ShuffleNet.Response resp) {
+            int respOverlayId = ((OverlayHeaderField) resp.header.get("overlay")).overlayId;
+            if(respOverlayId != overlayId) {
+                log.error("{} mixing croupier overlays {} and {}", new Object[]{croupierLogPrefix, respOverlayId, overlayId});
+                throw new RuntimeException("mixing croupiers overlays");
+            }
             if (shuffleTimeoutId == null) {
                 log.debug("{} received {}, but it already timed out", new Object[]{croupierLogPrefix, resp});
                 return;

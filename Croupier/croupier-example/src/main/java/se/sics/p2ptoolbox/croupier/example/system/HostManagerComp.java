@@ -42,6 +42,7 @@ import se.sics.p2ptoolbox.croupier.core.Croupier;
 import se.sics.p2ptoolbox.croupier.core.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleComponentA;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleComponentB;
+import se.sics.p2ptoolbox.serialization.filter.OverlayHeaderFilter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -70,10 +71,10 @@ public class HostManagerComp extends ComponentDefinition {
         Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(rand));
         Component compB = create(ExampleComponentB.class, new ExampleComponentB.ExampleInitB(rand));
         
-        connect(croupier1.getNegative(VodNetwork.class), network);
+        connect(croupier1.getNegative(VodNetwork.class), network, new OverlayHeaderFilter(10));
         connect(croupier1.getNegative(Timer.class), timer);
         
-        connect(croupier2.getNegative(VodNetwork.class), network);
+        connect(croupier2.getNegative(VodNetwork.class), network, new OverlayHeaderFilter(11));
         connect(croupier2.getNegative(Timer.class), timer);
         
         connect(croupier1.getPositive(CroupierPort.class), compA.getNegative(CroupierPort.class));
