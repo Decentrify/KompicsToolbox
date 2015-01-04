@@ -272,21 +272,21 @@ public class CroupierView {
     }
 
 //-------------------------------------------------------------------	
-    private boolean removeEntry(CroupierViewEntry entry) {
-        boolean res = entries.remove(entry);
-        if (d2e.remove(entry.getDescriptor().src) == null && res == true) {
-            System.err.println("Croupier View corrupted.");
-        }
+    private void removeEntry(CroupierViewEntry entry) {
+        entries.remove(entry);
+        d2e.remove(entry.getDescriptor().src);
+        if(entries.size() != d2e.size()) {
+            System.err.println("Croupier View corrupted after removing:" + entry);
+        } 
         checkSize();
-        return res;
     }
 
-    public boolean timedOut(VodAddress node) {
+    public void timedOut(VodAddress node) {
         CroupierViewEntry entry = d2e.get(node);
         if (entry == null) {
-            return false;
+            return;
         }
-        return removeEntry(entry);
+        removeEntry(entry);
     }
 
 //-------------------------------------------------------------------	

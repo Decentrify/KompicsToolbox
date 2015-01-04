@@ -135,15 +135,6 @@ public class Croupier extends ComponentDefinition {
         }
     };
 
-    Handler<ShuffleTimeout> handleTimeout = new Handler<ShuffleTimeout>() {
-        @Override
-        public void handle(ShuffleTimeout timeout) {
-            log.debug("{} shuffle to {} timed out", new Object[]{croupierLogPrefix, timeout.dest});
-            publicView.timedOut(timeout.dest);
-            privateView.timedOut(timeout.dest);
-        }
-    };
-
     private VodAddress selectPeerToShuffleWith() {
         if (!bootstrapNodes.isEmpty()) {
             return bootstrapNodes.remove(0);
@@ -280,7 +271,7 @@ public class Croupier extends ComponentDefinition {
         subscribe(handleShuffleRequest, network);
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
-        subscribe(handleTimeout, timer);
+        subscribe(handleShuffleTimeout, timer);
     }
 
     private void stopShuffle() {
@@ -294,7 +285,7 @@ public class Croupier extends ComponentDefinition {
         unsubscribe(handleShuffleRequest, network);
         unsubscribe(handleShuffleResponse, network);
         unsubscribe(handleShuffleCycle, timer);
-        unsubscribe(handleTimeout, timer);
+        unsubscribe(handleShuffleTimeout, timer);
     }
 
     private void shuffle(int shuffleSize, VodAddress node) {
