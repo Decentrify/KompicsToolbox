@@ -274,9 +274,9 @@ public class CroupierView {
 //-------------------------------------------------------------------	
     private void removeEntry(CroupierViewEntry entry) {
         entries.remove(entry);
-        d2e.remove(entry.getDescriptor().src);
+        CroupierViewEntry removed = d2e.remove(entry.getDescriptor().src);
         if(entries.size() != d2e.size()) {
-            System.err.println("Croupier View corrupted after removing:" + entry);
+            System.err.println("Croupier View corrupted after removing:" + entry + " removed:" + removed);
         } 
         checkSize();
     }
@@ -297,7 +297,7 @@ public class CroupierView {
                 sb.append(d.toString()).append(", ");
             }
             sb.append(" \n IndexEntries: \n");
-            for (VodAddress d : d2e.keySet()) {
+            for (CroupierViewEntry d : d2e.values()) {
                 sb.append(d.toString()).append(", ");
             }
             System.err.println(sb.toString());
