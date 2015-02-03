@@ -26,5 +26,4 @@ import se.sics.kompics.KompicsEvent;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface SimulationCmd extends KompicsEvent {
-    
 }

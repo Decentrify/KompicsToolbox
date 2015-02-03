@@ -19,17 +19,12 @@
 
 package se.sics.p2ptoolbox.simulator.cmd;
 
-import se.sics.kompics.KompicsEvent;
+import se.sics.gvod.net.VodAddress;
+import se.sics.gvod.net.msgs.DirectMsg;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class LocalCmd implements OperationCmd {
-    public final int peerId;
-    public final KompicsEvent localCmd;
-    
-    public LocalCmd(int peerId, KompicsEvent localCmd) {
-        this.peerId = peerId;
-        this.localCmd = localCmd;
-    }
+public interface NetworkOpCmd extends OperationCmd<DirectMsg> {
+    public DirectMsg getNetworkMsg(VodAddress origin);
 }

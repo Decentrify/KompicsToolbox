@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.exampleMain;
+package se.sics.p2ptoolbox.simulator.example.proj;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,65 +29,63 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
+import se.sics.kompics.Start;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SimplePeer extends ComponentDefinition {
+public class MyComponent extends ComponentDefinition {
     
-    private static final Logger log = LoggerFactory.getLogger(SimplePeer.class);
+    private static final Logger log = LoggerFactory.getLogger(MyComponent.class);
     
     private Positive<VodNetwork> network = requires(VodNetwork.class);
     private Positive<Timer> timer = requires(Timer.class);
-    private Negative<SimplePeerPort> myPort = provides(SimplePeerPort.class);
+    private Negative<MyPort> myPort = provides(MyPort.class);
     
     private VodAddress self;
     private VodAddress partner;
     
-    public SimplePeer(SimplePeerInit init) {
-        log.debug("Starting simple peer");
+    public MyComponent(MyInit init) {
+        log.debug("initiating test node:{}", init.self);
         
         this.self = init.self;
-        this.partner = init.partner;
         
-        subscribe(handlePing, myPort);
+        subscribe(handleStart, control);
         subscribe(handleNetPing, network);
         subscribe(handleNetPong, network);
     }
     
-    private Handler<TestMsg.Ping> handlePing = new Handler<TestMsg.Ping>() {
+    private Handler<Start> handleStart = new Handler<Start>() {
 
         @Override
-        public void handle(TestMsg.Ping event) {
-            log.debug("{} received local ping", self);
-            trigger(new NetTestMsg.Ping(self, partner), network);
+        public void handle(Start event) {
+            log.debug("starting test node:{}", self);
         }
+        
     };
     
-    private Handler<NetTestMsg.Ping> handleNetPing = new Handler<NetTestMsg.Ping>() {
+    private Handler<MyNetMsg.Ping> handleNetPing = new Handler<MyNetMsg.Ping>() {
 
         @Override
-        public void handle(NetTestMsg.Ping event) {
+        public void handle(MyNetMsg.Ping event) {
             log.debug("{} received net ping from {}", self, event.getVodSource());
-            trigger(new NetTestMsg.Pong(self, event.getVodSource()), network);
+            trigger(new MyNetMsg.Pong(self, event.getVodSource()), network);
         }
     };
     
-    private Handler<NetTestMsg.Pong> handleNetPong = new Handler<NetTestMsg.Pong>() {
+    private Handler<MyNetMsg.Pong> handleNetPong = new Handler<MyNetMsg.Pong>() {
 
         @Override
-        public void handle(NetTestMsg.Pong event) {
+        public void handle(MyNetMsg.Pong event) {
             log.debug("{} received net pong from {}", self, event.getVodSource());
         }
     };
     
-    public static class SimplePeerInit extends Init<SimplePeer> {
+    public static class MyInit extends Init<MyComponent> {
         public final VodAddress self;
-        public final VodAddress partner;
         
-        public SimplePeerInit(VodAddress self, VodAddress partner) {
+        public MyInit(VodAddress self) {
             this.self = self;
-            this.partner = partner;
         }
     }
 }

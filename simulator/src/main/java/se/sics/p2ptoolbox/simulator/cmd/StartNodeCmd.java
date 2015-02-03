@@ -16,26 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.simulator.exampleMain;
 
-import se.sics.kompics.KompicsEvent;
+package se.sics.p2ptoolbox.simulator.cmd;
+
+import java.net.InetAddress;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Init;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
+ * @param <E>
  */
-public class TestMsg {
-
-    public static class Ping implements KompicsEvent {
-        @Override
-        public String toString() {
-            return "Ping";
-        }
-    }
-    
-    public static class Pong implements KompicsEvent {
-        @Override
-        public String toString() {
-            return "Pong";
-        }
-    }
+public interface StartNodeCmd<E extends ComponentDefinition> extends SystemCmd {
+    public Integer getNodeId();
+    public Class<E> getNodeComponentDefinition();
+    public Init<E> getNodeComponentInit();
 }

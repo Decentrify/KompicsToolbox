@@ -19,25 +19,12 @@
 
 package se.sics.p2ptoolbox.simulator.cmd;
 
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Init;
-import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
-
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class StartPeerCmd<E extends ComponentDefinition> implements SystemCmd {
-    public final int id;
-    public final Class<E> peerClass;
-    public final Class<? extends PortType> peerPort;
-    public final Init<E> init;
-    
-    public StartPeerCmd(int id, Class<E> peerClass, Class<? extends PortType> peerPort, 
-            Init<E> init) {
-        this.id = id;
-        this.peerClass = peerClass;
-        this.peerPort = peerPort;
-        this.init = init;
-    }
+public interface SimulationResult extends SimulationCmd {
+    /**
+     * @param failureCause - null if simulation is successful.
+     */
+    public void setSimulationResult(OperationCmd.ValidationException failureCause);
 }

@@ -17,40 +17,39 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.exampleMain;
+package se.sics.p2ptoolbox.simulator;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import se.sics.kompics.Kompics;
-import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 import se.sics.kompics.simulation.SimulatorScheduler;
-import se.sics.p2ptoolbox.simulator.LauncherComp;
+import se.sics.p2ptoolbox.simulator.example.simulator.MyExperimentResult;
+import se.sics.p2ptoolbox.simulator.example.simulator.ScenarioGen;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@sics.se>
  */
-
-public class Main {
-    public static SimulatorScheduler scheduler;
-    public static SimulationScenario scenario;
+@RunWith(JUnit4.class)
+public class MyTest {
     public static long seed = 123;
     
-    public static void main(String[] args) {
-        start();
+    @Test
+    public void myTest() {
+        LauncherComp.scheduler = new SimulatorScheduler();
+        LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
+        
+        Kompics.setScheduler(LauncherComp.scheduler);
+        Kompics.createAndStart(LauncherComp.class, 1);
         try {
             Kompics.waitForTermination();
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex.getMessage());
         }
+        
+        Assert.assertEquals(null, MyExperimentResult.failureCause);
     }
 
-    public static void start() {
-        scheduler = new SimulatorScheduler();
-        scenario = ScenarioGen.simpleBoot(seed);
-        
-        Kompics.setScheduler(scheduler);
-        Kompics.createAndStart(LauncherComp.class, 1);
-    }
-    
-    public static void stop() {
-        Kompics.shutdown();
-    }
 }
