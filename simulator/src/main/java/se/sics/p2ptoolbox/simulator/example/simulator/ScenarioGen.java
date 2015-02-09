@@ -33,7 +33,6 @@ import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation1;
 import se.sics.kompics.p2p.experiment.dsl.distribution.ConstantDistribution;
 import se.sics.kompics.p2p.experiment.dsl.distribution.Distribution;
 import se.sics.p2ptoolbox.simulator.SimulationContext;
-import se.sics.p2ptoolbox.simulator.cmd.LocalOpCmd;
 import se.sics.p2ptoolbox.simulator.cmd.NetworkOpCmd;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.SimulationResult;
@@ -50,7 +49,7 @@ public class ScenarioGen {
     static {
         InetAddress localHost;
         try {
-            localHost = InetAddress.getLocalHost();
+            localHost = InetAddress.getByName("127.0.0.1");
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
