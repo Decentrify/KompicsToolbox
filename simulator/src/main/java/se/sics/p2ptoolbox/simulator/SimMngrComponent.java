@@ -23,8 +23,10 @@ import java.util.Random;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.gvod.common.msgs.DirectMsgNetty;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.VodNetwork;
+import se.sics.gvod.net.msgs.DirectMsg;
 import se.sics.gvod.timer.Timer;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
@@ -32,6 +34,7 @@ import se.sics.kompics.Fault;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Kompics;
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
@@ -66,6 +69,17 @@ public class SimMngrComponent extends ComponentDefinition {
         subscribe(handleStopped, control);
 
         subscribe(handleStartNode, experimentPort);
+        for(final SystemStatusHandler systemStatusHandler : init.systemStatusHandlers) {
+            Class<? extends DirectMsg> msgType = systemStatusHandler.getStatusMsgType();
+            Handler handler = new Handler(msgType) {
+
+                @Override
+                public void handle(KompicsEvent event) {
+                    systemStatusHandler.handle(event, simulationContext);
+                }
+            };
+            subscribe(handler, network);
+        }
         subscribe(handleTerminateExperiment, experimentPort);
     }
 
@@ -131,7 +145,7 @@ public class SimMngrComponent extends ComponentDefinition {
         public void handle(StartNodeCmd cmd) {
             log.info("received start cmd:{} for node:{}", cmd, cmd.getNodeId());
 
-            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit());
+            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getSimulatorAddress()));
             connect(node.getNegative(VodNetwork.class), network, new NodeIdFilter(cmd.getNodeId()));
             connect(node.getNegative(Timer.class), timer);
 
@@ -161,10 +175,13 @@ public class SimMngrComponent extends ComponentDefinition {
 
         public final Random rand;
         public final VodAddress simAddress;
+        public final Set<SystemStatusHandler> systemStatusHandlers;
 
-        public SimMngrInit(Random rand, VodAddress simAddress) {
+        public SimMngrInit(Random rand, VodAddress simAddress, Set<SystemStatusHandler> systemStatusHandlers) {
             this.rand = rand;
             this.simAddress = simAddress;
+            this.systemStatusHandlers = systemStatusHandlers;
         }
     }
+    
 }

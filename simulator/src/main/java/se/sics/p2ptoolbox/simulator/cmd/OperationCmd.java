@@ -19,7 +19,6 @@
 
 package se.sics.p2ptoolbox.simulator.cmd;
 
-import java.util.UUID;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.simulator.SimulationContext;
 
@@ -28,6 +27,7 @@ import se.sics.p2ptoolbox.simulator.SimulationContext;
  */
 public interface OperationCmd<T extends KompicsEvent> extends SimulationCmd {
     public void beforeCmd(SimulationContext context);
+    public boolean myResponse(T response);
     public void validate(SimulationContext context, T response) throws ValidationException;
     public void afterValidation(SimulationContext context);
     

@@ -24,7 +24,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import se.sics.kompics.Kompics;
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.simulation.SimulatorScheduler;
+import se.sics.p2ptoolbox.simulator.example.proj.MyStatusMsg;
 import se.sics.p2ptoolbox.simulator.example.simulator.MyExperimentResult;
 import se.sics.p2ptoolbox.simulator.example.simulator.ScenarioGen;
 
@@ -40,6 +42,27 @@ public class MyTest {
     public void myTest() {
         LauncherComp.scheduler = new SimulatorScheduler();
         LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
+        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
+
+            public Class getStatusMsgType() {
+                return MyStatusMsg.Status1.class;
+            }
+
+            public void handle(KompicsEvent msg, SimulationContext context) {
+                System.out.println("handling status1");
+            }
+        });
+        
+        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
+
+            public Class getStatusMsgType() {
+                return MyStatusMsg.Status2.class;
+            }
+
+            public void handle(KompicsEvent msg, SimulationContext context) {
+                System.out.println("handling status2");
+            }
+        });
         
         Kompics.setScheduler(LauncherComp.scheduler);
         Kompics.createAndStart(LauncherComp.class, 1);

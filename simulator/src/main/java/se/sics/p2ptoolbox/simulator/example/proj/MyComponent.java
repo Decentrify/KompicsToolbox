@@ -16,13 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.simulator.example.proj;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.VodNetwork;
+import se.sics.gvod.timer.SchedulePeriodicTimeout;
 import se.sics.gvod.timer.Timer;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -35,44 +35,50 @@ import se.sics.kompics.Start;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class MyComponent extends ComponentDefinition {
-    
+
     private static final Logger log = LoggerFactory.getLogger(MyComponent.class);
-    
+
     private Positive<VodNetwork> network = requires(VodNetwork.class);
     private Positive<Timer> timer = requires(Timer.class);
     private Negative<MyPort> myPort = provides(MyPort.class);
-    
+
     private VodAddress self;
+    private VodAddress statusServer;
     private VodAddress partner;
-    
+
     public MyComponent(MyInit init) {
         log.debug("initiating test node:{}", init.self);
-        
+
         this.self = init.self;
-        
+        this.statusServer = init.statusServer;
+
         subscribe(handleStart, control);
         subscribe(handleNetPing, network);
         subscribe(handleNetPong, network);
     }
-    
+
     private Handler<Start> handleStart = new Handler<Start>() {
 
         @Override
         public void handle(Start event) {
             log.debug("starting test node:{}", self);
         }
-        
+
     };
-    
+
     private Handler<MyNetMsg.Ping> handleNetPing = new Handler<MyNetMsg.Ping>() {
 
         @Override
         public void handle(MyNetMsg.Ping event) {
             log.debug("{} received net ping from {}", self, event.getVodSource());
             trigger(new MyNetMsg.Pong(self, event.getVodSource()), network);
+            
+            log.info("sending status msgs");
+            trigger(new MyStatusMsg.Status1(self, statusServer), network);
+            trigger(new MyStatusMsg.Status2(self, statusServer), network);
         }
     };
-    
+
     private Handler<MyNetMsg.Pong> handleNetPong = new Handler<MyNetMsg.Pong>() {
 
         @Override
@@ -80,12 +86,24 @@ public class MyComponent extends ComponentDefinition {
             log.debug("{} received net pong from {}", self, event.getVodSource());
         }
     };
-    
+
+    private void scheduleStatusTimeout() {
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
+        MyStatusMsg.StatusTimeout timeout = new MyStatusMsg.StatusTimeout(spt);
+        spt.setTimeoutEvent(timeout);
+
+        log.debug("scheduling timeout {}", timeout);
+        trigger(spt, timer);
+    }
+
     public static class MyInit extends Init<MyComponent> {
+
         public final VodAddress self;
-        
-        public MyInit(VodAddress self) {
+        public final VodAddress statusServer;
+
+        public MyInit(VodAddress self, VodAddress statusServer) {
             this.self = self;
+            this.statusServer = statusServer;
         }
     }
 }

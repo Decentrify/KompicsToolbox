@@ -17,18 +17,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.cmd;
+package se.sics.p2ptoolbox.simulator;
 
-import se.sics.gvod.net.VodAddress;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Init;
+import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
- * @param <E>
  */
-public interface StartNodeCmd<E extends ComponentDefinition> extends SystemCmd {
-    public Integer getNodeId();
-    public Class<E> getNodeComponentDefinition();
-    public Init<E> getNodeComponentInit(VodAddress statusAddress);
+public interface SystemStatusHandler {
+    public Class getStatusMsgType();
+    public void handle(KompicsEvent msg, SimulationContext context);
 }

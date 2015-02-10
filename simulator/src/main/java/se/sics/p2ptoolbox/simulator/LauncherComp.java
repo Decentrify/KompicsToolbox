@@ -20,7 +20,9 @@ package se.sics.p2ptoolbox.simulator;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import se.sics.gvod.address.Address;
@@ -41,6 +43,7 @@ import se.sics.kompics.simulation.SimulatorScheduler;
 public class LauncherComp extends ComponentDefinition {
     public static SimulatorScheduler scheduler;
     public static SimulationScenario scenario;
+    public static final Set<SystemStatusHandler> systemStatusHandlers = new HashSet<SystemStatusHandler>();
     
     {
         VodAddress simAddress = null;
@@ -51,7 +54,7 @@ public class LauncherComp extends ComponentDefinition {
         }
         P2pSimulator.setSimulationPortType(ExperimentPort.class);
         Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(scheduler, scenario, new UniformRandomModel(1, 10)));
-        Component simManager = create(SimMngrComponent.class, new SimMngrComponent.SimMngrInit(new Random(), simAddress));
+        Component simManager = create(SimMngrComponent.class, new SimMngrComponent.SimMngrInit(new Random(), simAddress, systemStatusHandlers));
         connect(simManager.getNegative(VodNetwork.class), simulator.getPositive(VodNetwork.class));
         connect(simManager.getNegative(Timer.class), simulator.getPositive(Timer.class));
         connect(simManager.getNegative(ExperimentPort.class), simulator.getPositive(ExperimentPort.class));

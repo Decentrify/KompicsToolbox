@@ -26,6 +26,7 @@ import java.util.Map;
 import se.sics.gvod.address.Address;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.msgs.DirectMsg;
+import se.sics.kompics.Init;
 import se.sics.p2ptoolbox.simulator.cmd.StartNodeCmd;
 import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation;
@@ -74,8 +75,8 @@ public class ScenarioGen {
                 }
 
                 @Override
-                public MyComponent.MyInit getNodeComponentInit() {
-                    return new MyComponent.MyInit(nodeAddressMap.get(nodeId));
+                public MyComponent.MyInit getNodeComponentInit(VodAddress statusServer) {
+                    return new MyComponent.MyInit(nodeAddressMap.get(nodeId), statusServer);
                 }
             };
         }
@@ -85,10 +86,11 @@ public class ScenarioGen {
 
         public NetworkOpCmd generate(final Integer nodeId) {
             return new NetworkOpCmd() {
-
+                private VodAddress destination = nodeAddressMap.get(nodeId);
+                
                 @Override
                 public DirectMsg getNetworkMsg(VodAddress origin) {
-                    return new MyNetMsg.Ping(origin, nodeAddressMap.get(nodeId));
+                    return new MyNetMsg.Ping(origin, destination);
                 }
 
                 @Override
@@ -110,6 +112,17 @@ public class ScenarioGen {
                     if (response.getVodSource().getId() != nodeId) {
                         throw new OperationCmd.ValidationException("node id is wrong");
                     }
+                }
+
+                @Override
+                public boolean myResponse(DirectMsg resp) {
+                    if(resp instanceof MyNetMsg.Pong) {
+                        MyNetMsg.Pong pong = (MyNetMsg.Pong) resp;
+                        if(pong.getVodSource().equals(destination)) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }
 
             };
