@@ -22,7 +22,6 @@ package se.sics.p2ptoolbox.croupier.core;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import java.security.SecureRandom;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +90,7 @@ public class Croupier extends ComponentDefinition {
         this.bootstrapNodes = new ArrayList<VodAddress>();
         this.selfView = null;
         
-        Random rand = setupCroupierRand(overlayId, init.seed);
+        Random rand = new Random(init.seed + overlayId);
         this.publicView = new CroupierView(selfAddress, config.viewSize, rand);
         this.privateView = new CroupierView(selfAddress, config.viewSize, rand);
         CroupierStats.addNode(selfAddress);
@@ -101,13 +100,6 @@ public class Croupier extends ComponentDefinition {
         subscribe(handleUpdate, croupierPort);
     }
     
-    private Random setupCroupierRand(int overlayId, byte[] seed) {
-        ByteBuf croupierSeed = Unpooled.buffer();
-        croupierSeed.writeInt(overlayId);
-        croupierSeed.writeBytes(seed);
-        return new SecureRandom(croupierSeed.array());
-    }
-
     Handler<Stop> handleStop = new Handler<Stop>() {
 
         @Override
@@ -352,12 +344,12 @@ public class Croupier extends ComponentDefinition {
 
     public static class CroupierInit extends Init<Croupier> {
 
-        public final byte[] seed;
+        public final long seed;
         public final CroupierConfig config;
         public final int overlayId;
         public final VodAddress selfAddress;
 
-        public CroupierInit(CroupierConfig config, byte[] seed, int overlayId, VodAddress selfAddress) {
+        public CroupierInit(CroupierConfig config, long seed, int overlayId, VodAddress selfAddress) {
             this.config = config;
             this.seed = seed;
             this.overlayId = overlayId;

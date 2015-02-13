@@ -19,7 +19,6 @@
 package se.sics.p2ptoolbox.croupier.example.system;
 
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -113,11 +112,11 @@ public class HostManagerComp extends ComponentDefinition {
     
     public static class HostManagerInit extends Init<HostManagerComp> {
 
-        public final byte[] seed;
+        public final long seed;
         public final VodAddress self;
         public final VodAddress bootstrap;
         
-        public HostManagerInit(byte[] seed, VodAddress self, VodAddress bootstrap) {
+        public HostManagerInit(long seed, VodAddress self, VodAddress bootstrap) {
             this.seed = seed;
             this.self = self;
             this.bootstrap = bootstrap;

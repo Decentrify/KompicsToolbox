@@ -52,7 +52,6 @@ public class Launcher extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
     private static final int seed = 1234;
-    private static final byte[] bSeed = {1,2,3,4};
     private static final int port = 23432;
     private static int id;
     private static VodAddress bootstrapNode;
@@ -108,7 +107,7 @@ public class Launcher extends ComponentDefinition {
 
     private void phase3(Address selfAddress) {
         log.info("phase 3 - starting with Address: {}", selfAddress);
-        Component hostMngr = create(HostManagerComp.class, new HostManagerComp.HostManagerInit(bSeed, new VodAddress(selfAddress, -1), bootstrapNode));
+        Component hostMngr = create(HostManagerComp.class, new HostManagerComp.HostManagerInit(seed, new VodAddress(selfAddress, -1), bootstrapNode));
         connect(hostMngr.getNegative(VodNetwork.class), network.getPositive(VodNetwork.class));
         connect(hostMngr.getNegative(Timer.class), timer.getPositive(Timer.class));
 
