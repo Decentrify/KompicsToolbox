@@ -20,6 +20,9 @@
  */
 package se.sics.p2ptoolbox.croupier.core;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import java.security.SecureRandom;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,13 +90,22 @@ public class Croupier extends ComponentDefinition {
         log.info("{} creating...", croupierLogPrefix);
         this.bootstrapNodes = new ArrayList<VodAddress>();
         this.selfView = null;
-        this.publicView = new CroupierView(selfAddress, config.viewSize, init.rand);
-        this.privateView = new CroupierView(selfAddress, config.viewSize, init.rand);
+        
+        Random rand = setupCroupierRand(overlayId, init.seed);
+        this.publicView = new CroupierView(selfAddress, config.viewSize, rand);
+        this.privateView = new CroupierView(selfAddress, config.viewSize, rand);
         CroupierStats.addNode(selfAddress);
 
         subscribe(handleStop, control);
         subscribe(handleJoin, croupierControlPort);
         subscribe(handleUpdate, croupierPort);
+    }
+    
+    private Random setupCroupierRand(int overlayId, byte[] seed) {
+        ByteBuf croupierSeed = Unpooled.buffer();
+        croupierSeed.writeInt(overlayId);
+        croupierSeed.writeBytes(seed);
+        return new SecureRandom(croupierSeed.array());
     }
 
     Handler<Stop> handleStop = new Handler<Stop>() {
@@ -340,14 +352,14 @@ public class Croupier extends ComponentDefinition {
 
     public static class CroupierInit extends Init<Croupier> {
 
-        public final Random rand;
+        public final byte[] seed;
         public final CroupierConfig config;
         public final int overlayId;
         public final VodAddress selfAddress;
 
-        public CroupierInit(CroupierConfig config, Random rand, int overlayId, VodAddress selfAddress) {
+        public CroupierInit(CroupierConfig config, byte[] seed, int overlayId, VodAddress selfAddress) {
             this.config = config;
-            this.rand = rand;
+            this.seed = seed;
             this.overlayId = overlayId;
             this.selfAddress = selfAddress;
         }

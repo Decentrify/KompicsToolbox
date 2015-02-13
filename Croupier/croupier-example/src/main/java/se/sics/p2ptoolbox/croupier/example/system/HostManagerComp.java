@@ -60,16 +60,15 @@ public class HostManagerComp extends ComponentDefinition {
     private VodAddress bootstrapNode;
     
     public HostManagerComp(HostManagerInit init) {
-        Random rand = new Random(init.seed);
         this.bootstrapNode = init.bootstrap;
         
         CroupierConfig config1 = new CroupierConfig(4, 1000, 2, CroupierSelectionPolicy.RANDOM);
-        Component croupier1 = create(Croupier.class, new Croupier.CroupierInit(config1, rand, 10, init.self));
+        Component croupier1 = create(Croupier.class, new Croupier.CroupierInit(config1, init.seed, 10, init.self));
         CroupierConfig config2 = new CroupierConfig(4, 2000, 2, CroupierSelectionPolicy.RANDOM);
-        Component croupier2 = create(Croupier.class, new Croupier.CroupierInit(config2, rand, 11, init.self));
+        Component croupier2 = create(Croupier.class, new Croupier.CroupierInit(config2, init.seed, 11, init.self));
         
-        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(rand));
-        Component compB = create(ExampleComponentB.class, new ExampleComponentB.ExampleInitB(rand));
+        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(init.seed));
+        Component compB = create(ExampleComponentB.class, new ExampleComponentB.ExampleInitB(init.seed));
         
         connect(croupier1.getNegative(VodNetwork.class), network, new OverlayHeaderFilter(10));
         connect(croupier1.getNegative(Timer.class), timer);
@@ -114,11 +113,11 @@ public class HostManagerComp extends ComponentDefinition {
     
     public static class HostManagerInit extends Init<HostManagerComp> {
 
-        public final int seed;
+        public final byte[] seed;
         public final VodAddress self;
         public final VodAddress bootstrap;
         
-        public HostManagerInit(int seed, VodAddress self, VodAddress bootstrap) {
+        public HostManagerInit(byte[] seed, VodAddress self, VodAddress bootstrap) {
             this.seed = seed;
             this.self = self;
             this.bootstrap = bootstrap;
