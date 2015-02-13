@@ -19,6 +19,7 @@
 
 package se.sics.p2ptoolbox.croupier.example.core;
 
+import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -75,8 +76,8 @@ public class ExampleComponentB extends ComponentDefinition {
     public static class ExampleInitB extends Init<ExampleComponentB> {
         public final Random rand;
         
-        public ExampleInitB(Random rand) {
-            this.rand = rand;
+        public ExampleInitB(byte[] seed) {
+            this.rand = new SecureRandom(seed);
         }
     }
 }
