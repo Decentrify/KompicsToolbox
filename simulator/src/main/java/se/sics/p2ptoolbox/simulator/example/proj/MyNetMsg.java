@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.simulator.exampleMain;
+package se.sics.p2ptoolbox.simulator.example.proj;
 
 import io.netty.buffer.ByteBuf;
 import se.sics.gvod.common.msgs.DirectMsgNetty;
@@ -27,7 +27,7 @@ import se.sics.gvod.net.msgs.RewriteableMsg;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class NetTestMsg {
+public class MyNetMsg {
 
     public static class Ping extends DirectMsgNetty.Request {
 

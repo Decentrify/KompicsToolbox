@@ -19,21 +19,14 @@
 
 package se.sics.p2ptoolbox.simulator;
 
-import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
-import se.sics.kompics.PortType;
-import se.sics.kompics.p2p.experiment.dsl.events.TerminateExperiment;
+import java.util.Random;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.SimulationResult;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class ExperimentPort extends PortType {
-    {
-        positive(SystemCmd.class);
-        positive(OperationCmd.class);
-        positive(SimulationResult.class);
-        positive(TerminateExperiment.class);
-        negative(TerminateExperiment.class);
-    }
+public interface SimulationContext {
+    public Random getRand();
+    public boolean register(String identifier, Object obj);
+    public Object get(String identifier);
 }

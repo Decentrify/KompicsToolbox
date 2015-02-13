@@ -17,16 +17,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.exampleMain;
+package se.sics.p2ptoolbox.simulator;
 
-import se.sics.kompics.PortType;
+import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SimplePeerPort extends PortType {
-    {
-        request(TestMsg.Ping.class);
-        indication(TestMsg.Pong.class);
-    }
+public interface SystemStatusHandler {
+    public Class getStatusMsgType();
+    public void handle(KompicsEvent msg, SimulationContext context);
 }

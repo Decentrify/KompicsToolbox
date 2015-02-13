@@ -16,26 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.simulator.exampleMain;
 
-import se.sics.kompics.KompicsEvent;
+package se.sics.p2ptoolbox.simulator.cmd;
+
+import se.sics.gvod.net.VodAddress;
+import se.sics.gvod.net.msgs.DirectMsg;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class TestMsg {
-
-    public static class Ping implements KompicsEvent {
-        @Override
-        public String toString() {
-            return "Ping";
-        }
-    }
-    
-    public static class Pong implements KompicsEvent {
-        @Override
-        public String toString() {
-            return "Pong";
-        }
-    }
+public interface NetworkOpCmd extends OperationCmd<DirectMsg> {
+    public DirectMsg getNetworkMsg(VodAddress origin);
 }

@@ -19,9 +19,33 @@
 
 package se.sics.p2ptoolbox.simulator.cmd;
 
+import se.sics.kompics.KompicsEvent;
+import se.sics.p2ptoolbox.simulator.SimulationContext;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface OperationCmd extends SimulationCmd {
+public interface OperationCmd<T extends KompicsEvent> extends SimulationCmd {
+    public void beforeCmd(SimulationContext context);
+    public boolean myResponse(T response);
+    public void validate(SimulationContext context, T response) throws ValidationException;
+    public void afterValidation(SimulationContext context);
     
+    public static class ValidationException extends Exception {
+        public ValidationException() {
+            super();
+        }
+        
+        public ValidationException(String msg) {
+            super(msg);
+        }
+        
+        public ValidationException(Throwable cause) {
+            super(cause);
+        }
+        
+        public ValidationException(String msg, Throwable cause) {
+            super(msg, cause);
+        }
+    }
 }
