@@ -89,7 +89,9 @@ public class Croupier extends ComponentDefinition {
         log.info("{} creating...", croupierLogPrefix);
         this.bootstrapNodes = new ArrayList<VodAddress>();
         this.selfView = null;
-        
+        this.shuffleCycleId = null;
+        this.shuffleTimeoutId = null;
+
         Random rand = new Random(init.seed + overlayId);
         this.publicView = new CroupierView(selfAddress, config.viewSize, rand);
         this.privateView = new CroupierView(selfAddress, config.viewSize, rand);
@@ -98,8 +100,54 @@ public class Croupier extends ComponentDefinition {
         subscribe(handleStop, control);
         subscribe(handleJoin, croupierControlPort);
         subscribe(handleUpdate, croupierPort);
+        subscribe(handleShuffleRequest, network);
+        subscribe(handleShuffleResponse, network);
+        subscribe(handleShuffleCycle, timer);
+        subscribe(handleShuffleTimeout, timer);
     }
-    
+
+    private void startShuffle() {
+        if (selfView == null) {
+            log.info("{} no self view - not shuffling", new Object[]{croupierLogPrefix, overlayId});
+            return;
+        }
+        if (!haveShufflePartners()) {
+            log.info("{} no insiders - not shuffling", new Object[]{croupierLogPrefix, overlayId});
+            return;
+        }
+        log.info("{} initiating shuffle", new Object[]{croupierLogPrefix});
+
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
+        ShuffleCycle sc = new ShuffleCycle(spt, overlayId);
+        spt.setTimeoutEvent(sc);
+        shuffleCycleId = sc.getTimeoutId();
+
+        log.debug("{} scheduling {} with period:{}", new Object[]{croupierLogPrefix, sc, config.shufflePeriod});
+        trigger(spt, timer);
+    }
+
+    private void stopShuffle() {
+        if (shuffleTimeoutId != null) {
+            cancelShuffleTimeout();
+        }
+        if (shuffleCycleId != null) {
+            log.debug("{} canceling shuffle cycle", new Object[]{croupierLogPrefix});
+            CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
+            trigger(cpt, timer);
+            shuffleCycleId = null;
+        }
+        log.info("{} stoped shuffling", new Object[]{croupierLogPrefix});
+        trigger(new CroupierDisconnected(UUID.randomUUID(), overlayId), croupierControlPort);
+    }
+
+    private boolean connected() {
+        return shuffleCycleId != null;
+    }
+
+    private boolean haveShufflePartners() {
+        return !bootstrapNodes.isEmpty() || !publicView.isEmpty() || (selfAddress.isOpen() && !privateView.isEmpty());
+    }
+
     Handler<Stop> handleStop = new Handler<Stop>() {
 
         @Override
@@ -122,7 +170,9 @@ public class Croupier extends ComponentDefinition {
                 bootstrapNodes.remove(selfAddress);
             }
 
-            tryInitiateShuffle();
+            if (!connected()) {
+                startShuffle();
+            }
         }
     };
 
@@ -133,8 +183,8 @@ public class Croupier extends ComponentDefinition {
 
             selfView = (update.selfView == null ? selfView : update.selfView);
 
-            if (shuffleCycleId == null) {
-                tryInitiateShuffle();
+            if (!connected()) {
+                startShuffle();
             }
         }
     };
@@ -157,21 +207,19 @@ public class Croupier extends ComponentDefinition {
         public void handle(ShuffleCycle event) {
             log.debug("{} public view size:{}, private view size:{}", new Object[]{croupierLogPrefix, publicView.size(), privateView.size()});
 
-            if (!publicView.isEmpty() || !privateView.isEmpty()) {
-                CroupierSample cs = new CroupierSample(UUID.randomUUID(), overlayId, publicView.getAll(), privateView.getAll());
-                log.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{croupierLogPrefix, cs.publicSample, cs.privateSample});
-                trigger(cs, croupierPort);
-            }
-            // If I don't have any references to any public nodes and I am a global Croupier
-            // disconnect
-            if (bootstrapNodes.isEmpty() && publicView.isEmpty()) {
-                log.warn("{} disconnected", croupierLogPrefix);
-                trigger(new CroupierDisconnected(UUID.randomUUID(), overlayId), croupierControlPort);
-//                cancelShuffleCycle();
+            if (!haveShufflePartners()) {
+                log.warn("{} no shuffle partners - disconnected", croupierLogPrefix);
+                stopShuffle();
                 return;
             }
+
+            CroupierSample cs = new CroupierSample(UUID.randomUUID(), overlayId, publicView.getAll(), privateView.getAll());
+            log.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{croupierLogPrefix, cs.publicSample, cs.privateSample});
+            trigger(cs, croupierPort);
+
             VodAddress peer = selectPeerToShuffleWith();
             if (peer == null || peer.equals(selfAddress)) {
+                log.error("{} this should not happen - logic error selecting peer", croupierLogPrefix);
                 throw new RuntimeException("Error selecting peer");
             }
 
@@ -180,12 +228,24 @@ public class Croupier extends ComponentDefinition {
             }
 
             CroupierStats.instance(selfAddress).incSelectedTimes();
-            shuffle(config.shuffleLength, peer);
+            List<CroupierPeerView> publicDescriptors = publicView.selectToSendAtInitiator(config.shuffleLength, peer);
+            List<CroupierPeerView> privateDescriptors = privateView.selectToSendAtInitiator(config.shuffleLength, peer);
+
+            if (selfAddress.isOpen()) {
+                publicDescriptors.add(new CroupierPeerView(selfView, selfAddress));
+            } else {
+                privateDescriptors.add(new CroupierPeerView(selfView, selfAddress));
+            }
+
+            Shuffle content = new Shuffle(publicDescriptors, privateDescriptors);
+            ShuffleNet.Request req = new ShuffleNet.Request(selfAddress, peer, UUID.randomUUID(), overlayId, content);
+            log.debug("{} sending {}", croupierLogPrefix, req);
+            trigger(req, network);
             scheduleShuffleTimeout(peer);
+            
             //TODO Alex - is it correct to increment descriptors here only? 
             publicView.incrementDescriptorAges();
             privateView.incrementDescriptorAges();
-
         }
     };
 
@@ -193,18 +253,24 @@ public class Croupier extends ComponentDefinition {
         @Override
         public void handle(ShuffleNet.Request req) {
             int reqOverlayId = ((OverlayHeaderField) req.header.get("overlay")).overlayId;
-            if(reqOverlayId != overlayId) {
+            if (reqOverlayId != overlayId) {
                 log.error("{} mixing croupier overlays {} and {}", new Object[]{croupierLogPrefix, reqOverlayId, overlayId});
                 throw new RuntimeException("mixing croupiers overlays");
             }
+            if (selfAddress.equals(req.getVodSource())) {
+                log.error("{} Tried to shuffle with myself", croupierLogPrefix);
+                throw new RuntimeException("mixing croupiers overlays");
+            }
+
+            if (selfView == null) {
+                log.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
+                        croupierLogPrefix, req.getVodSource());
+                return;
+            }
+
             log.debug("{} received {}", new Object[]{croupierLogPrefix, req});
             log.trace("{} received from:{} \n public nodes:{} \n private nodes:{}",
                     new Object[]{croupierLogPrefix, req.getVodSource(), req.content.publicNodes, req.content.privateNodes});
-
-            if (selfAddress.equals(req.getVodSource())) {
-                log.warn("{} Tried to shuffle with myself", croupierLogPrefix);
-                return;
-            }
 
             CroupierStats.instance(selfAddress).incShuffleRecvd(req.getVodSource());
             List<CroupierPeerView> toSendPublicDescs = publicView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
@@ -219,6 +285,10 @@ public class Croupier extends ComponentDefinition {
                     new Object[]{croupierLogPrefix, resp.getVodDestination(), resp.content.publicNodes, resp.content.privateNodes});
 
             trigger(resp, network);
+
+            if (!connected()) {
+                startShuffle();
+            }
         }
     };
 
@@ -226,26 +296,26 @@ public class Croupier extends ComponentDefinition {
         @Override
         public void handle(ShuffleNet.Response resp) {
             int respOverlayId = ((OverlayHeaderField) resp.header.get("overlay")).overlayId;
-            if(respOverlayId != overlayId) {
+            if (respOverlayId != overlayId) {
                 log.error("{} mixing croupier overlays {} and {}", new Object[]{croupierLogPrefix, respOverlayId, overlayId});
                 throw new RuntimeException("mixing croupiers overlays");
             }
+
             if (shuffleTimeoutId == null) {
                 log.debug("{} received {}, but it already timed out", new Object[]{croupierLogPrefix, resp});
                 return;
-            } else {
-                log.debug("{} received {}", new Object[]{croupierLogPrefix, resp});
-                log.trace("{} received from:{} \n public nodes:{} \n private nodes:{}",
-                        new Object[]{croupierLogPrefix, resp.getVodSource(), resp.content.publicNodes, resp.content.privateNodes});
-                cancelShuffleTimeout();
             }
 
+            log.debug("{} received {}", new Object[]{croupierLogPrefix, resp});
+            log.trace("{} received from:{} \n public nodes:{} \n private nodes:{}",
+                    new Object[]{croupierLogPrefix, resp.getVodSource(), resp.content.publicNodes, resp.content.privateNodes});
             CroupierStats.instance(selfAddress).incShuffleResp();
-
             publicView.selectToKeep(resp.getVodSource(), resp.content.publicNodes);
             privateView.selectToKeep(resp.getVodSource(), resp.content.privateNodes);
+            cancelShuffleTimeout();
         }
     };
+
     Handler<ShuffleTimeout> handleShuffleTimeout = new Handler<ShuffleTimeout>() {
         @Override
         public void handle(ShuffleTimeout timeout) {
@@ -260,56 +330,8 @@ public class Croupier extends ComponentDefinition {
         }
     };
 
-    private void tryInitiateShuffle() {
-        if (selfView == null) {
-            log.info("{} no self view - not shuffling", new Object[]{croupierLogPrefix, overlayId});
-            return;
-        }
-        if (bootstrapNodes.isEmpty()) {
-            log.info("{} no insiders - not shuffling", new Object[]{croupierLogPrefix, overlayId});
-            return;
-        }
-        log.info("{} initiating shuffle", new Object[]{croupierLogPrefix});
-        scheduleShuffleCycle();
-
-        subscribe(handleShuffleRequest, network);
-        subscribe(handleShuffleResponse, network);
-        subscribe(handleShuffleCycle, timer);
-        subscribe(handleShuffleTimeout, timer);
-    }
-
-    private void stopShuffle() {
-        if (shuffleTimeoutId != null) {
-            cancelShuffleTimeout();
-        }
-        if (shuffleCycleId != null) {
-            cancelShuffleCycle();
-        }
-        log.info("{} stopping shuffle", new Object[]{croupierLogPrefix});
-        unsubscribe(handleShuffleRequest, network);
-        unsubscribe(handleShuffleResponse, network);
-        unsubscribe(handleShuffleCycle, timer);
-        unsubscribe(handleShuffleTimeout, timer);
-    }
-
-    private void shuffle(int shuffleSize, VodAddress node) {
-        List<CroupierPeerView> publicDescriptors = publicView.selectToSendAtInitiator(shuffleSize, node);
-        List<CroupierPeerView> privateDescriptors = privateView.selectToSendAtInitiator(shuffleSize, node);
-
-        if (selfAddress.isOpen()) {
-            publicDescriptors.add(new CroupierPeerView(selfView, selfAddress));
-        } else {
-            privateDescriptors.add(new CroupierPeerView(selfView, selfAddress));
-        }
-
-        Shuffle content = new Shuffle(publicDescriptors, privateDescriptors);
-        ShuffleNet.Request req = new ShuffleNet.Request(selfAddress, node, UUID.randomUUID(), overlayId, content);
-        log.debug("{} sending {}", croupierLogPrefix, req);
-        trigger(req, network);
-    }
-
     private void scheduleShuffleTimeout(VodAddress dest) {
-        ScheduleTimeout spt = new ScheduleTimeout(config.shufflePeriod/2);
+        ScheduleTimeout spt = new ScheduleTimeout(config.shufflePeriod / 2);
         ShuffleTimeout sc = new ShuffleTimeout(spt, overlayId, dest);
         spt.setTimeoutEvent(sc);
         shuffleTimeoutId = sc.getTimeoutId();
@@ -323,23 +345,6 @@ public class Croupier extends ComponentDefinition {
         CancelTimeout cpt = new CancelTimeout(shuffleTimeoutId);
         trigger(cpt, timer);
         shuffleTimeoutId = null;
-    }
-
-    private void scheduleShuffleCycle() {
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
-        ShuffleCycle sc = new ShuffleCycle(spt, overlayId);
-        spt.setTimeoutEvent(sc);
-        shuffleCycleId = sc.getTimeoutId();
-
-        log.debug("{} scheduling {} with period:{}", new Object[]{croupierLogPrefix, sc, config.shufflePeriod});
-        trigger(spt, timer);
-    }
-
-    private void cancelShuffleCycle() {
-        log.debug("{} canceling shuffle cycle", new Object[]{croupierLogPrefix});
-        CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
-        trigger(cpt, timer);
-        shuffleCycleId = null;
     }
 
     public static class CroupierInit extends Init<Croupier> {
