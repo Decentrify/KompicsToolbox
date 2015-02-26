@@ -20,7 +20,23 @@
         <module>gradient-api</module>
         <module>gradient-core</module>
         <module>gradient-example</module>
-        
     </modules>
+    
+    <properties>
+        <kompics.version>0.6.1-SNAPSHOT</kompics.version>
+        <p2ptoolbox.version>1.0-SNAPSHOT</p2ptoolbox.version>
+    </properties>
+    
+
+    <dependencies>
+        <dependency>
+            <groupId>se.sics.kompics</groupId>
+            <artifactId>kompics-core</artifactId>
+            <version>${kompics.version}</version>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
+    
+    
     
 </project>
