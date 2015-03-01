@@ -33,6 +33,6 @@ public interface GradientHelper<T extends PeerView> {
     
     public void mergeCroupierExchangeSample(List<CroupierPeerView> croupierPeerViewSet);
     
-    public void incrementSamplesAge();
+    public void incrementSampleAge();
     
 }

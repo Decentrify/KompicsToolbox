@@ -4,7 +4,7 @@ import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 
 /**
- * Wrapper Over the Descriptor sent to the Gradient for Exchange.
+ * Wrapper Over the Self Descriptor sent to the Gradient for Exchange.
  *
  * Created by babbarshaer on 2015-02-26.
  */

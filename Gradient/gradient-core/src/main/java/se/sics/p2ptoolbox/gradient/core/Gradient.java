@@ -23,7 +23,6 @@ import se.sics.p2ptoolbox.gradient.api.util.GradientPeerView;
 import se.sics.p2ptoolbox.gradient.msg.GradientShuffleMessage;
 
 import java.util.*;
-import java.util.UUID;
 
 /**
  *
@@ -218,7 +217,7 @@ public class Gradient extends ComponentDefinition{
             trigger(response, network);
             
             gradientHelper.mergeGradientExchangeSample(event.getExchangeNodes());
-            gradientHelper.incrementSamplesAge();
+            gradientHelper.incrementSampleAge();
 
             trigger(new GradientSample(java.util.UUID.randomUUID(),gradientHelper.getSampleSet(), gradientHelper.isConverged()), gradientPort);
         }
