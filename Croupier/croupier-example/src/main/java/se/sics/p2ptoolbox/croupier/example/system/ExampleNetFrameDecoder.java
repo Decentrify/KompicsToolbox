@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.croupier.example.system;
 
 import io.netty.buffer.ByteBuf;
@@ -26,14 +25,15 @@ import se.sics.gvod.common.msgs.MessageDecodingException;
 import se.sics.gvod.net.BaseMsgFrameDecoder;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.msgs.RewriteableMsg;
-import se.sics.p2ptoolbox.croupier.core.CroupierConfig;
-import se.sics.p2ptoolbox.croupier.core.CroupierSetup;
+import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+import se.sics.p2ptoolbox.croupier.core.CroupierNetworkSettings;
 import se.sics.p2ptoolbox.croupier.example.core.PeerViewA;
 import se.sics.p2ptoolbox.croupier.example.core.PeerViewASerializer;
 import se.sics.p2ptoolbox.croupier.example.core.PeerViewB;
 import se.sics.p2ptoolbox.croupier.example.core.PeerViewBSerializer;
 import se.sics.p2ptoolbox.serialization.SerializationContext;
 import se.sics.p2ptoolbox.serialization.SerializationContextImpl;
+import se.sics.p2ptoolbox.serialization.msg.HeaderField;
 import se.sics.p2ptoolbox.serialization.msg.NetMsg;
 import se.sics.p2ptoolbox.serialization.msg.OverlayHeaderField;
 import se.sics.p2ptoolbox.serialization.serializer.OverlayHeaderFieldSerializer;
@@ -46,45 +46,42 @@ import se.sics.p2ptoolbox.serialization.serializer.VodAddressSerializer;
  */
 public class ExampleNetFrameDecoder extends BaseMsgFrameDecoder {
 
-    public static final byte CROUPIER_REQUEST = (byte)0x90;
-    public static final byte CROUPIER_RESPONSE = (byte)0x91;
-    
+    public static final byte CROUPIER_REQUEST = (byte) 0x90;
+    public static final byte CROUPIER_RESPONSE = (byte) 0x91;
+
     //other aliases
-    public static final byte HEADER_FIELD = (byte) 0x01;
-    public static final byte PEER_VIEW = (byte) 0x02;
+    public static final byte HEADER_FIELD_CODE = (byte) 0x01;
+    public static final byte PEER_VIEW_CODE = (byte) 0x02;
 
-    private static SerializationContext context = new SerializationContextImpl();
+    public static final String HEADER_FIELD_ALIAS = "MY_EXAMPLE_HEADER_FIELD";
+    public static final String PEER_VIEW_ALIAS = "MY_EXAMPLE_PEER_VIEW";
 
-    public static void reset() {
-        context = new SerializationContextImpl();
-    }
-    
+    private static final SerializationContext context = new SerializationContextImpl();
+
     public static void init() {
+        NetMsg.setContext(context);
+        SerializerAdapter.setContext(context);
+        CroupierNetworkSettings.oneTimeSetup(context, CONNECT_REQUEST, CONNECT_REQUEST);
+
         try {
-            context.registerAlias(CroupierConfig.MsgAliases.CROUPIER_NET_REQUEST.aliasedClass, CroupierConfig.MsgAliases.CROUPIER_NET_REQUEST.toString(), CROUPIER_REQUEST);
-            context.registerAlias(CroupierConfig.MsgAliases.CROUPIER_NET_RESPONSE.aliasedClass, CroupierConfig.MsgAliases.CROUPIER_NET_RESPONSE.toString(), CROUPIER_RESPONSE);
-            
-            context.registerAlias(CroupierConfig.OtherAliases.HEADER_FIELD.aliasedClass, CroupierConfig.OtherAliases.HEADER_FIELD.toString(), HEADER_FIELD);
+            //check CroupierNetworkSettings.OtherSerializers for Croupier required serializers
+            context.registerAlias(HeaderField.class, HEADER_FIELD_ALIAS, HEADER_FIELD_CODE);
             context.registerSerializer(OverlayHeaderField.class, new OverlayHeaderFieldSerializer());
-            context.multiplexAlias(CroupierConfig.OtherAliases.HEADER_FIELD.toString(), OverlayHeaderField.class, (byte)0x01);
-            
-            context.registerAlias(CroupierConfig.OtherAliases.PEER_VIEW.aliasedClass, CroupierConfig.OtherAliases.PEER_VIEW.toString(), PEER_VIEW);
-            context.registerSerializer(PeerViewA.class, new PeerViewASerializer());
-            context.multiplexAlias(CroupierConfig.OtherAliases.PEER_VIEW.toString(), PeerViewA.class, (byte)0x01);
-            context.registerSerializer(PeerViewB.class, new PeerViewBSerializer());
-            context.multiplexAlias(CroupierConfig.OtherAliases.PEER_VIEW.toString(), PeerViewB.class, (byte)0x02);
+            context.multiplexAlias(HEADER_FIELD_ALIAS, OverlayHeaderField.class, (byte) 0x01);
             
             context.registerSerializer(UUID.class, new UUIDSerializer());
             context.registerSerializer(VodAddress.class, new VodAddressSerializer());
+
+            context.registerAlias(PeerView.class, PEER_VIEW_ALIAS, PEER_VIEW_CODE);
+            context.registerSerializer(PeerViewA.class, new PeerViewASerializer());
+            context.multiplexAlias(PEER_VIEW_ALIAS, PeerViewA.class, (byte) 0x01);
+            context.registerSerializer(PeerViewB.class, new PeerViewBSerializer());
+            context.multiplexAlias(PEER_VIEW_ALIAS, PeerViewB.class, (byte) 0x02);
         } catch (SerializationContext.DuplicateException ex) {
             throw new RuntimeException(ex);
         } catch (SerializationContext.MissingException ex) {
             throw new RuntimeException(ex);
         }
-
-        NetMsg.setContext(context);
-        SerializerAdapter.setContext(context);
-        CroupierSetup.oneTimeSetup(context);
     }
 
     public ExampleNetFrameDecoder() {

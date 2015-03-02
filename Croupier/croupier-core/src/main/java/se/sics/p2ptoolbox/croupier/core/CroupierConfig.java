@@ -19,13 +19,7 @@
 
 package se.sics.p2ptoolbox.croupier.core;
 
-import java.util.UUID;
 import se.sics.p2ptoolbox.croupier.api.CroupierSelectionPolicy;
-import se.sics.gvod.common.msgs.DirectMsgNetty;
-import se.sics.gvod.net.VodAddress;
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
-import se.sics.p2ptoolbox.serialization.msg.HeaderField;
-import se.sics.p2ptoolbox.serialization.msg.OverlayHeaderField;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -41,36 +35,5 @@ public class CroupierConfig {
         this.shufflePeriod = shufflePeriod;
         this.shuffleLength = shuffleLength;
         this.policy = policy;
-    }
-
-    public static enum MsgAliases {
-
-        CROUPIER_NET_REQUEST(DirectMsgNetty.Request.class), CROUPIER_NET_RESPONSE(DirectMsgNetty.Response.class);
-        public final Class aliasedClass;
-
-        MsgAliases(Class aliasedClass) {
-            this.aliasedClass = aliasedClass;
-        }
-    }
-
-    public static enum OtherAliases {
-
-        HEADER_FIELD(HeaderField.class), PEER_VIEW(PeerView.class);
-
-        public final Class aliasedClass;
-
-        OtherAliases(Class aliasedClass) {
-            this.aliasedClass = aliasedClass;
-        }
-    }
-    
-    public static enum OtherSerializers {
-        UUID(UUID.class), VOD_ADDRESS(VodAddress.class), OVERLAY_HEADER_FIELD(OverlayHeaderField.class);
-        
-        public final Class serializedClass;
-
-        OtherSerializers(Class serializedClass) {
-            this.serializedClass = serializedClass;
-        }
     }
 }

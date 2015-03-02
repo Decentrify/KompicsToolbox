@@ -18,10 +18,9 @@ package se.sics.p2ptoolbox.croupier.core;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-
-import java.util.HashSet;
-import java.util.Set;
+import java.util.UUID;
+import se.sics.gvod.common.msgs.DirectMsgNetty;
+import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
 import se.sics.p2ptoolbox.croupier.core.msg.ShuffleNet;
@@ -39,65 +38,78 @@ import se.sics.p2ptoolbox.serialization.serializer.SerializerAdapter;
 public class CroupierNetworkSettings {
 
     private static SerializationContext context = null;
+    private static final String NET_REQUEST_ALIAS = "CROUPIER_NET_REQUEST";
+    private static final String NET_RESPONSE_ALIAS = "CROUPIER_NET_RESPONSE";
 
-    public static void setContext(SerializationContext setContext) {
+    public static void oneTimeSetup(SerializationContext setContext, byte croupierRequestAlias, byte croupierResponseAlias) {
+        if(context != null) {
+            throw new RuntimeException("croupier has already been setup - do not call this multiple times(for each croupier instance)");
+        }
         context = setContext;
-    }
 
-    public static boolean hasContext() {
-        return context != null;
-    }
-    
-    public static SerializationContext getContext() {
-        return context;
-    }
-
-    public static boolean checkPreCond() {
-        if (context == null || !NetMsg.hasContext() || !SerializerAdapter.hasContext()) {
-            return false;
-        }
-        
-        try {
-            for(CroupierConfig.OtherSerializers serializedClass : CroupierConfig.OtherSerializers.values()) {
-               context.getSerializer(serializedClass.serializedClass);
-            }
-        } catch (SerializationContext.MissingException ex) {
-            throw new RuntimeException(ex);
-        }
-        
-        Set<String> croupierAliases = new HashSet<String>();
-        croupierAliases.add(CroupierConfig.MsgAliases.CROUPIER_NET_REQUEST.toString());
-        croupierAliases.add(CroupierConfig.MsgAliases.CROUPIER_NET_RESPONSE.toString());
-        croupierAliases.add(CroupierConfig.OtherAliases.HEADER_FIELD.toString());
-        croupierAliases.add(CroupierConfig.OtherAliases.PEER_VIEW.toString());
-        return context.containsAliases(croupierAliases);
-    }
-
-    public static void registerSerializers() {
-        registerNetworkMsg();
+        registerNetworkMsg(croupierRequestAlias, croupierResponseAlias);
         registerOthers();
+        
+        checkSetup();
     }
 
-    private static void registerNetworkMsg() {
+    private static void registerNetworkMsg(byte croupierRequestAlias, byte croupierResponseAlias) {
         try {
+            context.registerAlias(DirectMsgNetty.Request.class, NET_REQUEST_ALIAS, croupierRequestAlias);
+            context.registerAlias(DirectMsgNetty.Response.class, NET_RESPONSE_ALIAS, croupierResponseAlias);
+
             context.registerSerializer(ShuffleNet.Request.class, new ShuffleNetSerializer.Request());
             context.registerSerializer(ShuffleNet.Response.class, new ShuffleNetSerializer.Response());
-            
-            context.multiplexAlias(CroupierConfig.MsgAliases.CROUPIER_NET_REQUEST.toString(), ShuffleNet.Request.class, (byte) 0x01);
-            context.multiplexAlias(CroupierConfig.MsgAliases.CROUPIER_NET_RESPONSE.toString(), ShuffleNet.Response.class, (byte) 0x01);
+
+            context.multiplexAlias(NET_REQUEST_ALIAS, ShuffleNet.Request.class, (byte) 0x01);
+            context.multiplexAlias(NET_RESPONSE_ALIAS, ShuffleNet.Response.class, (byte) 0x01);
         } catch (SerializationContext.DuplicateException ex) {
             throw new RuntimeException(ex);
         } catch (SerializationContext.MissingException ex) {
             throw new RuntimeException(ex);
         }
     }
-    
+
     private static void registerOthers() {
         try {
             context.registerSerializer(Shuffle.class, new ShuffleSerializer());
             context.registerSerializer(CroupierPeerView.class, new CroupierPVSerializer());
         } catch (SerializationContext.DuplicateException ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    private static void checkSetup() {
+        if (context == null || !NetMsg.hasContext() || !SerializerAdapter.hasContext()) {
+            throw new RuntimeException("serialization context not set");
+        }
+
+        try {
+            for (OtherSerializers serializedClass : OtherSerializers.values()) {
+                context.getSerializer(serializedClass.serializedClass);
+            }
+        } catch (SerializationContext.MissingException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+//    public static enum MsgAliases {
+//
+//        CROUPIER_NET_REQUEST(DirectMsgNetty.Request.class), CROUPIER_NET_RESPONSE(DirectMsgNetty.Response.class);
+//        public final Class aliasedClass;
+//
+//        MsgAliases(Class aliasedClass) {
+//            this.aliasedClass = aliasedClass;
+//        }
+//    }
+
+    public static enum OtherSerializers {
+        UUID(UUID.class), VOD_ADDRESS(VodAddress.class), OVERLAY_HEADER_FIELD(OverlayHeaderField.class);
+        
+        public final Class serializedClass;
+
+        OtherSerializers(Class serializedClass) {
+            this.serializedClass = serializedClass;
         }
     }
 }
