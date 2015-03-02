@@ -69,7 +69,7 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
     public static void setSimulationPortType(Class<? extends PortType> portType) {
         simulationPortType = portType;
     }
-    
+
     Negative<?> simulationPort = negative(simulationPortType);
     Negative<VodNetwork> network = negative(VodNetwork.class);
     Negative<Timer> timer = negative(Timer.class);
@@ -103,7 +103,6 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
         subscribe(handleSPT, timer);
         subscribe(handleCT, timer);
         subscribe(handleCPT, timer);
-        subscribe(handleChangeNetworkModel, simulationPort);
         subscribe(handleTerminate, simulationPort);
 
         //INIT
@@ -248,9 +247,15 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
     private void executeStochasticProcessEvent(StochasticProcessEvent event) {
         KompicsEvent e = event.generateOperation(random);
 
-        trigger(e, simulationPort);
-        logger.debug("{}: {}", pName(event), e);
-
+        if (e instanceof ChangeNetworkModelCmd) {
+            ChangeNetworkModelCmd cmd = (ChangeNetworkModelCmd) e;
+            logger.debug("Changing network parameters acording to {}", cmd.netModel);
+            networkModel = cmd.netModel;
+        } else {
+            trigger(e, simulationPort);
+            logger.debug("{}: {}", pName(event), e);
+        }
+        
         if (event.getCurrentCount() > 0) {
             // still have operations to generate, reschedule
             event.setNextTime();
@@ -334,15 +339,6 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
             logger.info("Simulation started");
         }
     };
-    Handler<ChangeNetworkModelCmd> handleChangeNetworkModel = new Handler<ChangeNetworkModelCmd>() {
-
-        @Override
-        public void handle(ChangeNetworkModelCmd event) {
-            logger.info("Changing network model");
-            networkModel = event.netModel;
-        }
-        
-    };
     Handler<RewriteableMsg> handleMessage = new Handler<RewriteableMsg>() {
 
         @Override
@@ -352,7 +348,7 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
 
             if (networkModel != null) {
                 long latency = networkModel.getLatencyMs(event);
-                if(latency == -1) {
+                if (latency == -1) {
                     //drop message
                     return;
                 }

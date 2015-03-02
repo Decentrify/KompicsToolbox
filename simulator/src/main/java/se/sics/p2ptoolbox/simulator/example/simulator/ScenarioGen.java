@@ -26,7 +26,6 @@ import java.util.Map;
 import se.sics.gvod.address.Address;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.msgs.DirectMsg;
-import se.sics.kompics.Init;
 import se.sics.p2ptoolbox.simulator.cmd.StartNodeCmd;
 import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation;
@@ -34,9 +33,14 @@ import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation1;
 import se.sics.kompics.p2p.experiment.dsl.distribution.ConstantDistribution;
 import se.sics.kompics.p2p.experiment.dsl.distribution.Distribution;
 import se.sics.p2ptoolbox.simulator.SimulationContext;
+import se.sics.p2ptoolbox.simulator.cmd.ChangeNetworkModelCmd;
 import se.sics.p2ptoolbox.simulator.cmd.NetworkOpCmd;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.SimulationResult;
+import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
+import se.sics.p2ptoolbox.simulator.core.network.PartitionedNetworkModel;
+import se.sics.p2ptoolbox.simulator.core.network.UniformRandomModel;
+import se.sics.p2ptoolbox.simulator.core.network.util.PartitionMapperFactory;
 import se.sics.p2ptoolbox.simulator.example.proj.MyNetMsg;
 
 /**
@@ -81,13 +85,22 @@ public class ScenarioGen {
             };
         }
     };
+    
+    static Operation<ChangeNetworkModelCmd> changeNetworkModelOp = new Operation<ChangeNetworkModelCmd>() {
+
+        @Override
+        public ChangeNetworkModelCmd generate() {
+            NetworkModel networkModel = new PartitionedNetworkModel(new UniformRandomModel(50, 500), PartitionMapperFactory.get2EqualPartitions());
+            return new ChangeNetworkModelCmd(networkModel);
+        }
+    };
 
     static Operation1<NetworkOpCmd, Integer> networkPingOp = new Operation1<NetworkOpCmd, Integer>() {
 
         public NetworkOpCmd generate(final Integer nodeId) {
             return new NetworkOpCmd() {
                 private VodAddress destination = nodeAddressMap.get(nodeId);
-                
+
                 @Override
                 public DirectMsg getNetworkMsg(VodAddress origin) {
                     return new MyNetMsg.Ping(origin, destination);
@@ -116,9 +129,9 @@ public class ScenarioGen {
 
                 @Override
                 public boolean myResponse(DirectMsg resp) {
-                    if(resp instanceof MyNetMsg.Pong) {
+                    if (resp instanceof MyNetMsg.Pong) {
                         MyNetMsg.Pong pong = (MyNetMsg.Pong) resp;
-                        if(pong.getVodSource().equals(destination)) {
+                        if (pong.getVodSource().equals(destination)) {
                             return true;
                         }
                     }
@@ -129,7 +142,7 @@ public class ScenarioGen {
 
         }
     };
-    
+
     static Operation<SimulationResult> simulationResult = new Operation<SimulationResult>() {
 
         public SimulationResult generate() {
@@ -138,6 +151,20 @@ public class ScenarioGen {
                 @Override
                 public void setSimulationResult(OperationCmd.ValidationException failureCause) {
                     MyExperimentResult.failureCause = failureCause;
+                }
+
+            };
+
+        }
+    };
+    
+    static Operation<SimulationResult> noResult = new Operation<SimulationResult>() {
+
+        public SimulationResult generate() {
+            return new SimulationResult() {
+
+                @Override
+                public void setSimulationResult(OperationCmd.ValidationException failureCause) {
                 }
 
             };
@@ -161,7 +188,7 @@ public class ScenarioGen {
                         raise(1, networkPingOp, nodeDist1);
                     }
                 };
-                
+
                 StochasticProcess fetchSimulationResult = new StochasticProcess() {
                     {
                         eventInterArrivalTime(constant(1000));
@@ -179,6 +206,38 @@ public class ScenarioGen {
 
         scen.setSeed(seed);
 
+        return scen;
+    }
+
+    public static SimulationScenario simpleChangeNetworkModel(final long seed) {
+        SimulationScenario scen = new SimulationScenario() {
+            {
+                StochasticProcess startPeer = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, startNodeOp, nodeDist1);
+                    }
+                };
+                StochasticProcess changeNetworkModel = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, changeNetworkModelOp);
+                    }
+                };
+                StochasticProcess fetchSimulationResult = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, noResult);
+                    }
+                };
+                
+                startPeer.start();
+                changeNetworkModel.startAfterTerminationOf(1000, startPeer);
+                fetchSimulationResult.startAfterTerminationOf(1000, changeNetworkModel);
+                terminateAfterTerminationOf(1000, fetchSimulationResult);
+            }
+        };
+        scen.setSeed(seed);
         return scen;
     }
 }

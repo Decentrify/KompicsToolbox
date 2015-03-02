@@ -23,7 +23,10 @@ package se.sics.p2ptoolbox.simulator.core.network.util;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class PartitionMapperFactory {
-    public PartitionMapper get2EqualPartitions() {
+    /**
+     * @return if nodeIds have a uniform distribution - the two partitions should be roughly equal
+     */
+    public static PartitionMapper get2EqualPartitions() {
         return new PartitionMapper() {
 
             @Override
@@ -33,7 +36,7 @@ public class PartitionMapperFactory {
         };
     }
     
-    public PartitionMapper get2WeightedPartitions(final int weight1, final int weight2) {
+    public static PartitionMapper get2WeightedPartitions(final int weight1, final int weight2) {
         return new PartitionMapper() {
 
             @Override
