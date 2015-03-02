@@ -39,7 +39,7 @@ public class MyTest {
     public static long seed = 123;
     
     @Test
-    public void myTest() {
+    public void simpleBoot() {
         LauncherComp.scheduler = new SimulatorScheduler();
         LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
         LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
@@ -73,6 +73,19 @@ public class MyTest {
         }
         
         Assert.assertEquals(null, MyExperimentResult.failureCause);
+    }
+    
+    @Test
+    public void simpleNetworkModelChange() {
+        LauncherComp.scheduler = new SimulatorScheduler();
+        LauncherComp.scenario = ScenarioGen.simpleChangeNetworkModel(seed);
+        Kompics.setScheduler(LauncherComp.scheduler);
+        Kompics.createAndStart(LauncherComp.class, 1);
+        try {
+            Kompics.waitForTermination();
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
     }
 
 }
