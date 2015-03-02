@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.simulator.core;
 
+import se.sics.p2ptoolbox.simulator.cmd.ChangeNetworkModelCmd;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
@@ -59,18 +60,20 @@ import se.sics.kompics.simulation.SimulatorSystem;
  * @author Cosmin Arad <cosmin@sics.se>
  * @version $Id$
  */
-public final class P2pSimulator extends ComponentDefinition implements
-        Simulator {
+public final class P2pSimulator extends ComponentDefinition implements Simulator {
+
+    private static final Logger logger = LoggerFactory.getLogger(P2pSimulator.class);
 
     private static Class<? extends PortType> simulationPortType;
 
     public static void setSimulationPortType(Class<? extends PortType> portType) {
         simulationPortType = portType;
     }
-    private static final Logger logger = LoggerFactory.getLogger(P2pSimulator.class);
+    
     Negative<?> simulationPort = negative(simulationPortType);
     Negative<VodNetwork> network = negative(VodNetwork.class);
     Negative<Timer> timer = negative(Timer.class);
+
     private SimulatorScheduler scheduler;
     private SimulationScenario scenario;
     private Simulator thisSimulator;
@@ -100,6 +103,7 @@ public final class P2pSimulator extends ComponentDefinition implements
         subscribe(handleSPT, timer);
         subscribe(handleCT, timer);
         subscribe(handleCPT, timer);
+        subscribe(handleChangeNetworkModel, simulationPort);
         subscribe(handleTerminate, simulationPort);
 
         //INIT
@@ -330,6 +334,15 @@ public final class P2pSimulator extends ComponentDefinition implements
             logger.info("Simulation started");
         }
     };
+    Handler<ChangeNetworkModelCmd> handleChangeNetworkModel = new Handler<ChangeNetworkModelCmd>() {
+
+        @Override
+        public void handle(ChangeNetworkModelCmd event) {
+            logger.info("Changing network model");
+            networkModel = event.netModel;
+        }
+        
+    };
     Handler<RewriteableMsg> handleMessage = new Handler<RewriteableMsg>() {
 
         @Override
@@ -339,6 +352,10 @@ public final class P2pSimulator extends ComponentDefinition implements
 
             if (networkModel != null) {
                 long latency = networkModel.getLatencyMs(event);
+                if(latency == -1) {
+                    //drop message
+                    return;
+                }
                 futureEventList.scheduleFutureEvent(CLOCK,
                         new KompicsSimulatorEvent(event, CLOCK + latency));
             } else {
