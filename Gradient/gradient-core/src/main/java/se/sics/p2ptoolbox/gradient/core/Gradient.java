@@ -46,6 +46,7 @@ import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.gradient.api.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.api.msg.GradientUpdate;
 import se.sics.p2ptoolbox.gradient.api.GradientControlPort;
+import se.sics.p2ptoolbox.gradient.api.GradientFilter;
 import se.sics.p2ptoolbox.gradient.api.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.Shuffle;
 import se.sics.p2ptoolbox.gradient.msg.ShuffleNet;
@@ -66,6 +67,7 @@ public class Gradient extends ComponentDefinition {
     private final GradientConfig config;
     private final int overlayId;
 
+    private GradientFilter filter;
     private CroupierPeerView selfCPV;
     private final GradientView view;
     private TimeoutId shuffleTId;
@@ -83,10 +85,10 @@ public class Gradient extends ComponentDefinition {
         this.selfAddress = init.selfAddress;
         this.config = init.gradientConfig;
         this.overlayId = init.overlayId;
-
+        
         logger.debug("<{}/{}> initializing...", selfAddress.getId(), overlayId);
-        this.view = new GradientView(init.utilityComparator, config.viewSize, new Random(init.seed));
-
+        this.view = new GradientView(init.utilityComparator, init.gradientFilter, config.viewSize, new Random(init.seed));
+        this.filter = init.gradientFilter;
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
@@ -123,9 +125,12 @@ public class Gradient extends ComponentDefinition {
     //**************************************************************************
     Handler<GradientUpdate> handleUpdate = new Handler<GradientUpdate>() {
         @Override
-        public void handle(GradientUpdate event) {
-            logger.debug("<{}/{}> updating self peer view:{}", new Object[]{selfAddress.getId(), overlayId, event.peerView});
-            selfCPV = new CroupierPeerView(event.peerView, selfAddress);
+        public void handle(GradientUpdate update) {
+            logger.debug("<{}/{}> updating self peer view:{}", new Object[]{selfAddress.getId(), overlayId, update.peerView});
+            if(filter.tryClean(selfCPV.pv, update.peerView)) {
+                view.clean(update.peerView);
+            }
+            selfCPV = new CroupierPeerView(update.peerView, selfAddress);
         }
     };
     
@@ -227,13 +232,16 @@ public class Gradient extends ComponentDefinition {
         public final GradientConfig gradientConfig;
         public final int overlayId;
         public final Comparator<PeerView> utilityComparator;
+        public final GradientFilter gradientFilter;
         public final int seed;
 
-        public GradientInit(VodAddress selfAddress, GradientConfig config, int overlayId, Comparator<PeerView> utilityComparator, int seed) {
+        public GradientInit(VodAddress selfAddress, GradientConfig config, int overlayId, 
+                Comparator<PeerView> utilityComparator, GradientFilter gradientFilter,int seed) {
             this.selfAddress = selfAddress;
             this.gradientConfig = config;
             this.overlayId = overlayId;
             this.utilityComparator = utilityComparator;
+            this.gradientFilter = gradientFilter;
             this.seed = seed;
         }
     }

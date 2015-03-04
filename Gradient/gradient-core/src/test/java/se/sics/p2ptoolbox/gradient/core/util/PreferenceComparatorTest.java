@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
-import se.sics.p2ptoolbox.util.UtilJava6;
+import se.sics.p2ptoolbox.util.Java6Util;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -77,7 +77,7 @@ public class PreferenceComparatorTest {
     
     private static class MyPVComparator implements Comparator<MyPeerView> {
         public int compare(MyPeerView o1, MyPeerView o2) {
-            return UtilJava6.compareInt(o1.val, o2.val);
+            return Java6Util.compareInt(o1.val, o2.val);
         }
     }
 }

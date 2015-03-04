@@ -32,22 +32,26 @@ import java.util.Set;
 import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+import se.sics.p2ptoolbox.gradient.api.GradientFilter;
 import se.sics.p2ptoolbox.util.InvertedComparator;
+import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class GradientView {
+    private static double softMaxTemp = 1;
 
-    public final Comparator<CroupierPeerView> ageComparator;
+    private final Comparator<CroupierPeerView> ageComparator;
     private final Comparator<CroupierPeerView> utilityComp;
+    private final GradientFilter filter;
 
     private final int viewSize;
     private final Random rand;
 
     private final Map<VodAddress, CroupierPeerView> view;
 
-    public GradientView(final Comparator<PeerView> utilityComparator, int viewSize, Random rand) {
+    public GradientView(final Comparator<PeerView> utilityComparator, GradientFilter filter, int viewSize, Random rand) {
         //TODO Alex replace with a WrapperComparator once CroupierPeerView implements ComparableWrapper
         this.utilityComp = new Comparator<CroupierPeerView>() {
             public int compare(CroupierPeerView o1, CroupierPeerView o2) {
@@ -68,7 +72,7 @@ public class GradientView {
                 return (o1.getAge() < o2.getAge() ? -1 : 1);
             }
         };
-
+        this.filter = filter;
         this.view = new HashMap<VodAddress, CroupierPeerView>();
         this.viewSize = viewSize;
         this.rand = rand;
@@ -83,10 +87,21 @@ public class GradientView {
             cpv.incrementAge();
         }
     }
+    
+    public void clean(PeerView selfPV) {
+        for (CroupierPeerView cpv : view.values()) {
+            if(!filter.apply(selfPV, cpv.pv)) {
+                view.remove(cpv.src);
+            }
+        }
+    }
 
     public void merge(Collection<CroupierPeerView> newSample, CroupierPeerView selfCPV) {
         for (CroupierPeerView cpv : newSample) {
             if (cpv.src.equals(selfCPV.src)) {
+                continue;
+            }
+            if(!filter.apply(selfCPV.pv, cpv.pv)) {
                 continue;
             }
             CroupierPeerView currentCPV = view.get(cpv.src);
@@ -111,7 +126,7 @@ public class GradientView {
             return null;
         }
 
-        int shuffleNodeIndex = Helper.getSoftMax(view.size());
+        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, softMaxTemp);
         List<CroupierPeerView> sortedList = new ArrayList<CroupierPeerView>(view.values());
         Comparator<CroupierPeerView> selfPrefferenceComparator = new InvertedComparator<CroupierPeerView>(new GradientPreferenceComparator<CroupierPeerView>(selfCPV, utilityComp));
         Collections.sort(sortedList, selfPrefferenceComparator);
@@ -150,7 +165,7 @@ public class GradientView {
 
         while (n > 0 && !sortedList.isEmpty()) {
             n--;
-            CroupierPeerView toRemove = sortedList.remove(Helper.getSoftMax(sortedList.size())); //remove from ist as well so as not to pick it again
+            CroupierPeerView toRemove = sortedList.remove(ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, softMaxTemp)); //remove from ist as well so as not to pick it again
             view.remove(toRemove.src);
         }
     }
