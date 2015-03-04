@@ -1,26 +1,36 @@
+/*
+ * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
+ * 2009 Royal Institute of Technology (KTH)
+ *
+ * GVoD is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package se.sics.p2ptoolbox.gradient.api.msg;
 
-import se.sics.gvod.common.Self;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 
 import java.util.UUID;
 
 /**
- * Gradient Update event providing the status of the gradient, in terms 
- * of gradient samples and convergence of the sample set.
- *  
- * Created by babbarshaer on 2015-02-26.
+ * @author Alex Ormenisan <aaor@sics.se>
  */
 public class GradientUpdate extends GradientMsg.OneWay{
     
     public final PeerView peerView;
     
-    public GradientUpdate(UUID uuid, PeerView peerView) {
-        super(uuid);
+    public GradientUpdate(PeerView peerView) {
+        super();
         this.peerView = peerView.deepCopy();
-    }
-    
-    public PeerView getPeerView(){
-        return this.peerView;
     }
 }

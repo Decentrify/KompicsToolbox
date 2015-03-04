@@ -7,26 +7,13 @@ package se.sics.p2ptoolbox.gradient.core;
  */
 public class GradientConfig {
     
-    int gradientViewSize;
-    int shufflePeriod;
-    int seed;
+    public final int viewSize;
+    public final long shufflePeriod;
+    public final int shuffleLength;
 
-    public GradientConfig(int gradientViewSize, int shufflePeriod, int seed){
-        this.gradientViewSize = gradientViewSize;
+    public GradientConfig(int viewSize, long shufflePeriod, int shuffleLength){
+        this.viewSize = viewSize;
         this.shufflePeriod = shufflePeriod;
-        this.seed = seed;
-    }
-
-
-    public int getGradientViewSize() {
-        return gradientViewSize;
-    }
-
-    public int getShufflePeriod() {
-        return shufflePeriod;
-    }
-
-    public int getSeed() {
-        return seed;
+        this.shuffleLength = shuffleLength;
     }
 }

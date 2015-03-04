@@ -16,24 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.api.msg;
+package se.sics.p2ptoolbox.util;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
-import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
+import java.util.Comparator;
 
 /**
- * Set of peer views published by the gradient periodically.
- *
- * Created by babbarshaer on 2015-02-26.
+ * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientSample extends GradientMsg.OneWay {
-    
-    public final Collection<CroupierPeerView> gradientPeerViewSet;
-    
-    public GradientSample(Collection<CroupierPeerView> gradientPeerViewSet) {
-        super();
-        this.gradientPeerViewSet = gradientPeerViewSet;
+public class InvertedComparator<E extends Object> implements Comparator<E> {
+
+    private final Comparator<E> comp;
+
+    public InvertedComparator(Comparator<E> comp) {
+        this.comp = comp;
+    }
+
+    public int compare(E o1, E o2) {
+        return comp.compare(o2, o1);
     }
 }

@@ -16,24 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.api.msg;
+package se.sics.p2ptoolbox.gradient.api;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
-import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
+import se.sics.kompics.PortType;
+import se.sics.p2ptoolbox.gradient.api.msg.GradientDisconnected;
 
 /**
- * Set of peer views published by the gradient periodically.
+ * Port on which gradient interacts with the control messages as part of
+ * gradient service.
  *
  * Created by babbarshaer on 2015-02-26.
  */
-public class GradientSample extends GradientMsg.OneWay {
-    
-    public final Collection<CroupierPeerView> gradientPeerViewSet;
-    
-    public GradientSample(Collection<CroupierPeerView> gradientPeerViewSet) {
-        super();
-        this.gradientPeerViewSet = gradientPeerViewSet;
+public class GradientControlPort extends PortType {
+
+    {
+        indication(GradientDisconnected.class);
     }
 }
