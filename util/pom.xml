@@ -10,9 +10,8 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>se.sics.p2ptoolbox.utility</groupId>
+    <groupId>se.sics.p2ptoolbox.util</groupId>
     <artifactId>util</artifactId>
+    <name>Util</name>
     <version>1.0-SNAPSHOT</version>
-
-    
 </project>

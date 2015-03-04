@@ -1,6 +1,6 @@
 package se.sics.p2ptoolbox.utility.test;
 
-import se.sics.p2ptoolbox.utitlity.common.UtilityAdaptorImpl;
+import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -27,7 +27,7 @@ public class UtilityAdaptorTest {
         
         
         for(int i =0 ; i < iterations ; i++){
-            int val = UtilityAdaptorImpl.getSoftMaxInstance(viewSize,random, temperature);
+            int val = ProbabilitiesHelper.getSoftMaxVal(viewSize,random, temperature);
             
             if(responseMap.get(val) == null){
                 responseMap.put(val,1);

@@ -1,4 +1,4 @@
-package se.sics.p2ptoolbox.utitlity.common;
+package se.sics.p2ptoolbox.util;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,11 +10,9 @@ import java.util.Random;
  *  
  * Created by babbarshaer on 2015-03-03.
  */
-public class UtilityAdaptorImpl {
-
+public class ProbabilitiesHelper {
 
     /**
-     *  
      *  Soft Max approach based on the provided temperature for the run, provides you the index of the sorted list.
      *  The temperature is a double value with bounds [0,infinity). 
      *  
@@ -33,7 +31,7 @@ public class UtilityAdaptorImpl {
      *
      * @return value chosen
      */
-    public static int getSoftMaxInstance(int size, Random random, double temperature){
+    public static int getSoftMaxVal(int size, Random random, double temperature){
         
         double rnd = random.nextDouble();
         double total = 0.0d;
