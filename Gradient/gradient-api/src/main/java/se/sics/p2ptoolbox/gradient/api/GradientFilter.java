@@ -26,5 +26,5 @@ import se.sics.p2ptoolbox.croupier.api.util.PeerView;
  */
 public interface GradientFilter {
     public boolean apply(PeerView selfPV, PeerView otherPV);
-    public boolean tryClean(PeerView newSelfCPV, PeerView oldSelfCPV);
+    public boolean tryClean(PeerView newSelfPV, PeerView oldSelfPV);
 }

@@ -18,6 +18,9 @@
  */
 package se.sics.p2ptoolbox.gradient.core.util;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -134,25 +137,13 @@ public class GradientView {
         return sortedList.get(shuffleNodeIndex);
     }
 
-    public Collection<CroupierPeerView> getExchangeCPV(CroupierPeerView partnerCPV, int n) {
-        Set<CroupierPeerView> returnList = new HashSet<CroupierPeerView>();
-
-        List<CroupierPeerView> sortedList = new ArrayList<CroupierPeerView>(view.values());
+    public ImmutableCollection<CroupierPeerView> getExchangeCPV(CroupierPeerView partnerCPV, int n) {
         Comparator<CroupierPeerView> partnerPrefferenceComparator = new InvertedComparator<CroupierPeerView>(new GradientPreferenceComparator<CroupierPeerView>(partnerCPV, utilityComp));
-        Collections.sort(sortedList, partnerPrefferenceComparator);
-
-        Iterator<CroupierPeerView> it = sortedList.iterator();
-        while (it.hasNext() && n > 0) {
-            n--;
-            returnList.add(it.next());
-        }
-        return returnList;
+        return Ordering.from(partnerPrefferenceComparator).immutableSortedCopy(view.values()).subList(0, n);
     }
 
-    public Collection<CroupierPeerView> getView() {
-        List<CroupierPeerView> sortedList = new ArrayList<CroupierPeerView>(view.values());
-        Collections.sort(sortedList, utilityComp);
-        return sortedList;
+    public ImmutableCollection<CroupierPeerView> getView() {
+        return Ordering.from(utilityComp).immutableSortedCopy(view.values());
     }
 
     public void clean(VodAddress node) {

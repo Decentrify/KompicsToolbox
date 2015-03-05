@@ -18,9 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.api.msg;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
+import com.google.common.collect.ImmutableCollection;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 
 /**
@@ -30,9 +28,9 @@ import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
  */
 public class GradientSample extends GradientMsg.OneWay {
     
-    public final Collection<CroupierPeerView> gradientPeerViewSet;
+    public final ImmutableCollection<CroupierPeerView> gradientPeerViewSet;
     
-    public GradientSample(Collection<CroupierPeerView> gradientPeerViewSet) {
+    public GradientSample(ImmutableCollection<CroupierPeerView> gradientPeerViewSet) {
         super();
         this.gradientPeerViewSet = gradientPeerViewSet;
     }

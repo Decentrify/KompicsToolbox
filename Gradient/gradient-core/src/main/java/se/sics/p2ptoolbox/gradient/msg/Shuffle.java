@@ -1,6 +1,6 @@
 package se.sics.p2ptoolbox.gradient.msg;
 
-import java.util.Collection;
+import com.google.common.collect.ImmutableCollection;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 
 /**
@@ -11,9 +11,9 @@ import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 public class Shuffle {
 
     public final CroupierPeerView selfCPV;
-    public final Collection<CroupierPeerView> exchangeNodes;
+    public final ImmutableCollection<CroupierPeerView> exchangeNodes;
     
-    public Shuffle(CroupierPeerView selfCPV, Collection<CroupierPeerView> exchangeNodes){
+    public Shuffle(CroupierPeerView selfCPV, ImmutableCollection<CroupierPeerView> exchangeNodes){
         this.selfCPV = selfCPV;
         this.exchangeNodes = exchangeNodes;
     }

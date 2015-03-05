@@ -18,6 +18,8 @@
  */
 package se.sics.p2ptoolbox.gradient.core;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.Sets;
 import se.sics.p2ptoolbox.gradient.core.util.GradientView;
 import java.util.Collection;
 import java.util.Comparator;
@@ -176,12 +178,12 @@ public class Gradient extends ComponentDefinition {
                 return;
             }
 
-            Collection<CroupierPeerView> gradientView = view.getView();
+            ImmutableCollection<CroupierPeerView> gradientView = view.getView();
             logger.debug("<{}/{}> publishing view:{}", new Object[]{selfAddress.getId(), overlayId, gradientView});
             trigger(new GradientSample(gradientView), gradientPort);
             
             CroupierPeerView partnerCPV = view.getShuffleNode(selfCPV);
-            Collection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(partnerCPV, config.shuffleLength);
+            ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(partnerCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
             outstandingShuffle = new ShuffleNet.Request(selfAddress, partnerCPV.src, UUID.randomUUID(), overlayId, shuffle);
             logger.debug("<{}/{}> sending:{}", new Object[]{selfAddress.getId(), overlayId, outstandingShuffle});
@@ -195,13 +197,14 @@ public class Gradient extends ComponentDefinition {
         public void handle(ShuffleNet.Request req) {
             logger.debug("<{}/{}> received:{}", new Object[]{selfAddress.getId(), overlayId, req});
             
-            Collection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(req.content.selfCPV, config.shuffleLength);
+            ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(req.content.selfCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
             ShuffleNet.Response resp = new ShuffleNet.Response(selfAddress, req.getVodSource(), UUID.randomUUID(), overlayId, shuffle);
             logger.debug("<{}/{}> sending:{}", new Object[]{selfAddress.getId(), overlayId, resp});
             trigger(outstandingShuffle, network);
 
             view.merge(req.content.exchangeNodes, selfCPV);
+            view.merge(Sets.newHashSet(req.content.selfCPV), selfCPV);
         }
     };
 
@@ -216,6 +219,7 @@ public class Gradient extends ComponentDefinition {
             }
             outstandingShuffle = null;
             view.merge(resp.content.exchangeNodes, selfCPV);
+            view.merge(Sets.newHashSet(resp.content.selfCPV), selfCPV);
         }
     };
 

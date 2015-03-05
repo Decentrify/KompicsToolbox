@@ -27,5 +27,11 @@
             <artifactId>croupier-api</artifactId>
             <version>${p2ptoolbox.serialization.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 </project>
