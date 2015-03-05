@@ -19,6 +19,7 @@
 package se.sics.p2ptoolbox.gradient.core;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import se.sics.p2ptoolbox.gradient.core.util.GradientView;
 import java.util.Comparator;
@@ -201,7 +202,7 @@ public class Gradient extends ComponentDefinition {
             trigger(outstandingShuffle, network);
 
             view.merge(req.content.exchangeNodes, selfCPV);
-            view.merge(Sets.newHashSet(req.content.selfCPV), selfCPV);
+            view.merge(ImmutableSet.copyOf(Sets.newHashSet(req.content.selfCPV)), selfCPV);
         }
     };
 
@@ -216,7 +217,7 @@ public class Gradient extends ComponentDefinition {
             }
             outstandingShuffle = null;
             view.merge(resp.content.exchangeNodes, selfCPV);
-            view.merge(Sets.newHashSet(resp.content.selfCPV), selfCPV);
+            view.merge(ImmutableSet.copyOf(Sets.newHashSet(resp.content.selfCPV)), selfCPV);
         }
     };
 

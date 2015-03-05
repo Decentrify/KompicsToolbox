@@ -99,7 +99,7 @@ public class GradientView {
         }
     }
 
-    public void merge(Collection<CroupierPeerView> newSample, CroupierPeerView selfCPV) {
+    public void merge(ImmutableCollection<CroupierPeerView> newSample, CroupierPeerView selfCPV) {
         for (CroupierPeerView cpv : newSample) {
             if (cpv.src.equals(selfCPV.src)) {
                 continue;
