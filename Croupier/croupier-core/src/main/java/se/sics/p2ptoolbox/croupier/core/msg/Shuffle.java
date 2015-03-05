@@ -18,8 +18,7 @@
  */
 package se.sics.p2ptoolbox.croupier.core.msg;
 
-import java.util.List;
-import se.sics.gvod.net.VodAddress;
+import com.google.common.collect.ImmutableCollection;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 
 /**
@@ -27,10 +26,10 @@ import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
  */
 public class Shuffle {
         
-        public final List<CroupierPeerView> publicNodes;
-        public final List<CroupierPeerView> privateNodes;
+        public final ImmutableCollection<CroupierPeerView> publicNodes;
+        public final ImmutableCollection<CroupierPeerView> privateNodes;
 
-        public Shuffle(List<CroupierPeerView> publicNodes, List<CroupierPeerView> privateNodes) {
+        public Shuffle(ImmutableCollection<CroupierPeerView> publicNodes, ImmutableCollection<CroupierPeerView> privateNodes) {
             this.publicNodes = publicNodes;
             this.privateNodes = privateNodes;
         }
