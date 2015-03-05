@@ -1,5 +1,7 @@
 package se.sics.p2ptoolbox.croupier.core.util;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -146,7 +148,7 @@ public class CroupierView {
     }
 
 //-------------------------------------------------------------------	
-    public void selectToKeep(VodAddress from, List<CroupierPeerView> descriptors) {
+    public void selectToKeep(VodAddress from, ImmutableCollection<CroupierPeerView> descriptors) {
         if (from.equals(selfAddress)) {
             return;
         }

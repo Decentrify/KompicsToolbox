@@ -20,8 +20,7 @@
  */
 package se.sics.p2ptoolbox.croupier.core;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import com.google.common.collect.ImmutableList;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,7 +212,7 @@ public class Croupier extends ComponentDefinition {
                 return;
             }
 
-            CroupierSample cs = new CroupierSample(UUID.randomUUID(), overlayId, publicView.getAll(), privateView.getAll());
+            CroupierSample cs = new CroupierSample(UUID.randomUUID(), overlayId, ImmutableList.copyOf(publicView.getAll()), ImmutableList.copyOf(privateView.getAll()));
             log.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{croupierLogPrefix, cs.publicSample, cs.privateSample});
             trigger(cs, croupierPort);
 
@@ -237,7 +236,7 @@ public class Croupier extends ComponentDefinition {
                 privateDescriptors.add(new CroupierPeerView(selfView, selfAddress));
             }
 
-            Shuffle content = new Shuffle(publicDescriptors, privateDescriptors);
+            Shuffle content = new Shuffle(ImmutableList.copyOf(publicDescriptors), ImmutableList.copyOf(privateDescriptors));
             ShuffleNet.Request req = new ShuffleNet.Request(selfAddress, peer, UUID.randomUUID(), overlayId, content);
             log.debug("{} sending {}", croupierLogPrefix, req);
             trigger(req, network);
@@ -275,7 +274,8 @@ public class Croupier extends ComponentDefinition {
             CroupierStats.instance(selfAddress).incShuffleRecvd(req.getVodSource());
             List<CroupierPeerView> toSendPublicDescs = publicView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
             List<CroupierPeerView> toSendPrivateDescs = privateView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
-            ShuffleNet.Response resp = req.getResponse(new Shuffle(toSendPublicDescs, toSendPrivateDescs));
+            Shuffle content = new Shuffle(ImmutableList.copyOf(toSendPublicDescs), ImmutableList.copyOf(toSendPrivateDescs));
+            ShuffleNet.Response resp = req.getResponse(content);
 
             publicView.selectToKeep(req.getVodSource(), req.content.publicNodes);
             privateView.selectToKeep(req.getVodSource(), req.content.privateNodes);

@@ -18,9 +18,8 @@
  */
 package se.sics.p2ptoolbox.croupier.core.net;
 
+import com.google.common.collect.ImmutableList;
 import io.netty.buffer.ByteBuf;
-import java.util.ArrayList;
-import java.util.List;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.croupier.core.msg.Shuffle;
 import se.sics.p2ptoolbox.serialization.SerializationContext;
@@ -32,11 +31,7 @@ import se.sics.p2ptoolbox.serialization.Serializer;
 public class ShuffleSerializer implements Serializer<Shuffle> {
 
     public ByteBuf encode(SerializationContext context, ByteBuf buf, Shuffle obj) throws SerializerException, SerializationContext.MissingException {
-        if(obj.publicNodes.isEmpty() && obj.privateNodes.isEmpty()) {
-            buf.writeInt(-1);
-            return buf;
-        }
-        Serializer serializer = context.getSerializer(obj.publicNodes.isEmpty() ? obj.privateNodes.get(0).getClass() : obj.publicNodes.get(0).getClass());
+        Serializer<CroupierPeerView> serializer = context.getSerializer(CroupierPeerView.class);
 
         buf.writeInt(obj.publicNodes.size());
         for (CroupierPeerView cpv : obj.publicNodes) {
@@ -50,34 +45,26 @@ public class ShuffleSerializer implements Serializer<Shuffle> {
     }
 
     public Shuffle decode(SerializationContext context, ByteBuf buf) throws SerializerException, SerializationContext.MissingException {
-        Serializer serializer = context.getSerializer(CroupierPeerView.class);
+        Serializer<CroupierPeerView> serializer = context.getSerializer(CroupierPeerView.class);
         
         int publicNodesSize = buf.readInt();
-        if(publicNodesSize == -1) {
-            return new Shuffle(new ArrayList<CroupierPeerView>(), new ArrayList<CroupierPeerView>());
-        }
-        List<CroupierPeerView> publicNodes = new ArrayList<CroupierPeerView>();
+        ImmutableList.Builder<CroupierPeerView> publicNodes = new ImmutableList.Builder<CroupierPeerView>();
         for (int i = 0; i < publicNodesSize; i++) {
             publicNodes.add((CroupierPeerView) serializer.decode(context, buf));
         }
         
         int privateNodesSize = buf.readInt();
-        List<CroupierPeerView> privateNodes = new ArrayList<CroupierPeerView>();
+        ImmutableList.Builder<CroupierPeerView> privateNodes = new ImmutableList.Builder<CroupierPeerView>();
         for (int i = 0; i < privateNodesSize; i++) {
             privateNodes.add((CroupierPeerView) serializer.decode(context, buf));
         }
-        return new Shuffle(publicNodes, privateNodes);
+        return new Shuffle(publicNodes.build(), privateNodes.build());
     }
 
     public int getSize(SerializationContext context, Shuffle obj) throws SerializerException, SerializationContext.MissingException {
         int size = 0;
         
-        if(obj.publicNodes.isEmpty() && obj.privateNodes.isEmpty()) {
-            size += Integer.SIZE/8;
-            return size;
-        }
-        Serializer serializer = context.getSerializer(obj.publicNodes.isEmpty() ? obj.privateNodes.get(0).getClass() : obj.publicNodes.get(0).getClass());
-
+        Serializer<CroupierPeerView> serializer = context.getSerializer(CroupierPeerView.class);
         size += Integer.SIZE/8;
         for (CroupierPeerView cpv : obj.publicNodes) {
             size += serializer.getSize(context, cpv);

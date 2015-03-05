@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.croupier.api.msg;
 
+import com.google.common.collect.ImmutableCollection;
 import java.util.List;
 import java.util.UUID;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
@@ -28,10 +29,10 @@ import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 public class CroupierSample extends CroupierMsg.OneWay {
 
     public final int overlayId;
-    public final List<CroupierPeerView> publicSample;
-    public final List<CroupierPeerView> privateSample;
+    public final ImmutableCollection<CroupierPeerView> publicSample;
+    public final ImmutableCollection<CroupierPeerView> privateSample;
     
-    public CroupierSample(UUID id, int overlayId, List<CroupierPeerView> publicSample, List<CroupierPeerView> privateSample) {
+    public CroupierSample(UUID id, int overlayId, ImmutableCollection<CroupierPeerView> publicSample, ImmutableCollection<CroupierPeerView> privateSample) {
         super(id);
         this.overlayId = overlayId;
         this.publicSample = publicSample;
