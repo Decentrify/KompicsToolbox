@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * 2009 Royal Institute of Technology (KTH)
+ * Copyright (C) 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * Croupier is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,19 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.api.msg;
+
+package se.sics.p2ptoolbox.gradient.example.core;
 
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientUpdate extends GradientMsg.OneWay{
+public class PeerViewA implements PeerView {
+    public final int counter;
     
-    public final PeerView peerView;
-    
-    public GradientUpdate(PeerView peerView) {
-        super();
-        this.peerView = peerView.deepCopy();
+    public PeerViewA(int counter) {
+        this.counter = counter;
+    }
+    public PeerViewA deepCopy() {
+        return new PeerViewA(counter);
+    }
+    @Override
+    public String toString() {
+        return "PEER_VIEW_A";
     }
 }

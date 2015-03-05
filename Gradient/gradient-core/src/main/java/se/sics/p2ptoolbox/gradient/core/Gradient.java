@@ -21,7 +21,6 @@ package se.sics.p2ptoolbox.gradient.core;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Sets;
 import se.sics.p2ptoolbox.gradient.core.util.GradientView;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Random;
 import java.util.UUID;
@@ -47,7 +46,6 @@ import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.gradient.api.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.api.msg.GradientUpdate;
-import se.sics.p2ptoolbox.gradient.api.GradientControlPort;
 import se.sics.p2ptoolbox.gradient.api.GradientFilter;
 import se.sics.p2ptoolbox.gradient.api.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.Shuffle;
@@ -76,7 +74,6 @@ public class Gradient extends ComponentDefinition {
     private ShuffleNet.Request outstandingShuffle;
 
     // == Identify Ports.
-    Negative<GradientControlPort> gradientControlPort = provides(GradientControlPort.class);
     Negative<GradientPort> gradientPort = provides(GradientPort.class);
     Positive<VodNetwork> network = requires(VodNetwork.class);
     Positive<Timer> timer = requires(Timer.class);
@@ -87,7 +84,7 @@ public class Gradient extends ComponentDefinition {
         this.selfAddress = init.selfAddress;
         this.config = init.gradientConfig;
         this.overlayId = init.overlayId;
-        
+
         logger.debug("<{}/{}> initializing...", selfAddress.getId(), overlayId);
         this.view = new GradientView(init.utilityComparator, init.gradientFilter, config.viewSize, new Random(init.seed));
         this.filter = init.gradientFilter;
@@ -129,19 +126,19 @@ public class Gradient extends ComponentDefinition {
         @Override
         public void handle(GradientUpdate update) {
             logger.debug("<{}/{}> updating self peer view:{}", new Object[]{selfAddress.getId(), overlayId, update.peerView});
-            if(filter.tryClean(selfCPV.pv, update.peerView)) {
+            if (filter.cleanOldView(selfCPV.pv, update.peerView)) {
                 view.clean(update.peerView);
             }
             selfCPV = new CroupierPeerView(update.peerView, selfAddress);
         }
     };
-    
+
     Handler<FailureDetectorPort.FailureDetectorEvent> handleNodeFailure = new Handler<FailureDetectorPort.FailureDetectorEvent>() {
 
         @Override
         public void handle(FailureDetectorPort.FailureDetectorEvent event) {
             logger.debug("<{}/{}> received:{}", new Object[]{selfAddress.getId(), overlayId, event});
-            for(VodAddress failedNode : event.getSuspectedNodes()) {
+            for (VodAddress failedNode : event.getSuspectedNodes()) {
                 view.clean(failedNode);
             }
         }
@@ -181,7 +178,7 @@ public class Gradient extends ComponentDefinition {
             ImmutableCollection<CroupierPeerView> gradientView = view.getView();
             logger.debug("<{}/{}> publishing view:{}", new Object[]{selfAddress.getId(), overlayId, gradientView});
             trigger(new GradientSample(gradientView), gradientPort);
-            
+
             CroupierPeerView partnerCPV = view.getShuffleNode(selfCPV);
             ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(partnerCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
@@ -196,7 +193,7 @@ public class Gradient extends ComponentDefinition {
         @Override
         public void handle(ShuffleNet.Request req) {
             logger.debug("<{}/{}> received:{}", new Object[]{selfAddress.getId(), overlayId, req});
-            
+
             ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(req.content.selfCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
             ShuffleNet.Response resp = new ShuffleNet.Response(selfAddress, req.getVodSource(), UUID.randomUUID(), overlayId, shuffle);
@@ -212,8 +209,8 @@ public class Gradient extends ComponentDefinition {
         @Override
         public void handle(ShuffleNet.Response resp) {
             logger.debug("<{}/{}> received:{}", new Object[]{selfAddress.getId(), overlayId, resp});
-            
-            if(outstandingShuffle == null || !resp.id.equals(outstandingShuffle.id)) {
+
+            if (outstandingShuffle == null || !resp.id.equals(outstandingShuffle.id)) {
                 logger.info("<{}/{}> unexpected response:{}", new Object[]{selfAddress.getId(), overlayId, resp});
                 return;
             }
@@ -230,17 +227,17 @@ public class Gradient extends ComponentDefinition {
         }
     }
 
-    public class GradientInit extends Init<Gradient> {
+    public static class GradientInit extends Init<Gradient> {
 
         public final VodAddress selfAddress;
         public final GradientConfig gradientConfig;
         public final int overlayId;
         public final Comparator<PeerView> utilityComparator;
         public final GradientFilter gradientFilter;
-        public final int seed;
+        public final long seed;
 
-        public GradientInit(VodAddress selfAddress, GradientConfig config, int overlayId, 
-                Comparator<PeerView> utilityComparator, GradientFilter gradientFilter,int seed) {
+        public GradientInit(VodAddress selfAddress, GradientConfig config, int overlayId,
+                Comparator<PeerView> utilityComparator, GradientFilter gradientFilter, long seed) {
             this.selfAddress = selfAddress;
             this.gradientConfig = config;
             this.overlayId = overlayId;

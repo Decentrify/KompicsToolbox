@@ -25,7 +25,7 @@
         <dependency>
             <groupId>se.sics.p2ptoolbox.croupier</groupId>
             <artifactId>croupier-api</artifactId>
-            <version>${p2ptoolbox.serialization.version}</version>
+            <version>${p2ptoolbox.croupier.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

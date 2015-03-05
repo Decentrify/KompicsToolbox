@@ -16,19 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.api.msg;
 
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+package se.sics.p2ptoolbox.gradient.example.core.gradient;
+
+import se.sics.p2ptoolbox.gradient.api.GradientFilter;
+import se.sics.p2ptoolbox.gradient.example.core.PeerViewA;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientUpdate extends GradientMsg.OneWay{
-    
-    public final PeerView peerView;
-    
-    public GradientUpdate(PeerView peerView) {
-        super();
-        this.peerView = peerView.deepCopy();
+public class GradientPeerViewAFilter implements GradientFilter<PeerViewA> {
+
+    public boolean retainOther(PeerViewA selfPV, PeerViewA otherPV) {
+        return true;
     }
+
+    public boolean cleanOldView(PeerViewA newSelfPV, PeerViewA oldSelfPV) {
+        return false;
+    }
+    
 }

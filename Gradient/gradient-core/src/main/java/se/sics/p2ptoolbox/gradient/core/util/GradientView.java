@@ -93,7 +93,7 @@ public class GradientView {
     
     public void clean(PeerView selfPV) {
         for (CroupierPeerView cpv : view.values()) {
-            if(!filter.apply(selfPV, cpv.pv)) {
+            if(!filter.retainOther(selfPV, cpv.pv)) {
                 view.remove(cpv.src);
             }
         }
@@ -104,7 +104,7 @@ public class GradientView {
             if (cpv.src.equals(selfCPV.src)) {
                 continue;
             }
-            if(!filter.apply(selfCPV.pv, cpv.pv)) {
+            if(!filter.retainOther(selfCPV.pv, cpv.pv)) {
                 continue;
             }
             CroupierPeerView currentCPV = view.get(cpv.src);

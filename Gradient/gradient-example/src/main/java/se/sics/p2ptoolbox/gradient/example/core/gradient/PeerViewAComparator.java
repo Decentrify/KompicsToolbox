@@ -16,20 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.api;
 
-import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.gradient.api.msg.GradientDisconnected;
+package se.sics.p2ptoolbox.gradient.example.core.gradient;
+
+import java.util.Comparator;
+import se.sics.p2ptoolbox.croupier.api.util.PeerView;
+import se.sics.p2ptoolbox.gradient.example.core.PeerViewA;
+import se.sics.p2ptoolbox.util.Java6Util;
 
 /**
- * Port on which gradient interacts with the control messages as part of
- * gradient service.
- *
- * Created by babbarshaer on 2015-02-26.
+ * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientControlPort extends PortType {
+public class PeerViewAComparator implements Comparator<PeerView> {
 
-    {
-        indication(GradientDisconnected.class);
+    public int compare(PeerView o1, PeerView o2) {
+        if(! (o1 instanceof PeerViewA && o2 instanceof PeerViewA)) {
+            throw new ClassCastException("unexpected PeerView types - expected" + PeerViewA.class);
+        }
+        return Java6Util.compareInt(((PeerViewA)o1).counter, ((PeerViewA)o2).counter);
     }
+    
 }

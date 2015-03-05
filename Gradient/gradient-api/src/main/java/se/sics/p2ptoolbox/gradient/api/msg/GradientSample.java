@@ -28,10 +28,10 @@ import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
  */
 public class GradientSample extends GradientMsg.OneWay {
     
-    public final ImmutableCollection<CroupierPeerView> gradientPeerViewSet;
+    public final ImmutableCollection<CroupierPeerView> gradientSample;
     
     public GradientSample(ImmutableCollection<CroupierPeerView> gradientPeerViewSet) {
         super();
-        this.gradientPeerViewSet = gradientPeerViewSet;
+        this.gradientSample = gradientPeerViewSet;
     }
 }
