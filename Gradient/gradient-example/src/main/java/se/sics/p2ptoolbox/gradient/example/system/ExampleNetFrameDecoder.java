@@ -62,9 +62,7 @@ public class ExampleNetFrameDecoder extends BaseMsgFrameDecoder {
     public static void init() {
         NetMsg.setContext(context);
         SerializerAdapter.setContext(context);
-        CroupierNetworkSettings.oneTimeSetup(context, CROUPIER_REQUEST, CROUPIER_RESPONSE);
-        GradientNetworkSettings.oneTimeSetup(context, GRADIENT_REQUEST, GRADIENT_RESPONSE);
-
+        
         try {
             //check CroupierNetworkSettings.OtherSerializers for Croupier required serializers
             context.registerAlias(HeaderField.class, HEADER_FIELD_ALIAS, HEADER_FIELD_CODE);
@@ -82,6 +80,9 @@ public class ExampleNetFrameDecoder extends BaseMsgFrameDecoder {
         } catch (SerializationContext.MissingException ex) {
             throw new RuntimeException(ex);
         }
+
+        CroupierNetworkSettings.oneTimeSetup(context, CROUPIER_REQUEST, CROUPIER_RESPONSE);
+        GradientNetworkSettings.oneTimeSetup(context, GRADIENT_REQUEST, GRADIENT_RESPONSE);
     }
 
     public ExampleNetFrameDecoder() {

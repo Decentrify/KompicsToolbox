@@ -91,7 +91,8 @@ public class HostManagerComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             Set<VodAddress> bootstrapSet = new HashSet<VodAddress>();
-            bootstrapSet.add(bootstrapNode);
+            if(bootstrapNode != null)
+                bootstrapSet.add(bootstrapNode);
             trigger(new CroupierJoin(UUID.randomUUID(), bootstrapSet), croupierControlPort1);
         }
         

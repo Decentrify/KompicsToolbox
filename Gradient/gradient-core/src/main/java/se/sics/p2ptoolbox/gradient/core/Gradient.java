@@ -127,7 +127,7 @@ public class Gradient extends ComponentDefinition {
         @Override
         public void handle(GradientUpdate update) {
             logger.debug("<{}/{}> updating self peer view:{}", new Object[]{selfAddress.getId(), overlayId, update.peerView});
-            if (filter.cleanOldView(selfCPV.pv, update.peerView)) {
+            if (selfCPV != null && filter.cleanOldView(selfCPV.pv, update.peerView)) {
                 view.clean(update.peerView);
             }
             selfCPV = new CroupierPeerView(update.peerView, selfAddress);

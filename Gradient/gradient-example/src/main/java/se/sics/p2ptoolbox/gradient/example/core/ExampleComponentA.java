@@ -59,7 +59,7 @@ public class ExampleComponentA extends ComponentDefinition {
         public void handle(Start event) {
             log.info("ExampleComponentA starting, sending first croupier update");
             trigger(new GradientUpdate(new PeerViewA(counter)), gradient);
-            trigger(new CroupierUpdate(UUID.randomUUID(), new PeerViewA(counter)), gradient);
+            trigger(new CroupierUpdate(UUID.randomUUID(), new PeerViewA(counter)), croupier);
         }
 
     };
