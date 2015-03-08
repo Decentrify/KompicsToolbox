@@ -42,6 +42,7 @@ lib
 /serialization-util/target/
 /netty-test/target/
 /chunk-manager/target/
+/util/target/
 /Croupier/croupier-api/target/
 /serialization-util/target/
 /Croupier/croupier-core/target/
