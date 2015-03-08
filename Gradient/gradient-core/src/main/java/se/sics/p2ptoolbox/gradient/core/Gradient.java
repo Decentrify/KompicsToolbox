@@ -199,7 +199,7 @@ public class Gradient extends ComponentDefinition {
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
             ShuffleNet.Response resp = new ShuffleNet.Response(selfAddress, req.getVodSource(), UUID.randomUUID(), overlayId, shuffle);
             logger.debug("<{}/{}> sending:{}", new Object[]{selfAddress.getId(), overlayId, resp});
-            trigger(outstandingShuffle, network);
+            trigger(resp, network);
 
             view.merge(req.content.exchangeNodes, selfCPV);
             view.merge(ImmutableSet.copyOf(Sets.newHashSet(req.content.selfCPV)), selfCPV);

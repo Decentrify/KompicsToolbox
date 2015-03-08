@@ -139,7 +139,16 @@ public class GradientView {
 
     public ImmutableCollection<CroupierPeerView> getExchangeCPV(CroupierPeerView partnerCPV, int n) {
         Comparator<CroupierPeerView> partnerPrefferenceComparator = new InvertedComparator<CroupierPeerView>(new GradientPreferenceComparator<CroupierPeerView>(partnerCPV, utilityComp));
-        return Ordering.from(partnerPrefferenceComparator).immutableSortedCopy(view.values()).subList(0, n);
+        ImmutableCollection<CroupierPeerView> immutableCollection;
+        
+        int size = view.values().size();
+        if(size <= n){
+            immutableCollection = Ordering.from(partnerPrefferenceComparator).immutableSortedCopy(view.values());    
+        }
+        else{
+            immutableCollection = Ordering.from(partnerPrefferenceComparator).immutableSortedCopy(view.values()).subList(0, n);
+        }
+        return immutableCollection;
     }
 
     public ImmutableCollection<CroupierPeerView> getView() {
