@@ -197,7 +197,7 @@ public class Gradient extends ComponentDefinition {
 
             ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(req.content.selfCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
-            ShuffleNet.Response resp = new ShuffleNet.Response(selfAddress, req.getVodSource(), UUID.randomUUID(), overlayId, shuffle);
+            ShuffleNet.Response resp = new ShuffleNet.Response(selfAddress, req.getVodSource(), req.id, overlayId, shuffle);
             logger.debug("<{}/{}> sending:{}", new Object[]{selfAddress.getId(), overlayId, resp});
             trigger(resp, network);
 
