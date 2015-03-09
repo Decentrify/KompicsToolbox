@@ -66,13 +66,14 @@ public class GradientView {
                 return (int) compareToValue;
             }
         };
+        // The age comparator orders the nodes in descending order.
         this.ageComparator = new Comparator<CroupierPeerView>() {
 
             public int compare(CroupierPeerView o1, CroupierPeerView o2) {
                 if (o1.getAge() == o2.getAge()) {
                     utilityComp.compare(o1, o2);
                 }
-                return (o1.getAge() < o2.getAge() ? -1 : 1);
+                return (o1.getAge() > o2.getAge() ? -1 : 1);
             }
         };
         this.filter = filter;
@@ -159,6 +160,11 @@ public class GradientView {
         view.remove(node);
     }
 
+    /**
+     *  Based on the comparator supplied, sort entries and then reduce the size of the view using SoftMax Approach.
+     * @param usedComparator Comparator used for sorting.
+     * @param n Number of samples to remove.
+     */
     private void softMaxReduceSize(Comparator<CroupierPeerView> usedComparator, int n) {
         List<CroupierPeerView> sortedList = new ArrayList<CroupierPeerView>(view.values());
         Collections.sort(sortedList, usedComparator);
