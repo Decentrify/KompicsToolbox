@@ -93,9 +93,12 @@ public class GradientView {
     }
     
     public void clean(PeerView selfPV) {
-        for (CroupierPeerView cpv : view.values()) {
-            if(!filter.retainOther(selfPV, cpv.pv)) {
-                view.remove(cpv.src);
+        
+        Iterator<Map.Entry<VodAddress, CroupierPeerView>> iterator = view.entrySet().iterator();
+        while(iterator.hasNext()){
+            Map.Entry<VodAddress,CroupierPeerView> entry = iterator.next();
+            if(!filter.retainOther(selfPV, entry.getValue().pv)){
+                iterator.remove();
             }
         }
     }
