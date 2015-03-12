@@ -52,3 +52,7 @@ lib
 /Gradient/gradient-api/target/
 /Gradient/gradient-core/target/
 /Gradient/gradient-example/target/
+/video-stream/target/
+/videostream/core/target/
+/videostream/example/target/
+/videostream/ws-example/target/

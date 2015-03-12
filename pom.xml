@@ -15,7 +15,8 @@
         <module>Croupier</module>
         <module>util</module>
         <module>Gradient</module>
-    </modules>
+    <module>videostream</module>
+  </modules>
    
     <distributionManagement>
         <repository>
