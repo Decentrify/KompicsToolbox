@@ -19,12 +19,13 @@
 package se.sics.p2ptoolbox.videostream;
 
 import com.yammer.dropwizard.Service;
-import com.yammer.dropwizard.assets.AssetsBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Map;
+
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import javax.ws.rs.*;
@@ -32,6 +33,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.p2ptoolbox.videostream.manager.VodManager;
+import se.sics.p2ptoolbox.videostream.manager.impl.VodManagerImpl;
+import se.sics.p2ptoolbox.videostream.manager.util.FileStatus;
 import se.sics.p2ptoolbox.videostream.http.BaseHandler;
 import se.sics.p2ptoolbox.videostream.http.JwHttpServer;
 import se.sics.p2ptoolbox.videostream.http.RangeCapableMp4Handler;
@@ -44,17 +48,20 @@ import se.sics.p2ptoolbox.videostream.wsmodel.VideoInfo;
 public class VideoStreamWebService extends Service<Configuration> {
 
     private static final Logger log = LoggerFactory.getLogger(VideoStreamWebService.class);
-
+    private static VodManager vodManager;
     @Override
     public void initialize(Bootstrap<Configuration> bootstrap) {
 
 //        bootstrap.addBundle(new AssetsBundle("/assets/","/webapp","index.html"));
         try {
             InetSocketAddress addr = new InetSocketAddress(54321);
-            BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl("/Users/Alex/Documents/Work/Code/globalcommon/videostream/ws-example/src/main/resources/messi.mp4", 1024 * 1024));
-            BaseHandler handler2 = new RangeCapableMp4Handler(new VideoStreamMngrImpl("/Users/Alex/Documents/Work/Code/globalcommon/videostream/ws-example/src/main/resources/knight.mp4", 1000 * 1000));
-            JwHttpServer.startOrUpdate(addr, "/messi.mp4/", handler1);
-            JwHttpServer.startOrUpdate(addr, "/knight.mp4/", handler2);
+            BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl("/home/babbar/Videos/gvod/demo.mp4", 1024 * 1024));
+//            BaseHandler handler2 = new RangeCapableMp4Handler(new VideoStreamMngrImpl("/Users/Alex/Documents/Work/Code/globalcommon/videostream/ws-example/src/main/resources/knight.mp4", 1000 * 1000));
+            JwHttpServer.startOrUpdate(addr, "/demo.mp4/", handler1);
+//            JwHttpServer.startOrUpdate(addr, "/knight.mp4/", handler2);
+
+            vodManager = new VodManagerImpl();
+
         } catch (IOException ex) {
             log.error("could not start player");
             System.exit(1);
@@ -69,6 +76,8 @@ public class VideoStreamWebService extends Service<Configuration> {
         environment.addProvider(new DownloadVideoResource());
         environment.addProvider(new PlayPosResource());
         environment.addProvider(new PlayVideoResource());
+        environment.addProvider(new FilesResource());
+        environment.addProvider(new UploadResource());
 //
         /*
          * To allow cross origin resource request from angular js client
@@ -117,4 +126,31 @@ public class VideoStreamWebService extends Service<Configuration> {
             return Response.status(Response.Status.OK).entity(54321).build();
         }
     }
+
+
+    @Path("/files")
+    @Produces(MediaType.APPLICATION_JSON)
+    public static class FilesResource {
+
+        @GET
+        public Response getFiles() {
+            log.debug("fetch files called");
+            Map<String, FileStatus> fileStatusMap = vodManager.fetchFiles();
+            return Response.status(Response.Status.OK).entity(fileStatusMap).build();
+        }
+    }
+
+
+    @Path("/uploadvideo")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public static class UploadResource {
+
+        @PUT
+        public Response playPos(VideoInfo videoInfo) {
+            log.debug("{}: video upload invoked.");
+            return Response.status(Response.Status.OK).entity(vodManager.uploadVideo(videoInfo)).build();
+        }
+    }
+
 }

@@ -47,11 +47,15 @@ lib
 /serialization-util/target/
 /Croupier/croupier-core/target/
 /Croupier/croupier-example/target/
+Croupier/target/
+videostream/target/
+
 
 #gradient
 /Gradient/gradient-api/target/
 /Gradient/gradient-core/target/
 /Gradient/gradient-example/target/
+Gradient/target/
 /video-stream/target/
 /videostream/core/target/
 /videostream/example/target/
