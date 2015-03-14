@@ -227,6 +227,10 @@ public class Croupier extends ComponentDefinition {
             }
 
             CroupierStats.instance(selfAddress).incSelectedTimes();
+            // NOTE:
+            publicView.incrementDescriptorAges();
+            privateView.incrementDescriptorAges();
+            
             List<CroupierPeerView> publicDescriptors = publicView.selectToSendAtInitiator(config.shuffleLength, peer);
             List<CroupierPeerView> privateDescriptors = privateView.selectToSendAtInitiator(config.shuffleLength, peer);
 
@@ -242,9 +246,9 @@ public class Croupier extends ComponentDefinition {
             trigger(req, network);
             scheduleShuffleTimeout(peer);
             
-            //TODO Alex - is it correct to increment descriptors here only? 
-            publicView.incrementDescriptorAges();
-            privateView.incrementDescriptorAges();
+//            //TODO Alex - is it correct to increment descriptors here only?
+//            publicView.incrementDescriptorAges();
+//            privateView.incrementDescriptorAges();
         }
     };
 
@@ -272,6 +276,11 @@ public class Croupier extends ComponentDefinition {
                     new Object[]{croupierLogPrefix, req.getVodSource(), req.content.publicNodes, req.content.privateNodes});
 
             CroupierStats.instance(selfAddress).incShuffleRecvd(req.getVodSource());
+            
+            publicView.incrementDescriptorAges();
+            privateView.incrementDescriptorAges();
+            
+            
             List<CroupierPeerView> toSendPublicDescs = publicView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
             List<CroupierPeerView> toSendPrivateDescs = privateView.selectToSendAtReceiver(config.shuffleLength, req.getVodSource());
             Shuffle content = new Shuffle(ImmutableList.copyOf(toSendPublicDescs), ImmutableList.copyOf(toSendPrivateDescs));

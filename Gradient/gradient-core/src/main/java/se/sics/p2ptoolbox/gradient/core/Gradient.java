@@ -180,13 +180,16 @@ public class Gradient extends ComponentDefinition {
             logger.debug("<{}/{}> publishing view:{}", new Object[]{selfAddress.getId(), overlayId, gradientView});
             trigger(new GradientSample(gradientView), gradientPort);
 
+            // NOTE:
             CroupierPeerView partnerCPV = view.getShuffleNode(selfCPV);
+            view.incrementAges();
+            
             ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(partnerCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
             outstandingShuffle = new ShuffleNet.Request(selfAddress, partnerCPV.src, UUID.randomUUID(), overlayId, shuffle);
             logger.debug("<{}/{}> sending:{}", new Object[]{selfAddress.getId(), overlayId, outstandingShuffle});
             trigger(outstandingShuffle, network);
-            view.incrementAges();
+//            view.incrementAges();
         }
     };
 
@@ -195,6 +198,7 @@ public class Gradient extends ComponentDefinition {
         public void handle(ShuffleNet.Request req) {
             logger.debug("<{}/{}> received:{}", new Object[]{selfAddress.getId(), overlayId, req});
 
+            view.incrementAges();
             ImmutableCollection<CroupierPeerView> exchangeCPV = view.getExchangeCPV(req.content.selfCPV, config.shuffleLength);
             Shuffle shuffle = new Shuffle(selfCPV, exchangeCPV);
             ShuffleNet.Response resp = new ShuffleNet.Response(selfAddress, req.getVodSource(), req.id, overlayId, shuffle);
