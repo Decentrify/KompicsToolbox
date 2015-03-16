@@ -83,7 +83,7 @@ public class RangeCapableMp4Handler extends BaseHandler {
 //                writeProgressiveMp4(dataOut, mDatLen);
 //            }
             
-            long rangeEnd = range.getValue0() + content.length - 1;
+            long rangeEnd = range.getValue0() + (content.length == 0 ? 0 : content.length - 1);
             log.debug("sending range[{},{}] content length:{}", new Object[]{range.getValue0(), rangeEnd, content.length});
             setRangeHeaders(exchange.getResponseHeaders(), contentLength, range.getValue0(), rangeEnd);
             exchange.sendResponseHeaders(RANGE_CODE, content.length);

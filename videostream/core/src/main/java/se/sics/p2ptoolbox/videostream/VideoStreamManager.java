@@ -29,4 +29,5 @@ public interface VideoStreamManager {
      * @return return a subrange of content [readPos, A] where A <= endPos
      */
     public byte[] getContent(long readPos, long endPos);
+    public void stop();
 }

@@ -22,6 +22,7 @@ import com.yammer.dropwizard.Service;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -36,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.videostream.manager.VodManager;
 import se.sics.p2ptoolbox.videostream.manager.impl.VodManagerImpl;
 import se.sics.p2ptoolbox.videostream.manager.util.FileStatus;
+import se.sics.p2ptoolbox.util.managedStore.FileMngr;
+import se.sics.p2ptoolbox.util.managedStore.StorageMngrFactory;
 import se.sics.p2ptoolbox.videostream.http.BaseHandler;
 import se.sics.p2ptoolbox.videostream.http.JwHttpServer;
 import se.sics.p2ptoolbox.videostream.http.RangeCapableMp4Handler;
@@ -55,13 +58,15 @@ public class VideoStreamWebService extends Service<Configuration> {
 //        bootstrap.addBundle(new AssetsBundle("/assets/","/webapp","index.html"));
         try {
             InetSocketAddress addr = new InetSocketAddress(54321);
-            BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl("/home/babbar/Videos/gvod/demo.mp4", 1024 * 1024));
-//            BaseHandler handler2 = new RangeCapableMp4Handler(new VideoStreamMngrImpl("/Users/Alex/Documents/Work/Code/globalcommon/videostream/ws-example/src/main/resources/knight.mp4", 1000 * 1000));
-            JwHttpServer.startOrUpdate(addr, "/demo.mp4/", handler1);
-//            JwHttpServer.startOrUpdate(addr, "/knight.mp4/", handler2);
-
             vodManager = new VodManagerImpl();
 
+            String filePath1 = "/Users/Alex/Documents/Temp/videos/gvod.mp4";
+            File file1 = new File(filePath1);
+            int pieceSize = 1024;
+            int blockSize = 1024 * 1024;
+            FileMngr fm1 = StorageMngrFactory.getCompleteFileMngr(filePath1, file1.length(), blockSize, pieceSize);
+            BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl(fm1, pieceSize, file1.length()));
+            JwHttpServer.startOrUpdate(addr, "/messi.mp4/", handler1);
         } catch (IOException ex) {
             log.error("could not start player");
             System.exit(1);
