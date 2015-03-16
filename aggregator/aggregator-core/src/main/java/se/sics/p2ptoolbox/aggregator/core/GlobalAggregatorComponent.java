@@ -12,6 +12,7 @@ import se.sics.p2ptoolbox.aggregator.api.model.AggregatedStatePacket;
 import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
 import se.sics.p2ptoolbox.aggregator.api.msg.GlobalState;
 import se.sics.p2ptoolbox.aggregator.api.port.GlobalAggregatorPort;
+import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,11 +73,11 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         }
     };
     
-    Handler<AggregatedStateContainer> aggregatedStateMsgHandler = new Handler<AggregatedStateContainer>() {
+    Handler<AggregatorNetMsg.OneWay> aggregatedStateMsgHandler = new Handler<AggregatorNetMsg.OneWay>() {
         @Override
-        public void handle(AggregatedStateContainer event) {
-            logger.debug("Received aggregated state message from : " + event.getAddress());
-            statePacketMap.put(event.getAddress(), event.getPacketInfo());
+        public void handle(AggregatorNetMsg.OneWay event) {
+            logger.debug("Received aggregated state message from : " + event.getVodSource());
+            statePacketMap.put(event.content.getAddress(), event.content.getPacketInfo());
         }
     };
 
