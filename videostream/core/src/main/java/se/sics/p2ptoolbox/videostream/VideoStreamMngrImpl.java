@@ -128,7 +128,7 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
     }
 
     public void stop() {
-        playPos.set(-1);
+        playPos.set(0);
     }
     
 }
