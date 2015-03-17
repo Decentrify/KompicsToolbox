@@ -21,6 +21,7 @@ package se.sics.p2ptoolbox.videostream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +37,13 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
     private final FileMngr fm;
     private final int pieceSize;
     private final long fileSize;
+    private final AtomicInteger playPos;
 
-    public VideoStreamMngrImpl(FileMngr fm, int pieceSize, long fileSize) throws IOException {
+    public VideoStreamMngrImpl(FileMngr fm, int pieceSize, long fileSize, AtomicInteger playPos) throws IOException {
         this.fm = fm;
         this.pieceSize = pieceSize;
         this.fileSize = fileSize;
+        this.playPos = playPos;
     }
 
     @Override
@@ -67,6 +70,9 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
         }
 
         int restToSend = piecesToSend;
+        if(!fm.hasPiece(pieceIdx)) {
+            playPos.set(pieceIdx);
+        }
         while(!fm.hasPiece(pieceIdx)) {
             try {
                 Thread.sleep(1000);
@@ -122,7 +128,7 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
     }
 
     public void stop() {
-        //TODO Alex - communicate with download mngr
+        playPos.set(-1);
     }
     
 }

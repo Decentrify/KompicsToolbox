@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
@@ -65,7 +66,7 @@ public class VideoStreamWebService extends Service<Configuration> {
             int pieceSize = 1024;
             int blockSize = 1024 * 1024;
             FileMngr fm1 = StorageMngrFactory.getCompleteFileMngr(filePath1, file1.length(), blockSize, pieceSize);
-            BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl(fm1, pieceSize, file1.length()));
+            BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl(fm1, pieceSize, file1.length(), new AtomicInteger(0)));
             JwHttpServer.startOrUpdate(addr, "/messi.mp4/", handler1);
         } catch (IOException ex) {
             log.error("could not start player");
