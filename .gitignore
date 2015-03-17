@@ -52,3 +52,9 @@ lib
 /Gradient/gradient-api/target/
 /Gradient/gradient-core/target/
 /Gradient/gradient-example/target/
+
+#aggregator
+/aggregator/aggregator-api/target/
+/aggregator/aggregator-core/target/
+/aggregator/aggregator-example/target/
+
