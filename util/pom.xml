@@ -17,6 +17,8 @@
     
     <properties>
         <netty.version>4.0.10.Final</netty.version>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
     </properties>
     
     <dependencies>
