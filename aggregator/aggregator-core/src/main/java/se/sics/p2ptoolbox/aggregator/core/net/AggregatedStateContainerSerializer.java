@@ -44,6 +44,13 @@ public class AggregatedStateContainerSerializer implements Serializer<Aggregated
 
     @Override
     public int getSize(SerializationContext context, AggregatedStateContainer obj) throws SerializerException, SerializationContext.MissingException {
-        return 0;
+
+        int size = 0;
+        size += 2 * Byte.SIZE / 8; //pv code
+        Serializer pvS = context.getSerializer(obj.getPacketInfo().getClass()); // packet serializer
+        size += pvS.getSize(context, obj); // update overall packet size.
+        size += context.getSerializer(VodAddress.class).getSize(context, obj.getAddress()); //address serializer.
+
+        return size;
     }
 }
