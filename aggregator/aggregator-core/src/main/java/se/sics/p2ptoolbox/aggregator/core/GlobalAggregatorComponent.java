@@ -9,8 +9,8 @@ import se.sics.gvod.timer.Timeout;
 import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
 import se.sics.p2ptoolbox.aggregator.api.model.AggregatedStatePacket;
-import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
 import se.sics.p2ptoolbox.aggregator.api.msg.GlobalState;
+import se.sics.p2ptoolbox.aggregator.api.msg.Ready;
 import se.sics.p2ptoolbox.aggregator.api.port.GlobalAggregatorPort;
 import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
 
@@ -35,7 +35,7 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
     public GlobalAggregatorComponent(GlobalAggregatorComponentInit init){
         doInit(init);
         subscribe(startHandler, control);
-        subscribe(mapCleanTimeout, timerPort);
+        subscribe(pushUpdateHandler, timerPort);
         subscribe(aggregatedStateMsgHandler, networkPort);
     }
     
@@ -45,8 +45,8 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
     }
     
     
-    private class CleanOldEntries extends Timeout{
-        protected CleanOldEntries(SchedulePeriodicTimeout request) {
+    private class UpdateTimeout extends Timeout{
+        protected UpdateTimeout(SchedulePeriodicTimeout request) {
             super(request);
         }
     }
@@ -57,18 +57,18 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         public void handle(Start event) {
             logger.info("Started the aggregator component.");
             SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(mapCleaningTimeout, mapCleaningTimeout);
-            spt.setTimeoutEvent(new CleanOldEntries(spt));
+            spt.setTimeoutEvent(new UpdateTimeout(spt));
 
             trigger(spt, timerPort);
+            trigger(new Ready(), globalAggregatorPort);
         }
     };
     
-    Handler<CleanOldEntries> mapCleanTimeout = new Handler<CleanOldEntries>() {
+    Handler<UpdateTimeout> pushUpdateHandler = new Handler<UpdateTimeout>() {
         @Override
-        public void handle(CleanOldEntries event) {
-            logger.info("Clean Map of old entries timeout");
-            
-            // For now trigger the update here .
+        public void handle(UpdateTimeout event) {
+
+            logger.info("Triggering update to application.");
             trigger(new GlobalState(statePacketMap), globalAggregatorPort);
         }
     };

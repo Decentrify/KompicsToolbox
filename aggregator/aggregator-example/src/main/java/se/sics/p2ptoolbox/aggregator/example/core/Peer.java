@@ -74,7 +74,7 @@ public class Peer extends ComponentDefinition{
         @Override
         public void handle(StateTimeout event) {
 
-            logger.debug(" State Timeout Handler Invoked ");
+            logger.info(" State Timeout Handler Invoked ");
             
             // FIXME: Redundant Wrapper as message going with the source address. Fix it once the linking is complete.
             PacketSample packetSample = new PacketSample(partitioningDepth, indexEntries++, partitionId, nodeId);

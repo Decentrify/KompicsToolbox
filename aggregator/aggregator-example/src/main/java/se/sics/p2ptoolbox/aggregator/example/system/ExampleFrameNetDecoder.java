@@ -9,6 +9,9 @@ import se.sics.gvod.net.msgs.RewriteableMsg;
 import se.sics.p2ptoolbox.aggregator.api.model.AggregatedStatePacket;
 import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
 import se.sics.p2ptoolbox.aggregator.core.AggregatorNetworkSettings;
+import se.sics.p2ptoolbox.aggregator.example.core.PacketSample;
+import se.sics.p2ptoolbox.aggregator.example.core.PacketSampleSerializer;
+import se.sics.p2ptoolbox.aggregator.example.core.Peer;
 import se.sics.p2ptoolbox.serialization.SerializationContext;
 import se.sics.p2ptoolbox.serialization.SerializationContextImpl;
 import se.sics.p2ptoolbox.serialization.msg.HeaderField;
@@ -46,15 +49,15 @@ public class ExampleFrameNetDecoder extends BaseMsgFrameDecoder {
             context.registerSerializer(VodAddress.class, new VodAddressSerializer());
 
             context.registerAlias(AggregatedStatePacket.class, AGGREGATED_STATE_PACKET_ALIAS, AGGREGATED_STATE_PACKET_CODE);
-//            context.registerSerializer(PeerViewA.class, new PeerViewASerializer());
-//            context.multiplexAlias(AGGREGATED_STATE_PACKET_ALIAS, PeerViewA.class, (byte) 0x01);
+            context.registerSerializer(PacketSample.class, new PacketSampleSerializer());
+            context.multiplexAlias(AGGREGATED_STATE_PACKET_ALIAS, PacketSample.class, (byte) 0x01);
 
         } catch (SerializationContext.DuplicateException ex) {
             throw new RuntimeException(ex);
         } 
-//        catch (SerializationContext.MissingException ex) {
-//            throw new RuntimeException(ex);
-//        }
+        catch (SerializationContext.MissingException ex) {
+            throw new RuntimeException(ex);
+        }
 
         AggregatorNetworkSettings.oneTimeSetup(context, AGGREGATOR_ONE_WAY);
     }

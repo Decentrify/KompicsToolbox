@@ -82,7 +82,7 @@ public class AggregatorNetworkSettings {
 //    }
 
     public static enum OtherSerializers {
-        UUID(java.util.UUID.class), VOD_ADDRESS(VodAddress.class), OVERLAY_HEADER_FIELD(OverlayHeaderField.class);
+        UUID(java.util.UUID.class), VOD_ADDRESS(VodAddress.class);
 
         public final Class serializedClass;
 

@@ -2,6 +2,7 @@ package se.sics.p2ptoolbox.aggregator.api.port;
 
 import se.sics.kompics.PortType;
 import se.sics.p2ptoolbox.aggregator.api.msg.GlobalState;
+import se.sics.p2ptoolbox.aggregator.api.msg.Ready;
 
 /**
  * Port used to communicate with global state handler.
@@ -9,4 +10,5 @@ import se.sics.p2ptoolbox.aggregator.api.msg.GlobalState;
  */
 public class GlobalAggregatorPort extends PortType{{
     indication(GlobalState.class);
+    indication(Ready.class);
 }}

@@ -43,7 +43,7 @@ public class HostManagerComp extends ComponentDefinition {
         this.selfAddress = init.self;
         this.aggregatorNodeAddress = init.aggregatorComponent;
 
-        Component peerA = create(Peer.class, new Peer.PeerInit(10000, selfAddress, aggregatorNodeAddress));
+        Component peerA = create(Peer.class, new Peer.PeerInit(5000, selfAddress, aggregatorNodeAddress));
         connect(peerA.getNegative(VodNetwork.class), network);
         connect(peerA.getNegative(Timer.class), timer);
     

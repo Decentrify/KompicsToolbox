@@ -31,6 +31,9 @@ import se.sics.kompics.nat.utils.getip.ResolveIp;
 import se.sics.kompics.nat.utils.getip.ResolveIpPort;
 import se.sics.kompics.nat.utils.getip.events.GetIpRequest;
 import se.sics.kompics.nat.utils.getip.events.GetIpResponse;
+import se.sics.p2ptoolbox.aggregator.api.msg.Ready;
+import se.sics.p2ptoolbox.aggregator.example.core.Application;
+import se.sics.p2ptoolbox.aggregator.example.core.ApplicationPort;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -45,12 +48,13 @@ public class Launcher extends ComponentDefinition {
     private static final int seed = 1234;
     private static final int port = 23432;
     private static int id;
-    private static VodAddress bootstrapNode;
+    private static VodAddress aggregatorNode;
 
     public static void setArgs(int idArg, String bootstrapIp, int bootstrapId) {
         id = idArg;
         try {
-            bootstrapNode = new VodAddress(new Address(InetAddress.getByName(bootstrapIp), port, bootstrapId), -1);
+            aggregatorNode = new VodAddress(new Address(InetAddress.getByName(bootstrapIp), port, bootstrapId), -1);
+            log.info("AggregatorNode : " + aggregatorNode);
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
@@ -59,7 +63,7 @@ public class Launcher extends ComponentDefinition {
     private Component timer;
     private Component resolveIp;
     private Component network;
-    private Component manager;
+    private Component application;
 
     private Address selfAddress;
 
@@ -96,9 +100,33 @@ public class Launcher extends ComponentDefinition {
         trigger(Start.event, network.getControl());
     }
 
-    private void phase3(Address selfAddress) {
-        log.info("phase 3 - starting with Address: {}", selfAddress);
-        Component hostMngr = create(HostManagerComp.class, new HostManagerComp.HostManagerInit(seed, new VodAddress(selfAddress, -1), bootstrapNode));
+    private void phase3(){
+
+        log.info("phase 3: trying to bring up the aggregator component.");
+        application = create(Application.class, Init.NONE );
+
+        connect(application.getNegative(Timer.class), timer.getPositive(Timer.class));
+        connect(application.getNegative(VodNetwork.class), network.getPositive(VodNetwork.class));
+        subscribe(readyEventHandler, application.getPositive(ApplicationPort.class));
+
+        trigger(Start.event, application.control());
+    }
+
+
+    Handler<Ready> readyEventHandler = new Handler<Ready>() {
+        @Override
+        public void handle(Ready ready) {
+
+            log.info("Received Ready Event from the Application.");
+            log.info("Time to start with phase 4");
+
+            phase4(selfAddress);
+        }
+    };
+
+    private void phase4(Address selfAddress) {
+        log.info("phase 4 - starting with Address: {}", selfAddress);
+        Component hostMngr = create(HostManagerComp.class, new HostManagerComp.HostManagerInit(seed, new VodAddress(selfAddress, -1), aggregatorNode));
         connect(hostMngr.getNegative(VodNetwork.class), network.getPositive(VodNetwork.class));
         connect(hostMngr.getNegative(Timer.class), timer.getPositive(Timer.class));
 
@@ -126,7 +154,9 @@ public class Launcher extends ComponentDefinition {
                 Kompics.shutdown();
                 System.exit(-1);
             } else {
-                phase3(resp.boundAddress);
+
+                selfAddress = resp.boundAddress;
+                phase3();
             }
         }
     };
