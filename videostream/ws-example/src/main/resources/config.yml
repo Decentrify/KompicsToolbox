@@ -1,0 +1,25 @@
+http:
+  port: 54322
+  adminPort: 54323
+  
+# Logging settings.
+logging:
+
+  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  level: INFO
+
+  # Logger-specific levels.
+  loggers:
+    # Sets the level for 'com.example.app' to DEBUG.
+    
+    "Kompics": INFO
+    "se.sics.p2ptoolbox.videostream.VideoStreamWebService": TRACE
+    "se.sics.p2ptoolbox.videostream.http.MyMp4Handler": TRACE
+
+  console:
+      enabled: true
+      
+  file:
+      enabled: false
+      currentLogFilename: "gvod.log"
+      archivedLogFilenamePattern: "gvod-%d{yyyy-mm-dd}.log.gz"

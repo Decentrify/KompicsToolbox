@@ -47,6 +47,9 @@ lib
 /serialization-util/target/
 /Croupier/croupier-core/target/
 /Croupier/croupier-example/target/
+Croupier/target/
+videostream/target/
+
 
 #gradient
 /Gradient/gradient-api/target/
@@ -58,3 +61,8 @@ lib
 /aggregator/aggregator-core/target/
 /aggregator/aggregator-example/target/
 
+Gradient/target/
+/video-stream/target/
+/videostream/core/target/
+/videostream/example/target/
+/videostream/ws-example/target/
