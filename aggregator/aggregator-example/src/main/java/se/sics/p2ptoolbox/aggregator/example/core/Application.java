@@ -29,7 +29,7 @@ public class Application extends ComponentDefinition{
 
     public Application(){
 
-        aggregator = create(GlobalAggregatorComponent.class, new GlobalAggregatorComponentInit(5000));
+        aggregator = create(GlobalAggregatorComponent.class, new GlobalAggregatorComponentInit(5000, 10000));
         connect(aggregator.getNegative(VodNetwork.class), networkPositive);
         connect(aggregator.getNegative(Timer.class), timerPositive);
 
