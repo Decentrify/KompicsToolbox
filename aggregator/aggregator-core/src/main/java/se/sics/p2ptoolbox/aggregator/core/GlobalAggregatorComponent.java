@@ -73,13 +73,6 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
             spt.setTimeoutEvent(new UpdateTimeout(spt));
 
             trigger(spt, timerPort);
-            
-            logger.info("Triggering window timeout.");
-            SchedulePeriodicTimeout wrpt = new SchedulePeriodicTimeout(windowTimeout, windowTimeout);
-            spt.setTimeoutEvent(new WindowRefreshTimeout(wrpt));
-            
-            trigger(wrpt, timerPort);
-            
             trigger(new Ready(), globalAggregatorPort);
         }
     };
@@ -94,12 +87,16 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
             for(Map.Entry<VodAddress, Pair<AggregatedStatePacket, Boolean>> entry : statePacketMap.entrySet()){
                 updatedMap.put(entry.getKey(), entry.getValue().getValue0());
             }
-            
+
             trigger(new GlobalState(updatedMap), globalAggregatorPort);
+            statePacketMap.clear();
         }
     };
-    
-    
+
+
+    /**
+     * Unused implementation of refresh timeout.
+     */
     Handler<WindowRefreshTimeout> windowRefreshTimeoutHandler = new Handler<WindowRefreshTimeout>() {
         @Override
         public void handle(WindowRefreshTimeout event) {
