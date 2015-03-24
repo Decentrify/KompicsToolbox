@@ -9,12 +9,18 @@ import se.sics.kompics.Init;
 public class GlobalAggregatorComponentInit extends Init<GlobalAggregatorComponent>{
     
     private long timeout;
+    private long windowTimeout;
     
-    public GlobalAggregatorComponentInit (long timeout){
+    public GlobalAggregatorComponentInit (long timeout, long windowTimeout){
         this.timeout = timeout;
+        this.windowTimeout = windowTimeout;
     }
 
     public long getTimeout() {
         return timeout;
+    }
+
+    public long getWindowTimeout() {
+        return windowTimeout;
     }
 }

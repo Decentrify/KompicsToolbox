@@ -49,18 +49,18 @@ public class RangeCapableMp4Handler extends BaseHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        log.info("service http request from:{}", exchange.getRequestHeaders().get("referer"));
         log.debug("method:{} request headers:{}",
                 new Object[]{exchange.getRequestMethod(), exchange.getRequestHeaders().entrySet()});
         if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
             long contentLength = playMngr.getLength();
             Pair<Long, Long> range = extractRange(exchange.getRequestHeaders().get("Range"));
             if (range == null) {
-                log.info("could not parse range");
+                log.error("could not parse range");
                 System.exit(1);
                 return;
             }
-            log.debug("request for range[{},{}]", range.getValue0(), range.getValue1());
+            log.info("method:{} from:{} for range[{},{}]", 
+                    new Object[]{exchange.getRequestMethod(), exchange.getRequestHeaders().get("referer"), range.getValue0(), range.getValue1()});
             byte[] content;
             if (range.getValue1() == null) {
                 content = playMngr.getContent(range.getValue0());
@@ -68,25 +68,11 @@ public class RangeCapableMp4Handler extends BaseHandler {
                 content = playMngr.getContent(range.getValue0(), range.getValue1());
             }
             
-//            if (range.getValue0() != 0) {
-//                long mDatOffset = 0;
-//                long mDatLen = 0;
-//
-//                mDatOffset = progSplitMp4(false);
-//                mDatLen = contentLength - mDatOffset;
-//                long lenMoov = lenHeaders();
-//                long altLen = lenMoov + mDatLen;
-//                contentLength = lenSplitMp4();
-//                log.debug("Content-Length: " + contentLength);
-//                log.debug("Alt Content-Length: " + altLen);
-//                DataOutputStream dataOut = new DataOutputStream(exchange.getResponseBody());
-//                writeProgressiveMp4(dataOut, mDatLen);
-//            }
-            
-            long rangeEnd = range.getValue0() + (content.length == 0 ? 0 : content.length - 1);
-            log.debug("sending range[{},{}] content length:{}", new Object[]{range.getValue0(), rangeEnd, content.length});
-            setRangeHeaders(exchange.getResponseHeaders(), contentLength, range.getValue0(), rangeEnd);
-            exchange.sendResponseHeaders(RANGE_CODE, content.length);
+            long rangeLength = content.length;
+            long rangeEnd = range.getValue0() + (rangeLength == 0 ? 0 : rangeLength - 1);
+            log.info("sending range[{},{}] range length:{}", new Object[]{range.getValue0(), rangeEnd, content.length});
+            setRangeHeaders(exchange.getResponseHeaders(), contentLength, range.getValue0(), rangeEnd, rangeLength);
+            exchange.sendResponseHeaders(RANGE_CODE, rangeLength);
             exchange.getResponseBody().write(content);
             exchange.getResponseBody().flush();
             exchange.getResponseBody().close();
@@ -95,9 +81,9 @@ public class RangeCapableMp4Handler extends BaseHandler {
         }
     }
 
-    private void setRangeHeaders(Headers responseHeaders, long contentLength, long rangeStart, long rangeEnd) {
+    private void setRangeHeaders(Headers responseHeaders, long contentLength, long rangeStart, long rangeEnd, long rangeLength) {
         responseHeaders.set("Content-Type", "video/mp4");
-        responseHeaders.set("Content-Length", "" + contentLength);
+        responseHeaders.set("Content-Length", "" + rangeLength);
         responseHeaders.set("Accept-Ranges", "bytes");
         responseHeaders.set("Content-Range", "bytes " + rangeStart + "-" + (rangeEnd) + "/" + contentLength);
         DateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");

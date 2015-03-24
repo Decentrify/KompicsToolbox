@@ -1,5 +1,6 @@
 package se.sics.p2ptoolbox.aggregator.core;
 
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.gvod.net.VodAddress;
@@ -15,7 +16,9 @@ import se.sics.p2ptoolbox.aggregator.api.port.GlobalAggregatorPort;
 import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+
 
 /**
  * Component Having the God's View of the System.
@@ -25,8 +28,9 @@ import java.util.Map;
  */
 public class GlobalAggregatorComponent extends ComponentDefinition{
     
-    private long mapCleaningTimeout;
-    private Map<VodAddress, AggregatedStatePacket> statePacketMap;
+    private long updateTimeout;
+    private long windowTimeout;
+    private Map<VodAddress, Pair<AggregatedStatePacket, Boolean>> statePacketMap;
     private Logger logger = LoggerFactory.getLogger(GlobalAggregatorComponent.class);
     private Positive<Timer> timerPort = requires(Timer.class);
     private Positive<VodNetwork> networkPort = requires(VodNetwork.class);
@@ -36,12 +40,14 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         doInit(init);
         subscribe(startHandler, control);
         subscribe(pushUpdateHandler, timerPort);
+        subscribe(windowRefreshTimeoutHandler, timerPort);
         subscribe(aggregatedStateMsgHandler, networkPort);
     }
     
     private void doInit(GlobalAggregatorComponentInit init) {
-        statePacketMap = new HashMap<VodAddress, AggregatedStatePacket>();
-        mapCleaningTimeout = init.getTimeout();
+        statePacketMap = new HashMap<VodAddress, Pair<AggregatedStatePacket, Boolean>>();
+        updateTimeout = init.getTimeout();
+        windowTimeout = init.getWindowTimeout();
     }
     
     
@@ -51,12 +57,19 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         }
     }
     
+    private class WindowRefreshTimeout extends Timeout{
+        protected WindowRefreshTimeout(SchedulePeriodicTimeout request) {
+            super(request);
+        }
+    }
     
     Handler<Start> startHandler = new Handler<Start>() {
         @Override
         public void handle(Start event) {
             logger.info("Started the aggregator component.");
-            SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(mapCleaningTimeout, mapCleaningTimeout);
+            
+            logger.info("Triggering periodic update timeout.");
+            SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(updateTimeout, updateTimeout);
             spt.setTimeoutEvent(new UpdateTimeout(spt));
 
             trigger(spt, timerPort);
@@ -69,15 +82,47 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         public void handle(UpdateTimeout event) {
 
             logger.info("Triggering update to application.");
-            trigger(new GlobalState(statePacketMap), globalAggregatorPort);
+            Map<VodAddress, AggregatedStatePacket> updatedMap = new HashMap<VodAddress, AggregatedStatePacket>();
+            
+            for(Map.Entry<VodAddress, Pair<AggregatedStatePacket, Boolean>> entry : statePacketMap.entrySet()){
+                updatedMap.put(entry.getKey(), entry.getValue().getValue0());
+            }
+
+            trigger(new GlobalState(updatedMap), globalAggregatorPort);
+            statePacketMap.clear();
         }
     };
+
+
+    /**
+     * Unused implementation of refresh timeout.
+     */
+    Handler<WindowRefreshTimeout> windowRefreshTimeoutHandler = new Handler<WindowRefreshTimeout>() {
+        @Override
+        public void handle(WindowRefreshTimeout event) {
+
+            Iterator<Map.Entry<VodAddress, Pair<AggregatedStatePacket, Boolean>>> iterator = statePacketMap.entrySet().iterator();
+            while(iterator.hasNext()){
+                
+                Map.Entry<VodAddress, Pair<AggregatedStatePacket, Boolean>> entry = iterator.next();
+
+                if(entry.getValue().getValue1()){
+                    statePacketMap.put(entry.getKey(), entry.getValue().setAt1(false));     // Reset Refreshed State of Entries.
+                }
+                else{
+                    iterator.remove();
+                }
+            }
+        }
+    };
+    
+    
     
     Handler<AggregatorNetMsg.OneWay> aggregatedStateMsgHandler = new Handler<AggregatorNetMsg.OneWay>() {
         @Override
         public void handle(AggregatorNetMsg.OneWay event) {
             logger.debug("Received aggregated state message from : " + event.getVodSource());
-            statePacketMap.put(event.content.getAddress(), event.content.getPacketInfo());
+            statePacketMap.put(event.content.getAddress(), Pair.with(event.content.getPacketInfo(), true));
         }
     };
 
