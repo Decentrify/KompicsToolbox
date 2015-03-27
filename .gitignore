@@ -66,3 +66,6 @@ Gradient/target/
 /videostream/core/target/
 /videostream/example/target/
 /videostream/ws-example/target/
+/util/basic/target/
+/util/kompics-basic/target/
+/util/vod-net-helper/target/

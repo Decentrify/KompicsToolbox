@@ -14,9 +14,9 @@
         <module>serialization-util</module>
         <module>chunk-manager</module>
         <module>Croupier</module>
-        <module>util</module>
         <module>Gradient</module>
     <module>videostream</module>
+    <module>util</module>
   </modules>
    
     <distributionManagement>
