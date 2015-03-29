@@ -9,7 +9,6 @@
     <modules>
         <module>aggregator</module>
         <module>g-common</module>
-        <module>simulator</module>
         <module>netty-test</module>
         <module>serialization-util</module>
         <module>chunk-manager</module>
@@ -17,6 +16,7 @@
         <module>Gradient</module>
     <module>videostream</module>
     <module>util</module>
+    <module>simulator</module>
   </modules>
    
     <distributionManagement>
