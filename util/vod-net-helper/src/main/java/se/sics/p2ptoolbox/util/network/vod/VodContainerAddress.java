@@ -21,10 +21,12 @@ package se.sics.p2ptoolbox.util.network.vod;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Set;
 import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.util.network.NatType;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -97,6 +99,17 @@ public class VodContainerAddress implements NatedAddress {
 
     @Override
     public boolean isOpen() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return baseAddress.isOpen();
+    }
+
+    @Override
+    public Set<NatedAddress> getParents() {
+        throw new UnsupportedOperationException();
+    }
+
+    //****************Identifiable**********************************************
+    @Override
+    public Integer getId() {
+        return baseAddress.getId();
     }
 }

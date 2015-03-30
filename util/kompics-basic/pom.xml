@@ -10,12 +10,17 @@
     <groupId>se.sics.p2ptoolbox.util</groupId>
     <artifactId>kompics-basic</artifactId>
     <version>1.1-SNAPSHOT</version>
-    <name>Kompics Basic</name>
+    <name>Util Basic Kompics</name>
     <url>http://maven.apache.org</url>
     <properties>
         <kompics.version>0.8.0-SNAPSHOT</kompics.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <artifactId>basic</artifactId>
+            <version>1.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>se.sics.kompics</groupId>
             <artifactId>kompics-core</artifactId>

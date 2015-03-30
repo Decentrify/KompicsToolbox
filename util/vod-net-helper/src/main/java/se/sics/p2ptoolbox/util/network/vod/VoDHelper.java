@@ -40,14 +40,14 @@ public class VoDHelper {
         }
     }
 
-    public static Set<NatedAddress> getNatedAddressSet(Set<VodAddress> adrSet) {
+    public static Set<NatedAddress> getNatAdrSetFromVodAdr(Set<VodAddress> adrSet) {
         Set<NatedAddress> result = new HashSet<NatedAddress>();
         for (VodAddress adr : adrSet) {
             result.add(new VodContainerAddress(adr));
         }
         return result;
     }
-
+    
     public static Set<VodAddress> getVodAddressSet(Set<NatedAddress> adrSet) {
         Set<VodAddress> result = new HashSet<VodAddress>();
         for (NatedAddress adr : adrSet) {
