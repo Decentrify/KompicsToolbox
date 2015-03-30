@@ -18,9 +18,13 @@
  */
 package se.sics.p2ptoolbox.simulator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
 import se.sics.kompics.network.Address;
@@ -37,15 +41,49 @@ public class SimulationContextImpl implements SimulationContext {
     private final Address simulatorAddress;
 
     private final Map<Integer, Map<Class<? extends PortType>, Port>> ports;
+    private final Map<Integer, Address> systemNodes;
     private final Map<String, Object> otherContext;
 
     public SimulationContextImpl(Random rand, Address simulatorAddress) {
         this.rand = rand;
         this.simulatorAddress = simulatorAddress;
         this.ports = new HashMap<Integer, Map<Class<? extends PortType>, Port>>();
+        this.systemNodes = new HashMap<Integer, Address>();
         this.otherContext = new HashMap<String, Object>();
     }
 
+    public boolean bootNode(Integer nodeId, Address nodeAddress) {
+        if (systemNodes.containsKey(nodeId)) {
+            return false;
+        }
+        systemNodes.put(nodeId, nodeAddress);
+        return true;
+    }
+    
+    public boolean killNode(Integer nodeId) {
+        if (!systemNodes.containsKey(nodeId)) {
+            return false;
+        }
+        systemNodes.remove(nodeId);
+        return true;
+    }
+    
+    public Set<Address> systemNodesSample(int n, Address self) {
+        Set<Address> result = new HashSet<Address>();
+        if(systemNodes.size() < n) {
+            result.addAll(systemNodes.values());
+            result.remove(self);
+            return result;
+        }
+        List<Address> nodeList = new ArrayList<Address>(systemNodes.values());
+        while(result.size() < n) {
+            int nodeIndex = rand.nextInt(nodeList.size());
+            result.add(nodeList.remove(nodeIndex));
+        }
+        result.remove(self);
+        return result;
+    }
+    
     public boolean registerNode(Integer nodeId) {
         if (ports.containsKey(nodeId)) {
             return false;
@@ -57,7 +95,7 @@ public class SimulationContextImpl implements SimulationContext {
     public boolean isNodeRegistered(Integer nodeId) {
         return ports.containsKey(nodeId);
     }
-
+    
     public boolean registerPort(Integer nodeId, Class<? extends PortType> portType, Port port) {
         Map<Class<? extends PortType>, Port> localPorts = ports.get(nodeId);
         if (localPorts == null) {

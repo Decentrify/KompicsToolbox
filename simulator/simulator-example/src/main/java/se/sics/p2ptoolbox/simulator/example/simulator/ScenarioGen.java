@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import se.sics.kompics.network.Msg;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
@@ -77,13 +78,18 @@ public class ScenarioGen {
                 }
 
                 @Override
-                public MyComponent.MyInit getNodeComponentInit(BasicAddress statusServer) {
+                public MyComponent.MyInit getNodeComponentInit(BasicAddress statusServer, Set<BasicAddress> bootstrapNodes) {
                     return new MyComponent.MyInit(nodeAddressMap.get(nodeId), statusServer);
                 }
 
                 @Override
                 public BasicAddress getAddress() {
                     return nodeAddressMap.get(nodeId);
+                }
+
+                @Override
+                public int bootstrapSize() {
+                    return 5;
                 }
 
             };
