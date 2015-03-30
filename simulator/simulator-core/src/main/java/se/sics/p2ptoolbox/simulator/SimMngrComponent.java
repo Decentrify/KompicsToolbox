@@ -29,6 +29,7 @@ import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
+import se.sics.kompics.Kill;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
@@ -123,7 +124,7 @@ public class SimMngrComponent extends ComponentDefinition {
         public void handle(StartNodeCmd cmd) {
             log.info("received start cmd:{} for node:{}", cmd, cmd.getNodeId());
 
-            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getSimulatorAddress()));
+            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getSimulatorAddress(), simulationContext.systemNodesSample(cmd.bootstrapSize(), cmd.getAddress())));
             connect(node.getNegative(Timer.class), timer);
 
             Component natEmulator = null;
@@ -137,9 +138,12 @@ public class SimMngrComponent extends ComponentDefinition {
             }
             connect(nodeNetwork, network, new IntegerFilter(cmd.getNodeId()));
 
+            //TODO maybe this should be one method
             simulationContext.registerNode(cmd.getNodeId());
+            simulationContext.bootNode(cmd.getNodeId(), cmd.getAddress());
             systemNodes.put(cmd.getNodeId(), Pair.with(node, natEmulator));
-
+            //********************************
+            
             if (cmd.getAddress() instanceof NatedAddress) {
                 trigger(Start.event, natEmulator.control());
             }
@@ -164,9 +168,9 @@ public class SimMngrComponent extends ComponentDefinition {
                 disconnect(node.getValue0().getNegative(Network.class), network);
             }
             disconnect(node.getValue0().getNegative(Timer.class), timer);
-            trigger(Stop.event, node.getValue0().control());
+            trigger(Kill.event, node.getValue0().control());
             if (node.getValue1() != null) {
-                trigger(Stop.event, node.getValue1().control());
+                trigger(Kill.event, node.getValue1().control());
             }
         }
     };
