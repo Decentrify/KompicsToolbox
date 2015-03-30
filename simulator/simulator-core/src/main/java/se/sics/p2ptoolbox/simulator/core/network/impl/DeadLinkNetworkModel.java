@@ -17,49 +17,41 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.network.impl;
+package se.sics.p2ptoolbox.simulator.core.network.impl;
 
+import java.util.Set;
+import org.javatuples.Pair;
 import se.sics.kompics.network.Address;
-import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.network.ContentMsg;
+import se.sics.kompics.network.Msg;
+import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
 
 /**
  *
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public abstract class BasicContentMsg<A extends Address, H extends Header<A>, C extends Object> implements ContentMsg<A, H, C>{
-    private final H header;
-    private final C content;
+public class DeadLinkNetworkModel implements NetworkModel {
+    private int id;
+    private final NetworkModel baseNM;
+    private final Set<Pair<Address, Address>> deadLinks;
     
-    public BasicContentMsg(H header, C content) {
-        this.header = header;
-        this.content = content;
-    }
-    
-    @Override
-    public C getContent() {
-        return content;
+    public DeadLinkNetworkModel(int id, NetworkModel baseNM, Set<Pair<Address, Address>> deadLinks) {
+        this.id = id;
+        this.baseNM = baseNM;
+        this.deadLinks = deadLinks;
     }
 
     @Override
-    public H getHeader() {
-        return header;
+    public long getLatencyMs(Msg message) {
+        Pair<Address, Address> link = Pair.with(message.getHeader().getSource(), message.getHeader().getDestination());
+        if(deadLinks.contains(link)) {
+            return -1;
+        } else {
+            return baseNM.getLatencyMs(message);
+        }
     }
-
+ 
     @Override
-    public A getSource() {
-        return header.getSource();
+    public String toString() {
+        return "DeadLink NetworkModel<" + id + ">";
     }
-
-    @Override
-    public A getDestination() {
-        return header.getDestination();
-    }
-
-    @Override
-    public Transport getProtocol() {
-        return header.getProtocol();
-    }
-    
 }

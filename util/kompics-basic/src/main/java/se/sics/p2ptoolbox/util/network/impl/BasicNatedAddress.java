@@ -17,53 +17,65 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.network.vod;
+package se.sics.p2ptoolbox.util.network.impl;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.Set;
-import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.util.network.NatType;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class VodContainerAddress implements NatedAddress {
-    private final InetSocketAddress isa;
-    private final VodAddress baseAddress;
+public class BasicNatedAddress implements NatedAddress {
+    private final BasicAddress base;
+    private final NatType natType;
+    private final Set<NatedAddress> parents;
     
-    public VodContainerAddress(VodAddress baseAddress) {
-        this.isa = new InetSocketAddress(baseAddress.getIp(), baseAddress.getPort());
-        this.baseAddress = baseAddress;
+    public BasicNatedAddress(BasicAddress base, NatType natType, Set<NatedAddress> parents) {
+        this.base = base;
+        this.natType = natType;
+        this.parents = parents;
     }
     
+    public BasicNatedAddress(BasicAddress base) {
+        this(base, NatType.OPEN, new HashSet<NatedAddress>());
+    }
+
     @Override
     public InetAddress getIp() {
-        return baseAddress.getIp();
+        return base.getIp();
     }
 
     @Override
     public int getPort() {
-        return baseAddress.getPort();
+        return base.getPort();
     }
-    
+
     @Override
     public InetSocketAddress asSocket() {
-        return isa;
+        return base.asSocket();
     }
 
     @Override
     public boolean sameHostAs(Address other) {
-        return this.isa.equals(other.asSocket());
+        return base.sameHostAs(other);
     }
     
     @Override
+    public String toString() {
+        return base.toString() + (isOpen() ? " OPEN " : " NATED " );
+    }
+
+    @Override
     public int hashCode() {
         int hash = 7;
-        hash = 47 * hash + (this.baseAddress != null ? this.baseAddress.hashCode() : 0);
+        hash = 31 * hash + (this.base != null ? this.base.hashCode() : 0);
+        hash = 31 * hash + (this.natType != null ? this.natType.hashCode() : 0);
+        hash = 31 * hash + (this.parents != null ? this.parents.hashCode() : 0);
         return hash;
     }
 
@@ -75,41 +87,39 @@ public class VodContainerAddress implements NatedAddress {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final VodContainerAddress other = (VodContainerAddress) obj;
-        if (this.baseAddress != other.baseAddress && (this.baseAddress == null || !this.baseAddress.equals(other.baseAddress))) {
+        final BasicNatedAddress other = (BasicNatedAddress) obj;
+        if (this.base != other.base && (this.base == null || !this.base.equals(other.base))) {
+            return false;
+        }
+        if (this.natType != other.natType) {
+            return false;
+        }
+        if (this.parents != other.parents && (this.parents == null || !this.parents.equals(other.parents))) {
             return false;
         }
         return true;
     }
     
-    //**************NAT********************************************************
-    @Override
-    public NatType getNatType() {
-        switch(baseAddress.getNatType()) {
-            case OPEN: return NatType.OPEN;
-            case NAT: return NatType.NAT;
-        }
-        return null; //should never happen
-    }
-
     
-    public VodAddress getVodAddress() {
-        return baseAddress;
-    }
-
+    //********************NAT***************************************************
     @Override
     public boolean isOpen() {
-        return baseAddress.isOpen();
+        return natType.equals(NatType.OPEN);
+    }
+
+    @Override
+    public NatType getNatType() {
+        return natType;
     }
 
     @Override
     public Set<NatedAddress> getParents() {
-        throw new UnsupportedOperationException();
+        return parents;
     }
 
-    //****************Identifiable**********************************************
+    //********************Identifiable******************************************
     @Override
     public Integer getId() {
-        return baseAddress.getId();
+        return base.getId();
     }
 }

@@ -17,7 +17,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.cmd;
+package se.sics.p2ptoolbox.simulator.cmd.impl;
+
+import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
+import se.sics.p2ptoolbox.simulator.cmd.SimulationCmd;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

@@ -25,12 +25,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import se.sics.kompics.network.Msg;
-import se.sics.p2ptoolbox.simulator.cmd.StartNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.SimulationContext;
 import se.sics.p2ptoolbox.simulator.cmd.impl.ChangeNetworkModelCmd;
 import se.sics.p2ptoolbox.simulator.cmd.NetworkOpCmd;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.SimulationResult;
+import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
 import se.sics.p2ptoolbox.simulator.core.network.impl.PartitionedNetworkModel;
 import se.sics.p2ptoolbox.simulator.core.network.impl.UniformRandomModel;
@@ -79,6 +79,11 @@ public class ScenarioGen {
                 @Override
                 public MyComponent.MyInit getNodeComponentInit(BasicAddress statusServer) {
                     return new MyComponent.MyInit(nodeAddressMap.get(nodeId), statusServer);
+                }
+
+                @Override
+                public BasicAddress getAddress() {
+                    return nodeAddressMap.get(nodeId);
                 }
 
             };

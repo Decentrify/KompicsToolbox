@@ -19,6 +19,8 @@
 
 package se.sics.p2ptoolbox.simulator.example;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +33,8 @@ import se.sics.p2ptoolbox.simulator.SystemStatusHandler;
 import se.sics.p2ptoolbox.simulator.example.core.MyNetMsg;
 import se.sics.p2ptoolbox.simulator.example.simulator.MyExperimentResult;
 import se.sics.p2ptoolbox.simulator.example.simulator.ScenarioGen;
-import se.sics.p2ptoolbox.simulator.example.system.LauncherComp;
+import se.sics.p2ptoolbox.simulator.run.LauncherComp;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 /**
  *
@@ -45,6 +48,11 @@ public class MyTest {
     public void simpleBoot() {
         LauncherComp.scheduler = new SimulatorScheduler();
         LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
+        try {
+            LauncherComp.simulatorClientAddress = new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1);
+        } catch (UnknownHostException ex) {
+            throw new RuntimeException("cannot create address for localhost");
+        }
         LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
 
             public Class getStatusMsgType() {
@@ -55,7 +63,6 @@ public class MyTest {
                 System.out.println("handling status1");
             }
         });
-        
         LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
 
             public Class getStatusMsgType() {

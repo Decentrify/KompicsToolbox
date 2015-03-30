@@ -35,7 +35,7 @@ public class BasicAddress implements Address, IntegerIdentifiable {
     public BasicAddress(InetAddress addr, int port, int id) {
         this.isa = new InetSocketAddress(addr, port);
         this.id = id;
-        this.printForm = addr.getHostAddress() + ":" + port + "<" + id + "> ";
+        this.printForm = addr.getHostAddress() + ":" + port + "<" + id + ">";
     }
 
     @Override
@@ -62,6 +62,34 @@ public class BasicAddress implements Address, IntegerIdentifiable {
     public String toString() {
         return printForm;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 13 * hash + (this.isa != null ? this.isa.hashCode() : 0);
+        hash = 13 * hash + this.id;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BasicAddress other = (BasicAddress) obj;
+        if (this.isa != other.isa && (this.isa == null || !this.isa.equals(other.isa))) {
+            return false;
+        }
+        if (this.id != other.id) {
+            return false;
+        }
+        return true;
+    }
+    
+    
     //*********************Integer Identifiable*********************************
     @Override
     public Integer getId() {

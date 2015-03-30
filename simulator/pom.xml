@@ -15,7 +15,8 @@
         <module>simulator-core</module>
         <module>simulator-example</module>
         <module>simulator-dsl</module>
-    </modules>
+    <module>simulator-basic</module>
+  </modules>
     
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>

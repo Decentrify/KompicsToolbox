@@ -17,23 +17,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator;
+package se.sics.p2ptoolbox.simulator.cmd.impl;
 
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Init;
+import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
-import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
-import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
+ * @param <E>
  */
-public class ExperimentPort extends PortType {
-    {
-        positive(SystemCmd.class);
-        positive(OperationCmd.class);
-        positive(SimulationResult.class);
-        positive(TerminateExperiment.class);
-        negative(TerminateExperiment.class);
-    }
+public interface StartNodeCmd<E extends ComponentDefinition, A extends Address> extends SystemCmd {
+    public Integer getNodeId();
+    public Class<E> getNodeComponentDefinition();
+    public Init<E> getNodeComponentInit(A statusAddress);
+    public A getAddress();
 }

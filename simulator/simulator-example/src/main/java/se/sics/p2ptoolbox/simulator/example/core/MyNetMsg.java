@@ -29,7 +29,7 @@ import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class MyNetMsg {
-    private static class MyBasicNetMsg<C extends Object> extends BasicContentMsg<BasicAddress, BasicHeader<BasicAddress>, C> {
+    private static abstract class MyBasicNetMsg<C extends Object> extends BasicContentMsg<BasicAddress, BasicHeader<BasicAddress>, C> {
         public MyBasicNetMsg(BasicAddress src, BasicAddress dst, C content) {
             super(new BasicHeader(src, dst, Transport.UDP), content);
         }

@@ -19,13 +19,15 @@
 
 package se.sics.p2ptoolbox.util.network;
 
+import java.util.Set;
 import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface NatedAddress extends Address {
+public interface NatedAddress extends Address, IntegerIdentifiable {
     public boolean isOpen();
     public NatType getNatType();
-//    public Set<NatedAddress> getParents();
+    public Set<NatedAddress> getParents();
 }

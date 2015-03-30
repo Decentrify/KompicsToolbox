@@ -32,7 +32,7 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.simulator.cmd.NetworkOpCmd;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.SimulationResult;
+import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

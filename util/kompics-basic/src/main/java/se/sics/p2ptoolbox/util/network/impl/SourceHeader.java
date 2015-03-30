@@ -17,18 +17,44 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.cmd;
+package se.sics.p2ptoolbox.util.network.impl;
 
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Init;
-import se.sics.kompics.network.Address;
+import se.sics.kompics.network.Header;
+import se.sics.kompics.network.Transport;
+import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
- * @param <E>
  */
-public interface StartNodeCmd<E extends ComponentDefinition, A extends Address> extends SystemCmd {
-    public Integer getNodeId();
-    public Class<E> getNodeComponentDefinition();
-    public Init<E> getNodeComponentInit(A statusAddress);
+public class SourceHeader<A extends NatedAddress> implements Header<A>  {
+    private final Header<A> baseH;
+    private final A relay;
+    
+    public SourceHeader(Header<A> base, A relay) {
+        this.baseH = base;
+        this.relay = relay;
+    }
+    
+    @Override
+    public A getSource() {
+        return baseH.getSource();
+    }
+
+    @Override
+    public A getDestination() {
+        return relay;
+    }
+
+    @Override
+    public Transport getProtocol() {
+        return baseH.getProtocol();
+    }
+    
+    public A getActualDestination() {
+        return baseH.getDestination();
+    }
+    
+    public RelayHeader getRelayHeader() {
+        return new RelayHeader(baseH, relay);
+    }
 }

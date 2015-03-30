@@ -17,23 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator;
+package se.sics.p2ptoolbox.util.network;
 
-import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
-import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
-import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
+import se.sics.kompics.network.Header;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class ExperimentPort extends PortType {
-    {
-        positive(SystemCmd.class);
-        positive(OperationCmd.class);
-        positive(SimulationResult.class);
-        positive(TerminateExperiment.class);
-        negative(TerminateExperiment.class);
-    }
+public interface NatedHeader<A extends NatedAddress> extends Header<A> {
 }

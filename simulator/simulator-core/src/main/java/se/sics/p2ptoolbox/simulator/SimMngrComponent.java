@@ -18,30 +18,35 @@
  */
 package se.sics.p2ptoolbox.simulator;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Fault;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.Stopped;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.simulator.basic.NatEmulatorComp;
+import se.sics.p2ptoolbox.simulator.cmd.impl.ReStartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
-import se.sics.p2ptoolbox.simulator.cmd.StartNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.StopNodeCmd;
 import se.sics.p2ptoolbox.util.filters.IntegerFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
+import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -56,20 +61,22 @@ public class SimMngrComponent extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private Set<Component> startedComp;
-    private int stoppedCounter;
+    private Map<Integer, Pair<Component, Component>> systemNodes;
+
+    private Component simulationClient;
 
     public SimMngrComponent(SimMngrInit init) {
         log.info("initiating...");
         this.simulationContext = new SimulationContextImpl(init.rand, init.simAddress);
-        this.startedComp = new HashSet<Component>();
+        this.systemNodes = new HashMap<Integer, Pair<Component, Component>>();
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
-        subscribe(handleStopped, control);
 
         subscribe(handleStartNode, experimentPort);
-        for(final SystemStatusHandler systemStatusHandler : init.systemStatusHandlers) {
+        subscribe(handleStopNode, experimentPort);
+        subscribe(handleReStartNode, experimentPort);
+        for (final SystemStatusHandler systemStatusHandler : init.systemStatusHandlers) {
             Class<? extends Msg> msgType = systemStatusHandler.getStatusMsgType();
             Handler handler = new Handler(msgType) {
 
@@ -90,13 +97,12 @@ public class SimMngrComponent extends ComponentDefinition {
         public void handle(Start event) {
             log.info("starting...");
 
-            Component simClient = create(SimClientComponent.class, new SimClientComponent.SimClientInit(simulationContext));
-            connect(simClient.getNegative(Network.class), network, new IntegerFilter(((IntegerIdentifiable)simulationContext.getSimulatorAddress()).getId()));
-            connect(simClient.getNegative(Timer.class), timer);
-            connect(simClient.getNegative(ExperimentPort.class), experimentPort);
-            startedComp.add(simClient);
+            simulationClient = create(SimClientComponent.class, new SimClientComponent.SimClientInit(simulationContext));
+            connect(simulationClient.getNegative(Network.class), network, new IntegerFilter(((IntegerIdentifiable) simulationContext.getSimulatorAddress()).getId()));
+            connect(simulationClient.getNegative(Timer.class), timer);
+            connect(simulationClient.getNegative(ExperimentPort.class), experimentPort);
 
-            trigger(Start.event, simClient.control());
+            trigger(Start.event, simulationClient.control());
         }
 
     };
@@ -110,19 +116,6 @@ public class SimMngrComponent extends ComponentDefinition {
 
     };
 
-    private Handler<Stopped> handleStopped = new Handler<Stopped>() {
-
-        @Override
-        public void handle(Stopped event) {
-            stoppedCounter--;
-            log.info("child stopped, remaining unstopped children:{}", stoppedCounter);
-            if(stoppedCounter == 0) {
-                Kompics.shutdown();
-            }
-        }
-
-    };
-
     //**************************************************************************
     private Handler<StartNodeCmd> handleStartNode = new Handler<StartNodeCmd>() {
 
@@ -131,27 +124,82 @@ public class SimMngrComponent extends ComponentDefinition {
             log.info("received start cmd:{} for node:{}", cmd, cmd.getNodeId());
 
             Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getSimulatorAddress()));
-            connect(node.getNegative(Network.class), network, new IntegerFilter(cmd.getNodeId()));
             connect(node.getNegative(Timer.class), timer);
 
-            simulationContext.registerNode(cmd.getNodeId());
-            startedComp.add(node);
+            Component natEmulator = null;
+            Negative<Network> nodeNetwork = null;
+            if (cmd.getAddress() instanceof NatedAddress) {
+                natEmulator = create(NatEmulatorComp.class, new NatEmulatorComp.NatEmulatorInit((NatedAddress) cmd.getAddress()));
+                connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class), new IntegerFilter(cmd.getNodeId()));
+                nodeNetwork = natEmulator.getNegative(Network.class);
+            } else {
+                nodeNetwork = node.getNegative(Network.class);
+            }
+            connect(nodeNetwork, network, new IntegerFilter(cmd.getNodeId()));
 
+            simulationContext.registerNode(cmd.getNodeId());
+            systemNodes.put(cmd.getNodeId(), Pair.with(node, natEmulator));
+
+            if (cmd.getAddress() instanceof NatedAddress) {
+                trigger(Start.event, natEmulator.control());
+            }
             trigger(Start.event, node.control());
         }
 
+    };
+
+    private Handler<StopNodeCmd> handleStopNode = new Handler<StopNodeCmd>() {
+
+        @Override
+        public void handle(StopNodeCmd cmd) {
+            log.info("received stop cmd:{} for node:{}", cmd, cmd.getNodeId());
+
+            if (!systemNodes.containsKey(cmd.getNodeId())) {
+                throw new RuntimeException("node does not exist");
+            }
+            Pair<Component, Component> node = systemNodes.get(cmd.getNodeId());
+            if (node.getValue1() != null) {
+                disconnect(node.getValue1().getNegative(Network.class), network);
+            } else {
+                disconnect(node.getValue0().getNegative(Network.class), network);
+            }
+            disconnect(node.getValue0().getNegative(Timer.class), timer);
+            trigger(Stop.event, node.getValue0().control());
+            if (node.getValue1() != null) {
+                trigger(Stop.event, node.getValue1().control());
+            }
+        }
+    };
+
+    private Handler<ReStartNodeCmd> handleReStartNode = new Handler<ReStartNodeCmd>() {
+
+        @Override
+        public void handle(ReStartNodeCmd cmd) {
+            log.info("received re-start cmd:{} for node:{}", cmd, cmd.getNodeId());
+            if (!systemNodes.containsKey(cmd.getNodeId())) {
+                throw new RuntimeException("node does not exist");
+            }
+            Pair<Component, Component> node = systemNodes.get(cmd.getNodeId());
+            if (node.getValue1() != null) {
+                connect(node.getValue1().getNegative(Network.class), network, new IntegerFilter(cmd.getNodeId()));
+            } else {
+                connect(node.getValue0().getNegative(Network.class), network, new IntegerFilter(cmd.getNodeId()));
+            }
+            connect(node.getValue0().getNegative(Timer.class), timer);
+            trigger(Start.event, node.getValue0().control());
+            if (node.getValue1() != null) {
+                trigger(Start.event, node.getValue1().control());
+            }
+        }
     };
 
     private Handler<TerminateExperiment> handleTerminateExperiment = new Handler<TerminateExperiment>() {
 
         @Override
         public void handle(TerminateExperiment event) {
-            log.info("terminating simulation(stopping children)...");
-            
-            stoppedCounter = startedComp.size();
-            for (Component comp : startedComp) {
-                trigger(Stop.event, comp.control());
-            }
+            log.info("terminating simulation...");
+            Kompics.shutdown();
+
         }
     };
 
@@ -167,5 +215,5 @@ public class SimMngrComponent extends ComponentDefinition {
             this.systemStatusHandlers = systemStatusHandlers;
         }
     }
-    
+
 }

@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.UUID;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
@@ -250,7 +249,7 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
 
         if (e instanceof ChangeNetworkModelCmd) {
             ChangeNetworkModelCmd cmd = (ChangeNetworkModelCmd) e;
-            logger.debug("Changing network parameters acording to {}", cmd.netModel);
+            logger.info("Changing network parameters acording to {}", cmd.netModel);
             networkModel = cmd.netModel;
         } else {
             trigger(e, simulationPort);

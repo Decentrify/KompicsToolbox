@@ -16,10 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.simulator.example.system;
+package se.sics.p2ptoolbox.simulator.run;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -38,7 +36,6 @@ import se.sics.p2ptoolbox.simulator.ExperimentPort;
 import se.sics.p2ptoolbox.simulator.SimMngrComponent;
 import se.sics.p2ptoolbox.simulator.SystemStatusHandler;
 import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -48,19 +45,13 @@ public class LauncherComp extends ComponentDefinition {
     
     public static SimulatorScheduler scheduler;
     public static SimulationScenario scenario;
+    public static Address simulatorClientAddress;
     public static final Set<SystemStatusHandler> systemStatusHandlers = new HashSet<SystemStatusHandler>();
     
     {
-        Address simAddress = null;
-        try {
-            simAddress = new BasicAddress(InetAddress.getByName("127.0.0.1"), 45654, -1);
-        } catch (UnknownHostException ex) {
-            log.error("cannot create address for localhost");
-            System.exit(1);
-        }
         P2pSimulator.setSimulationPortType(ExperimentPort.class);
         Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(scheduler, scenario, new UniformRandomModel(1, 10)));
-        Component simManager = create(SimMngrComponent.class, new SimMngrComponent.SimMngrInit(new Random(), simAddress, systemStatusHandlers));
+        Component simManager = create(SimMngrComponent.class, new SimMngrComponent.SimMngrInit(new Random(), simulatorClientAddress, systemStatusHandlers));
         connect(simManager.getNegative(Network.class), simulator.getPositive(Network.class));
         connect(simManager.getNegative(Timer.class), simulator.getPositive(Timer.class));
         connect(simManager.getNegative(ExperimentPort.class), simulator.getPositive(ExperimentPort.class));
