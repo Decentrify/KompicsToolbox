@@ -17,10 +17,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.example.core;
+package se.sics.p2ptoolbox.simulator.cmd.impl;
+
+import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Status1 {
+public interface KillNodeCmd extends SystemCmd {
+    public Integer getNodeId();
 }

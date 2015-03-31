@@ -33,6 +33,6 @@ public interface StartNodeCmd<E extends ComponentDefinition, A extends Address> 
     public Integer getNodeId();
     public int bootstrapSize();
     public Class<E> getNodeComponentDefinition();
-    public Init<E> getNodeComponentInit(A statusServer, Set<A> bootstrapNodes);
+    public Init<E> getNodeComponentInit(A aggregatorServer, Set<A> bootstrapNodes);
     public A getAddress();
 }

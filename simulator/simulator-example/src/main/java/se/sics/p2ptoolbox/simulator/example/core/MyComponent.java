@@ -72,8 +72,8 @@ public class MyComponent extends ComponentDefinition {
             trigger(new MyNetMsg.NetPong(self, ping.getHeader().getSource(), ping.getContent().id), network);
             
             log.info("sending status msgs");
-            trigger(new MyNetMsg.NetStatus1(self, statusServer), network);
-            trigger(new MyNetMsg.NetStatus2(self, statusServer), network);
+//            trigger(new MyNetMsg.NetStatus1(self, statusServer), network);
+//            trigger(new MyNetMsg.NetStatus2(self, statusServer), network);
         }
     };
 
@@ -85,14 +85,14 @@ public class MyComponent extends ComponentDefinition {
         }
     };
 
-    private void scheduleStatusTimeout() {
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
-        StatusTimeout timeout = new StatusTimeout(spt);
-        spt.setTimeoutEvent(timeout);
-
-        log.debug("scheduling timeout {}", timeout);
-        trigger(spt, timer);
-    }
+//    private void scheduleStatusTimeout() {
+//        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
+//        StatusTimeout timeout = new StatusTimeout(spt);
+//        spt.setTimeoutEvent(timeout);
+//
+//        log.debug("scheduling timeout {}", timeout);
+//        trigger(spt, timer);
+//    }
 
     public static class MyInit extends Init<MyComponent> {
 

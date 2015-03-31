@@ -22,6 +22,7 @@ import java.util.Set;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
+import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -30,9 +31,9 @@ public class DisconnectedNodesNetworkModel implements NetworkModel {
 
     private int id;
     private final NetworkModel baseNM;
-    private final Set<Address> disconnectedNodes;
+    private final Set<Integer> disconnectedNodes;
 
-    public DisconnectedNodesNetworkModel(int id, NetworkModel baseNM, Set<Address> disconnectedNodes) {
+    public DisconnectedNodesNetworkModel(int id, NetworkModel baseNM, Set<Integer> disconnectedNodes) {
         this.id = id;
         this.baseNM = baseNM;
         this.disconnectedNodes = disconnectedNodes;
@@ -40,7 +41,12 @@ public class DisconnectedNodesNetworkModel implements NetworkModel {
 
     @Override
     public long getLatencyMs(Msg message) {
-        if (disconnectedNodes.contains(message.getHeader().getSource()) || disconnectedNodes.contains(message.getHeader().getDestination()))  {
+        Address src = message.getHeader().getSource();
+        Address dst = message.getHeader().getDestination();
+        if(!(src instanceof IntegerIdentifiable) || !(dst instanceof IntegerIdentifiable)) {
+            throw new RuntimeException("used addresses are not identifiable - cannot used DeadLinkNetworkModel with these addresses");
+        }
+        if (disconnectedNodes.contains(((IntegerIdentifiable)src).getId()) || disconnectedNodes.contains(((IntegerIdentifiable)dst).getId()))  {
             return -1;
         }
         return baseNM.getLatencyMs(message);

@@ -48,15 +48,4 @@ public class MyNetMsg {
         }
     }
     
-    public static class NetStatus1 extends MyBasicNetMsg<Status1> {
-        public NetStatus1(BasicAddress src, BasicAddress dst) {
-            super(src, dst, new Status1());
-        }
-    }
-    
-    public static class NetStatus2 extends MyBasicNetMsg<Status2> {
-        public NetStatus2(BasicAddress src, BasicAddress dst) {
-            super(src, dst, new Status2());
-        }
-    }
 }

@@ -17,23 +17,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.dsl.distribution.extra;
+package se.sics.p2ptoolbox.simulator.cmd.impl;
 
-import se.sics.p2ptoolbox.simulator.dsl.distribution.Distribution;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Init;
+import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SequentialDistribution extends Distribution<Integer> {
-    private int current;
-    
-    public SequentialDistribution(int start) {
-        super(Type.OTHER, Integer.class);
-        current = start;
-    }
-    @Override
-    public Integer draw() {
-        return current++;
-    }
-    
+public interface StartAggregatorCmd<E extends ComponentDefinition, A extends Address> extends SystemCmd {
+    public Class<E> getNodeComponentDefinition();
+    public Init<E> getNodeComponentInit();
+    public A getAddress();
 }

@@ -17,10 +17,23 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.example.core;
+package se.sics.p2ptoolbox.simulator.dsl.distribution.extra;
+
+import se.sics.p2ptoolbox.simulator.dsl.distribution.Distribution;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Status2 {
+public class BasicIntSequentialDistribution extends Distribution<Integer> {
+    private int current;
+    
+    public BasicIntSequentialDistribution(int start) {
+        super(Type.OTHER, Integer.class);
+        current = start;
+    }
+    @Override
+    public Integer draw() {
+        return current++;
+    }
+    
 }
