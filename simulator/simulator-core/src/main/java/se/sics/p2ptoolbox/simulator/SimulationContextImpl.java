@@ -29,6 +29,7 @@ import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
+import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -36,54 +37,66 @@ import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 public class SimulationContextImpl implements SimulationContext {
 
     private OperationCmd.ValidationException failureCause = null;
-    
+
     private final Random rand;
     private final Address simulatorAddress;
-
+    
+    private Address aggregatorAddress = null;
     private final Map<Integer, Map<Class<? extends PortType>, Port>> ports;
-    private final Map<Integer, Address> systemNodes;
+    private final Map<Integer, Address> systemOpenNodes; //subset of started nodes containing open nodes
     private final Map<String, Object> otherContext;
 
     public SimulationContextImpl(Random rand, Address simulatorAddress) {
         this.rand = rand;
         this.simulatorAddress = simulatorAddress;
         this.ports = new HashMap<Integer, Map<Class<? extends PortType>, Port>>();
-        this.systemNodes = new HashMap<Integer, Address>();
+        this.systemOpenNodes = new HashMap<Integer, Address>();
         this.otherContext = new HashMap<String, Object>();
     }
+    
+    public void registerAggregator(Address aggregatorAddress) {
+        this.aggregatorAddress = aggregatorAddress;
+    }
+    
+    public Address getAggregatorAddress() {
+        return aggregatorAddress;
+    }
 
-    public boolean bootNode(Integer nodeId, Address nodeAddress) {
-        if (systemNodes.containsKey(nodeId)) {
-            return false;
+    public void bootNode(Integer nodeId, Address nodeAddress) {
+        if (systemOpenNodes.containsKey(nodeId)) {
+            //something fishy
+            return;
         }
-        systemNodes.put(nodeId, nodeAddress);
-        return true;
-    }
-    
-    public boolean killNode(Integer nodeId) {
-        if (!systemNodes.containsKey(nodeId)) {
-            return false;
+        if (nodeAddress instanceof NatedAddress) {
+            NatedAddress natedAddress = (NatedAddress) nodeAddress;
+            if (natedAddress.isOpen()) {
+                systemOpenNodes.put(nodeId, nodeAddress);
+            }
+        } else {
+            systemOpenNodes.put(nodeId, nodeAddress);
         }
-        systemNodes.remove(nodeId);
-        return true;
     }
-    
-    public Set<Address> systemNodesSample(int n, Address self) {
+
+    public void killNode(Integer nodeId) {
+        systemOpenNodes.remove(nodeId);
+    }
+
+    public Set<Address> systemOpenNodesSample(int n, Address self) {
         Set<Address> result = new HashSet<Address>();
-        if(systemNodes.size() < n) {
-            result.addAll(systemNodes.values());
+        if (systemOpenNodes.size() < n) {
+            result.addAll(systemOpenNodes.values());
             result.remove(self);
             return result;
         }
-        List<Address> nodeList = new ArrayList<Address>(systemNodes.values());
-        while(result.size() < n) {
+        List<Address> nodeList = new ArrayList<Address>(systemOpenNodes.values());
+        while (result.size() < n) {
             int nodeIndex = rand.nextInt(nodeList.size());
             result.add(nodeList.remove(nodeIndex));
         }
         result.remove(self);
         return result;
     }
-    
+
     public boolean registerNode(Integer nodeId) {
         if (ports.containsKey(nodeId)) {
             return false;
@@ -95,7 +108,7 @@ public class SimulationContextImpl implements SimulationContext {
     public boolean isNodeRegistered(Integer nodeId) {
         return ports.containsKey(nodeId);
     }
-    
+
     public boolean registerPort(Integer nodeId, Class<? extends PortType> portType, Port port) {
         Map<Class<? extends PortType>, Port> localPorts = ports.get(nodeId);
         if (localPorts == null) {
@@ -119,11 +132,11 @@ public class SimulationContextImpl implements SimulationContext {
     public Address getSimulatorAddress() {
         return simulatorAddress;
     }
-    
+
     public boolean canContinue() {
-        return failureCause == null ;
+        return failureCause == null;
     }
-    
+
     public void fail(OperationCmd.ValidationException cause) {
         this.failureCause = cause;
     }

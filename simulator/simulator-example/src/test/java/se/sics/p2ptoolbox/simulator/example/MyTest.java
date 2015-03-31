@@ -53,26 +53,26 @@ public class MyTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException("cannot create address for localhost");
         }
-        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
-
-            public Class getStatusMsgType() {
-                return MyNetMsg.NetStatus1.class;
-            }
-
-            public void handle(KompicsEvent msg, SimulationContext context) {
-                System.out.println("handling status1");
-            }
-        });
-        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
-
-            public Class getStatusMsgType() {
-                return MyNetMsg.NetStatus2.class;
-            }
-
-            public void handle(KompicsEvent msg, SimulationContext context) {
-                System.out.println("handling status2");
-            }
-        });
+//        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
+//
+//            public Class getStatusMsgType() {
+//                return MyNetMsg.NetStatus1.class;
+//            }
+//
+//            public void handle(KompicsEvent msg, SimulationContext context) {
+//                System.out.println("handling status1");
+//            }
+//        });
+//        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
+//
+//            public Class getStatusMsgType() {
+//                return MyNetMsg.NetStatus2.class;
+//            }
+//
+//            public void handle(KompicsEvent msg, SimulationContext context) {
+//                System.out.println("handling status2");
+//            }
+//        });
         
         Kompics.setScheduler(LauncherComp.scheduler);
         Kompics.createAndStart(LauncherComp.class, 1);

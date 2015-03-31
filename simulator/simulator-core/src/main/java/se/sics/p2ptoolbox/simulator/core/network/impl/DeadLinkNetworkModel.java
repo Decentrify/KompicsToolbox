@@ -24,6 +24,7 @@ import org.javatuples.Pair;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
+import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 
 /**
  *
@@ -32,9 +33,9 @@ import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
 public class DeadLinkNetworkModel implements NetworkModel {
     private int id;
     private final NetworkModel baseNM;
-    private final Set<Pair<Address, Address>> deadLinks;
+    private final Set<Pair<Integer, Integer>> deadLinks;
     
-    public DeadLinkNetworkModel(int id, NetworkModel baseNM, Set<Pair<Address, Address>> deadLinks) {
+    public DeadLinkNetworkModel(int id, NetworkModel baseNM, Set<Pair<Integer, Integer>> deadLinks) {
         this.id = id;
         this.baseNM = baseNM;
         this.deadLinks = deadLinks;
@@ -42,7 +43,12 @@ public class DeadLinkNetworkModel implements NetworkModel {
 
     @Override
     public long getLatencyMs(Msg message) {
-        Pair<Address, Address> link = Pair.with(message.getHeader().getSource(), message.getHeader().getDestination());
+        Address src = message.getHeader().getSource();
+        Address dst = message.getHeader().getDestination();
+        if(!(src instanceof IntegerIdentifiable) || !(dst instanceof IntegerIdentifiable)) {
+            throw new RuntimeException("used addresses are not identifiable - cannot used DeadLinkNetworkModel with these addresses");
+        }
+        Pair<Integer, Integer> link = Pair.with(((IntegerIdentifiable)src).getId(), ((IntegerIdentifiable)dst).getId());
         if(deadLinks.contains(link)) {
             return -1;
         } else {

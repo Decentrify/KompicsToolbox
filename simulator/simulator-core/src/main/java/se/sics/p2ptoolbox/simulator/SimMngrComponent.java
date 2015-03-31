@@ -42,9 +42,10 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.simulator.basic.NatEmulatorComp;
 import se.sics.p2ptoolbox.simulator.cmd.impl.ReStartNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.StopNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
 import se.sics.p2ptoolbox.util.filters.IntegerFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
@@ -63,7 +64,7 @@ public class SimMngrComponent extends ComponentDefinition {
     private Positive<Timer> timer = requires(Timer.class);
 
     private Map<Integer, Pair<Component, Component>> systemNodes;
-
+    private Component aggregator;
     private Component simulationClient;
 
     public SimMngrComponent(SimMngrInit init) {
@@ -74,9 +75,11 @@ public class SimMngrComponent extends ComponentDefinition {
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
+        subscribe(handleStartAggregator, experimentPort);
         subscribe(handleStartNode, experimentPort);
         subscribe(handleStopNode, experimentPort);
-        subscribe(handleReStartNode, experimentPort);
+        //stop-restart does not work in kompics now
+//        subscribe(handleReStartNode, experimentPort); 
         for (final SystemStatusHandler systemStatusHandler : init.systemStatusHandlers) {
             Class<? extends Msg> msgType = systemStatusHandler.getStatusMsgType();
             Handler handler = new Handler(msgType) {
@@ -118,13 +121,34 @@ public class SimMngrComponent extends ComponentDefinition {
     };
 
     //**************************************************************************
+    private Handler<StartAggregatorCmd> handleStartAggregator = new Handler<StartAggregatorCmd>() {
+
+        @Override
+        public void handle(StartAggregatorCmd cmd) {
+            log.info("received start aggregator cmd:{}", cmd);
+
+            aggregator = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit());
+            connect(aggregator.getNegative(Timer.class), timer);
+            Address aggregatorAdr = cmd.getAddress();
+            if (aggregatorAdr instanceof IntegerIdentifiable) {
+                Integer aggregatorId = ((IntegerIdentifiable) aggregatorAdr).getId();
+                connect(aggregator.getNegative(Network.class), network, new IntegerFilter(aggregatorId));
+            } else {
+                log.error("aggregator address is wrong - not identifiable");
+                throw new RuntimeException("aggregator address is wrong - not identifiable");
+            }
+            simulationContext.registerAggregator(aggregatorAdr);
+            trigger(Start.event, aggregator.control());
+        }
+    };
+
     private Handler<StartNodeCmd> handleStartNode = new Handler<StartNodeCmd>() {
 
         @Override
         public void handle(StartNodeCmd cmd) {
             log.info("received start cmd:{} for node:{}", cmd, cmd.getNodeId());
 
-            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getSimulatorAddress(), simulationContext.systemNodesSample(cmd.bootstrapSize(), cmd.getAddress())));
+            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getAggregatorAddress(), simulationContext.systemOpenNodesSample(cmd.bootstrapSize(), cmd.getAddress())));
             connect(node.getNegative(Timer.class), timer);
 
             Component natEmulator = null;
@@ -143,7 +167,7 @@ public class SimMngrComponent extends ComponentDefinition {
             simulationContext.bootNode(cmd.getNodeId(), cmd.getAddress());
             systemNodes.put(cmd.getNodeId(), Pair.with(node, natEmulator));
             //********************************
-            
+
             if (cmd.getAddress() instanceof NatedAddress) {
                 trigger(Start.event, natEmulator.control());
             }
@@ -152,10 +176,10 @@ public class SimMngrComponent extends ComponentDefinition {
 
     };
 
-    private Handler<StopNodeCmd> handleStopNode = new Handler<StopNodeCmd>() {
+    private Handler<KillNodeCmd> handleStopNode = new Handler<KillNodeCmd>() {
 
         @Override
-        public void handle(StopNodeCmd cmd) {
+        public void handle(KillNodeCmd cmd) {
             log.info("received stop cmd:{} for node:{}", cmd, cmd.getNodeId());
 
             if (!systemNodes.containsKey(cmd.getNodeId())) {

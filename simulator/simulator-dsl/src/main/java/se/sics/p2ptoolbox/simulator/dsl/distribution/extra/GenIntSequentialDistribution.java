@@ -17,13 +17,31 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.simulator.cmd.impl;
+package se.sics.p2ptoolbox.simulator.dsl.distribution.extra;
 
-import se.sics.p2ptoolbox.simulator.cmd.SystemCmd;
+import se.sics.p2ptoolbox.simulator.dsl.distribution.Distribution;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface StopNodeCmd extends SystemCmd {
-    public Integer getNodeId();
+public class GenIntSequentialDistribution extends Distribution<Integer> {
+    private final BasicIntSequentialDistribution indexDist;
+    private final Integer[] sequence;
+    
+    public GenIntSequentialDistribution(Integer[] sequence) {
+        super(Type.OTHER, Integer.class);
+        this.sequence = sequence;
+        this.indexDist = new BasicIntSequentialDistribution(0);
+    }
+
+    @Override
+    public Integer draw() {
+        int index = indexDist.draw();
+        if(index < sequence.length) {
+            return sequence[index];
+        } else {
+            return null;
+        }
+    }
+    
 }

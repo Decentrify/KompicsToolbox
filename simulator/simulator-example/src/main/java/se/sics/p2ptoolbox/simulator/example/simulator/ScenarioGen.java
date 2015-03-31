@@ -78,8 +78,8 @@ public class ScenarioGen {
                 }
 
                 @Override
-                public MyComponent.MyInit getNodeComponentInit(BasicAddress statusServer, Set<BasicAddress> bootstrapNodes) {
-                    return new MyComponent.MyInit(nodeAddressMap.get(nodeId), statusServer);
+                public MyComponent.MyInit getNodeComponentInit(BasicAddress aggregatorServer, Set<BasicAddress> bootstrapNodes) {
+                    return new MyComponent.MyInit(nodeAddressMap.get(nodeId), aggregatorServer);
                 }
 
                 @Override
