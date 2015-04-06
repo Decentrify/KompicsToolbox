@@ -25,10 +25,9 @@ import se.sics.kompics.network.Transport;
 import se.sics.p2ptoolbox.util.network.ContentMsg;
 
 /**
- *
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public abstract class BasicContentMsg<A extends Address, H extends Header<A>, C extends Object> implements ContentMsg<A, H, C>{
+public class BasicContentMsg<A extends Address, H extends Header<A>, C extends Object> implements ContentMsg<A, H, C>{
     private final H header;
     private final C content;
     
@@ -61,5 +60,14 @@ public abstract class BasicContentMsg<A extends Address, H extends Header<A>, C 
     public Transport getProtocol() {
         return header.getProtocol();
     }
-    
+
+    @Override
+    public Class<C> extractPattern() {
+        return (Class<C>)content.getClass();
+    }
+
+    @Override
+    public C extractValue() {
+        return content;
+    }
 }

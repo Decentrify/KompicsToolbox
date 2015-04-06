@@ -19,19 +19,15 @@
 
 package se.sics.p2ptoolbox.croupier.example.core;
 
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
-
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class PeerViewB implements PeerView {
+public class PeerViewB {
     public final int counter;
     public PeerViewB(int counter) {
         this.counter = counter;
     }
-    public PeerViewB deepCopy() {
-        return new PeerViewB(counter);
-    }
+
     @Override
     public String toString() {
         return "" + counter;

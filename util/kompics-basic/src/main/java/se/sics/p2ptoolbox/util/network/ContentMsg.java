@@ -19,6 +19,7 @@
 
 package se.sics.p2ptoolbox.util.network;
 
+import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Header;
 import se.sics.kompics.network.Msg;
@@ -26,6 +27,6 @@ import se.sics.kompics.network.Msg;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface ContentMsg<Adr extends Address, H extends Header<Adr>, Content extends Object> extends Msg<Adr, H>{
+public interface ContentMsg<Adr extends Address, H extends Header<Adr>, Content extends Object> extends Msg<Adr, H>, PatternExtractor<Class<Content>, Content>{
     public Content getContent();
 }

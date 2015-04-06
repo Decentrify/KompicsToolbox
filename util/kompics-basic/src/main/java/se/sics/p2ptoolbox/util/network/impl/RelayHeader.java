@@ -22,12 +22,11 @@ package se.sics.p2ptoolbox.util.network.impl;
 import se.sics.kompics.network.Header;
 import se.sics.kompics.network.Transport;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
-import se.sics.p2ptoolbox.util.network.NatedHeader;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class RelayHeader<A extends NatedAddress> implements NatedHeader<A> {
+public class RelayHeader<A extends NatedAddress> implements Header<A> {
     private final Header<A> baseH;
     private final A relay;
     

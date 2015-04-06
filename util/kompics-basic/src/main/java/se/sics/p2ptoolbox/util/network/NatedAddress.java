@@ -30,4 +30,10 @@ public interface NatedAddress extends Address, IntegerIdentifiable {
     public boolean isOpen();
     public NatType getNatType();
     public Set<NatedAddress> getParents();
+    /**
+     * base Address without the nat decorator elements
+     * a host should be identifiable at all times by the base address
+     * a hosts nated address might change - when parents change
+     */ 
+    public Address getBaseAddress(); 
 }

@@ -67,7 +67,7 @@ public class BasicNatedAddress implements NatedAddress {
     
     @Override
     public String toString() {
-        return base.toString() + (isOpen() ? " OPEN " : " NATED " );
+        return base.toString() + (isOpen() ? "OPEN" : "NATED" );
     }
 
     @Override
@@ -121,5 +121,10 @@ public class BasicNatedAddress implements NatedAddress {
     @Override
     public Integer getId() {
         return base.getId();
+    }
+    
+    //**************************************************************************
+    public BasicAddress getBaseAddress() {
+        return base;
     }
 }

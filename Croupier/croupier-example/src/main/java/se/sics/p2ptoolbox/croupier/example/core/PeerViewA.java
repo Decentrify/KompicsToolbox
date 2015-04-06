@@ -16,23 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.croupier.example.core;
-
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class PeerViewA implements PeerView {
+public class PeerViewA {
+
     public final boolean flag;
-    
+
     public PeerViewA(boolean flag) {
         this.flag = flag;
     }
-    public PeerViewA deepCopy() {
-        return new PeerViewA(flag);
-    }
+
     @Override
     public String toString() {
         return "" + flag;
