@@ -8,14 +8,13 @@
     </parent>
     <groupId>se.sics.p2ptoolbox</groupId>
     <artifactId>simulator</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Simulator</name>
     <modules>
         <module>simulator-core</module>
         <module>simulator-example</module>
         <module>simulator-dsl</module>
-    <module>simulator-basic</module>
   </modules>
     
     <properties>
@@ -24,6 +23,7 @@
         <java.compiler.version>1.6</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kompics.version>0.8.0-SNAPSHOT</kompics.version>
+        <p2ptoolbox.util.version>1.2-SNAPSHOT</p2ptoolbox.util.version>
     </properties>
     
     <dependencies>
@@ -49,6 +49,17 @@
             <groupId>se.sics.kompics.simulation</groupId>
             <artifactId>kompics-simulation</artifactId>
             <version>${kompics.version}</version>
+        </dependency>
+        
+        <dependency> 
+            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <artifactId>basic</artifactId>
+            <version>${p2ptoolbox.util.version}</version>
+        </dependency>
+        <dependency> 
+            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <artifactId>kompics-basic</artifactId>
+            <version>${p2ptoolbox.util.version}</version>
         </dependency>
         
         <dependency>

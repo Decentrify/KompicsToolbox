@@ -55,7 +55,19 @@ public class BasicAddress implements Address, IntegerIdentifiable {
 
     @Override
     public boolean sameHostAs(Address other) {
-        return this.isa.equals(other.asSocket());
+        if(other == null) {
+            return false;
+        }
+        if(!this.isa.equals(other.asSocket())) {
+            return false;
+        }
+        if(!(other instanceof IntegerIdentifiable)) {
+            throw new RuntimeException("Mix of indentifiable and non identifiable addresses");
+        }
+        if(id != ((IntegerIdentifiable)other).getId()) {
+            return false;
+        }
+        return true;
     }
 
     @Override

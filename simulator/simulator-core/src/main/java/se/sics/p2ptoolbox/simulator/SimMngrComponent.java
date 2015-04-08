@@ -46,7 +46,7 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
-import se.sics.p2ptoolbox.util.filters.IntegerFilter;
+import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 
@@ -102,7 +102,7 @@ public class SimMngrComponent extends ComponentDefinition {
             log.info("starting...");
 
             simulationClient = create(SimClientComponent.class, new SimClientComponent.SimClientInit(simulationContext));
-            connect(simulationClient.getNegative(Network.class), network, new IntegerFilter(((IntegerIdentifiable) simulationContext.getSimulatorAddress()).getId()));
+            connect(simulationClient.getNegative(Network.class), network, new IntegerIdentifiableFilter(((IntegerIdentifiable) simulationContext.getSimulatorAddress()).getId()));
             connect(simulationClient.getNegative(Timer.class), timer);
             connect(simulationClient.getNegative(ExperimentPort.class), experimentPort);
 
@@ -132,7 +132,7 @@ public class SimMngrComponent extends ComponentDefinition {
             Address aggregatorAdr = cmd.getAddress();
             if (aggregatorAdr instanceof IntegerIdentifiable) {
                 Integer aggregatorId = ((IntegerIdentifiable) aggregatorAdr).getId();
-                connect(aggregator.getNegative(Network.class), network, new IntegerFilter(aggregatorId));
+                connect(aggregator.getNegative(Network.class), network, new IntegerIdentifiableFilter(aggregatorId));
             } else {
                 log.error("aggregator address is wrong - not identifiable");
                 throw new RuntimeException("aggregator address is wrong - not identifiable");
@@ -155,12 +155,12 @@ public class SimMngrComponent extends ComponentDefinition {
             Negative<Network> nodeNetwork = null;
             if (cmd.getAddress() instanceof NatedAddress) {
                 natEmulator = create(NatEmulatorComp.class, new NatEmulatorComp.NatEmulatorInit((NatedAddress) cmd.getAddress()));
-                connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class), new IntegerFilter(cmd.getNodeId()));
+                connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class));
                 nodeNetwork = natEmulator.getNegative(Network.class);
             } else {
                 nodeNetwork = node.getNegative(Network.class);
             }
-            connect(nodeNetwork, network, new IntegerFilter(cmd.getNodeId()));
+            connect(nodeNetwork, network, new IntegerIdentifiableFilter(cmd.getNodeId()));
 
             //TODO maybe this should be one method
             simulationContext.registerNode(cmd.getNodeId());
@@ -209,9 +209,9 @@ public class SimMngrComponent extends ComponentDefinition {
             }
             Pair<Component, Component> node = systemNodes.get(cmd.getNodeId());
             if (node.getValue1() != null) {
-                connect(node.getValue1().getNegative(Network.class), network, new IntegerFilter(cmd.getNodeId()));
+                connect(node.getValue1().getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
             } else {
-                connect(node.getValue0().getNegative(Network.class), network, new IntegerFilter(cmd.getNodeId()));
+                connect(node.getValue0().getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
             }
             connect(node.getValue0().getNegative(Timer.class), timer);
             trigger(Start.event, node.getValue0().control());

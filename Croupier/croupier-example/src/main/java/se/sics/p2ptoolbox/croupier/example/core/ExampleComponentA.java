@@ -19,7 +19,6 @@
 package se.sics.p2ptoolbox.croupier.example.core;
 
 import java.util.Random;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -27,9 +26,11 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.p2ptoolbox.croupier.api.CroupierPort;
-import se.sics.p2ptoolbox.croupier.api.msg.CroupierSample;
-import se.sics.p2ptoolbox.croupier.api.msg.CroupierUpdate;
+import se.sics.kompics.Stop;
+import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.croupier.CroupierPort;
+import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
+import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -39,14 +40,18 @@ public class ExampleComponentA extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(ExampleComponentA.class);
 
     private Positive croupier = requires(CroupierPort.class);
-    
+
+    private final Address selfAddress;
     private final Random rand;
     private boolean flag;
 
     public ExampleComponentA(ExampleInitA init) {
+        this.selfAddress = init.selfAddress;
+        log.info("{} intiating...", selfAddress);
         this.rand = init.rand;
         this.flag = true;
         subscribe(handleStart, control);
+        subscribe(handleStop, control);
         subscribe(handleCroupierSample, croupier);
     }
 
@@ -54,28 +59,39 @@ public class ExampleComponentA extends ComponentDefinition {
 
         @Override
         public void handle(Start event) {
-            log.info("ExampleComponentA starting, sending first croupier update");
-            trigger(new CroupierUpdate(UUID.randomUUID(), new PeerViewA(flag)), croupier);
+            log.info("{} starting...", selfAddress);
+            log.debug("sending first self update");
+            trigger(new CroupierUpdate(new PeerViewA(flag)), croupier);
         }
+    };
+    Handler<Stop> handleStop = new Handler<Stop>() {
 
+        @Override
+        public void handle(Stop event) {
+            log.info("{} stopping...", selfAddress);
+        }
     };
 
     Handler<CroupierSample> handleCroupierSample = new Handler<CroupierSample>() {
 
         @Override
         public void handle(CroupierSample sample) {
-            log.info("ExampleComponentA - croupier public sample {} \n croupier private sample{}", sample.publicSample, sample.privateSample);
-            if(rand.nextDouble() > 0.7) {
+            log.info("\n{} Croupier public sample:{} \n{} Croupier private sample:{}", 
+                    new Object[]{selfAddress, sample.publicSample, selfAddress, sample.privateSample});
+            if (rand.nextDouble() > 0.7) {
                 flag = !flag;
-                trigger(new CroupierUpdate(UUID.randomUUID(), new PeerViewA(flag)), croupier);
+                trigger(new CroupierUpdate(new PeerViewA(flag)), croupier);
             }
         }
     };
-    
+
     public static class ExampleInitA extends Init<ExampleComponentA> {
+
+        public final Address selfAddress;
         public final Random rand;
-        
-        public ExampleInitA(long seed) {
+
+        public ExampleInitA(Address selfAddress, long seed) {
+            this.selfAddress = selfAddress;
             this.rand = new Random(seed + 1);
         }
     }

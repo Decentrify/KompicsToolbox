@@ -9,31 +9,70 @@
     <groupId>se.sics.p2ptoolbox.croupier</groupId>
     <artifactId>croupier</artifactId>
     <name>Croupier</name>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <modules>
         <module>croupier-api</module>
         <module>croupier-core</module>
         <module>croupier-example</module>
-    </modules>
+    <module>croupier-network</module>
+  </modules>
     
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <java.compiler.version>1.6</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kompics.version>0.6.1-SNAPSHOT</kompics.version>
-        <network.version>1.2.1-SNAPSHOT</network.version>
-        <p2ptoolbox.serialization.version>1.0-SNAPSHOT</p2ptoolbox.serialization.version>
-        <guava.version>17.0</guava.version>
+        <kompics.version>0.8.0-SNAPSHOT</kompics.version>
     </properties>
     
     <dependencies>
         <dependency>
+            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <artifactId>basic</artifactId>
+            <version>1.2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <artifactId>kompics-basic</artifactId>
+            <version>1.2-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
             <groupId>se.sics.kompics</groupId>
             <artifactId>kompics-core</artifactId>
             <version>${kompics.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.kompics.basic</groupId>
+            <artifactId>kompics-port-timer</artifactId>
+            <version>${kompics.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.kompics.basic</groupId>
+            <artifactId>kompics-port-network</artifactId>
+            <version>${kompics.version}</version>
+            <type>jar</type>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.5.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
             <type>jar</type>
         </dependency>
     </dependencies>

@@ -5,11 +5,11 @@
     <parent>
         <groupId>se.sics.p2ptoolbox</groupId>
         <artifactId>util</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.p2ptoolbox.util</groupId>
     <artifactId>kompics-basic</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <name>Util Basic Kompics</name>
     <url>http://maven.apache.org</url>
     <properties>
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>se.sics.p2ptoolbox.util</groupId>
             <artifactId>basic</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>se.sics.kompics</groupId>
