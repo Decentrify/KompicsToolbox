@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Croupier is free software; you can redistribute it and/or
+ * GVoD is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,21 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.p2ptoolbox.gradient.msg;
 
-package se.sics.p2ptoolbox.croupier.msg;
+import java.util.List;
+import se.sics.p2ptoolbox.util.Container;
+import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * Set of peer views published by the gradient periodically.
+ *
+ * Created by babbarshaer on 2015-02-26.
  */
-public class CroupierUpdate<C extends Object> implements CroupierMsg.OneWay {
-    public final C selfView;
+public class GradientSample<C extends Object> extends GradientMsg.OneWay {
     
-    public CroupierUpdate(C selfView) {
-        this.selfView = selfView;
-    }
-
-    @Override
-    public String toString() {
-        return "UPDATE";
+    public final List<Container<NatedAddress, C>> gradientSample;
+    
+    public GradientSample(List<Container<NatedAddress, C>> gradientPeerViewSet) {
+        super();
+        this.gradientSample = gradientPeerViewSet;
     }
 }

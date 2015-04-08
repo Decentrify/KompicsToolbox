@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Croupier is free software; you can redistribute it and/or
+ * GVoD is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -17,20 +17,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.msg;
+package se.sics.p2ptoolbox.gradient.util;
+
+import java.util.Comparator;
+import se.sics.p2ptoolbox.util.Java6Util;
 
 /**
+ * do not use with TreeSets or TreeMaps - it is not equal equivalent
+ * sorts ascending - from small age to high ages
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierUpdate<C extends Object> implements CroupierMsg.OneWay {
-    public final C selfView;
-    
-    public CroupierUpdate(C selfView) {
-        this.selfView = selfView;
-    }
+public class GradientContainerAgeComparator implements Comparator<GradientContainer> {
 
     @Override
-    public String toString() {
-        return "UPDATE";
+    public int compare(GradientContainer o1, GradientContainer o2) {
+        if(o1 == null || o2 == null) {
+            throw new NullPointerException();
+        }
+        return Java6Util.compareInt(o1.getAge(), o2.getAge());
     }
+    
 }

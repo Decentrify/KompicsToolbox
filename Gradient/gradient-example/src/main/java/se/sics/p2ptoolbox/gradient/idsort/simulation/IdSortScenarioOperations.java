@@ -16,12 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.example.simulation;
+package se.sics.p2ptoolbox.gradient.idsort.simulation;
 
+import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Set;
-import se.sics.p2ptoolbox.croupier.example.core.CroupierHostComp;
+import se.sics.p2ptoolbox.gradient.idsort.system.IdSortHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
@@ -35,9 +37,10 @@ import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierScenarioOperations {
+public class IdSortScenarioOperations {
 
-    public static long seed;
+    public static long seed = 1234l;
+    public static double softMaxTemperature = 1;
     private static int bootstrapSize = 5;
     private static InetAddress localHost;
     static {
@@ -60,16 +63,16 @@ public class CroupierScenarioOperations {
 
         @Override
         public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<CroupierHostComp, NatedAddress>() {
+            return new StartNodeCmd<IdSortHostComp, NatedAddress>() {
                 private NatedAddress nodeAddress;
 
                 @Override
                 public Class getNodeComponentDefinition() {
-                    return CroupierHostComp.class;
+                    return IdSortHostComp.class;
                 }
 
                 @Override
-                public CroupierHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
+                public IdSortHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
                     //open address
                     nodeAddress = new BasicNatedAddress(new BasicAddress(localHost, 12345, nodeId));
                     /**
@@ -77,7 +80,8 @@ public class CroupierScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    return new CroupierHostComp.HostInit(nodeAddress, bootstrapNodes, nodeSeed, aggregatorServer);
+                    int period = 1000;
+                    return new IdSortHostComp.HostInit(nodeAddress, new ArrayList<NatedAddress>(bootstrapNodes), nodeSeed, period, softMaxTemperature);
                 }
 
                 @Override
@@ -105,7 +109,7 @@ public class CroupierScenarioOperations {
             return new SimulationResult() {
                 @Override
                 public void setSimulationResult(OperationCmd.ValidationException failureCause) {
-                    CroupierSimulationResult.failureCause = failureCause;
+                    GradientSimulationResult.failureCause = failureCause;
                 }
             };
         }

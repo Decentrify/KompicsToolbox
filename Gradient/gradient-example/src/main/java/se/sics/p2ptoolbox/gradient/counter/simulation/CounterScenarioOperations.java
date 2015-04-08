@@ -16,18 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.example.simulation;
+package se.sics.p2ptoolbox.gradient.counter.simulation;
 
+import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
-import se.sics.p2ptoolbox.croupier.example.core.CroupierHostComp;
+import org.javatuples.Pair;
+import se.sics.p2ptoolbox.gradient.counter.system.CounterHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
+import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation2;
 import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
@@ -35,9 +41,10 @@ import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierScenarioOperations {
+public class CounterScenarioOperations {
 
-    public static long seed;
+    public static long seed = 1234l;
+    public static double softMaxTemperature = 1;
     private static int bootstrapSize = 5;
     private static InetAddress localHost;
     static {
@@ -46,6 +53,12 @@ public class CroupierScenarioOperations {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
+    }
+    private final static Map<Integer, Pair<Double, Integer>> counterRateMap = new HashMap<Integer, Pair<Double, Integer>>();
+    static {
+        counterRateMap.put(1, Pair.with(0.95d, 5)); //medium
+        counterRateMap.put(2, Pair.with(0.99d, 15)); //slow but big steps
+        counterRateMap.put(3, Pair.with(0.90d, 1)); //fast but little steps
     }
 
     static Operation1<StartAggregatorCmd, Integer> startAggregatorOp = new Operation1<StartAggregatorCmd, Integer>() {
@@ -56,20 +69,20 @@ public class CroupierScenarioOperations {
         }
     };
 
-    static Operation1<StartNodeCmd, Integer> startNodeOp = new Operation1<StartNodeCmd, Integer>() {
+    static Operation2<StartNodeCmd, Integer, Integer> startNodeOp = new Operation2<StartNodeCmd, Integer, Integer>() {
 
         @Override
-        public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<CroupierHostComp, NatedAddress>() {
+        public StartNodeCmd generate(final Integer nodeId, final Integer counterRateType) {
+            return new StartNodeCmd<CounterHostComp, NatedAddress>() {
                 private NatedAddress nodeAddress;
 
                 @Override
                 public Class getNodeComponentDefinition() {
-                    return CroupierHostComp.class;
+                    return CounterHostComp.class;
                 }
 
                 @Override
-                public CroupierHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
+                public CounterHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
                     //open address
                     nodeAddress = new BasicNatedAddress(new BasicAddress(localHost, 12345, nodeId));
                     /**
@@ -77,7 +90,8 @@ public class CroupierScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    return new CroupierHostComp.HostInit(nodeAddress, bootstrapNodes, nodeSeed, aggregatorServer);
+                    int period = 1000;
+                    return new CounterHostComp.HostInit(nodeAddress, new ArrayList<NatedAddress>(bootstrapNodes), nodeSeed, period, counterRateMap.get(counterRateType), softMaxTemperature);
                 }
 
                 @Override
@@ -105,7 +119,7 @@ public class CroupierScenarioOperations {
             return new SimulationResult() {
                 @Override
                 public void setSimulationResult(OperationCmd.ValidationException failureCause) {
-                    CroupierSimulationResult.failureCause = failureCause;
+                    GradientSimulationResult.failureCause = failureCause;
                 }
             };
         }

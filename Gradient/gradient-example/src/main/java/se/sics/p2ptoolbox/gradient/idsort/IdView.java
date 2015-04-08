@@ -17,20 +17,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.msg;
+package se.sics.p2ptoolbox.gradient.idsort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierUpdate<C extends Object> implements CroupierMsg.OneWay {
-    public final C selfView;
+public class IdView {
+    public final int id;
     
-    public CroupierUpdate(C selfView) {
-        this.selfView = selfView;
+    public IdView(int id) {
+        this.id = id;
     }
 
     @Override
     public String toString() {
-        return "UPDATE";
+        return "" + id;
     }
 }

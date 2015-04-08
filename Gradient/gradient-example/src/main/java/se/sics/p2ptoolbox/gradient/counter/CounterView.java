@@ -17,20 +17,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.msg;
+package se.sics.p2ptoolbox.gradient.counter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierUpdate<C extends Object> implements CroupierMsg.OneWay {
-    public final C selfView;
+public class CounterView {
+    public final int counter;
     
-    public CroupierUpdate(C selfView) {
-        this.selfView = selfView;
+    public CounterView(int counter) {
+        this.counter = counter;
     }
 
     @Override
     public String toString() {
-        return "UPDATE";
+        return "" + counter;
     }
 }
