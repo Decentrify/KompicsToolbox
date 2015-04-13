@@ -7,30 +7,30 @@
         <artifactId>util</artifactId>
         <version>1.3-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox.util</groupId>
-    <artifactId>kompics-basic</artifactId>
-    <name>Util Basic Kompics</name>
+    <groupId>se.sics.p2ptoolbox</groupId>
+    <artifactId>util-serializer</artifactId>
+    <name>Util Serializer</name>
     <url>http://maven.apache.org</url>
+  
     <properties>
         <kompics.version>0.8.0-SNAPSHOT</kompics.version>
     </properties>
+    
     <dependencies>
+        <dependency>
+            <groupId>se.sics.kompics.basic</groupId>
+            <artifactId>kompics-component-netty-network</artifactId>
+            <version>${kompics.version}</version>
+        </dependency>
         <dependency>
             <groupId>se.sics.p2ptoolbox.util</groupId>
             <artifactId>basic</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.sics.kompics</groupId>
-            <artifactId>kompics-core</artifactId>
-            <version>${kompics.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>se.sics.kompics.basic</groupId>
-            <artifactId>kompics-port-network</artifactId>
-            <version>${kompics.version}</version>
-            <type>jar</type>
+            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <artifactId>kompics-basic</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

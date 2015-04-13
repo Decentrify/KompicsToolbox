@@ -18,45 +18,51 @@
  */
 package se.sics.p2ptoolbox.util.network.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import se.sics.kompics.network.Address;
-import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicOverlayHeader<A extends Address> implements Header<A>, OverlayMember {
+public class Route<Adr extends Address> {
 
-    private final BasicHeader<A> baseHeader;
-    private final int overlayId;
+    private final List<Adr> route;
 
-    public BasicOverlayHeader(BasicHeader<A> base, int overlayId) {
-        this.baseHeader = base;
-        this.overlayId = overlayId;
+    public Route(List<Adr> route) {
+        this.route = route;
     }
 
-    public BasicOverlayHeader(A source, A destination, Transport protocol, int overlayId) {
-        this(new BasicHeader(source, destination, protocol), overlayId);
+    public Adr getSource() {
+        if (route.size() > 0) {
+            return route.get(0);
+        }
+        return null;
     }
 
-    @Override
-    public A getSource() {
-        return baseHeader.getSource();
+    public Adr getDestination() {
+        if (route.size() > 1) {
+            return route.get(1);
+        }
+        return null;
     }
 
-    @Override
-    public A getDestination() {
-        return baseHeader.getDestination();
+    public boolean hasNext() {
+        return route.size() > 1;
     }
 
-    @Override
-    public Transport getProtocol() {
-        return baseHeader.getProtocol();
+    public Route next() {
+        if (route.size() > 1) {
+            return new Route(new ArrayList<Adr>(route.subList(1, route.size())));
+        }
+        return null;
     }
 
-    @Override
-    public int getOverlayId() {
-        return overlayId;
+    public Route prepend(List<Adr> newPrefix) {
+        List<Adr> newRoute = new ArrayList<Adr>();
+        newRoute.add(route.get(0));
+        newRoute.addAll(newPrefix);
+        newRoute.addAll(route.subList(1, route.size()));
+        return new Route(newRoute);
     }
 }

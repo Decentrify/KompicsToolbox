@@ -17,44 +17,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.network.impl;
+package se.sics.p2ptoolbox.util.traits;
 
-import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import java.util.List;
+import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SourceHeader<A extends NatedAddress> implements Header<A>  {
-    private final Header<A> baseH;
-    private final A relay;
-    
-    public SourceHeader(Header<A> base, A relay) {
-        this.baseH = base;
-        this.relay = relay;
-    }
-    
-    @Override
-    public A getSource() {
-        return baseH.getSource();
-    }
-
-    @Override
-    public A getDestination() {
-        return relay;
-    }
-
-    @Override
-    public Transport getProtocol() {
-        return baseH.getProtocol();
-    }
-    
-    public A getActualDestination() {
-        return baseH.getDestination();
-    }
-    
-    public RelayHeader getRelayHeader() {
-        return new RelayHeader(baseH, relay);
-    }
+public interface Forwardable<Adr extends Address> extends Trait {
+    public DecoratedHeader<Adr> next();
+    public DecoratedHeader<Adr> prependRoute(List<Adr> route);
 }

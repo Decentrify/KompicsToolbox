@@ -22,6 +22,5 @@ package se.sics.p2ptoolbox.util.traits;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface OverlayMember extends Trait {
-    public int getOverlayId();
+public interface Trait {
 }

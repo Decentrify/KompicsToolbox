@@ -21,30 +21,42 @@ package se.sics.p2ptoolbox.util.network.impl;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashSet;
 import java.util.Set;
 import se.sics.kompics.network.Address;
-import se.sics.p2ptoolbox.util.network.NatType;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
+import se.sics.p2ptoolbox.util.traits.Nated;
+import se.sics.p2ptoolbox.util.traits.Trait;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicNatedAddress implements NatedAddress {
+public class DecoratedAddress implements Address, IntegerIdentifiable {
     private final BasicAddress base;
-    private final NatType natType;
-    private final Set<NatedAddress> parents;
     
-    public BasicNatedAddress(BasicAddress base, NatType natType, Set<NatedAddress> parents) {
+    //traits
+    private final Set<DecoratedAddress> parents;
+
+    public DecoratedAddress(BasicAddress base, Set<DecoratedAddress> parents) {
         this.base = base;
-        this.natType = natType;
         this.parents = parents;
     }
     
-    public BasicNatedAddress(BasicAddress base) {
-        this(base, NatType.OPEN, new HashSet<NatedAddress>());
+    public DecoratedAddress(InetAddress addr, int port, int id) {
+        this(new BasicAddress(addr, port, id), null);
     }
-
+    
+    public DecoratedAddress(BasicAddress base) {
+        this(base, null);
+    }
+    
+    public static DecoratedAddress addNatedTrait(Address adr, Set<DecoratedAddress> parents) {
+        if (adr instanceof BasicAddress) {
+            return new DecoratedAddress((BasicAddress) adr, parents);
+        }
+        DecoratedAddress dAdr = (DecoratedAddress) adr;
+        return new DecoratedAddress(dAdr.base, parents);
+    }
+    
     @Override
     public InetAddress getIp() {
         return base.getIp();
@@ -64,18 +76,17 @@ public class BasicNatedAddress implements NatedAddress {
     public boolean sameHostAs(Address other) {
         return base.sameHostAs(other);
     }
-    
+
     @Override
-    public String toString() {
-        return base.toString() + (isOpen() ? "OPEN" : "NATED" );
+    public Integer getId() {
+        return base.getId();
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 31 * hash + (this.base != null ? this.base.hashCode() : 0);
-        hash = 31 * hash + (this.natType != null ? this.natType.hashCode() : 0);
-        hash = 31 * hash + (this.parents != null ? this.parents.hashCode() : 0);
+        int hash = 3;
+        hash = 47 * hash + (this.base != null ? this.base.hashCode() : 0);
+        hash = 47 * hash + (this.parents != null ? this.parents.hashCode() : 0);
         return hash;
     }
 
@@ -87,11 +98,8 @@ public class BasicNatedAddress implements NatedAddress {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final BasicNatedAddress other = (BasicNatedAddress) obj;
+        final DecoratedAddress other = (DecoratedAddress) obj;
         if (this.base != other.base && (this.base == null || !this.base.equals(other.base))) {
-            return false;
-        }
-        if (this.natType != other.natType) {
             return false;
         }
         if (this.parents != other.parents && (this.parents == null || !this.parents.equals(other.parents))) {
@@ -100,31 +108,34 @@ public class BasicNatedAddress implements NatedAddress {
         return true;
     }
     
+    @Override
+    public String toString() {
+        return base.toString();
+    }
+    //********************DecoratedAddress***************************************
+    public <E extends Trait> boolean hasTrait(Class<E> traitClass) {
+        if (traitClass.equals(Nated.class)) {
+            return parents != null;
+        }
+        throw new RuntimeException("unknown address trait" + traitClass);
+    }
+    public <E extends Trait> E getTrait(Class<E> traitClass) {
+        if (traitClass.equals(Nated.class)) {
+            return (E) new Nated<DecoratedAddress>() {
+                @Override
+                public Set<DecoratedAddress> getParents() {
+                    return parents;
+                }
+            };
+        }
+        throw new RuntimeException("unknown header trait" + traitClass);
+    }
     
-    //********************NAT***************************************************
-    @Override
-    public boolean isOpen() {
-        return natType.equals(NatType.OPEN);
-    }
-
-    @Override
-    public NatType getNatType() {
-        return natType;
-    }
-
-    @Override
-    public Set<NatedAddress> getParents() {
+    //**********************Packaged - used for Serialization*******************
+    Set<DecoratedAddress> getParents() {
         return parents;
     }
-
-    //********************Identifiable******************************************
-    @Override
-    public Integer getId() {
-        return base.getId();
-    }
-    
-    //**************************************************************************
-    public BasicAddress getBaseAddress() {
+    BasicAddress getBase() {
         return base;
     }
 }
