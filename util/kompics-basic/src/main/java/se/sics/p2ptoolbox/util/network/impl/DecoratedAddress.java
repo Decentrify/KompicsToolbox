@@ -115,6 +115,10 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
     public String toString() {
         return base.toString();
     }
+    
+    public BasicAddress getBase() {
+        return base;
+    }
     //********************DecoratedAddress***************************************
     public <E extends Trait> boolean hasTrait(Class<E> traitClass) {
         if (traitClass.equals(Nated.class)) {
@@ -138,7 +142,5 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
     Set<DecoratedAddress> getParents() {
         return parents;
     }
-    BasicAddress getBase() {
-        return base;
-    }
+   
 }
