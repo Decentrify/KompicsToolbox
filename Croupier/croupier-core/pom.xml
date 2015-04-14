@@ -4,11 +4,10 @@
     <parent>
         <groupId>se.sics.p2ptoolbox.croupier</groupId>
         <artifactId>croupier</artifactId>
-        <version>1.3-SNAPSHOT</version>
+        <version>1.5-SNAPSHOT</version>
     </parent>
     <artifactId>croupier-core</artifactId>
     <name>Croupier Core</name>
-    <version>1.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     
     <dependencies>

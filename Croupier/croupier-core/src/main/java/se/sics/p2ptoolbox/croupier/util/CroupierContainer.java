@@ -19,25 +19,25 @@
 package se.sics.p2ptoolbox.croupier.util;
 
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.traits.Ageing;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierContainer<C extends Object> implements Container<NatedAddress, C>, Ageing {
+public class CroupierContainer<C extends Object> implements Container<DecoratedAddress, C>, Ageing {
 
     private int age;
-    private NatedAddress src;
+    private DecoratedAddress src;
     private final C content;
 
-    public CroupierContainer(NatedAddress src, C content, int age) {
+    public CroupierContainer(DecoratedAddress src, C content, int age) {
         this.age = age;
         this.src = src;
         this.content = content;
     }
 
-    public CroupierContainer(NatedAddress src, C content) {
+    public CroupierContainer(DecoratedAddress src, C content) {
         this(src, content, 0);
     }
 
@@ -47,7 +47,7 @@ public class CroupierContainer<C extends Object> implements Container<NatedAddre
     }
 
     @Override
-    public NatedAddress getSource() {
+    public DecoratedAddress getSource() {
         return src;
     }
 

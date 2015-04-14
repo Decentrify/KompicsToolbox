@@ -85,6 +85,10 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
         return base.getId();
     }
 
+    public BasicAddress getBase() {
+        return base;
+    }
+    
     @Override
     public int hashCode() {
         int hash = 3;
@@ -92,7 +96,6 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
         hash = 47 * hash + (this.parents != null ? this.parents.hashCode() : 0);
         return hash;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -116,9 +119,6 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
         return base.toString();
     }
     
-    public BasicAddress getBase() {
-        return base;
-    }
     //********************DecoratedAddress***************************************
     public <E extends Trait> boolean hasTrait(Class<E> traitClass) {
         if (traitClass.equals(Nated.class)) {
@@ -141,6 +141,5 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
     //**********************Packaged - used for Serialization*******************
     Set<DecoratedAddress> getParents() {
         return parents;
-    }
-   
+    }  
 }

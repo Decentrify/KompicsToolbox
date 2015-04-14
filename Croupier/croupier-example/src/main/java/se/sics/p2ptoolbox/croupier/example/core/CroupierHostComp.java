@@ -39,7 +39,7 @@ import se.sics.p2ptoolbox.croupier.CroupierPort;
 import se.sics.p2ptoolbox.croupier.CroupierSelectionPolicy;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -51,8 +51,8 @@ public class CroupierHostComp extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private final NatedAddress selfAddress;
-    private final List<NatedAddress> bootstrapNodes;
+    private final DecoratedAddress selfAddress;
+    private final List<DecoratedAddress> bootstrapNodes;
     private final long seed;
 
     public CroupierHostComp(HostInit init) {
@@ -107,15 +107,15 @@ public class CroupierHostComp extends ComponentDefinition {
     };
 
     public static class HostInit extends Init<CroupierHostComp> {
-        public final NatedAddress selfAddress;
-        public final List<NatedAddress> bootstrapNodes;
+        public final DecoratedAddress selfAddress;
+        public final List<DecoratedAddress> bootstrapNodes;
         public final long seed;
-        public final NatedAddress aggregatorAddress;
+        public final DecoratedAddress aggregatorAddress;
 
-        public HostInit(NatedAddress self, Set<NatedAddress> bootstrapNodes, long seed, NatedAddress aggregatorAddress) {
+        public HostInit(DecoratedAddress self, Set<DecoratedAddress> bootstrapNodes, long seed, DecoratedAddress aggregatorAddress) {
             this.seed = seed;
             this.selfAddress = self;
-            this.bootstrapNodes = new ArrayList<NatedAddress>(bootstrapNodes);
+            this.bootstrapNodes = new ArrayList<DecoratedAddress>(bootstrapNodes);
             this.aggregatorAddress = aggregatorAddress;
         }
     }

@@ -23,7 +23,7 @@ package se.sics.p2ptoolbox.croupier.util;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
-import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 /**
  * The <code>RandomViewEntry</code> class represents an entry in a node's
@@ -56,7 +56,7 @@ public class CroupierViewEntry<C extends Object> {
     private final CroupierContainer<C> cc;
     private final long addedAt;
     private long sentAt;
-    private final Set<Address> sentTo = new HashSet<Address>();
+    private final Set<BasicAddress> sentTo = new HashSet<BasicAddress>();
 
     public CroupierViewEntry(CroupierContainer<C> cc) {
         this.cc = cc;
@@ -65,7 +65,7 @@ public class CroupierViewEntry<C extends Object> {
     }
 
 
-    public void sentTo(Address peer) {
+    public void sentTo(BasicAddress peer) {
         sentTo.add(peer);
         sentAt = System.currentTimeMillis();
     }
@@ -82,7 +82,7 @@ public class CroupierViewEntry<C extends Object> {
         return sentAt;
     }
 
-    public boolean wasSentTo(Address peer) {
+    public boolean wasSentTo(BasicAddress peer) {
         return sentTo == null ? false : sentTo.contains(peer);
     }
     
