@@ -27,10 +27,10 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.traits.Nated;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -41,11 +41,11 @@ public class NatEmulatorComp extends ComponentDefinition {
     private Negative<Network> emulatedNat = provides(Network.class);
     private Positive<Network> network = requires(Network.class);
 
-    private final NatedAddress selfAddress;
+    private final DecoratedAddress selfAddress;
 
     public NatEmulatorComp(NatEmulatorInit init) {
         this.selfAddress = init.selfAddress;
-        log.info("{} {} initiating...", new Object[]{selfAddress.getId(), (selfAddress.isOpen() ? "OPEN" : "NATED")});
+        log.info("{} NATED initiating...", new Object[]{selfAddress.getId()});
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
@@ -74,14 +74,13 @@ public class NatEmulatorComp extends ComponentDefinition {
 
         @Override
         public void handle(Msg msg) {
-            Address src = msg.getHeader().getSource();
-            if (!(src instanceof NatedAddress)) {
-                throw new RuntimeException("started Nat Emulator with wrong address types");
+            if (!(msg.getHeader().getSource() instanceof DecoratedAddress)) {
+                throw new RuntimeException("using wrong type of address - expected DecoratedAddress");
             }
-            NatedAddress natedSrc = (NatedAddress) src;
-            log.trace("{} received msg from:{}", new Object[]{selfAddress.getId(), msg.getHeader().getSource()});
-            if (!allowMsg(natedSrc)) {
-                log.info("{} dropping msg from:{}", new Object[]{selfAddress, natedSrc});
+            DecoratedAddress src = (DecoratedAddress)msg.getHeader().getSource();
+            log.trace("{} received msg from:{}", new Object[]{selfAddress.getId(), src});
+            if (!allowMsg(src)) {
+                log.info("{} dropping msg from:{}", new Object[]{selfAddress, src});
                 return;
             }
             trigger(msg, emulatedNat);
@@ -98,18 +97,18 @@ public class NatEmulatorComp extends ComponentDefinition {
         }
     };
     
-    private boolean allowMsg(NatedAddress src) {
-        if(selfAddress.isOpen()) {
+    private boolean allowMsg(DecoratedAddress src) {
+        if(!selfAddress.hasTrait(Nated.class)) {
             return true;
         }
-        return selfAddress.getParents().contains(src);
+        return selfAddress.getTrait(Nated.class).getParents().contains(src);
     }
 
     public static class NatEmulatorInit extends Init<NatEmulatorComp> {
 
-        public final NatedAddress selfAddress;
+        public final DecoratedAddress selfAddress;
 
-        public NatEmulatorInit(NatedAddress selfAddress) {
+        public NatEmulatorInit(DecoratedAddress selfAddress) {
             this.selfAddress = selfAddress;
         }
     }

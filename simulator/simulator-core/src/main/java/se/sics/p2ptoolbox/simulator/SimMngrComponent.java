@@ -48,7 +48,8 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
 import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.traits.Nated;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -153,10 +154,13 @@ public class SimMngrComponent extends ComponentDefinition {
 
             Component natEmulator = null;
             Negative<Network> nodeNetwork = null;
-            if (cmd.getAddress() instanceof NatedAddress) {
-                natEmulator = create(NatEmulatorComp.class, new NatEmulatorComp.NatEmulatorInit((NatedAddress) cmd.getAddress()));
-                connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class));
-                nodeNetwork = natEmulator.getNegative(Network.class);
+            if (cmd.getAddress() instanceof DecoratedAddress) {
+                DecoratedAddress dAdr = (DecoratedAddress) cmd.getAddress();
+                if (dAdr.hasTrait(Nated.class)) {
+                    natEmulator = create(NatEmulatorComp.class, new NatEmulatorComp.NatEmulatorInit((DecoratedAddress) cmd.getAddress()));
+                    connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class));
+                    nodeNetwork = natEmulator.getNegative(Network.class);
+                }
             } else {
                 nodeNetwork = node.getNegative(Network.class);
             }
@@ -168,12 +172,14 @@ public class SimMngrComponent extends ComponentDefinition {
             systemNodes.put(cmd.getNodeId(), Pair.with(node, natEmulator));
             //********************************
 
-            if (cmd.getAddress() instanceof NatedAddress) {
-                trigger(Start.event, natEmulator.control());
+            if (cmd.getAddress() instanceof DecoratedAddress) {
+                DecoratedAddress dAdr = (DecoratedAddress) cmd.getAddress();
+                if (dAdr.hasTrait(Nated.class)) {
+                    trigger(Start.event, natEmulator.control());
+                }
             }
             trigger(Start.event, node.control());
         }
-
     };
 
     private Handler<KillNodeCmd> handleStopNode = new Handler<KillNodeCmd>() {
