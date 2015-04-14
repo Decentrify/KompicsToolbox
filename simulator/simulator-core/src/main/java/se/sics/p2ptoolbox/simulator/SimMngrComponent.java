@@ -160,6 +160,8 @@ public class SimMngrComponent extends ComponentDefinition {
                     natEmulator = create(NatEmulatorComp.class, new NatEmulatorComp.NatEmulatorInit((DecoratedAddress) cmd.getAddress()));
                     connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class));
                     nodeNetwork = natEmulator.getNegative(Network.class);
+                } else {
+                    nodeNetwork = node.getNegative(Network.class);
                 }
             } else {
                 nodeNetwork = node.getNegative(Network.class);
