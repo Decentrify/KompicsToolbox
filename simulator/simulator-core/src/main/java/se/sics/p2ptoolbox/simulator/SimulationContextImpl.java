@@ -29,7 +29,8 @@ import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.traits.Nated;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -40,7 +41,7 @@ public class SimulationContextImpl implements SimulationContext {
 
     private final Random rand;
     private final Address simulatorAddress;
-    
+
     private Address aggregatorAddress = null;
     private final Map<Integer, Map<Class<? extends PortType>, Port>> ports;
     private final Map<Integer, Address> systemOpenNodes; //subset of started nodes containing open nodes
@@ -53,23 +54,23 @@ public class SimulationContextImpl implements SimulationContext {
         this.systemOpenNodes = new HashMap<Integer, Address>();
         this.otherContext = new HashMap<String, Object>();
     }
-    
+
     public void registerAggregator(Address aggregatorAddress) {
         this.aggregatorAddress = aggregatorAddress;
     }
-    
+
     public Address getAggregatorAddress() {
         return aggregatorAddress;
     }
 
     public void bootNode(Integer nodeId, Address nodeAddress) {
         if (systemOpenNodes.containsKey(nodeId)) {
-            //something fishy
+            //TODO Alex something fishy
             return;
         }
-        if (nodeAddress instanceof NatedAddress) {
-            NatedAddress natedAddress = (NatedAddress) nodeAddress;
-            if (natedAddress.isOpen()) {
+        if (nodeAddress instanceof DecoratedAddress) {
+            DecoratedAddress dAdr = (DecoratedAddress) nodeAddress;
+            if (!dAdr.hasTrait(Nated.class)) {
                 systemOpenNodes.put(nodeId, nodeAddress);
             }
         } else {
