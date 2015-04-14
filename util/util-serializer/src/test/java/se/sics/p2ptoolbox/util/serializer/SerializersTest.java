@@ -51,7 +51,7 @@ public class SerializersTest {
     private static InetAddress localHost;
 
     {
-        BasicSerializers.registerBasicSerializers(0);
+        BasicSerializerSetup.registerBasicSerializers(0);
         try {
             localHost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ex) {
