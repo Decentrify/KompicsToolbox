@@ -20,6 +20,7 @@ package se.sics.p2ptoolbox.util.filters;
 
 import se.sics.kompics.ChannelFilter;
 import se.sics.kompics.network.Msg;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
@@ -33,8 +34,11 @@ public class IntegerOverlayFilter extends ChannelFilter<Msg, Integer> {
 
     @Override
     public Integer getValue(Msg msg) {
-        if (msg.getHeader() instanceof OverlayMember) {
-            return ((OverlayMember) msg.getHeader()).getOverlayId();
+        if (msg.getHeader() instanceof DecoratedHeader) {
+            DecoratedHeader dHeader = (DecoratedHeader) msg.getHeader();
+            if (dHeader.hasTrait(OverlayMember.class)) {
+                return ((OverlayMember) msg.getHeader()).getOverlayId();
+            }
         }
         return null;
     }
