@@ -39,6 +39,9 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
     public DecoratedAddress(BasicAddress base, Set<DecoratedAddress> parents) {
         this.base = base;
         this.parents = parents;
+        if(parents != null && parents.size() > 127) {
+            throw new RuntimeException("you should have less than 128 parents");
+        }
     }
     
     public DecoratedAddress(InetAddress addr, int port, int id) {

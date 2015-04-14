@@ -18,22 +18,29 @@
  */
 package se.sics.p2ptoolbox.util.serializer;
 
+import se.sics.p2ptoolbox.util.basic.UUIDSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeaderSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddressSerializer;
 import java.util.UUID;
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
+import se.sics.p2ptoolbox.util.network.impl.BasicContentMsgSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddressSerializer;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeaderSerializer;
+import se.sics.p2ptoolbox.util.network.impl.Route;
+import se.sics.p2ptoolbox.util.network.impl.RouteSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class BasicSerializers {
 
-    public static final int serializerIds = 4;
+    public static final int serializerIds = 7;
 
     public static void registerBasicSerializers(int startingId) {
         int currentId = 0;
@@ -53,6 +60,18 @@ public class BasicSerializers {
         Serializers.register(basicHeaderSerializer, "basicHeaderSerializer");
         Serializers.register(BasicHeader.class, "basicHeaderSerializer");
         
+        RouteSerializer routeSerializer = new RouteSerializer(startingId + currentId++);
+        Serializers.register(routeSerializer, "routeSerializer");
+        Serializers.register(Route.class, "routeSerializer");
+        
+        DecoratedHeaderSerializer decoratedHeaderSerializer = new DecoratedHeaderSerializer(startingId + currentId++);
+        Serializers.register(decoratedHeaderSerializer, "decoratedHeaderSerializer");
+        Serializers.register(DecoratedHeader.class, "decoratedHeaderSerializer");
+       
+        BasicContentMsgSerializer basicContentMsgSerializer = new BasicContentMsgSerializer(startingId + currentId++);
+        Serializers.register(basicContentMsgSerializer, "basicContentMsgSerializer");
+        Serializers.register(BasicContentMsg.class, "basicContentMsgSerializer");
+       
         Assert.assertEquals(serializerIds, currentId);
     }
 }

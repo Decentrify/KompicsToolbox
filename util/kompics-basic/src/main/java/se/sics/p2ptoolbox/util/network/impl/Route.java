@@ -25,12 +25,20 @@ import se.sics.kompics.network.Address;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
+//routes are never empty
+//routes are homogeneus
 public class Route<Adr extends Address> {
 
     private final List<Adr> route;
 
     public Route(List<Adr> route) {
         this.route = route;
+        if (route == null || route.isEmpty()) {
+            throw new RuntimeException("null routes or empty routes are bad - should be no routes at all");
+        }
+        if (route != null && route.size() > 127) {
+            throw new RuntimeException("routes should be less than 128 hops");
+        }
     }
 
     public Adr getSource() {
@@ -58,11 +66,47 @@ public class Route<Adr extends Address> {
         return null;
     }
 
+    public int size() {
+        return route.size();
+    }
+
     public Route prepend(List<Adr> newPrefix) {
         List<Adr> newRoute = new ArrayList<Adr>();
         newRoute.add(route.get(0));
         newRoute.addAll(newPrefix);
         newRoute.addAll(route.subList(1, route.size()));
         return new Route(newRoute);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + (this.route != null ? this.route.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Route<?> other = (Route<?>) obj;
+        if (this.route != other.route && (this.route == null || !this.route.equals(other.route))) {
+            return false;
+        }
+        return true;
+    }
+    
+    @Override
+    public String toString() {
+        return route.toString();
+    }        
+
+    //***********************Packaged for Serializers***************************
+    List<Adr> getRoute() {
+        return route;
     }
 }

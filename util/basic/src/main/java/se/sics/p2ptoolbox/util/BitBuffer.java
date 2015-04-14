@@ -42,24 +42,32 @@ public class BitBuffer {
         return b;
     }
 
-    public static boolean[] extract(int numValues, byte[] bytes) {
-            assert (((int) Math.ceil(((double) numValues) / 8.0)) <= bytes.length);
-
-            boolean[] output = new boolean[numValues];
-            for (int i = 0; i < bytes.length; i++) {
-                int b = bytes[i];
-                for (int j = 0; j < 8; j++) {
-                    int pos = i * 8 + j;
-                    if (pos >= numValues) {
-                        return output;
-                    }
-                    output[pos] = ((b & POS[j]) != 0);
-                }
-            }
-
-            return output;
+    public static BitBuffer create(int nrFlags) {
+        BitBuffer b = new BitBuffer();
+        for (int i = 0; i < nrFlags; i++) {
+            b.write(Pair.with(i, false));
         }
-    
+        return b;
+    }
+
+    public static boolean[] extract(int numValues, byte[] bytes) {
+        assert (((int) Math.ceil(((double) numValues) / 8.0)) <= bytes.length);
+
+        boolean[] output = new boolean[numValues];
+        for (int i = 0; i < bytes.length; i++) {
+            int b = bytes[i];
+            for (int j = 0; j < 8; j++) {
+                int pos = i * 8 + j;
+                if (pos >= numValues) {
+                    return output;
+                }
+                output[pos] = ((b & POS[j]) != 0);
+            }
+        }
+
+        return output;
+    }
+
     public BitBuffer write(Pair<Integer, Boolean>... args) {
         for (Pair<Integer, Boolean> arg : args) {
             while (arg.getValue0() >= buffer.size()) {

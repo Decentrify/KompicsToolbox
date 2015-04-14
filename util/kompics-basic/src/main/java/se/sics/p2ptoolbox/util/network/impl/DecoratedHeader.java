@@ -84,6 +84,36 @@ public class DecoratedHeader<Adr extends Address> implements Header<Adr> {
         return base.getProtocol();
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 37 * hash + (this.base != null ? this.base.hashCode() : 0);
+        hash = 37 * hash + (this.route != null ? this.route.hashCode() : 0);
+        hash = 37 * hash + (this.overlayId != null ? this.overlayId.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DecoratedHeader<?> other = (DecoratedHeader<?>) obj;
+        if (this.base != other.base && (this.base == null || !this.base.equals(other.base))) {
+            return false;
+        }
+        if (this.route != other.route && (this.route == null || !this.route.equals(other.route))) {
+            return false;
+        }
+        if (this.overlayId != other.overlayId && (this.overlayId == null || !this.overlayId.equals(other.overlayId))) {
+            return false;
+        }
+        return true;
+    }
+    
     //********************DecoratedHeader***************************************
     public <E extends Trait> boolean hasTrait(Class<E> traitClass) {
         if (traitClass.equals(Forwardable.class)) {
@@ -119,6 +149,9 @@ public class DecoratedHeader<Adr extends Address> implements Header<Adr> {
     }
     
     //**********************Packaged - used for Serialization*******************
+    BasicHeader getBase() {
+        return base;
+    }
     Route<Adr> getRoute() {
         return route;
     }

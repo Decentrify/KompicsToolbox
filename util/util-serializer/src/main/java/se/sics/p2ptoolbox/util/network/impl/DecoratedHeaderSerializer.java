@@ -16,30 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+
 package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import java.util.HashSet;
-import java.util.Set;
 import org.javatuples.Pair;
-import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.util.BitBuffer;
-import se.sics.p2ptoolbox.util.traits.Nated;
+import se.sics.p2ptoolbox.util.traits.Forwardable;
+import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class DecoratedAddressSerializer implements Serializer {
-
+public class DecoratedHeaderSerializer implements Serializer {
     private final int id;
-
-    public DecoratedAddressSerializer(int id) {
+    
+    public DecoratedHeaderSerializer(int id) {
         this.id = id;
     }
-
+    
     @Override
     public int identifier() {
         return id;
@@ -47,38 +45,40 @@ public class DecoratedAddressSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        DecoratedAddress obj = (DecoratedAddress) o;
-        Serializers.lookupSerializer(BasicAddress.class).toBinary(obj.getBase(), buf);
+        DecoratedHeader obj = (DecoratedHeader) o;
+        Serializers.lookupSerializer(BasicHeader.class).toBinary(obj.getBase(), buf);
 
-        //traits - uses flag 0 for the Nated Trait
-        BitBuffer flags = BitBuffer.create(1);
-        flags.write(Pair.with(0, obj.hasTrait(Nated.class)));
+        //traits - uses flag 0 for OverlayMember and 1 for Forwardable
+        BitBuffer flags = BitBuffer.create(2);
+        flags.write(Pair.with(0, obj.hasTrait(OverlayMember.class)));
+        flags.write(Pair.with(1, obj.hasTrait(Forwardable.class)));
         buf.writeBytes(flags.finalise());
-
-        if (obj.hasTrait(Nated.class)) {
-            buf.writeByte(obj.getParents().size());
-            for (DecoratedAddress adr : obj.getParents()) {
-                this.toBinary(adr, buf);
-            }
+        
+        if(obj.hasTrait(OverlayMember.class)) {
+            buf.writeInt(obj.getOverlayId());
+        }
+        if(obj.hasTrait(Forwardable.class)) {
+            Serializers.lookupSerializer(Route.class).toBinary(obj.getRoute(), buf);
         }
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        Serializer basicAdrSerializer = Serializers.lookupSerializer(BasicAddress.class);
-        BasicAddress base = (BasicAddress) basicAdrSerializer.fromBinary(buf, hint);
-
+        BasicHeader base = (BasicHeader)Serializers.lookupSerializer(BasicHeader.class).fromBinary(buf, hint);
+        
+        Route route = null;
+        Integer overlayId = null;
+        
         byte[] bFlags = new byte[1];
         buf.readBytes(bFlags);
-        boolean[] flags = BitBuffer.extract(1, bFlags);
-        if (flags[0]) {
-            int parentsSize = buf.readByte();
-            Set<DecoratedAddress> parents = new HashSet<DecoratedAddress>();
-            for (int i = 0; i < parentsSize; i++) {
-                parents.add((DecoratedAddress) this.fromBinary(buf, hint));
-            }
-            return new DecoratedAddress(base, parents);
+        boolean[] flags = BitBuffer.extract(2, bFlags);
+        if(flags[0]) {
+            overlayId = buf.readInt();
         }
-        return new DecoratedAddress(base);
+        if (flags[1]) {
+            route = (Route)Serializers.lookupSerializer(Route.class).fromBinary(buf, hint);
+        }
+        return new DecoratedHeader(base, route, overlayId);
     }
+    
 }
