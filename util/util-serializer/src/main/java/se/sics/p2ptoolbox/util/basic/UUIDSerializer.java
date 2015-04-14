@@ -17,44 +17,42 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.network.impl;
+package se.sics.p2ptoolbox.util.basic;
 
-import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.sics.kompics.network.netty.serialization.Serializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class RelayHeader<A extends NatedAddress> implements Header<A> {
-    private final Header<A> baseH;
-    private final A relay;
+public class UUIDSerializer implements Serializer {
+
+    private final int id;
     
-    public RelayHeader(Header<A> baseH, A relay) {
-        this.baseH = baseH;
-        this.relay = relay;
+    public UUIDSerializer(int id) {
+       this.id = id;
     }
     
     @Override
-    public A getSource() {
-        return relay;
+    public int identifier() {
+        return id;
     }
 
     @Override
-    public A getDestination() {
-        return baseH.getDestination();
+    public void toBinary(Object o, ByteBuf buf) {
+        UUID obj = (UUID)o;
+        buf.writeLong(obj.getMostSignificantBits());
+        buf.writeLong(obj.getLeastSignificantBits());
     }
 
     @Override
-    public Transport getProtocol() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
-    public A getActualSource() {
-        return baseH.getSource();
-    }
-    
-    public Header<A> getActualHeader() {
-        return baseH;
+    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
+        Long uuidMSB = buf.readLong();
+        Long uuidLSB = buf.readLong();
+        return new UUID(uuidMSB, uuidLSB);
     }
 }

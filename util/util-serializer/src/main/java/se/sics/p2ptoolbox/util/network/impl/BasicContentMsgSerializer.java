@@ -16,47 +16,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+
 package se.sics.p2ptoolbox.util.network.impl;
 
-import se.sics.kompics.network.Address;
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.traits.OverlayMember;
+import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicOverlayHeader<A extends Address> implements Header<A>, OverlayMember {
+public class BasicContentMsgSerializer implements Serializer {
 
-    private final BasicHeader<A> baseHeader;
-    private final int overlayId;
-
-    public BasicOverlayHeader(BasicHeader<A> base, int overlayId) {
-        this.baseHeader = base;
-        this.overlayId = overlayId;
+    private final int id;
+    public BasicContentMsgSerializer(int id) {
+        this.id = id;
     }
-
-    public BasicOverlayHeader(A source, A destination, Transport protocol, int overlayId) {
-        this(new BasicHeader(source, destination, protocol), overlayId);
+    
+    @Override
+    public int identifier() {
+        return id;
     }
 
     @Override
-    public A getSource() {
-        return baseHeader.getSource();
+    public void toBinary(Object o, ByteBuf buf) {
+        BasicContentMsg obj = (BasicContentMsg)o;
+        Serializers.toBinary(obj.getHeader(), buf);
+        Serializers.toBinary(obj.getContent(), buf);
     }
 
     @Override
-    public A getDestination() {
-        return baseHeader.getDestination();
-    }
-
-    @Override
-    public Transport getProtocol() {
-        return baseHeader.getProtocol();
-    }
-
-    @Override
-    public int getOverlayId() {
-        return overlayId;
+    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
+        Header header = (Header)Serializers.fromBinary(buf, hint);
+        Object content = Serializers.fromBinary(buf, hint);
+        return new BasicContentMsg(header, content);
     }
 }

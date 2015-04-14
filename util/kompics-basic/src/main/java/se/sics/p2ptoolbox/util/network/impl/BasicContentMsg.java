@@ -70,4 +70,30 @@ public class BasicContentMsg<A extends Address, H extends Header<A>, C extends O
     public C extractValue() {
         return content;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 37 * hash + (this.header != null ? this.header.hashCode() : 0);
+        hash = 37 * hash + (this.content != null ? this.content.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BasicContentMsg<?, ?, ?> other = (BasicContentMsg<?, ?, ?>) obj;
+        if (this.header != other.header && (this.header == null || !this.header.equals(other.header))) {
+            return false;
+        }
+        if (this.content != other.content && (this.content == null || !this.content.equals(other.content))) {
+            return false;
+        }
+        return true;
+    }
 }

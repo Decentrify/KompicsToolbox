@@ -17,23 +17,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.network;
+package se.sics.p2ptoolbox.util.traits;
 
 import java.util.Set;
 import se.sics.kompics.network.Address;
-import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface NatedAddress extends Address, IntegerIdentifiable {
-    public boolean isOpen();
-    public NatType getNatType();
-    public Set<NatedAddress> getParents();
-    /**
-     * base Address without the nat decorator elements
-     * a host should be identifiable at all times by the base address
-     * a hosts nated address might change - when parents change
-     */ 
-    public Address getBaseAddress(); 
+public interface Nated<Adr extends Address> extends Trait {
+    public Set<Adr> getParents();
 }
