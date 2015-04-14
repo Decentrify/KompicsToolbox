@@ -38,40 +38,65 @@ import se.sics.p2ptoolbox.util.network.impl.RouteSerializer;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicSerializers {
+public class BasicSerializerSetup {
 
     public static final int serializerIds = 7;
+
+    public static enum BasicSerializers {
+
+        UUID(UUID.class),
+        BasicAddress(BasicAddress.class),
+        DecoratedAddress(DecoratedAddress.class),
+        Route(Route.class),
+        BasicHeader(BasicHeader.class),
+        DecoratedHeader(DecoratedHeader.class),
+        BasicContentMsg(BasicContentMsg.class);
+
+        public final Class serializedClass;
+
+        BasicSerializers(Class serializedClass) {
+            this.serializedClass = serializedClass;
+        }
+    }
+
+    public static void checkSetup() {
+        for (BasicSerializers bs : BasicSerializers.values()) {
+            if (Serializers.lookupSerializer(bs.serializedClass) == null) {
+                throw new RuntimeException("No serializer for " + bs.serializedClass);
+            }
+        }
+    }
 
     public static void registerBasicSerializers(int startingId) {
         int currentId = 0;
         UUIDSerializer uuidSerializer = new UUIDSerializer(startingId + currentId++);
         Serializers.register(uuidSerializer, "uuidSerializer");
         Serializers.register(UUID.class, "uuidSerializer");
-        
+
         BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(startingId + currentId++);
         Serializers.register(basicAddressSerializer, "basicAddressSerializer");
         Serializers.register(BasicAddress.class, "basicAddressSerializer");
-        
+
         DecoratedAddressSerializer decoratedAddressSerializer = new DecoratedAddressSerializer(startingId + currentId++);
         Serializers.register(decoratedAddressSerializer, "decoratedAddressSerializer");
         Serializers.register(DecoratedAddress.class, "decoratedAddressSerializer");
-        
+
         BasicHeaderSerializer basicHeaderSerializer = new BasicHeaderSerializer(startingId + currentId++);
         Serializers.register(basicHeaderSerializer, "basicHeaderSerializer");
         Serializers.register(BasicHeader.class, "basicHeaderSerializer");
-        
+
         RouteSerializer routeSerializer = new RouteSerializer(startingId + currentId++);
         Serializers.register(routeSerializer, "routeSerializer");
         Serializers.register(Route.class, "routeSerializer");
-        
+
         DecoratedHeaderSerializer decoratedHeaderSerializer = new DecoratedHeaderSerializer(startingId + currentId++);
         Serializers.register(decoratedHeaderSerializer, "decoratedHeaderSerializer");
         Serializers.register(DecoratedHeader.class, "decoratedHeaderSerializer");
-       
+
         BasicContentMsgSerializer basicContentMsgSerializer = new BasicContentMsgSerializer(startingId + currentId++);
         Serializers.register(basicContentMsgSerializer, "basicContentMsgSerializer");
         Serializers.register(BasicContentMsg.class, "basicContentMsgSerializer");
-       
+
         Assert.assertEquals(serializerIds, currentId);
     }
 }
