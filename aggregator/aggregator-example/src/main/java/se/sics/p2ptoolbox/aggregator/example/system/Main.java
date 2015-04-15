@@ -29,7 +29,7 @@ public class Main {
     
     public static void main(String[] args) {
         if(args.length == 3) {
-            Launcher.setArgs(Integer.valueOf(args[0]), args[1], Integer.valueOf(args[2]));
+//            Launcher.setArgs(Integer.valueOf(args[0]), args[1], Integer.valueOf(args[2]));
         }
         start();
         try {
@@ -43,7 +43,7 @@ public class Main {
         if (Kompics.isOn()) {
             Kompics.shutdown();
         }
-        Kompics.createAndStart(Launcher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
+//        Kompics.createAndStart(Launcher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
     }
 
     public static void stop() {
