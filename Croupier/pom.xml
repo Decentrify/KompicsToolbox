@@ -25,18 +25,19 @@
         <java.compiler.version>1.6</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kompics.version>0.8.0-SNAPSHOT</kompics.version>
+        <util.version>1.3-SNAPSHOT</util.version>
     </properties>
     
     <dependencies>
         <dependency>
             <groupId>se.sics.p2ptoolbox.util</groupId>
             <artifactId>basic</artifactId>
-            <version>1.3-SNAPSHOT</version>
+            <version>${util.version}</version>
         </dependency>
         <dependency>
             <groupId>se.sics.p2ptoolbox.util</groupId>
             <artifactId>kompics-basic</artifactId>
-            <version>1.3-SNAPSHOT</version>
+            <version>${util.version}</version>
         </dependency>
         
         <dependency>

@@ -38,6 +38,9 @@ public class CroupierShuffle {
             this.id = id;
             this.publicNodes = publicNodes;
             this.privateNodes = privateNodes;
+            if(publicNodes.size() > 128 || privateNodes.size() > 128) {
+                throw new RuntimeException("Croupier shuffle message is too large - limit yourself to 128 public nodes and 128 private nodes per shuffle");
+            }
         }
         
         @Override
