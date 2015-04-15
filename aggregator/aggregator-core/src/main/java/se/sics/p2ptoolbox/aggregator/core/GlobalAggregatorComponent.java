@@ -1,20 +1,17 @@
 package se.sics.p2ptoolbox.aggregator.core;
 
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodAddress;
-import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.SchedulePeriodicTimeout;
-import se.sics.gvod.timer.Timeout;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.aggregator.api.model.AggregatedStatePacket;
 import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
 import se.sics.p2ptoolbox.aggregator.api.msg.GlobalState;
 import se.sics.p2ptoolbox.aggregator.api.msg.Ready;
 import se.sics.p2ptoolbox.aggregator.api.port.GlobalAggregatorPort;
-import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
@@ -36,7 +33,7 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
     private Map<DecoratedAddress, AggregatedStatePacket> statePacketMap;
     private Logger logger = LoggerFactory.getLogger(GlobalAggregatorComponent.class);
     private Positive<Timer> timerPort = requires(Timer.class);
-    private Positive<VodNetwork> networkPort = requires(VodNetwork.class);
+    private Positive<Network> networkPort = requires(Network.class);
     private Negative<GlobalAggregatorPort> globalAggregatorPort = provides(GlobalAggregatorPort.class);
     
     public GlobalAggregatorComponent(GlobalAggregatorComponentInit init){
@@ -44,7 +41,6 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         subscribe(startHandler, control);
         subscribe(pushUpdateHandler, timerPort);
         subscribe(aggregatedStateMsgHandler, networkPort);
-//        subscribe(aggregatedStateMsgHandler, networkPort);
     }
     
     private void doInit(GlobalAggregatorComponentInit init) {
@@ -53,8 +49,8 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
     }
     
     
-    private class UpdateTimeout extends Timeout{
-        protected UpdateTimeout(SchedulePeriodicTimeout request) {
+    private class UpdateTimeout extends Timeout {
+        public UpdateTimeout(SchedulePeriodicTimeout request) {
             super(request);
         }
     }
@@ -62,13 +58,14 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
     Handler<Start> startHandler = new Handler<Start>() {
         @Override
         public void handle(Start event) {
+
             logger.info("Started the aggregator component.");
-            
             logger.info("Triggering periodic update timeout.");
+
             SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(updateTimeout, updateTimeout);
             spt.setTimeoutEvent(new UpdateTimeout(spt));
-
             trigger(spt, timerPort);
+
             trigger(new Ready(), globalAggregatorPort);
         }
     };
@@ -79,10 +76,7 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
 
             logger.info("Triggering update to application.");
             Map<DecoratedAddress, AggregatedStatePacket> updatedMap = new HashMap<DecoratedAddress, AggregatedStatePacket>();
-            
-            for(Map.Entry<DecoratedAddress, AggregatedStatePacket> entry : statePacketMap.entrySet()){
-                updatedMap.put(entry.getKey(), entry.getValue());
-            }
+            updatedMap.putAll(statePacketMap);
 
             trigger(new GlobalState(updatedMap), globalAggregatorPort);
             statePacketMap.clear();
@@ -98,6 +92,7 @@ public class GlobalAggregatorComponent extends ComponentDefinition{
         @Override
         public void handle(AggregatedStateContainer aggregatedStateContainer, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, AggregatedStateContainer> event) {
 
+            logger.info("Received something ... ");
             AggregatedStateContainer container = event.getContent();
             statePacketMap.put(container.getAddress(), container.getPacketInfo());
         }

@@ -2,14 +2,15 @@ package se.sics.p2ptoolbox.aggregator.example.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.aggregator.api.msg.GlobalState;
 import se.sics.p2ptoolbox.aggregator.api.msg.Ready;
 import se.sics.p2ptoolbox.aggregator.api.port.GlobalAggregatorPort;
 import se.sics.p2ptoolbox.aggregator.core.GlobalAggregatorComponent;
 import se.sics.p2ptoolbox.aggregator.core.GlobalAggregatorComponentInit;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.sql.Time;
 
@@ -22,7 +23,7 @@ public class Application extends ComponentDefinition{
 
     private Logger logger = LoggerFactory.getLogger(Application.class);
     Positive<Timer> timerPositive = requires(Timer.class);
-    Positive<VodNetwork> networkPositive = requires(VodNetwork.class);
+    Positive<Network> networkPositive = requires(Network.class);
     Negative<ApplicationPort> applicationPortNegative = provides(ApplicationPort.class);
 
     Component aggregator;
@@ -30,7 +31,7 @@ public class Application extends ComponentDefinition{
     public Application(){
 
         aggregator = create(GlobalAggregatorComponent.class, new GlobalAggregatorComponentInit(5000, 10000));
-        connect(aggregator.getNegative(VodNetwork.class), networkPositive);
+        connect(aggregator.getNegative(Network.class), networkPositive);
         connect(aggregator.getNegative(Timer.class), timerPositive);
 
         subscribe(startHandler, control);
@@ -61,4 +62,17 @@ public class Application extends ComponentDefinition{
             trigger(new Ready(), applicationPortNegative);
         }
     };
+
+
+
+
+    public static class ApplicationInit extends Init<Application>{
+
+        public DecoratedAddress aggregatorAddress;
+        public ApplicationInit(DecoratedAddress aggregatorAddress){
+            this.aggregatorAddress = aggregatorAddress;
+        }
+
+    }
+
 }

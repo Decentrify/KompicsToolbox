@@ -57,6 +57,7 @@ videostream/target/
 /Gradient/gradient-example/target/
 
 #aggregator
+/aggregator/target/
 /aggregator/aggregator-api/target/
 /aggregator/aggregator-core/target/
 /aggregator/aggregator-example/target/

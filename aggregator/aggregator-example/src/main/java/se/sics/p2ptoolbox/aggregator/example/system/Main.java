@@ -19,6 +19,7 @@
 
 package se.sics.p2ptoolbox.aggregator.example.system;
 
+import org.javatuples.Triplet;
 import se.sics.kompics.Kompics;
 
 /**
@@ -26,11 +27,22 @@ import se.sics.kompics.Kompics;
  */
 
 public class Main {
-    
+
     public static void main(String[] args) {
-        if(args.length == 3) {
-//            Launcher.setArgs(Integer.valueOf(args[0]), args[1], Integer.valueOf(args[2]));
+
+        long seed = 29;
+        Triplet<String, Integer, Integer> self = null;
+        Triplet<String, Integer, Integer> bootstrap = null;
+
+        if(args.length >= 4) {
+            seed = Long.valueOf(args[0]);
+            self = Triplet.with(args[1], Integer.valueOf(args[2]), Integer.valueOf(args[3]));
         }
+        if(args.length >= 7) {
+            bootstrap = Triplet.with(args[4], Integer.valueOf(args[5]), Integer.valueOf(args[6]));
+        }
+        Launcher.setArgs(seed, self, bootstrap);
+
         start();
         try {
             Kompics.waitForTermination();
@@ -43,7 +55,7 @@ public class Main {
         if (Kompics.isOn()) {
             Kompics.shutdown();
         }
-//        Kompics.createAndStart(Launcher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
+        Kompics.createAndStart(Launcher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
     }
 
     public static void stop() {
