@@ -1,0 +1,7 @@
+se/sics/p2ptoolbox/election/network/ElectionSerializerSetup$ElectionSerializerEnum.class
+se/sics/p2ptoolbox/election/network/ElectionSerializerSetup.class
+se/sics/p2ptoolbox/election/network/util/LeaseCommitSerializer.class
+se/sics/p2ptoolbox/election/network/util/ExtensionSerializer.class
+se/sics/p2ptoolbox/election/network/util/PromiseSerializer.class
+se/sics/p2ptoolbox/election/network/util/PromiseSerializer$Request.class
+se/sics/p2ptoolbox/election/network/util/PromiseSerializer$Response.class
