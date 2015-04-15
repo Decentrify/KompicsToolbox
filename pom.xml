@@ -14,10 +14,11 @@
         <module>chunk-manager</module>
         <module>Croupier</module>
         <module>Gradient</module>
-    <module>videostream</module>
-    <module>util</module>
-    <module>simulator</module>
-  </modules>
+        <module>videostream</module>
+        <module>util</module>
+        <module>simulator</module>
+        <module>leader-election</module>
+    </modules>
    
     <distributionManagement>
         <repository>
