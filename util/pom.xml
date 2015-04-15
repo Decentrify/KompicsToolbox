@@ -14,7 +14,6 @@
     <modules>
         <module>basic</module>
         <module>kompics-basic</module>
-        <module>vod-net-helper</module>
         <module>util-serializer</module>
     </modules>
     
