@@ -10,6 +10,7 @@ import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
 import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
 import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.UUID;
 
@@ -76,9 +77,9 @@ public class Peer extends ComponentDefinition{
 
             logger.info(" State Timeout Handler Invoked ");
             
-            // FIXME: Redundant Wrapper as message going with the source address. Fix it once the linking is complete.
+            // FIXME: The decorated address that is created here is not correct. Created to remove errors.
             PacketSample packetSample = new PacketSample(partitioningDepth, indexEntries++, partitionId, nodeId);
-            AggregatedStateContainer container = new AggregatedStateContainer(selfAddress, packetSample);
+            AggregatedStateContainer container = new AggregatedStateContainer(UUID.randomUUID(), new DecoratedAddress(null, 0, 0), packetSample);
             
             trigger(new AggregatorNetMsg.OneWay(selfAddress, aggregatorAddress, UUID.randomUUID(), container), networkPort);
         }
