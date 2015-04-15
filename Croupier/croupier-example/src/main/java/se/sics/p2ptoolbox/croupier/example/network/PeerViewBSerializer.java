@@ -20,26 +20,11 @@
 //package se.sics.p2ptoolbox.croupier.example.network;
 //
 //import io.netty.buffer.ByteBuf;
+//import se.sics.kompics.network.netty.serialization.Serializer;
 //import se.sics.p2ptoolbox.croupier.example.core.PeerViewB;
-//import se.sics.p2ptoolbox.serialization.SerializationContext;
-//import se.sics.p2ptoolbox.serialization.Serializer;
 //
 ///**
 // * @author Alex Ormenisan <aaor@sics.se>
 // */
-//public class PeerViewBSerializer implements Serializer<PeerViewB> {
-//
-//    public ByteBuf encode(SerializationContext context, ByteBuf buf, PeerViewB obj) throws SerializerException, SerializationContext.MissingException {
-//        buf.writeInt(obj.counter);
-//        return buf;
-//    }
-//
-//    public PeerViewB decode(SerializationContext context, ByteBuf buf) throws SerializerException, SerializationContext.MissingException {
-//        int counter = buf.readInt();
-//        return new PeerViewB(counter);
-//    }
-//
-//    public int getSize(SerializationContext context, PeerViewB obj) throws SerializerException, SerializationContext.MissingException {
-//        return Integer.SIZE / 8;
-//    }
+//public class PeerViewBSerializer implements Serializer {
 //}
