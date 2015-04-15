@@ -16,20 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.croupier;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -39,6 +42,7 @@ import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class SerializersTest {
+
     private static InetAddress localHost;
 
     {
@@ -51,16 +55,19 @@ public class SerializersTest {
 
     private DecoratedAddress simpleAdr1, simpleAdr2, simpleAdr3, simpleAdr4, simpleAdr5;
     private DecoratedAddress natedAdr1, natedAdr2;
+    private CroupierContainer container1, container2, container3;
 
     @BeforeClass
     public static void oneTimeSetup() {
-        BasicSerializerSetup.registerBasicSerializers(0);
-        CroupierSerializerSetup.registerSerializers(BasicSerializerSetup.serializerIds);
-        TestSerializer testSerializer = new TestSerializer(255);
+        int currentId = 0;
+        BasicSerializerSetup.registerBasicSerializers(currentId);
+        currentId = currentId + BasicSerializerSetup.serializerIds;
+        currentId = CroupierSerializerSetup.registerSerializers(currentId);
+        TestSerializer testSerializer = new TestSerializer(currentId++);
         Serializers.register(testSerializer, "testSerializer");
         Serializers.register(TestContent.class, "testSerializer");
     }
-    
+
     @Before
     public void setup() {
         simpleAdr1 = new DecoratedAddress(localHost, 10000, 1);
@@ -68,6 +75,7 @@ public class SerializersTest {
         simpleAdr3 = new DecoratedAddress(localHost, 10000, 3);
         simpleAdr4 = new DecoratedAddress(localHost, 10000, 4);
         simpleAdr5 = new DecoratedAddress(localHost, 10000, 5);
+
         Set<DecoratedAddress> parents1 = new HashSet<DecoratedAddress>();
         parents1.add(simpleAdr1);
         parents1.add(simpleAdr2);
@@ -77,23 +85,69 @@ public class SerializersTest {
         parents2.add(simpleAdr4);
         parents2.add(simpleAdr5);
         natedAdr2 = new DecoratedAddress(new BasicAddress(localHost, 20000, 2), parents2);
+
+        container1 = new CroupierContainer(simpleAdr1, new TestContent(1));
+        container2 = new CroupierContainer(simpleAdr2, new TestContent(2));
+        container3 = new CroupierContainer(natedAdr1, new TestContent(3));
     }
-    
+
     @Test
     public void testCroupierContainer() {
         Serializer serializer = Serializers.lookupSerializer(CroupierContainer.class);
         CroupierContainer original, copy;
         ByteBuf serializedOriginal, serializedCopy;
+
+        original = container1;
+        serializedOriginal = Unpooled.buffer();
+        serializer.toBinary(original, serializedOriginal);
+        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
+        copy = (CroupierContainer) serializer.fromBinary(serializedCopy, Optional.absent());
+
+        Assert.assertEquals(original, copy);
+    }
+
+    @Test
+    public void testCroupierShuffleRequest() {
+        Serializer serializer = Serializers.lookupSerializer(CroupierShuffle.Request.class);
+        CroupierShuffle.Request original, copy;
+        ByteBuf serializedOriginal, serializedCopy;
+
+        Set<CroupierContainer> publicNodes = new HashSet<CroupierContainer>();
+        publicNodes.add(container1);
+        publicNodes.add(container2);
+        Set<CroupierContainer> privateNodes = new HashSet<CroupierContainer>();
+        privateNodes.add(container3);
+        original = new CroupierShuffle.Request(UUID.randomUUID(), publicNodes, privateNodes);
         
-//        original = new CroupierContainer(simpleAdr1, new Test);
-//        serializedOriginal = Unpooled.buffer();
-//        serializer.toBinary(original, serializedOriginal);
-//        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
-//        copy = (UUID) serializer.fromBinary(serializedCopy, Optional.absent());
-//
-//        Assert.assertEquals(original, copy);
+        serializedOriginal = Unpooled.buffer();
+        serializer.toBinary(original, serializedOriginal);
+        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
+        copy = (CroupierShuffle.Request) serializer.fromBinary(serializedCopy, Optional.absent());
+
+        Assert.assertEquals(original, copy);
     }
     
+    @Test
+    public void testCroupierShuffleResponse() {
+        Serializer serializer = Serializers.lookupSerializer(CroupierShuffle.Response.class);
+        CroupierShuffle.Response original, copy;
+        ByteBuf serializedOriginal, serializedCopy;
+
+        Set<CroupierContainer> publicNodes = new HashSet<CroupierContainer>();
+        publicNodes.add(container1);
+        publicNodes.add(container2);
+        Set<CroupierContainer> privateNodes = new HashSet<CroupierContainer>();
+        privateNodes.add(container3);
+        original = new CroupierShuffle.Response(UUID.randomUUID(), publicNodes, privateNodes);
+        
+        serializedOriginal = Unpooled.buffer();
+        serializer.toBinary(original, serializedOriginal);
+        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
+        copy = (CroupierShuffle.Response) serializer.fromBinary(serializedCopy, Optional.absent());
+
+        Assert.assertEquals(original, copy);
+    }
+
     public static class TestContent {
 
         public final int val;
@@ -124,6 +178,7 @@ public class SerializersTest {
             return true;
         }
     }
+
     public static class TestSerializer implements Serializer {
 
         public final int id;

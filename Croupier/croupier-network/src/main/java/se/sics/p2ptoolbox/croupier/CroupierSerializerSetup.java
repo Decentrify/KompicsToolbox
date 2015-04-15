@@ -22,17 +22,21 @@ package se.sics.p2ptoolbox.croupier;
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
+import se.sics.p2ptoolbox.croupier.msg.CroupierShuffleSerializer;
+import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
+import se.sics.p2ptoolbox.croupier.util.CroupierContainerSerializer;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierSerializerSetup {
-    public static int serializerIds = 2;
+    public static int serializerIds = 3;
     
     public static enum CroupierSerializers {
-        CroupierShuffleRequest(CroupierShuffle.Request.class, "croupierShuffleRequest"),
-        CroupierShuffleResponse(CroupierShuffle.Response.class, "croupierShuffleResponse");
+        CroupierContainer(CroupierContainer.class, "croupierContainerSerializer"),
+        CroupierShuffleRequest(CroupierShuffle.Request.class, "croupierShuffleRequestSerializer"),
+        CroupierShuffleResponse(CroupierShuffle.Response.class, "croupierShuffleResponseSerializer");
         
         public final Class serializedClass;
         public final String serializerName;
@@ -52,12 +56,22 @@ public class CroupierSerializerSetup {
         BasicSerializerSetup.checkSetup();
     }
     
-    public static void registerSerializers(int startingId) {
-        int currentId = 0;
-//        Shuffle uuidSerializer = new UUIDSerializer(startingId + currentId++);
-//        Serializers.register(uuidSerializer, "uuidSerializer");
-//        Serializers.register(UUID.class, "uuidSerializer");
+    public static int registerSerializers(int startingId) {
+        int currentId = startingId;
         
-        Assert.assertEquals(serializerIds, currentId);
+        CroupierContainerSerializer croupierContainerSerializer = new CroupierContainerSerializer(currentId++);
+        Serializers.register(croupierContainerSerializer, CroupierSerializers.CroupierContainer.serializerName);
+        Serializers.register(CroupierSerializers.CroupierContainer.serializedClass, CroupierSerializers.CroupierContainer.serializerName);
+        
+        CroupierShuffleSerializer.Request croupierShuffleRequestSerializer = new CroupierShuffleSerializer.Request(currentId++);
+        Serializers.register(croupierShuffleRequestSerializer, CroupierSerializers.CroupierShuffleRequest.serializerName);
+        Serializers.register(CroupierSerializers.CroupierShuffleRequest.serializedClass, CroupierSerializers.CroupierShuffleRequest.serializerName);
+        
+        CroupierShuffleSerializer.Response croupierShuffleResponseSerializer = new CroupierShuffleSerializer.Response(currentId++);
+        Serializers.register(croupierShuffleResponseSerializer, CroupierSerializers.CroupierShuffleResponse.serializerName);
+        Serializers.register(CroupierSerializers.CroupierShuffleResponse.serializedClass, CroupierSerializers.CroupierShuffleResponse.serializerName);
+        
+        Assert.assertEquals(serializerIds, currentId - startingId);
+        return currentId;
     }
 }

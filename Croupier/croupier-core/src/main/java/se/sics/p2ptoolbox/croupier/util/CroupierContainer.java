@@ -71,4 +71,34 @@ public class CroupierContainer<C extends Object> implements Container<DecoratedA
     public String toString() {
         return "<" + src + ":" + age + ">";
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + this.age;
+        hash = 53 * hash + (this.src != null ? this.src.hashCode() : 0);
+        hash = 53 * hash + (this.content != null ? this.content.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CroupierContainer<?> other = (CroupierContainer<?>) obj;
+        if (this.age != other.age) {
+            return false;
+        }
+        if (this.src != other.src && (this.src == null || !this.src.equals(other.src))) {
+            return false;
+        }
+        if (this.content != other.content && (this.content == null || !this.content.equals(other.content))) {
+            return false;
+        }
+        return true;
+    }
 }
