@@ -5,11 +5,10 @@
     <parent>
         <groupId>se.sics.p2ptoolbox</groupId>
         <artifactId>util</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.3-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.p2ptoolbox.util</groupId>
     <artifactId>vod-net-helper</artifactId>
-    <version>1.2-SNAPSHOT</version>
     <name>Util VoD-Net</name>
     <url>http://maven.apache.org</url>
     <properties>
