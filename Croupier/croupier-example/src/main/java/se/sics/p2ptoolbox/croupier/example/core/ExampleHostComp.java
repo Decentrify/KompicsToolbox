@@ -44,9 +44,9 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierHostComp extends ComponentDefinition {
+public class ExampleHostComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(CroupierHostComp.class);
+    private static final Logger log = LoggerFactory.getLogger(ExampleHostComp.class);
 
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
@@ -55,7 +55,7 @@ public class CroupierHostComp extends ComponentDefinition {
     private final List<DecoratedAddress> bootstrapNodes;
     private final long seed;
 
-    public CroupierHostComp(HostInit init) {
+    public ExampleHostComp(HostInit init) {
         this.selfAddress = init.selfAddress;
         log.info("{} initiating...", selfAddress);
         this.bootstrapNodes = init.bootstrapNodes;
@@ -106,7 +106,7 @@ public class CroupierHostComp extends ComponentDefinition {
         }
     };
 
-    public static class HostInit extends Init<CroupierHostComp> {
+    public static class HostInit extends Init<ExampleHostComp> {
         public final DecoratedAddress selfAddress;
         public final List<DecoratedAddress> bootstrapNodes;
         public final long seed;

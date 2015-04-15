@@ -21,7 +21,7 @@ package se.sics.p2ptoolbox.croupier.example.simulation;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Set;
-import se.sics.p2ptoolbox.croupier.example.core.CroupierHostComp;
+import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
@@ -59,16 +59,16 @@ public class CroupierScenarioOperations {
 
         @Override
         public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<CroupierHostComp, DecoratedAddress>() {
+            return new StartNodeCmd<ExampleHostComp, DecoratedAddress>() {
                 private DecoratedAddress nodeAddress;
 
                 @Override
                 public Class getNodeComponentDefinition() {
-                    return CroupierHostComp.class;
+                    return ExampleHostComp.class;
                 }
 
                 @Override
-                public CroupierHostComp.HostInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
+                public ExampleHostComp.HostInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
                     //open address
                     nodeAddress = new DecoratedAddress(new BasicAddress(localHost, 12345, nodeId));
                     /**
@@ -76,7 +76,7 @@ public class CroupierScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    return new CroupierHostComp.HostInit(nodeAddress, bootstrapNodes, nodeSeed, aggregatorServer);
+                    return new ExampleHostComp.HostInit(nodeAddress, bootstrapNodes, nodeSeed, aggregatorServer);
                 }
 
                 @Override

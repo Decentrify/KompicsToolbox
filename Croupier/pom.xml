@@ -16,8 +16,8 @@
         <module>croupier-api</module>
         <module>croupier-core</module>
         <module>croupier-example</module>
-    <module>croupier-network</module>
-  </modules>
+        <module>croupier-network</module>
+    </modules>
     
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>
