@@ -7,7 +7,10 @@ import se.sics.p2ptoolbox.election.core.data.Promise;
 import se.sics.p2ptoolbox.election.network.util.ExtensionSerializer;
 import se.sics.p2ptoolbox.election.network.util.LeaseCommitSerializer;
 import se.sics.p2ptoolbox.election.network.util.PromiseSerializer;
+import se.sics.p2ptoolbox.election.network.util.PublicKeySerializer;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+
+import java.security.PublicKey;
 
 /**
  * Main class for setting up of the serializer for the election module.
@@ -27,8 +30,9 @@ public class ElectionSerializerSetup {
         promiseResponse(Promise.Response.class, "electionPromiseResponse"),
         leaseCommitRequest(LeaseCommitUpdated.Request.class, "electionLeaseCommitRequest"),
         leaseCommitResponse(LeaseCommitUpdated.Response.class, "electionLeaseCommitResponse"),
-        extensionRequest(ExtensionRequest.class, "electionExtension");
-        
+        extensionRequest(ExtensionRequest.class, "electionExtension"),
+        publicKey(PublicKey.class, "publicKey");
+
         private Class serializedClass;
         private String serializerName;
         
@@ -71,12 +75,10 @@ public class ElectionSerializerSetup {
         PromiseSerializer.Request promiseRequestSerializer = new PromiseSerializer.Request(currentId++);
         Serializers.register(promiseRequestSerializer, ElectionSerializerEnum.promiseRequest.serializerName);
         Serializers.register(ElectionSerializerEnum.promiseRequest.serializedClass, ElectionSerializerEnum.promiseRequest.serializerName);
-        
-        
+
         PromiseSerializer.Response promiseResponseSerializer = new PromiseSerializer.Response(currentId++);
         Serializers.register(promiseResponseSerializer, ElectionSerializerEnum.promiseResponse.serializerName);
         Serializers.register(ElectionSerializerEnum.promiseResponse.serializedClass, ElectionSerializerEnum.promiseResponse.serializerName);
-
 
         LeaseCommitSerializer.Request leaseCommitRequestSerializer = new LeaseCommitSerializer.Request(currentId++);
         Serializers.register(leaseCommitRequestSerializer, ElectionSerializerEnum.leaseCommitRequest.serializerName);
@@ -89,7 +91,11 @@ public class ElectionSerializerSetup {
         ExtensionSerializer extensionSerializer = new ExtensionSerializer(currentId++);
         Serializers.register(extensionSerializer, ElectionSerializerEnum.extensionRequest.serializerName);
         Serializers.register(ElectionSerializerEnum.extensionRequest.serializedClass, ElectionSerializerEnum.extensionRequest.serializerName);
-        
+
+        PublicKeySerializer publicKeySerializer = new PublicKeySerializer(currentId++);
+        Serializers.register(publicKeySerializer, ElectionSerializerEnum.publicKey.serializerName);
+        Serializers.register(ElectionSerializerEnum.publicKey.serializedClass, ElectionSerializerEnum.publicKey.serializerName);
+
         return currentId;
     }
 

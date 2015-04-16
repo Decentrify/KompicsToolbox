@@ -2,11 +2,8 @@ package se.sics.p2ptoolbox.election.core.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.election.core.data.LeaseCommitUpdated;
 import se.sics.p2ptoolbox.election.core.data.Promise;
-import se.sics.p2ptoolbox.election.core.msg.LeaderPromiseMessage;
-import se.sics.p2ptoolbox.election.core.msg.LeaseCommitMessageUpdated;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.ArrayList;
