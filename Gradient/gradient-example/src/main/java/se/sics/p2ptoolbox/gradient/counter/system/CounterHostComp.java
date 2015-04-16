@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.counter.system;
 
+import com.typesafe.config.ConfigFactory;
 import java.util.List;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ import se.sics.p2ptoolbox.gradient.counter.CounterComp;
 import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
 import se.sics.p2ptoolbox.gradient.counter.CounterViewComparator;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -58,7 +59,7 @@ public class CounterHostComp extends ComponentDefinition {
 
     private Positive<CroupierControlPort> croupierControlPort1;
 
-    private NatedAddress selfAddress;
+    private DecoratedAddress selfAddress;
 
     public CounterHostComp(HostInit init) {
         this.selfAddress = init.selfAddress;
@@ -73,8 +74,8 @@ public class CounterHostComp extends ComponentDefinition {
         int croupierOverlayId = 10;
         int gradientOverlayId = 11;
 
-        CroupierConfig croupierConfig1 = new CroupierConfig(viewSize, init.period, shuffleSize, CroupierSelectionPolicy.RANDOM, init.softMaxTemperature);
-        CroupierComp.CroupierInit croupierInit1 = new CroupierComp.CroupierInit(croupierConfig1, croupierOverlayId, selfAddress, init.bootstrapNodes, init.seed);
+        CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
+        CroupierComp.CroupierInit croupierInit1 = new CroupierComp.CroupierInit(croupierConfig, croupierOverlayId, selfAddress, init.bootstrapNodes, init.seed);
         Component croupier1 = createNConnectCroupier(croupierInit1);
 
         GradientConfig gradientConfig1 = new GradientConfig(viewSize, init.period, shuffleSize, init.softMaxTemperature);
@@ -136,13 +137,13 @@ public class CounterHostComp extends ComponentDefinition {
     public static class HostInit extends Init<CounterHostComp> {
 
         public final long seed;
-        public final NatedAddress selfAddress;
-        public final List<NatedAddress> bootstrapNodes;
+        public final DecoratedAddress selfAddress;
+        public final List<DecoratedAddress> bootstrapNodes;
         public final int period;
         public final Pair<Double, Integer> counterRate;
         public final double softMaxTemperature;
 
-        public HostInit(NatedAddress selfAddress, List<NatedAddress> bootstrapNodes, long seed, int period, Pair<Double, Integer> counterRate, double softMaxTemperature) {
+        public HostInit(DecoratedAddress selfAddress, List<DecoratedAddress> bootstrapNodes, long seed, int period, Pair<Double, Integer> counterRate, double softMaxTemperature) {
             this.seed = seed;
             this.selfAddress = selfAddress;
             this.bootstrapNodes = bootstrapNodes;

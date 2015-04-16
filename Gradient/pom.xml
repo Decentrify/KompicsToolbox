@@ -9,7 +9,7 @@
     <groupId>se.sics.p2ptoolbox.gradient</groupId>
     <artifactId>gradient</artifactId>
     <name>Gradient</name>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -23,10 +23,8 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <kompics.version>0.8.0-SNAPSHOT</kompics.version>
-        <p2ptoolbox.serialization.version>1.0-SNAPSHOT</p2ptoolbox.serialization.version>
-        <p2ptoolbox.croupier.version>1.3-SNAPSHOT</p2ptoolbox.croupier.version>
-        <p2ptoolbox.util.version>1.2-SNAPSHOT</p2ptoolbox.util.version>
-        <guava.version>18.0</guava.version>
+        <p2ptoolbox.croupier.version>1.5-SNAPSHOT</p2ptoolbox.croupier.version>
+        <p2ptoolbox.util.version>1.3-SNAPSHOT</p2ptoolbox.util.version>
     </properties>
     
     <dependencies>
@@ -63,7 +61,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
+            <version>18.0</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -77,6 +75,10 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.5.6</version>
         </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.2.1</version>
+        </dependency>
     </dependencies>
-    
 </project>

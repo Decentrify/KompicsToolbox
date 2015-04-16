@@ -30,9 +30,8 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -63,8 +62,8 @@ public class IdSortScenarioOperations {
 
         @Override
         public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<IdSortHostComp, NatedAddress>() {
-                private NatedAddress nodeAddress;
+            return new StartNodeCmd<IdSortHostComp, DecoratedAddress>() {
+                private DecoratedAddress nodeAddress;
 
                 @Override
                 public Class getNodeComponentDefinition() {
@@ -72,16 +71,16 @@ public class IdSortScenarioOperations {
                 }
 
                 @Override
-                public IdSortHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
+                public IdSortHostComp.HostInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
                     //open address
-                    nodeAddress = new BasicNatedAddress(new BasicAddress(localHost, 12345, nodeId));
+                    nodeAddress = new DecoratedAddress(new BasicAddress(localHost, 12345, nodeId));
                     /**
                      * we don't want all nodes to start their pseudo random
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
                     int period = 1000;
-                    return new IdSortHostComp.HostInit(nodeAddress, new ArrayList<NatedAddress>(bootstrapNodes), nodeSeed, period, softMaxTemperature);
+                    return new IdSortHostComp.HostInit(nodeAddress, new ArrayList<DecoratedAddress>(bootstrapNodes), nodeSeed, period, softMaxTemperature);
                 }
 
                 @Override
@@ -90,7 +89,7 @@ public class IdSortScenarioOperations {
                 }
 
                 @Override
-                public NatedAddress getAddress() {
+                public DecoratedAddress getAddress() {
                     return nodeAddress;
                 }
 

@@ -36,7 +36,7 @@ import se.sics.p2ptoolbox.gradient.GradientFilter;
 import se.sics.p2ptoolbox.util.InvertedComparator;
 import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
 import se.sics.p2ptoolbox.util.compare.WrapperComparator;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -97,26 +97,26 @@ public class GradientView {
 
     public void merge(Set<GradientContainer> newSample, GradientContainer selfView) {
         for (GradientContainer gc : newSample) {
-            if (gc.getSource().getBaseAddress().equals(selfView.getSource().getBaseAddress())) {
+            if (gc.getSource().getBase().equals(selfView.getSource().getBase())) {
                 continue;
             }
             if (!filter.retainOther(selfView.getContent(), gc.getContent())) {
                 continue;
             }
-            GradientContainer currentGc = view.get(gc.getSource().getBaseAddress());
+            GradientContainer currentGc = view.get(gc.getSource().getBase());
             if (currentGc != null) {
                 if (currentGc.getAge() > gc.getAge()) {
-                    view.put(gc.getSource().getBaseAddress(), gc);
+                    view.put(gc.getSource().getBase(), gc);
                 }
             } else {
-                view.put(gc.getSource().getBaseAddress(), gc);
+                view.put(gc.getSource().getBase(), gc);
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
         if (view.size() > viewSize) {
             for (GradientContainer toRemove : softMaxReduceSize(ageComparator, 1)) {
                 log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
-                view.remove(toRemove.getSource().getBaseAddress());
+                view.remove(toRemove.getSource().getBase());
             }
         }
         if (view.size() > viewSize) {
@@ -124,7 +124,7 @@ public class GradientView {
             int reduceSize = view.size() - viewSize;
             for (GradientContainer toRemove : softMaxReduceSize(preferenceComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
-                view.remove(toRemove.getSource().getBaseAddress());
+                view.remove(toRemove.getSource().getBase());
             }
         }
         log.debug("{} remove - after shrink:{}", logPrefix, view.values());
@@ -164,8 +164,8 @@ public class GradientView {
         return copyList;
     }
 
-    public void clean(NatedAddress node) {
-        view.remove(node.getBaseAddress());
+    public void clean(DecoratedAddress node) {
+        view.remove(node.getBase());
     }
 
     /**

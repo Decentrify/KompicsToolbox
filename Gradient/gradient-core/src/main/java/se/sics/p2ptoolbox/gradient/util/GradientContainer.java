@@ -19,26 +19,26 @@
 package se.sics.p2ptoolbox.gradient.util;
 
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.traits.Ageing;
 import se.sics.p2ptoolbox.util.traits.Wrapper;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientContainer<C extends Object> implements Container<NatedAddress, C>, Ageing, Wrapper<C> {
+public class GradientContainer<C extends Object> implements Container<DecoratedAddress, C>, Ageing, Wrapper<C> {
 
     private int age;
-    private NatedAddress src;
+    private DecoratedAddress src;
     private final C content;
 
-    public GradientContainer(NatedAddress src, C content, int age) {
+    public GradientContainer(DecoratedAddress src, C content, int age) {
         this.age = age;
         this.src = src;
         this.content = content;
     }
 
-    public GradientContainer(NatedAddress src, C content) {
+    public GradientContainer(DecoratedAddress src, C content) {
         this(src, content, 0);
     }
 
@@ -48,7 +48,7 @@ public class GradientContainer<C extends Object> implements Container<NatedAddre
     }
 
     @Override
-    public NatedAddress getSource() {
+    public DecoratedAddress getSource() {
         return src;
     }
 
