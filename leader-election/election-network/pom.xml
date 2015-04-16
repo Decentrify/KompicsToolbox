@@ -19,7 +19,7 @@
         <dependency>
             <groupId>se.sics.kompics.basic</groupId>
             <artifactId>kompics-component-netty-network</artifactId>
-            <version>${new.kompics.version}</version>
+            <version>${kompics.version}</version>
         </dependency>
 
         <dependency>

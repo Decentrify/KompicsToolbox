@@ -1,17 +1,21 @@
 package se.sics.p2ptoolbox.election.core.util;
 
-import se.sics.gvod.timer.ScheduleTimeout;
-import se.sics.gvod.timer.Timeout;
+
+import se.sics.kompics.timer.ScheduleTimeout;
+import se.sics.kompics.timer.Timeout;
 
 import java.util.UUID;
 
 /**
+ *
+ * Collection of Timeouts used during the election protocol.
+ *
  * Created by babbarshaer on 2015-03-31.
  */
 public class TimeoutCollection {
     
     // Common.
-    public static class LeaseTimeout extends Timeout{
+    public static class LeaseTimeout extends Timeout {
         
         public LeaseTimeout(ScheduleTimeout request) {
             super(request);

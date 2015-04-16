@@ -3,11 +3,12 @@ package se.sics.p2ptoolbox.election.core;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.*;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.timer.CancelTimeout;
+import se.sics.kompics.timer.ScheduleTimeout;
+import se.sics.kompics.timer.Timer;
+import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.LEContainer;
@@ -68,12 +69,12 @@ public class ElectionLeader extends ComponentDefinition {
 
     // Promise Sub Protocol.
     private UUID electionRoundId;
-    private TimeoutId promisePhaseTimeout;
-    private TimeoutId leaseCommitPhaseTimeout;
+    private UUID promisePhaseTimeout;
+    private UUID leaseCommitPhaseTimeout;
     private PromiseResponseTracker electionRoundTracker;
     private PublicKey publicKey;
 
-    private TimeoutId leaseTimeoutId;
+    private UUID leaseTimeoutId;
 
     // Convergence Variables.
     int convergenceCounter;
@@ -90,7 +91,7 @@ public class ElectionLeader extends ComponentDefinition {
 
     // Ports.
     Positive<Timer> timerPositive = requires(Timer.class);
-    Positive<VodNetwork> networkPositive = requires(VodNetwork.class);
+    Positive<Network> networkPositive = requires(Network.class);
     Negative<LeaderElectionPort> electionPort = provides(LeaderElectionPort.class);
     Positive<GradientPort> gradientPort = requires(GradientPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);

@@ -3,10 +3,11 @@ package se.sics.p2ptoolbox.election.core;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.*;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.CancelTimeout;
+import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.LEContainer;
 import se.sics.p2ptoolbox.election.api.msg.ElectionState;
@@ -59,12 +60,12 @@ public class ElectionFollower extends ComponentDefinition {
     private UUID electionRoundId;
     private boolean inElection;
 
-    private TimeoutId awaitLeaseCommitId;
-    private TimeoutId leaseTimeoutId;
+    private UUID awaitLeaseCommitId;
+    private UUID leaseTimeoutId;
     private DecoratedAddress leaderAddress;
 
     // Ports.
-    Positive<VodNetwork> networkPositive = requires(VodNetwork.class);
+    Positive<Network> networkPositive = requires(Network.class);
     Positive<se.sics.gvod.timer.Timer> timerPositive = requires(se.sics.gvod.timer.Timer.class);
     Positive<GradientPort> gradientPort = requires(GradientPort.class);
     Negative<LeaderElectionPort> electionPort = provides(LeaderElectionPort.class);
