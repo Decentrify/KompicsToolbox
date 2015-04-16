@@ -1,42 +1,43 @@
 package se.sics.p2ptoolbox.election.example.main;
 
+import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import se.sics.p2ptoolbox.serialization.SerializationContext;
-import se.sics.p2ptoolbox.serialization.Serializer;
+import se.sics.kompics.network.netty.serialization.Serializer;
 
 /**
  * Serializer for the application specific leader descriptor.
  *
  * Created by babbar on 2015-04-02.
  */
-public class LEDescriptorSerializer implements Serializer<LeaderDescriptor> {
+public class LEDescriptorSerializer implements Serializer{
 
-    @Override
-    public ByteBuf encode(SerializationContext serializationContext, ByteBuf byteBuf, LeaderDescriptor leaderDescriptor) throws SerializerException, SerializationContext.MissingException {
+    private int id;
 
-        byteBuf.writeInt(leaderDescriptor.utility);
-        byteBuf.writeBoolean(leaderDescriptor.membership);
-
-        return byteBuf;
+    public LEDescriptorSerializer(int id){
+        this.id = id;
     }
 
     @Override
-    public LeaderDescriptor decode(SerializationContext serializationContext, ByteBuf byteBuf) throws SerializerException, SerializationContext.MissingException {
+    public int identifier() {
+        return this.id;
+    }
 
-        int utility = byteBuf.readInt();
+    @Override
+    public void toBinary(Object o, ByteBuf byteBuf) {
+
+        LeaderDescriptor leaderDescriptor = (LeaderDescriptor)o;
+        byteBuf.writeBoolean(leaderDescriptor.membership);
+        byteBuf.writeInt(leaderDescriptor.utility);
+
+
+    }
+
+    @Override
+    public Object fromBinary(ByteBuf byteBuf, Optional<Object> optional) {
+
         boolean membership = byteBuf.readBoolean();
+        int utility = byteBuf.readInt();
 
         return new LeaderDescriptor(utility, membership);
-    }
-
-    @Override
-    public int getSize(SerializationContext serializationContext, LeaderDescriptor leaderDescriptor) throws SerializerException, SerializationContext.MissingException {
-
-        int size = 0;
-
-        size += Integer.SIZE/8;
-        size += Byte.SIZE/8;
-
-        return size;
     }
 }

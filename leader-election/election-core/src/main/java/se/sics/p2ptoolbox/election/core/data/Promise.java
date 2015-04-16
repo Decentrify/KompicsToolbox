@@ -1,7 +1,5 @@
 package se.sics.p2ptoolbox.election.core.data;
 
-import se.sics.gvod.net.VodAddress;
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 

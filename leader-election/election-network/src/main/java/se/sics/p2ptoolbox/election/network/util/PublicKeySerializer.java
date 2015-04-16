@@ -7,7 +7,6 @@ import se.sics.gvod.common.msgs.MessageEncodingException;
 import se.sics.gvod.net.util.UserTypesDecoderFactory;
 import se.sics.gvod.net.util.UserTypesEncoderFactory;
 import se.sics.kompics.network.netty.serialization.Serializer;
-import se.sics.p2ptoolbox.serialization.SerializationContext;
 import sun.misc.BASE64Encoder;
 
 import java.security.KeyFactory;

@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.timer.CancelTimeout;
-import se.sics.kompics.timer.ScheduleTimeout;
+import se.sics.kompics.timer.*;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.LEContainer;
 import se.sics.p2ptoolbox.election.api.msg.ElectionState;
@@ -22,8 +22,8 @@ import se.sics.p2ptoolbox.election.core.data.Promise;
 import se.sics.p2ptoolbox.election.core.util.ElectionHelper;
 import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
 import se.sics.p2ptoolbox.election.core.util.TimeoutCollection;
-import se.sics.p2ptoolbox.gradient.api.GradientPort;
-import se.sics.p2ptoolbox.gradient.api.msg.GradientSample;
+import se.sics.p2ptoolbox.gradient.GradientPort;
+import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -66,7 +66,7 @@ public class ElectionFollower extends ComponentDefinition {
 
     // Ports.
     Positive<Network> networkPositive = requires(Network.class);
-    Positive<se.sics.gvod.timer.Timer> timerPositive = requires(se.sics.gvod.timer.Timer.class);
+    Positive<Timer> timerPositive = requires(Timer.class);
     Positive<GradientPort> gradientPort = requires(GradientPort.class);
     Negative<LeaderElectionPort> electionPort = provides(LeaderElectionPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);
@@ -135,7 +135,7 @@ public class ElectionFollower extends ComponentDefinition {
 
             // Incorporate the new sample.
             Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
-            addressContainerMap = ElectionHelper.addGradientSample(event.cpvCollection);
+            addressContainerMap = ElectionHelper.addGradientSample(event.collection);
 
             // Check how much the sample changed.
             if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), config.getConvergenceTest())) {

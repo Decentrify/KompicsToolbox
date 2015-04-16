@@ -1,7 +1,7 @@
 package se.sics.p2ptoolbox.election.api.msg.mock;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
+import se.sics.p2ptoolbox.util.Container;
 
 import java.util.Collection;
 
@@ -11,10 +11,10 @@ import java.util.Collection;
  */
 public class MockedGradientUpdate implements KompicsEvent {
 
-    public final Collection<CroupierPeerView> cpvCollection;
+    public final Collection<Container> collection;
 
-    public MockedGradientUpdate(Collection<CroupierPeerView> collection){
-        this.cpvCollection = collection;
+    public MockedGradientUpdate(Collection<Container> collection){
+        this.collection = collection;
     }
 
 }

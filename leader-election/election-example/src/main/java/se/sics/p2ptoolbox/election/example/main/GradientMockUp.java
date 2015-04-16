@@ -6,7 +6,6 @@ import se.sics.kompics.*;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.election.api.msg.ElectionState;
 import se.sics.p2ptoolbox.election.api.msg.LeaderState;
 import se.sics.p2ptoolbox.election.api.msg.LeaderUpdate;
@@ -16,6 +15,7 @@ import se.sics.p2ptoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.p2ptoolbox.election.api.ports.TestPort;
 import se.sics.p2ptoolbox.election.example.data.PeersUpdate;
 import se.sics.p2ptoolbox.election.example.ports.ApplicationPort;
+import se.sics.p2ptoolbox.util.Container;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class GradientMockUp extends ComponentDefinition {
 
     private DecoratedAddress selfAddress;
     Logger logger = LoggerFactory.getLogger(GradientMockUp.class);
-    private Collection<CroupierPeerView> cpvCollection;
+    private Collection<Container> containerCollection;
 
     // Ports
     Positive<LeaderElectionPort> leaderElectionPortPositive = requires(LeaderElectionPort.class);
@@ -56,7 +56,7 @@ public class GradientMockUp extends ComponentDefinition {
 
     public void doInit(GradientMockUpInit init){
         this.selfAddress = init.selfAddress;
-        cpvCollection = new ArrayList<CroupierPeerView>();
+        containerCollection = new ArrayList<Container>();
     }
 
 
@@ -90,18 +90,17 @@ public class GradientMockUp extends ComponentDefinition {
                 if(address.equals(selfAddress))
                     continue;
 
-//                CroupierPeerView cpv = new CroupierPeerView(new LeaderDescriptor(address.getId(), false), address);
-                CroupierPeerView cpv = null;
-                cpvCollection.add(cpv);
+                Container container  = new ExampleContainer(address, new LeaderDescriptor(address.getId(), false));
+                containerCollection.add(container);
             }
 
-            if(cpvCollection.size() > 0){
+            if(containerCollection.size() > 0){
 
                 SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(2000, 2000);
                 spt.setTimeoutEvent(new PeriodicUpdate(spt));
                 trigger(spt, timerPort);
 
-                trigger(new MockedGradientUpdate(cpvCollection), testPort);
+                trigger(new MockedGradientUpdate(containerCollection), testPort);
             }
         }
     };
@@ -153,8 +152,8 @@ public class GradientMockUp extends ComponentDefinition {
     Handler<PeriodicUpdate> periodicUpdateHandler = new Handler<PeriodicUpdate>() {
         @Override
         public void handle(PeriodicUpdate periodicUpdate) {
-            if(cpvCollection != null){
-                trigger(new MockedGradientUpdate(cpvCollection) , testPort);
+            if(containerCollection != null){
+                trigger(new MockedGradientUpdate(containerCollection) , testPort);
             }
         }
     };

@@ -1,11 +1,11 @@
 package se.sics.p2ptoolbox.election.core.util;
 
 import org.javatuples.Pair;
-import se.sics.gvod.net.VodAddress;
-import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.LEContainer;
+import se.sics.p2ptoolbox.util.Container;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.*;
 
@@ -22,11 +22,11 @@ public class ElectionHelper {
      * @param sample sample from the gradient.
      * @return updated view.
      */
-    public static Map<BasicAddress, LEContainer> addGradientSample(Collection<CroupierPeerView> sample){
+    public static Map<BasicAddress, LEContainer> addGradientSample(Collection<Container> sample){
 
         Map<BasicAddress, LEContainer> containerMap = new HashMap<BasicAddress, LEContainer>();
-        for(CroupierPeerView cpv: sample){
-//            containerMap.put(cpv.src, new LEContainer(cpv.src, (LCPeerView)cpv.pv));
+        for(Container container : sample){
+            containerMap.put(((DecoratedAddress)container.getSource()).getBase(), new LEContainer( (DecoratedAddress)container.getSource(), (LCPeerView)container.getContent()) );
         }
 
         return containerMap;

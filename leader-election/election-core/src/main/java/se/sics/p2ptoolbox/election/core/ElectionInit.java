@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.election.core;
 
-import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Init;
 import se.sics.p2ptoolbox.election.api.LCPeerView;

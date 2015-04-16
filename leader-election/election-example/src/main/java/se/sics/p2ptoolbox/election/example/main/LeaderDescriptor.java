@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.election.example.main;
 
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 
 /**
@@ -8,7 +7,7 @@ import se.sics.p2ptoolbox.election.api.LCPeerView;
  *
  * Created by babbar on 2015-04-01.
  */
-public class LeaderDescriptor implements PeerView, LCPeerView, Comparable<LeaderDescriptor>{
+public class LeaderDescriptor implements  LCPeerView, Comparable<LeaderDescriptor>{
 
 
     public int utility;
@@ -37,11 +36,6 @@ public class LeaderDescriptor implements PeerView, LCPeerView, Comparable<Leader
     @Override
     public LCPeerView disableLGMembership() {
         return new LeaderDescriptor(this.utility, false);
-    }
-
-    @Override
-    public LeaderDescriptor deepCopy() {
-        return null;
     }
 
     public void setMembership(boolean membership){

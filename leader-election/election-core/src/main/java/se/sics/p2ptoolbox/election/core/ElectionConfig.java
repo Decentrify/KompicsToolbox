@@ -1,12 +1,4 @@
 package se.sics.p2ptoolbox.election.core;
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
-import se.sics.p2ptoolbox.election.api.LCPeerView;
-import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
-
-
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.Comparator;
 
 /**
  * Configuration Class for the Election Module.

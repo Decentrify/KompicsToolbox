@@ -1,12 +1,9 @@
 package se.sics.p2ptoolbox.election.api.msg;
 
-import se.sics.gvod.address.Address;
-import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.security.PublicKey;
-import java.util.Collection;
 
 /**
  * Indication event from the election component,

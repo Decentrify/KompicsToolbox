@@ -1,7 +1,6 @@
 package se.sics.p2ptoolbox.election.api.msg;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 
 import java.util.UUID;

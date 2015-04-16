@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.election.api;
 
-import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**

@@ -3,7 +3,6 @@ package se.sics.p2ptoolbox.election.core;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodNetwork;
 import se.sics.kompics.*;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
@@ -24,8 +23,8 @@ import se.sics.p2ptoolbox.election.core.util.ElectionHelper;
 import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
 import se.sics.p2ptoolbox.election.core.util.PromiseResponseTracker;
 import se.sics.p2ptoolbox.election.core.util.TimeoutCollection;
-import se.sics.p2ptoolbox.gradient.api.GradientPort;
-import se.sics.p2ptoolbox.gradient.api.msg.GradientSample;
+import se.sics.p2ptoolbox.gradient.GradientPort;
+import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -170,7 +169,7 @@ public class ElectionLeader extends ComponentDefinition {
 
             // Incorporate the new sample.
             Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
-            addressContainerMap = ElectionHelper.addGradientSample(event.cpvCollection);
+            addressContainerMap = ElectionHelper.addGradientSample(event.collection);
 
             // Check how much the sample changed.
             if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), config.getConvergenceTest())) {
