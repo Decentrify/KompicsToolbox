@@ -2,11 +2,9 @@ package se.sics.p2ptoolbox.election.example.main;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.address.Address;
-import se.sics.gvod.net.VodAddress;
-import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.p2ptoolbox.election.api.ports.TestPort;
@@ -31,7 +29,7 @@ import java.util.Comparator;
  */
 public class HostManagerComp extends ComponentDefinition{
 
-    Positive<VodNetwork> networkPositive = requires(VodNetwork.class);
+    Positive<Network> networkPositive = requires(Network.class);
     Positive<Timer> timerPositive = requires(Timer.class);
     Negative<ApplicationPort> applicationPort = provides(ApplicationPort.class);
 
@@ -63,10 +61,10 @@ public class HostManagerComp extends ComponentDefinition{
         gradientMockUp = create(GradientMockUp.class, new GradientMockUp.GradientMockUpInit(selfAddress));
 
         // Make the necessary connections.
-        connect(electionLeader.getNegative(VodNetwork.class), networkPositive);
+        connect(electionLeader.getNegative(Network.class), networkPositive);
         connect(electionLeader.getNegative(Timer.class), timerPositive);
 
-        connect(electionFollower.getNegative(VodNetwork.class), networkPositive);
+        connect(electionFollower.getNegative(Network.class), networkPositive);
         connect(electionFollower.getNegative(Timer.class), timerPositive);
 
         // Connections with the mock up component.

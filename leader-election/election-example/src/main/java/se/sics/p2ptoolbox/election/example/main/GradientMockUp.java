@@ -2,11 +2,10 @@ package se.sics.p2ptoolbox.election.example.main;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodAddress;
-import se.sics.gvod.timer.SchedulePeriodicTimeout;
-import se.sics.gvod.timer.Timeout;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.election.api.msg.ElectionState;
 import se.sics.p2ptoolbox.election.api.msg.LeaderState;
@@ -71,8 +70,8 @@ public class GradientMockUp extends ComponentDefinition {
         }
     };
 
-    public class PeriodicUpdate extends Timeout{
-        public PeriodicUpdate(se.sics.gvod.timer.SchedulePeriodicTimeout request) {
+    public class PeriodicUpdate extends Timeout {
+        public PeriodicUpdate(SchedulePeriodicTimeout request) {
             super(request);
         }
     }
