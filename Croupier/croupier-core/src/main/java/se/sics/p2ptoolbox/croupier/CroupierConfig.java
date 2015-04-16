@@ -29,7 +29,7 @@ import se.sics.p2ptoolbox.util.config.SystemConfig;
  */
 public class CroupierConfig {
 
-    private final static Logger log = LoggerFactory.getLogger(SystemConfig.class);
+    private final static Logger log = LoggerFactory.getLogger(CroupierConfig.class);
 
     public final CroupierSelectionPolicy policy;
     public final int viewSize;
@@ -50,7 +50,7 @@ public class CroupierConfig {
                 throw new RuntimeException("shufflePeriod / shuffleTimeout missconfiguration");
             }
             this.softMaxTemperature = config.getDouble("croupier.softMaxTemperature");
-            log.info("policy:{} view size:{} shuffle size:{} period:{} timeout:{} softMaxTemperature", 
+            log.info("policy:{} view size:{} shuffle size:{} period:{} timeout:{} softMaxTemperature:{}", 
                     new Object[]{policy, viewSize, shuffleSize, shufflePeriod, shuffleTimeout, softMaxTemperature});
         } catch (ConfigException.Missing ex) {
             log.error("missing parameter", ex);

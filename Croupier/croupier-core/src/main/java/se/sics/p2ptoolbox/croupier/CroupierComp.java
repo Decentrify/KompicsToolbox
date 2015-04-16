@@ -106,17 +106,8 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
-//        subscribe(handleTestMsg, network);
     }
     
-//    Handler handleTestMsg = new Handler<Msg>() {
-//
-//        @Override
-//        public void handle(Msg event) {
-//            log.info("received:{}", event);
-//        }
-//    };
-
     Handler<Start> handleStart = new Handler<Start>() {
 
         @Override

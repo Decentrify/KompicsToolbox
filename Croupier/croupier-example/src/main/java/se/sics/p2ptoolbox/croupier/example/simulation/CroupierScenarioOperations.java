@@ -18,9 +18,12 @@
  */
 package se.sics.p2ptoolbox.croupier.example.simulation;
 
+import com.typesafe.config.ConfigFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Set;
+import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
@@ -28,6 +31,7 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -76,7 +80,8 @@ public class CroupierScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    return new ExampleHostComp.HostInit(nodeAddress, bootstrapNodes, nodeSeed, aggregatorServer);
+                    CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
+                    return new ExampleHostComp.HostInit(nodeSeed, new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes)), croupierConfig);
                 }
 
                 @Override

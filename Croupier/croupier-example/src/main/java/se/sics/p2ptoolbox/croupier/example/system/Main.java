@@ -30,17 +30,13 @@ public class Main {
     
     public static void main(String[] args) {
         Long seed = null;
-        Triplet<String, Integer, Integer> self = null;
-        Triplet<String, Integer, Integer> bootstrap = null;
         
-        if(args.length >= 4) {
+        if(args.length >= 1) {
             seed = Long.valueOf(args[0]);
-            self = Triplet.with(args[1], Integer.valueOf(args[2]), Integer.valueOf(args[3]));
+        } else {
+            throw new RuntimeException("no seed argument");
         }
-        if(args.length >= 7) {
-            bootstrap = Triplet.with(args[4], Integer.valueOf(args[5]), Integer.valueOf(args[6]));
-        }
-        Launcher.setArgs(seed, self, bootstrap);
+        Launcher.setArgs(seed);
         start();
         try {
             Kompics.waitForTermination();

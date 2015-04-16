@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.croupier.example.system;
 
+import com.typesafe.config.ConfigFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
@@ -38,6 +39,7 @@ import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.croupier.example.network.ExampleSerializerSetup;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -49,20 +51,9 @@ public class Launcher extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
     private static long seed;
-    private static DecoratedAddress selfAddress = null;
-    private static DecoratedAddress bootstrapAddress = null;
-    private static DecoratedAddress aggregatorAddress = null;
 
-    public static void setArgs(long setSeed, Triplet<String, Integer, Integer> self, Triplet<String, Integer, Integer> bootstrap) {
+    public static void setArgs(long setSeed) {
         seed = setSeed;
-        try {
-            selfAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName(self.getValue0()), self.getValue1(), self.getValue2()));
-            if (bootstrap != null) {
-                bootstrapAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName(bootstrap.getValue0()), bootstrap.getValue1(), bootstrap.getValue2()));
-            }
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex);
-        }
     }
 
     private Component timer;
@@ -78,14 +69,10 @@ public class Launcher extends ComponentDefinition {
         ExampleSerializerSetup.oneTimeSetup();
 
         timer = create(JavaTimer.class, Init.NONE);
-        network = create(NettyNetwork.class, new NettyInit(selfAddress));
-//        connect(network.getNegative(Timer.class), timer.getPositive(Timer.class));
+        SystemConfig systemConfig = new SystemConfig(ConfigFactory.load("application.conf"));
+        network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
 
-        Set<DecoratedAddress> bootstrapNodes = new HashSet<DecoratedAddress>();
-        if (bootstrapAddress != null) {
-            bootstrapNodes.add(bootstrapAddress);
-        }
-        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(selfAddress, bootstrapNodes, seed, aggregatorAddress));
+        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(seed, "application.conf"));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 
