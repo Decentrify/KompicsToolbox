@@ -2,6 +2,7 @@ package se.sics.p2ptoolbox.election.core.data;
 
 import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.security.PublicKey;
 import java.util.UUID;
@@ -18,12 +19,12 @@ public class LeaseCommitUpdated {
     
     public static class Request {
         
-        public VodAddress leaderAddress;
+        public DecoratedAddress leaderAddress;
         public PublicKey leaderPublicKey;
         public LCPeerView leaderView;
         public UUID electionRoundId;
         
-        public Request(VodAddress leaderAddress, PublicKey publicKey, LCPeerView leaderView, UUID electionRoundId){
+        public Request(DecoratedAddress leaderAddress, PublicKey publicKey, LCPeerView leaderView, UUID electionRoundId){
             this.leaderAddress = leaderAddress;
             this.leaderPublicKey = publicKey;
             this.leaderView = leaderView;

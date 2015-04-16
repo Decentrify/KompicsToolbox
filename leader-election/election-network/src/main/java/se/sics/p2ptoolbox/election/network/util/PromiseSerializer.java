@@ -3,6 +3,12 @@ package se.sics.p2ptoolbox.election.network.util;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.p2ptoolbox.election.api.LCPeerView;
+import se.sics.p2ptoolbox.election.core.data.Promise;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+
+import java.util.UUID;
 
 /**
  * Main Wrapper class for the serializer of the objects passed during promise phase
@@ -28,12 +34,21 @@ public class PromiseSerializer {
 
         @Override
         public void toBinary(Object o, ByteBuf byteBuf) {
-
+            
+            Promise.Request request = (Promise.Request)o;
+            Serializers.lookupSerializer(UUID.class).toBinary(request.electionRoundId, byteBuf);
+            Serializers.lookupSerializer(DecoratedAddress.class).toBinary(request.leaderAddress, byteBuf);
+            Serializers.toBinary(request.leaderView, byteBuf);
         }
 
         @Override
         public Object fromBinary(ByteBuf byteBuf, Optional<Object> optional) {
-            return null;
+            
+            UUID uuid = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(byteBuf, optional);
+            DecoratedAddress address = (DecoratedAddress)Serializers.lookupSerializer(DecoratedAddress.class).fromBinary(byteBuf, optional);
+            LCPeerView lcPeerView = (LCPeerView)Serializers.fromBinary(byteBuf, optional);
+            
+            return new Promise.Request(address, lcPeerView, uuid);
         }
     }
 
@@ -49,17 +64,27 @@ public class PromiseSerializer {
 
         @Override
         public int identifier() {
-            return 0;
+            return this.id;
         }
 
         @Override
         public void toBinary(Object o, ByteBuf byteBuf) {
-
+            
+            Promise.Response response = (Promise.Response)o;
+            Serializers.lookupSerializer(UUID.class).toBinary(response.electionRoundId, byteBuf);
+            byteBuf.writeBoolean(response.acceptCandidate);
+            byteBuf.writeBoolean(response.isConverged);
+            
         }
 
         @Override
         public Object fromBinary(ByteBuf byteBuf, Optional<Object> optional) {
-            return null;
+            
+            UUID uuid = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(byteBuf, optional);
+            boolean acceptCandidate = byteBuf.readBoolean();
+            boolean isConverged = byteBuf.readBoolean();
+            
+            return new Promise.Response(acceptCandidate, isConverged, uuid);
         }
     }
 

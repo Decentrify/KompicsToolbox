@@ -3,6 +3,7 @@ package se.sics.p2ptoolbox.election.core.data;
 import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.croupier.api.util.PeerView;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.UUID;
 
@@ -19,10 +20,10 @@ public class Promise {
     public static class Request{
         
         public final LCPeerView leaderView;
-        public final VodAddress leaderAddress;
+        public final DecoratedAddress leaderAddress;
         public final UUID electionRoundId;
         
-        public Request(VodAddress leaderAddress, LCPeerView leaderView, UUID electionRoundId) {
+        public Request(DecoratedAddress leaderAddress, LCPeerView leaderView, UUID electionRoundId) {
             this.leaderAddress = leaderAddress;
             this.leaderView = leaderView;
             this.electionRoundId = electionRoundId;

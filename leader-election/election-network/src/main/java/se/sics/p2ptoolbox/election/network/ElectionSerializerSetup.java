@@ -1,5 +1,14 @@
 package se.sics.p2ptoolbox.election.network;
 
+import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.p2ptoolbox.election.core.data.ExtensionRequest;
+import se.sics.p2ptoolbox.election.core.data.LeaseCommitUpdated;
+import se.sics.p2ptoolbox.election.core.data.Promise;
+import se.sics.p2ptoolbox.election.network.util.ExtensionSerializer;
+import se.sics.p2ptoolbox.election.network.util.LeaseCommitSerializer;
+import se.sics.p2ptoolbox.election.network.util.PromiseSerializer;
+import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+
 /**
  * Main class for setting up of the serializer for the election module.
  *
@@ -13,7 +22,21 @@ public class ElectionSerializerSetup {
      * mechanism.
      */
     private static enum ElectionSerializerEnum{
-
+        
+        promiseRequest(Promise.Request.class, "electionPromiseRequest"),
+        promiseResponse(Promise.Response.class, "electionPromiseResponse"),
+        leaseCommitRequest(LeaseCommitUpdated.Request.class, "electionLeaseCommitRequest"),
+        leaseCommitResponse(LeaseCommitUpdated.Response.class, "electionLeaseCommitResponse"),
+        extensionRequest(ExtensionRequest.class, "electionExtension");
+        
+        private Class serializedClass;
+        private String serializerName;
+        
+        private ElectionSerializerEnum(Class serializedClass, String serializerName){
+            this.serializedClass = serializedClass;
+            this.serializerName = serializerName;
+        }
+        
     }
 
 
@@ -26,6 +49,12 @@ public class ElectionSerializerSetup {
      */
     public static void checkSetup(){
 
+        for (ElectionSerializerEnum cs : ElectionSerializerEnum.values()) {
+            if (Serializers.lookupSerializer(cs.serializedClass) == null) {
+                throw new RuntimeException("No serializer for " + cs.serializedClass);
+            }
+        }
+        BasicSerializerSetup.checkSetup();
     }
 
 
@@ -39,6 +68,28 @@ public class ElectionSerializerSetup {
 
         int currentId = startId;
 
+        PromiseSerializer.Request promiseRequestSerializer = new PromiseSerializer.Request(currentId++);
+        Serializers.register(promiseRequestSerializer, ElectionSerializerEnum.promiseRequest.serializerName);
+        Serializers.register(ElectionSerializerEnum.promiseRequest.serializedClass, ElectionSerializerEnum.promiseRequest.serializerName);
+        
+        
+        PromiseSerializer.Response promiseResponseSerializer = new PromiseSerializer.Response(currentId++);
+        Serializers.register(promiseResponseSerializer, ElectionSerializerEnum.promiseResponse.serializerName);
+        Serializers.register(ElectionSerializerEnum.promiseResponse.serializedClass, ElectionSerializerEnum.promiseResponse.serializerName);
+
+
+        LeaseCommitSerializer.Request leaseCommitRequestSerializer = new LeaseCommitSerializer.Request(currentId++);
+        Serializers.register(leaseCommitRequestSerializer, ElectionSerializerEnum.leaseCommitRequest.serializerName);
+        Serializers.register(ElectionSerializerEnum.leaseCommitRequest.serializedClass, ElectionSerializerEnum.leaseCommitRequest.serializerName);
+
+        LeaseCommitSerializer.Request leaseCommitResponseSerializer = new LeaseCommitSerializer.Request(currentId++);
+        Serializers.register(leaseCommitResponseSerializer, ElectionSerializerEnum.leaseCommitResponse.serializerName);
+        Serializers.register(ElectionSerializerEnum.leaseCommitResponse.serializedClass, ElectionSerializerEnum.leaseCommitResponse.serializerName);
+
+        ExtensionSerializer extensionSerializer = new ExtensionSerializer(currentId++);
+        Serializers.register(extensionSerializer, ElectionSerializerEnum.extensionRequest.serializerName);
+        Serializers.register(ElectionSerializerEnum.extensionRequest.serializedClass, ElectionSerializerEnum.extensionRequest.serializerName);
+        
         return currentId;
     }
 
