@@ -5,6 +5,7 @@ import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.croupier.api.util.CroupierPeerView;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.LEContainer;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.util.*;
 
@@ -21,11 +22,11 @@ public class ElectionHelper {
      * @param sample sample from the gradient.
      * @return updated view.
      */
-    public static Map<VodAddress, LEContainer> addGradientSample(Collection<CroupierPeerView> sample){
+    public static Map<BasicAddress, LEContainer> addGradientSample(Collection<CroupierPeerView> sample){
 
-        Map<VodAddress, LEContainer> containerMap = new HashMap<VodAddress, LEContainer>();
+        Map<BasicAddress, LEContainer> containerMap = new HashMap<BasicAddress, LEContainer>();
         for(CroupierPeerView cpv: sample){
-            containerMap.put(cpv.src, new LEContainer(cpv.src, (LCPeerView)cpv.pv));
+//            containerMap.put(cpv.src, new LEContainer(cpv.src, (LCPeerView)cpv.pv));
         }
 
         return containerMap;
@@ -41,7 +42,7 @@ public class ElectionHelper {
      * @param convergenceFactor value determining how much change is acceptable.
      * @return if round is converged or not.
      */
-    public static boolean isRoundConverged(Set<VodAddress> oldAddressSet, Set<VodAddress> currentAddressSet, double convergenceFactor){
+    public static boolean isRoundConverged(Set<BasicAddress> oldAddressSet, Set<BasicAddress> currentAddressSet, double convergenceFactor){
 
         int oldSize = oldAddressSet.size();
         int newSize = currentAddressSet.size();

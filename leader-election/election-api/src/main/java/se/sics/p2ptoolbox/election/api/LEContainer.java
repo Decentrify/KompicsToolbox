@@ -1,6 +1,7 @@
 package se.sics.p2ptoolbox.election.api;
 
 import se.sics.gvod.net.VodAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * Container for the Leader Election Capable View.
@@ -9,16 +10,16 @@ import se.sics.gvod.net.VodAddress;
  */
 public class LEContainer {
 
-    VodAddress source;
+    DecoratedAddress source;
     LCPeerView lcp;
 
 
-    public LEContainer(VodAddress source, LCPeerView lcp){
+    public LEContainer(DecoratedAddress source, LCPeerView lcp){
         this.source = source;
         this.lcp = lcp;
     }
 
-    public VodAddress getSource(){
+    public DecoratedAddress getSource(){
         return this.source;
     }
 

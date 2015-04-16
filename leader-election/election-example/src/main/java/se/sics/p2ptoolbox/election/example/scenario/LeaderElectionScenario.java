@@ -1,7 +1,7 @@
 package se.sics.p2ptoolbox.election.example.scenario;
 
-import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 import se.sics.p2ptoolbox.election.example.simulator.LeaderElectionOperations;
+import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
 
 /**
  * Basic Simple Scenario Used to Test Leader Election.

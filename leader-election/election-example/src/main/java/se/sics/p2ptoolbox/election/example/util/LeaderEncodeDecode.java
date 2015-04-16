@@ -7,15 +7,11 @@ import se.sics.gvod.net.BaseMsgFrameDecoder;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.msgs.RewriteableMsg;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
-import se.sics.p2ptoolbox.election.core.LENetworkSettings;
 import se.sics.p2ptoolbox.election.example.main.LEDescriptorSerializer;
 import se.sics.p2ptoolbox.election.example.main.LeaderDescriptor;
 import se.sics.p2ptoolbox.serialization.SerializationContext;
 import se.sics.p2ptoolbox.serialization.SerializationContextImpl;
-import se.sics.p2ptoolbox.serialization.msg.HeaderField;
 import se.sics.p2ptoolbox.serialization.msg.NetMsg;
-import se.sics.p2ptoolbox.serialization.msg.OverlayHeaderField;
-import se.sics.p2ptoolbox.serialization.serializer.OverlayHeaderFieldSerializer;
 import se.sics.p2ptoolbox.serialization.serializer.SerializerAdapter;
 import se.sics.p2ptoolbox.serialization.serializer.UUIDSerializer;
 import se.sics.p2ptoolbox.serialization.serializer.VodAddressSerializer;
@@ -72,7 +68,7 @@ public class LeaderEncodeDecode extends BaseMsgFrameDecoder{
         }
 
         // One time settings.
-        LENetworkSettings.oneTimeSetup(context, PROMISE_REQUEST, PROMISE_RESPONSE, EXTENSION_REQUEST, LEASE_REQUEST, LEASE_RESPONSE);
+//        LENetworkSettings.oneTimeSetup(context, PROMISE_REQUEST, PROMISE_RESPONSE, EXTENSION_REQUEST, LEASE_REQUEST, LEASE_RESPONSE);
     }
 
 

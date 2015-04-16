@@ -3,6 +3,7 @@ package se.sics.p2ptoolbox.election.api.msg;
 import se.sics.gvod.address.Address;
 import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.security.PublicKey;
 import java.util.Collection;
@@ -22,9 +23,9 @@ import java.util.Collection;
 public class LeaderUpdate implements KompicsEvent{
 
     public final PublicKey leaderPublicKey;
-    public final VodAddress leaderAddress;
+    public final DecoratedAddress leaderAddress;
     
-    public LeaderUpdate(PublicKey leaderPublicKey, VodAddress leaderAddress){
+    public LeaderUpdate(PublicKey leaderPublicKey, DecoratedAddress leaderAddress){
         this.leaderPublicKey = leaderPublicKey;
         this.leaderAddress = leaderAddress;
     }

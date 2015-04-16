@@ -5,6 +5,7 @@ import se.sics.gvod.common.msgs.DirectMsgNetty;
 import se.sics.gvod.common.msgs.MessageEncodingException;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.msgs.RewriteableMsg;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.Collection;
 
@@ -13,32 +14,10 @@ import java.util.Collection;
  *
  * Created by babbar on 2015-04-01.
  */
-public class AddPeers extends DirectMsgNetty.Request {
+public class AddPeers{
 
-    public Collection<VodAddress> peers;
-
-    public AddPeers(VodAddress source, VodAddress destination, Collection<VodAddress> peers) {
-        super(source, destination);
+    public Collection<DecoratedAddress> peers;
+    public AddPeers(Collection<DecoratedAddress> peers){
         this.peers = peers;
-    }
-
-    @Override
-    public int getSize() {
-        return 0;
-    }
-
-    @Override
-    public RewriteableMsg copy() {
-        return null;
-    }
-
-    @Override
-    public ByteBuf toByteArray() throws MessageEncodingException {
-        return null;
-    }
-
-    @Override
-    public byte getOpcode() {
-        return 0;
     }
 }

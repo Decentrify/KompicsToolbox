@@ -2,6 +2,7 @@ package se.sics.p2ptoolbox.election.example.data;
 
 import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.Collection;
 
@@ -11,9 +12,9 @@ import java.util.Collection;
  */
 public class PeersUpdate implements KompicsEvent{
 
-    public Collection<VodAddress> peers;
+    public Collection<DecoratedAddress> peers;
 
-    public PeersUpdate(Collection<VodAddress> peers){
+    public PeersUpdate(Collection<DecoratedAddress> peers){
         this.peers = peers;
     }
 }

@@ -5,6 +5,7 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Init;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -16,7 +17,7 @@ import java.util.Comparator;
  */
 public class ElectionInit<T extends ComponentDefinition> extends  Init <T> {
 
-    public final VodAddress selfAddress;
+    public final DecoratedAddress selfAddress;
     public final LCPeerView initialView;
     public final long seed;
     public final ElectionConfig electionConfig;
@@ -25,7 +26,7 @@ public class ElectionInit<T extends ComponentDefinition> extends  Init <T> {
     public final Comparator<LCPeerView> comparator;
     public final LeaderFilter filter;
 
-    public ElectionInit(VodAddress selfAddress, LCPeerView initialView, long seed, ElectionConfig electionConfig, PublicKey publicKey, PrivateKey privateKey, Comparator<LCPeerView> comparator, LeaderFilter filter){
+    public ElectionInit(DecoratedAddress selfAddress, LCPeerView initialView, long seed, ElectionConfig electionConfig, PublicKey publicKey, PrivateKey privateKey, Comparator<LCPeerView> comparator, LeaderFilter filter){
         this.selfAddress = selfAddress;
         this.seed = seed;
         this.initialView = initialView;

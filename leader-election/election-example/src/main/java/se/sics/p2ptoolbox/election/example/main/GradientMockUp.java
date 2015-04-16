@@ -17,6 +17,7 @@ import se.sics.p2ptoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.p2ptoolbox.election.api.ports.TestPort;
 import se.sics.p2ptoolbox.election.example.data.PeersUpdate;
 import se.sics.p2ptoolbox.election.example.ports.ApplicationPort;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +29,7 @@ import java.util.Collection;
  */
 public class GradientMockUp extends ComponentDefinition {
 
-    private VodAddress selfAddress;
+    private DecoratedAddress selfAddress;
     Logger logger = LoggerFactory.getLogger(GradientMockUp.class);
     private Collection<CroupierPeerView> cpvCollection;
 
@@ -86,11 +87,12 @@ public class GradientMockUp extends ComponentDefinition {
 
             logger.debug("{}: Received event from the application.", selfAddress.getId());
 
-            for(VodAddress address : peersUpdate.peers){
+            for(DecoratedAddress address : peersUpdate.peers){
                 if(address.equals(selfAddress))
                     continue;
 
-                CroupierPeerView cpv = new CroupierPeerView(new LeaderDescriptor(address.getId(), false), address);
+//                CroupierPeerView cpv = new CroupierPeerView(new LeaderDescriptor(address.getId(), false), address);
+                CroupierPeerView cpv = null;
                 cpvCollection.add(cpv);
             }
 
@@ -161,8 +163,8 @@ public class GradientMockUp extends ComponentDefinition {
 
     public static class GradientMockUpInit extends Init<GradientMockUp> {
 
-        public VodAddress selfAddress;
-        public GradientMockUpInit(VodAddress selfAddress){
+        public DecoratedAddress selfAddress;
+        public GradientMockUpInit(DecoratedAddress selfAddress){
             this.selfAddress = selfAddress;
         }
 

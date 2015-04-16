@@ -7,6 +7,7 @@ import se.sics.p2ptoolbox.election.core.data.LeaseCommitUpdated;
 import se.sics.p2ptoolbox.election.core.data.Promise;
 import se.sics.p2ptoolbox.election.core.msg.LeaderPromiseMessage;
 import se.sics.p2ptoolbox.election.core.msg.LeaseCommitMessageUpdated;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +30,7 @@ public class PromiseResponseTracker {
     private boolean isCommitAccepted;
     
     private Logger logger = LoggerFactory.getLogger(PromiseResponseTracker.class);
-    private List<VodAddress> leaderGroupInformation;
+    private List<DecoratedAddress> leaderGroupInformation;
     private List<Promise.Response> promiseResponseCollection;
     private List<LeaseCommitUpdated.Response> leaseResponseCollection;
     
@@ -44,14 +45,14 @@ public class PromiseResponseTracker {
      * A new promise round has started, therefore the tracking of responses needs to be reset.
      * @param promiseRoundCounter promise round id.
      */
-    public void startTracking(UUID promiseRoundCounter, Collection<VodAddress> leaderGroupInformation){
+    public void startTracking(UUID promiseRoundCounter, Collection<DecoratedAddress> leaderGroupInformation){
 
         this.isPromiseAccepted = true;
         this.convergenceCounter=0;
         this.isCommitAccepted = true;
         
         this.electionRoundId = promiseRoundCounter;
-        this.leaderGroupInformation = new ArrayList<VodAddress>();
+        this.leaderGroupInformation = new ArrayList<DecoratedAddress>();
         this.leaderGroupInformation.addAll(leaderGroupInformation);
         
         this.promiseResponseCollection = new ArrayList<Promise.Response>();
@@ -64,17 +65,16 @@ public class PromiseResponseTracker {
      *
      * @param response Voting response from peer.
      */
-    public int addPromiseResponseAndGetSize (LeaderPromiseMessage.Response response){
+    public int addPromiseResponseAndGetSize (Promise.Response response){
         
-        if(electionRoundId == null || !response.content.electionRoundId.equals(electionRoundId)){
+        if(electionRoundId == null || !response.electionRoundId.equals(electionRoundId)){
             logger.warn("Received a response that is not currently tracked.");
         }
 
-        Promise.Response promiseResponse = response.content;
-        isPromiseAccepted = isPromiseAccepted && promiseResponse.acceptCandidate;
-        convergenceCounter = promiseResponse.isConverged ? (convergenceCounter + 1)  : convergenceCounter;
+        isPromiseAccepted = isPromiseAccepted && response.acceptCandidate;
+        convergenceCounter = response.isConverged ? (convergenceCounter + 1)  : convergenceCounter;
         
-        promiseResponseCollection.add(promiseResponse);
+        promiseResponseCollection.add(response);
         
         return promiseResponseCollection.size();
     }
@@ -168,7 +168,7 @@ public class PromiseResponseTracker {
      *
      * @return LeaderGroupInformation.
      */
-    public List<VodAddress> getLeaderGroupInformation(){
+    public List<DecoratedAddress> getLeaderGroupInformation(){
         return this.leaderGroupInformation;
     }
     

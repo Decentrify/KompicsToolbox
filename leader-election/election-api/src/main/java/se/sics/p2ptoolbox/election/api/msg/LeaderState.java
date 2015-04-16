@@ -2,6 +2,7 @@ package se.sics.p2ptoolbox.election.api.msg;
 
 import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.Collection;
 
@@ -18,9 +19,9 @@ public class LeaderState {
      */
     public static class ElectedAsLeader implements KompicsEvent{
 
-        public final Collection<VodAddress> leaderGroup;
+        public final Collection<DecoratedAddress> leaderGroup;
 
-        public ElectedAsLeader(Collection<VodAddress> leaderGroup){
+        public ElectedAsLeader(Collection<DecoratedAddress> leaderGroup){
             this.leaderGroup = leaderGroup;
         }
     }

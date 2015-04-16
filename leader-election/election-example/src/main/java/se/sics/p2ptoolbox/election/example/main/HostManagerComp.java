@@ -2,6 +2,7 @@ package se.sics.p2ptoolbox.election.example.main;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.gvod.address.Address;
 import se.sics.gvod.net.VodAddress;
 import se.sics.gvod.net.VodNetwork;
 import se.sics.gvod.timer.Timer;
@@ -17,6 +18,9 @@ import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
 import se.sics.p2ptoolbox.election.example.data.PeersUpdate;
 import se.sics.p2ptoolbox.election.example.msg.AddPeers;
 import se.sics.p2ptoolbox.election.example.ports.ApplicationPort;
+import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
 import java.util.Comparator;
 
@@ -33,7 +37,7 @@ public class HostManagerComp extends ComponentDefinition{
 
     Logger logger = LoggerFactory.getLogger(HostManagerComp.class);
 
-    private VodAddress selfAddress;
+    private DecoratedAddress selfAddress;
     private long leaseTimeout;
     private LeaderDescriptor selfView;
 
@@ -76,7 +80,7 @@ public class HostManagerComp extends ComponentDefinition{
 
         // Handlers.
         subscribe(startHandler, control);
-        subscribe(addPeershandler, networkPositive);
+        subscribe(addPeersHandler, networkPositive);
     }
 
     private void doInit(HostManagerCompInit init) {
@@ -97,10 +101,10 @@ public class HostManagerComp extends ComponentDefinition{
 
 
 
-    Handler<AddPeers> addPeershandler = new Handler<AddPeers>() {
-        @Override
-        public void handle(AddPeers addPeers) {
 
+    ClassMatchedHandler<AddPeers, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, AddPeers>> addPeersHandler = new ClassMatchedHandler<AddPeers, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, AddPeers>>() {
+        @Override
+        public void handle(AddPeers addPeers, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, AddPeers> decoratedAddressDecoratedHeaderAddPeersBasicContentMsg) {
             logger.trace("Received add peers event from the simulator.... ");
             trigger(new PeersUpdate(addPeers.peers), gradientMockUp.getNegative(ApplicationPort.class));
         }
@@ -112,14 +116,14 @@ public class HostManagerComp extends ComponentDefinition{
      */
     public static class HostManagerCompInit extends Init<HostManagerComp>{
 
-        VodAddress selfAddress;
+        DecoratedAddress selfAddress;
         long leaseTimeout;
         Comparator<LCPeerView> lcpComparator;
         private int viewSize;
         private LeaderFilter filter;
 
 
-        public HostManagerCompInit(VodAddress selfAddress, long leaseTimeout, Comparator<LCPeerView> lcpComparator, int viewSize, LeaderFilter filter){
+        public HostManagerCompInit(DecoratedAddress selfAddress, long leaseTimeout, Comparator<LCPeerView> lcpComparator, int viewSize, LeaderFilter filter){
 
             this.selfAddress = selfAddress;
             this.leaseTimeout = leaseTimeout;

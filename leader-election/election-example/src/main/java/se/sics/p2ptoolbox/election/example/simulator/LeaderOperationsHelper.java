@@ -7,6 +7,8 @@ import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.election.example.main.LCPComparator;
 import se.sics.p2ptoolbox.election.example.main.HostManagerComp;
 import se.sics.p2ptoolbox.election.example.main.TestFilter;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -26,22 +28,31 @@ public class LeaderOperationsHelper {
     private static ConsistentHashtable<Long> ringNodes = new ConsistentHashtable<Long>();
     private static Long identifierSpaceSize = (long) 3000;
 
-    private static Collection<VodAddress> addressCollection = new ArrayList<VodAddress>();
-    private static LinkedList<VodAddress> copy = new LinkedList<VodAddress>();
+    private static Collection<DecoratedAddress> addressCollection = new ArrayList<DecoratedAddress>();
+    private static LinkedList<DecoratedAddress> copy = new LinkedList<DecoratedAddress>();
 
-    public static HostManagerComp.HostManagerCompInit generateComponentInit (long id){
+    private static InetAddress ip = null;
 
-        logger.info(" Generating address for peer with id: {} ", id);
-        InetAddress ip = null;
+    static {
         try {
             ip = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(-1);
         }
+    }
+
+
+
+    public static HostManagerComp.HostManagerCompInit generateComponentInit (long id){
+
+        logger.info(" Generating address for peer with id: {} ", id);
+
 
         Address address = new Address(ip, 9999, (int) id);
-        VodAddress selfAddress = new VodAddress(address, 0);
+
+        BasicAddress basic = new BasicAddress(ip, 9999, (int)id);
+        DecoratedAddress selfAddress = new DecoratedAddress(basic);
 
         addressCollection.add(selfAddress);
         copy.add(selfAddress);
@@ -63,7 +74,7 @@ public class LeaderOperationsHelper {
     }
 
 
-    public static Collection<VodAddress> getPeersAddressCollection(){
+    public static Collection<DecoratedAddress> getPeersAddressCollection(){
         return addressCollection;
     }
 
@@ -73,17 +84,26 @@ public class LeaderOperationsHelper {
      *
      * @return Address in rotation.
      */
-    public static VodAddress getUniqueAddress(){
+    public static DecoratedAddress getUniqueAddress(){
 
         if(copy == null || copy.size() == 0){
             throw new IllegalStateException("No entries in the list to return to");
         }
 
         
-        VodAddress currentAddress = copy.removeFirst();
+        DecoratedAddress currentAddress = copy.removeFirst();
         copy.addLast(currentAddress);
         
         return currentAddress;
     }
+
+
+
+
+    public static BasicAddress getBasicAddress(long id){
+        BasicAddress basic = new BasicAddress(ip, 9999, (int)id);
+        return basic;
+    }
+
 
 }
