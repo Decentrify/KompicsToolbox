@@ -73,6 +73,35 @@ public class GradientContainer<C extends Object> implements Container<DecoratedA
         return "<" + src + "," + age + ">:" + content;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 37 * hash + this.age;
+        hash = 37 * hash + (this.src != null ? this.src.hashCode() : 0);
+        hash = 37 * hash + (this.content != null ? this.content.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final GradientContainer<?> other = (GradientContainer<?>) obj;
+        if (this.age != other.age) {
+            return false;
+        }
+        if (this.src != other.src && (this.src == null || !this.src.equals(other.src))) {
+            return false;
+        }
+        if (this.content != other.content && (this.content == null || !this.content.equals(other.content))) {
+            return false;
+        }
+        return true;
+    }
     //*********************ComparableWrapper************************************
     @Override
     public C unwrap() {
