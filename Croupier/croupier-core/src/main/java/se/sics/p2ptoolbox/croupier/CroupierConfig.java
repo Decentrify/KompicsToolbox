@@ -16,24 +16,45 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.croupier;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierConfig {
-    public final int viewSize;
-    public final long shufflePeriod;
-    public final int shuffleLength;
+
+    private final static Logger log = LoggerFactory.getLogger(CroupierConfig.class);
+
     public final CroupierSelectionPolicy policy;
-    public final double temperature;
-    
-    public CroupierConfig(int viewSize, long shufflePeriod, int shuffleLength, CroupierSelectionPolicy policy, double temperature) {
-        this.viewSize = viewSize;
-        this.shufflePeriod = shufflePeriod;
-        this.shuffleLength = shuffleLength;
-        this.policy = policy;
-        this.temperature = temperature;
+    public final int viewSize;
+    public final int shuffleSize;
+    public final int shufflePeriod;
+    public final int shuffleTimeout;
+    public final double softMaxTemperature;
+
+    public CroupierConfig(Config config) {
+        try {
+            this.policy = CroupierSelectionPolicy.create(config.getString("croupier.policy"));
+            this.viewSize = config.getInt("croupier.viewSize");
+            this.shuffleSize = config.getInt("croupier.shuffleSize");
+            this.shufflePeriod = config.getInt("croupier.shufflePeriod");
+            this.shuffleTimeout = config.getInt("croupier.shuffleTimeout");
+            if(shufflePeriod < shuffleTimeout) {
+                log.error("shuffle period should be larger than shuffle timeout");
+                throw new RuntimeException("shufflePeriod / shuffleTimeout missconfiguration");
+            }
+            this.softMaxTemperature = config.getDouble("croupier.softMaxTemperature");
+            log.info("policy:{} view size:{} shuffle size:{} period:{} timeout:{} softMaxTemperature:{}", 
+                    new Object[]{policy, viewSize, shuffleSize, shufflePeriod, shuffleTimeout, softMaxTemperature});
+        } catch (ConfigException.Missing ex) {
+            log.error("missing parameter", ex);
+            throw new RuntimeException(ex);
+        }
     }
 }

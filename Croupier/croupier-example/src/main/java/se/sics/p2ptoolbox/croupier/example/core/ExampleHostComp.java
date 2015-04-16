@@ -18,9 +18,8 @@
  */
 package se.sics.p2ptoolbox.croupier.example.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -36,51 +35,51 @@ import se.sics.p2ptoolbox.croupier.CroupierComp;
 import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.CroupierControlPort;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.CroupierSelectionPolicy;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierHostComp extends ComponentDefinition {
+public class ExampleHostComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(CroupierHostComp.class);
+    private static final Logger log = LoggerFactory.getLogger(ExampleHostComp.class);
 
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private final NatedAddress selfAddress;
-    private final List<NatedAddress> bootstrapNodes;
     private final long seed;
+    private final SystemConfig systemConfig;
+    private final CroupierConfig croupierConfig;
 
-    public CroupierHostComp(HostInit init) {
-        this.selfAddress = init.selfAddress;
-        log.info("{} initiating...", selfAddress);
-        this.bootstrapNodes = init.bootstrapNodes;
-        log.debug("{} bootstrap sample:{}", selfAddress, bootstrapNodes);
+    private final String logPrefix;
+
+    public ExampleHostComp(HostInit init) {
         this.seed = init.seed;
+        this.systemConfig = init.systemConfig;
+        this.croupierConfig = init.croupierConfig;
+        this.logPrefix = systemConfig.self.toString();
+        log.info("{} initiating...", logPrefix);
+        log.debug("{} bootstrap sample:{}", logPrefix, systemConfig.bootstrapNodes);
 
-        int shufflePeriodCroupier1 = 1000;
-        CroupierConfig croupierConfig1 = new CroupierConfig(10, shufflePeriodCroupier1, 5, CroupierSelectionPolicy.RANDOM, 1);
-        Component croupier1 = createNConnectCroupier(croupierConfig1, 10);
-        Component compA = createNConnectCompA(croupier1);
+        Component croupier = createNConnectCroupier(10);
+        Component compA = createNConnectCompA(croupier);
 
-        subscribe(handleDisconnected, croupier1.getPositive(CroupierControlPort.class));
+        subscribe(handleDisconnected, croupier.getPositive(CroupierControlPort.class));
         subscribe(handleStart, control);
         subscribe(handleStop, control);
     }
-    
-    private Component createNConnectCroupier(CroupierConfig config, int overlayId) {
-        Component croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(config, overlayId, selfAddress, bootstrapNodes, seed));
+
+    private Component createNConnectCroupier(int overlayId) {
+        Component croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(croupierConfig, overlayId, systemConfig.self, systemConfig.bootstrapNodes, seed));
         connect(croupier.getNegative(Network.class), network, new IntegerOverlayFilter(overlayId));
         connect(croupier.getNegative(Timer.class), timer);
         return croupier;
     }
 
     private Component createNConnectCompA(Component croupier) {
-        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(selfAddress, seed));
+        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(systemConfig.self, seed));
         connect(croupier.getPositive(CroupierPort.class), compA.getNegative(CroupierPort.class));
         return compA;
     }
@@ -88,35 +87,41 @@ public class CroupierHostComp extends ComponentDefinition {
     private Handler<Start> handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.info("{} starting...", selfAddress);
+            log.info("{} starting...", logPrefix);
         }
     };
 
     private Handler<Stop> handleStop = new Handler<Stop>() {
         @Override
         public void handle(Stop event) {
-            log.info("{} stopping...", selfAddress);
+            log.info("{} stopping...", logPrefix);
         }
     };
 
     private Handler<CroupierDisconnected> handleDisconnected = new Handler<CroupierDisconnected>() {
         @Override
         public void handle(CroupierDisconnected event) {
-            log.info("{} croupier:{} disconnected", selfAddress, event.overlayId);
+            log.info("{} croupier:{} disconnected", logPrefix, event.overlayId);
         }
     };
 
-    public static class HostInit extends Init<CroupierHostComp> {
-        public final NatedAddress selfAddress;
-        public final List<NatedAddress> bootstrapNodes;
-        public final long seed;
-        public final NatedAddress aggregatorAddress;
+    public static class HostInit extends Init<ExampleHostComp> {
 
-        public HostInit(NatedAddress self, Set<NatedAddress> bootstrapNodes, long seed, NatedAddress aggregatorAddress) {
+        public final long seed;
+        public final SystemConfig systemConfig;
+        public final CroupierConfig croupierConfig;
+
+        public HostInit(long seed, String configFile) {
             this.seed = seed;
-            this.selfAddress = self;
-            this.bootstrapNodes = new ArrayList<NatedAddress>(bootstrapNodes);
-            this.aggregatorAddress = aggregatorAddress;
+            Config config = ConfigFactory.load(configFile);
+            this.systemConfig = new SystemConfig(config);
+            this.croupierConfig = new CroupierConfig(config);
+        }
+
+        public HostInit(long seed, SystemConfig systemConfig, CroupierConfig croupierConfig) {
+            this.seed = seed;
+            this.systemConfig = systemConfig;
+            this.croupierConfig = croupierConfig;
         }
     }
 }

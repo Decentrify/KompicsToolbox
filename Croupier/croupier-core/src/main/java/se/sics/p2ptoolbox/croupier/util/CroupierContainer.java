@@ -19,25 +19,25 @@
 package se.sics.p2ptoolbox.croupier.util;
 
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.traits.Ageing;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierContainer<C extends Object> implements Container<NatedAddress, C>, Ageing {
+public class CroupierContainer<C extends Object> implements Container<DecoratedAddress, C>, Ageing {
 
     private int age;
-    private NatedAddress src;
+    private DecoratedAddress src;
     private final C content;
 
-    public CroupierContainer(NatedAddress src, C content, int age) {
+    public CroupierContainer(DecoratedAddress src, C content, int age) {
         this.age = age;
         this.src = src;
         this.content = content;
     }
 
-    public CroupierContainer(NatedAddress src, C content) {
+    public CroupierContainer(DecoratedAddress src, C content) {
         this(src, content, 0);
     }
 
@@ -47,7 +47,7 @@ public class CroupierContainer<C extends Object> implements Container<NatedAddre
     }
 
     @Override
-    public NatedAddress getSource() {
+    public DecoratedAddress getSource() {
         return src;
     }
 
@@ -70,5 +70,35 @@ public class CroupierContainer<C extends Object> implements Container<NatedAddre
     @Override
     public String toString() {
         return "<" + src + ":" + age + ">";
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + this.age;
+        hash = 53 * hash + (this.src != null ? this.src.hashCode() : 0);
+        hash = 53 * hash + (this.content != null ? this.content.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CroupierContainer<?> other = (CroupierContainer<?>) obj;
+        if (this.age != other.age) {
+            return false;
+        }
+        if (this.src != other.src && (this.src == null || !this.src.equals(other.src))) {
+            return false;
+        }
+        if (this.content != other.content && (this.content == null || !this.content.equals(other.content))) {
+            return false;
+        }
+        return true;
     }
 }

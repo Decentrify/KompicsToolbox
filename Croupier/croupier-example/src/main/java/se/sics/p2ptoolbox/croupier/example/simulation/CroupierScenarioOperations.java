@@ -18,19 +18,22 @@
  */
 package se.sics.p2ptoolbox.croupier.example.simulation;
 
+import com.typesafe.config.ConfigFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Set;
-import se.sics.p2ptoolbox.croupier.example.core.CroupierHostComp;
+import se.sics.p2ptoolbox.croupier.CroupierConfig;
+import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -60,24 +63,25 @@ public class CroupierScenarioOperations {
 
         @Override
         public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<CroupierHostComp, NatedAddress>() {
-                private NatedAddress nodeAddress;
+            return new StartNodeCmd<ExampleHostComp, DecoratedAddress>() {
+                private DecoratedAddress nodeAddress;
 
                 @Override
                 public Class getNodeComponentDefinition() {
-                    return CroupierHostComp.class;
+                    return ExampleHostComp.class;
                 }
 
                 @Override
-                public CroupierHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
+                public ExampleHostComp.HostInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
                     //open address
-                    nodeAddress = new BasicNatedAddress(new BasicAddress(localHost, 12345, nodeId));
+                    nodeAddress = new DecoratedAddress(new BasicAddress(localHost, 12345, nodeId));
                     /**
                      * we don't want all nodes to start their pseudo random
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    return new CroupierHostComp.HostInit(nodeAddress, bootstrapNodes, nodeSeed, aggregatorServer);
+                    CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
+                    return new ExampleHostComp.HostInit(nodeSeed, new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes)), croupierConfig);
                 }
 
                 @Override
@@ -86,7 +90,7 @@ public class CroupierScenarioOperations {
                 }
 
                 @Override
-                public NatedAddress getAddress() {
+                public DecoratedAddress getAddress() {
                     return nodeAddress;
                 }
 

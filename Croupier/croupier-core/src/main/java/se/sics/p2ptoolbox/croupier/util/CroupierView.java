@@ -29,9 +29,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.croupier.CroupierSelectionPolicy;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -39,8 +39,8 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
 public class CroupierView<C extends Object> {
 
     private final int viewSize;
-    private final NatedAddress selfAddress;
-    private final HashMap<Address, CroupierViewEntry<C>> d2e;
+    private final DecoratedAddress selfAddress;
+    private final HashMap<BasicAddress, CroupierViewEntry<C>> d2e;
     private final Random rand;
 
     private Comparator<CroupierViewEntry> comparatorByAge = new Comparator<CroupierViewEntry>() {
@@ -56,11 +56,11 @@ public class CroupierView<C extends Object> {
         }
     };
 
-    public CroupierView(NatedAddress selfAddress, int viewSize, Random rand) {
+    public CroupierView(DecoratedAddress selfAddress, int viewSize, Random rand) {
         super();
         this.selfAddress = selfAddress;
         this.viewSize = viewSize;
-        this.d2e = new HashMap<Address, CroupierViewEntry<C>>();
+        this.d2e = new HashMap<BasicAddress, CroupierViewEntry<C>>();
         this.rand = rand;
     }
 
@@ -71,7 +71,7 @@ public class CroupierView<C extends Object> {
     }
 
     //TODO Alex - what is the difference between tail and healer? according to algorithm none - did I change the code?
-    public NatedAddress selectPeerToShuffleWith(CroupierSelectionPolicy policy,
+    public DecoratedAddress selectPeerToShuffleWith(CroupierSelectionPolicy policy,
             boolean softmax, double temperature) {
         if (d2e.isEmpty()) {
             return null;
@@ -112,35 +112,35 @@ public class CroupierView<C extends Object> {
         // break the 'batched random walk' (Cyclon) behaviour. But it's more important
         // to keep the graph connected.
         if (d2e.size() >= viewSize) {
-            removeEntry(selectedEntry.getDescriptor().getSource());
+            removeEntry(selectedEntry.getDescriptor().getSource().getBase());
         }
 
         return selectedEntry.getDescriptor().getSource();
     }
 
-    public Set<CroupierContainer<C>> initiatorCopySet(int count, NatedAddress destinationPeer) {
+    public Set<CroupierContainer<C>> initiatorCopySet(int count, DecoratedAddress destinationPeer) {
         List<CroupierViewEntry> randomEntries = generateRandomSample(count);
         Set<CroupierContainer<C>> descriptors = new HashSet<CroupierContainer<C>>();
         for (CroupierViewEntry cacheEntry : randomEntries) {
-            cacheEntry.sentTo(destinationPeer);
+            cacheEntry.sentTo(destinationPeer.getBase());
             descriptors.add(cacheEntry.getDescriptor().getCopy());
         }
         return descriptors;
     }
 
-    public Set<CroupierContainer<C>> receiverCopySet(int count, NatedAddress destinationPeer) {
+    public Set<CroupierContainer<C>> receiverCopySet(int count, DecoratedAddress destinationPeer) {
         List<CroupierViewEntry> randomEntries = generateRandomSample(count);
         Set<CroupierContainer<C>> descriptors = new HashSet<CroupierContainer<C>>();
         for (CroupierViewEntry cacheEntry : randomEntries) {
-            cacheEntry.sentTo(destinationPeer);
+            cacheEntry.sentTo(destinationPeer.getBase());
             descriptors.add(cacheEntry.getDescriptor().getCopy());
         }
         return descriptors;
     }
 
-    public void selectToKeep(NatedAddress from, Set<CroupierContainer<C>> descriptors) {
-        Address baseFrom = from.getBaseAddress();
-        Address baseSelf = selfAddress.getBaseAddress();
+    public void selectToKeep(DecoratedAddress from, Set<CroupierContainer<C>> descriptors) {
+        BasicAddress baseFrom = from.getBase();
+        BasicAddress baseSelf = selfAddress.getBase();
         if (baseFrom.equals(baseSelf)) {
             return;
         }
@@ -157,7 +157,7 @@ public class CroupierView<C extends Object> {
         }
 
         for (CroupierContainer<C> descriptor : descriptors) {
-            Address baseSrc = descriptor.getSource().getBaseAddress();
+            BasicAddress baseSrc = descriptor.getSource().getBase();
             if (baseSelf.equals(baseSrc)) {
                 continue; // do not keep descriptor of self
             }
@@ -185,7 +185,7 @@ public class CroupierView<C extends Object> {
                 // replace one slot out of those sent to this peer
                 CroupierViewEntry sentEntry = entriesSentToThisPeer.poll();
                 if (sentEntry != null) {
-                    removeEntry(sentEntry.getDescriptor().getSource().getBaseAddress());
+                    removeEntry(sentEntry.getDescriptor().getSource().getBase());
                     addEntry(new CroupierViewEntry(descriptor));
                 }
             }
@@ -225,15 +225,15 @@ public class CroupierView<C extends Object> {
     }
 
     private void addEntry(CroupierViewEntry entry) {
-        d2e.put(entry.getDescriptor().getSource().getBaseAddress(), entry);
+        d2e.put(entry.getDescriptor().getSource().getBase(), entry);
     }
 
-    private boolean removeEntry(Address src) {
+    private boolean removeEntry(BasicAddress src) {
         return d2e.remove(src) != null;
     }
 
-    public void timedOut(NatedAddress src) {
-        removeEntry(src.getBaseAddress());
+    public void timedOut(DecoratedAddress src) {
+        removeEntry(src.getBase());
     }
 
     public boolean isEmpty() {

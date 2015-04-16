@@ -28,7 +28,7 @@ import se.sics.p2ptoolbox.croupier.example.simulation.CroupierSimulationResult;
 import se.sics.p2ptoolbox.croupier.example.simulation.CroupierSimulationScenarios;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -45,7 +45,7 @@ public class CroupierSimulationTest {
         LauncherComp.scenario = CroupierSimulationScenarios.simpleBoot(nodes, 1234L, simulatedSeconds);
         //
         try {
-            LauncherComp.simulatorClientAddress = new BasicNatedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
         } catch (UnknownHostException ex) {
             throw new RuntimeException("cannot create address for localhost");
         }

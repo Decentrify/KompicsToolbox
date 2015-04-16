@@ -17,37 +17,27 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier.example.network;
+package se.sics.p2ptoolbox.croupier;
 
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.netty.serialization.Serializer;
-import se.sics.p2ptoolbox.croupier.example.core.PeerViewA;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class PeerViewASerializer implements Serializer {
-    private final int id;
-    
-    public PeerViewASerializer(int id) {
-        this.id = id;
-    }
-    
-    @Override
-    public int identifier() {
-        return id;
-    }
-
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        PeerViewA obj = (PeerViewA) o;
-        buf.writeBoolean(obj.flag);
-    }
-
-    @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        boolean flag = buf.readBoolean();
-        return new PeerViewA(flag);
+public class CroupierConfigTest {
+    @Test
+    public void test1() {
+        Config config = ConfigFactory.load("application1.conf");
+        CroupierConfig croupierConfig = new CroupierConfig(config);
+        
+        Assert.assertEquals(CroupierSelectionPolicy.RANDOM, croupierConfig.policy);
+        Assert.assertEquals(10, croupierConfig.viewSize);
+        Assert.assertEquals(5, croupierConfig.shuffleSize);
+        Assert.assertEquals(2000, croupierConfig.shufflePeriod);
+        Assert.assertEquals(1000, croupierConfig.shuffleTimeout);
+        Assert.assertEquals(500, croupierConfig.softMaxTemperature, 0.0001);
     }
 }
