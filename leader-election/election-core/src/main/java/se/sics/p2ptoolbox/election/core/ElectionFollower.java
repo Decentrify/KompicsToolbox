@@ -370,7 +370,7 @@ public class ElectionFollower extends ComponentDefinition {
                 terminateElectionInformation();
             }
             else{
-                logger.warn("{}: Application current lease timeout id has changed");
+                logger.warn("{}: Application current lease timeout id has changed", selfAddress.getId());
             }
 
         }
