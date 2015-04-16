@@ -91,4 +91,10 @@ public class SystemConfig {
             log.info("bootstrap nodes:{}", bootstrapNodes);
         }
     }
+    
+    public SystemConfig(DecoratedAddress self, DecoratedAddress aggregator, List<DecoratedAddress> bootstrapNodes) {
+        this.self = self;
+        this.aggregator = aggregator;
+        this.bootstrapNodes = bootstrapNodes;
+    }
 }
