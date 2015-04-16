@@ -34,8 +34,6 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.CancelTimeout;
@@ -228,7 +226,7 @@ public class CroupierComp extends ComponentDefinition {
                 trigger(cs, croupierPort);
             }
 
-            DecoratedAddress peer = selectPeerToShuffleWith(config.temperature);
+            DecoratedAddress peer = selectPeerToShuffleWith(config.softMaxTemperature);
             if (peer == null || peer.equals(selfAddress)) {
                 log.error("{} this should not happen - logic error selecting peer", logPrefix);
                 throw new RuntimeException("Error selecting peer");
@@ -242,8 +240,8 @@ public class CroupierComp extends ComponentDefinition {
             publicView.incrementDescriptorAges();
             privateView.incrementDescriptorAges();
 
-            Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(config.shuffleLength, peer);
-            Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(config.shuffleLength, peer);
+            Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(config.shuffleSize, peer);
+            Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(config.shuffleSize, peer);
 
             if (!selfAddress.hasTrait(Nated.class)) {
                 publicDescCopy.add(new CroupierContainer(selfAddress, selfView));
@@ -288,8 +286,8 @@ public class CroupierComp extends ComponentDefinition {
                     publicView.incrementDescriptorAges();
                     privateView.incrementDescriptorAges();
 
-                    Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(config.shuffleLength, reqSrc);
-                    Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(config.shuffleLength, reqSrc);
+                    Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(config.shuffleSize, reqSrc);
+                    Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(config.shuffleSize, reqSrc);
                     if (!selfAddress.hasTrait(Nated.class)) {
                         publicDescCopy.add(new CroupierContainer(selfAddress, selfView));
                     } else {
