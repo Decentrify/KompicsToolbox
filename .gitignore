@@ -87,3 +87,10 @@ Gradient/target/
 /Croupier/croupier-network/target/
 /Gradient/gradient-network/target/
 /util/util-serializer/target/
+
+#chunk-manager
+/chunk-manager/cm-core/target
+/chunk-manager/cm-network/target
+/chunk-manager/cm-example/target
+/chunk-manager-old/target/
+
