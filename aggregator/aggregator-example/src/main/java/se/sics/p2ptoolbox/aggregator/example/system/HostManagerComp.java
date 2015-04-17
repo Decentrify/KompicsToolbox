@@ -20,11 +20,11 @@ package se.sics.p2ptoolbox.aggregator.example.system;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodAddress;
-import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.aggregator.example.core.Peer;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -33,24 +33,26 @@ public class HostManagerComp extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(HostManagerComp.class);
     
-    private Positive<VodNetwork> network = requires(VodNetwork.class);
+    private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
     
-    private VodAddress aggregatorNodeAddress;
-    private VodAddress selfAddress;
+    private DecoratedAddress aggregatorNodeAddress;
+    private DecoratedAddress selfAddress;
     
     public HostManagerComp(HostManagerInit init) {
+
         this.selfAddress = init.self;
         this.aggregatorNodeAddress = init.aggregatorComponent;
 
-        Component peerA = create(Peer.class, new Peer.PeerInit(5000, selfAddress, aggregatorNodeAddress));
-        connect(peerA.getNegative(VodNetwork.class), network);
-        connect(peerA.getNegative(Timer.class), timer);
+        Component peer = create(Peer.class, new Peer.PeerInit(5000, selfAddress, aggregatorNodeAddress));
+
+        connect(peer.getNegative(Network.class), network);
+        connect(peer.getNegative(Timer.class), timer);
     
         subscribe(handleStart, control);
     }
     
-    private Handler<Start> handleStart = new Handler<Start>() {
+    public Handler<Start> handleStart = new Handler<Start>() {
 
         @Override
         public void handle(Start event) {
@@ -63,10 +65,10 @@ public class HostManagerComp extends ComponentDefinition {
     public static class HostManagerInit extends Init<HostManagerComp> {
 
         public final long seed;
-        public final VodAddress self;
-        public final VodAddress aggregatorComponent;
+        public final DecoratedAddress self;
+        public final DecoratedAddress aggregatorComponent;
         
-        public HostManagerInit(long seed, VodAddress self, VodAddress aggregatorComponent) {
+        public HostManagerInit(long seed, DecoratedAddress self, DecoratedAddress aggregatorComponent) {
             this.seed = seed;
             this.self = self;
             this.aggregatorComponent = aggregatorComponent;

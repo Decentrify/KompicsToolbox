@@ -2,14 +2,16 @@ package se.sics.p2ptoolbox.aggregator.example.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.net.VodAddress;
-import se.sics.gvod.net.VodNetwork;
-import se.sics.gvod.timer.SchedulePeriodicTimeout;
-import se.sics.gvod.timer.Timeout;
-import se.sics.gvod.timer.Timer;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Network;
+import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
+import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
-import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
+import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
 import java.util.UUID;
 
@@ -22,9 +24,9 @@ public class Peer extends ComponentDefinition{
     
     Logger logger = LoggerFactory.getLogger(Peer.class);
     Positive<Timer> timerPort = requires(Timer.class);
-    Positive<VodNetwork> networkPort = requires(VodNetwork.class);
-    VodAddress selfAddress;
-    VodAddress aggregatorAddress;
+    Positive<Network> networkPort = requires(Network.class);
+    DecoratedAddress selfAddress;
+    DecoratedAddress aggregatorAddress;
     
     private int partitionId = 0;
     private int nodeId;
@@ -44,7 +46,7 @@ public class Peer extends ComponentDefinition{
         subscribe(stateTimeoutHandler, timerPort);
     }
     
-    public class StateTimeout extends Timeout{
+    public class StateTimeout extends Timeout {
 
         protected StateTimeout(SchedulePeriodicTimeout request) {
             super(request);
@@ -76,21 +78,21 @@ public class Peer extends ComponentDefinition{
 
             logger.info(" State Timeout Handler Invoked ");
             
-            // FIXME: Redundant Wrapper as message going with the source address. Fix it once the linking is complete.
             PacketSample packetSample = new PacketSample(partitioningDepth, indexEntries++, partitionId, nodeId);
-            AggregatedStateContainer container = new AggregatedStateContainer(selfAddress, packetSample);
-            
-            trigger(new AggregatorNetMsg.OneWay(selfAddress, aggregatorAddress, UUID.randomUUID(), container), networkPort);
+            AggregatedStateContainer container = new AggregatedStateContainer(UUID.randomUUID(), selfAddress, packetSample);
+
+            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, aggregatorAddress, Transport.UDP);
+            trigger(new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, AggregatedStateContainer>(header, container), networkPort);
         }
     };
     
     public static class PeerInit extends Init<Peer>{
         
         public long delay;
-        public VodAddress selfAddress;
-        public VodAddress aggregatorAddress;
+        public DecoratedAddress selfAddress;
+        public DecoratedAddress aggregatorAddress;
         
-        public PeerInit(long delay, VodAddress selfAddress, VodAddress aggregatorAddress){
+        public PeerInit(long delay, DecoratedAddress selfAddress, DecoratedAddress aggregatorAddress){
             this.delay = delay;
             this.selfAddress = selfAddress;
             this.aggregatorAddress = aggregatorAddress;

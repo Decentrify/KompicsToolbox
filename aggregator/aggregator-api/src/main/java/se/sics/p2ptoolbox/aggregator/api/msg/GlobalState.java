@@ -1,8 +1,8 @@
 package se.sics.p2ptoolbox.aggregator.api.msg;
 
-import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.aggregator.api.model.AggregatedStatePacket;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.Map;
 
@@ -13,13 +13,13 @@ import java.util.Map;
  */
 public class GlobalState implements KompicsEvent{
    
-    private Map<VodAddress, AggregatedStatePacket> statePacketMap;
+    private Map<DecoratedAddress, AggregatedStatePacket> statePacketMap;
     
-    public GlobalState(Map<VodAddress, AggregatedStatePacket> statePacketMap){
+    public GlobalState(Map<DecoratedAddress, AggregatedStatePacket> statePacketMap){
         this.statePacketMap = statePacketMap;
     }
     
-    public Map<VodAddress, AggregatedStatePacket> getStatePacketMap(){
+    public Map<DecoratedAddress, AggregatedStatePacket> getStatePacketMap(){
         return this.statePacketMap;
     }
     

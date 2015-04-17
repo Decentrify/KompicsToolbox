@@ -57,9 +57,20 @@ videostream/target/
 /Gradient/gradient-example/target/
 
 #aggregator
+/aggregator/target/
 /aggregator/aggregator-api/target/
 /aggregator/aggregator-core/target/
 /aggregator/aggregator-example/target/
+/aggregator/aggregator-network/src/test/
+/aggregator/aggregator-network/target/
+
+
+#leader-election
+/leader-election/target/
+/leader-election/election-api/target/
+/leader-election/election-core/target/
+/leader-election/election-example/target/
+/leader-election/election-network/target/
 
 Gradient/target/
 /video-stream/target/

@@ -16,7 +16,7 @@
         <module>gradient-api</module>
         <module>gradient-core</module>
         <module>gradient-example</module>
-    <module>gradient-network</module>
+        <module>gradient-network</module>
   </modules>
     
     <properties>
