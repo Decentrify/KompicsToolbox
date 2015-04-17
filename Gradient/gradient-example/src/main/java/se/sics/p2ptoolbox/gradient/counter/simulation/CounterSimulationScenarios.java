@@ -65,7 +65,6 @@ public class CounterSimulationScenarios {
             }
         };
         CounterScenarioOperations.seed = seed;
-        CounterScenarioOperations.softMaxTemperature = softMaxTemperature;
         scen.setSeed(seed);
         return scen;
     }

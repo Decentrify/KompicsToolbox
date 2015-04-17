@@ -36,14 +36,12 @@ import se.sics.p2ptoolbox.gradient.GradientFilter;
 import se.sics.p2ptoolbox.util.InvertedComparator;
 import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
 import se.sics.p2ptoolbox.util.compare.WrapperComparator;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class GradientView {
-
-    private static double shrinkSoftMaxTemperature = 1;
 
     private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
     private final Comparator<GradientContainer> ageComparator;
@@ -97,34 +95,34 @@ public class GradientView {
 
     public void merge(Set<GradientContainer> newSample, GradientContainer selfView) {
         for (GradientContainer gc : newSample) {
-            if (gc.getSource().getBaseAddress().equals(selfView.getSource().getBaseAddress())) {
+            if (gc.getSource().getBase().equals(selfView.getSource().getBase())) {
                 continue;
             }
             if (!filter.retainOther(selfView.getContent(), gc.getContent())) {
                 continue;
             }
-            GradientContainer currentGc = view.get(gc.getSource().getBaseAddress());
+            GradientContainer currentGc = view.get(gc.getSource().getBase());
             if (currentGc != null) {
                 if (currentGc.getAge() > gc.getAge()) {
-                    view.put(gc.getSource().getBaseAddress(), gc);
+                    view.put(gc.getSource().getBase(), gc);
                 }
             } else {
-                view.put(gc.getSource().getBaseAddress(), gc);
+                view.put(gc.getSource().getBase(), gc);
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
         if (view.size() > viewSize) {
-            for (GradientContainer toRemove : softMaxReduceSize(ageComparator, 1)) {
+            for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
                 log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
-                view.remove(toRemove.getSource().getBaseAddress());
+                view.remove(toRemove.getSource().getBase());
             }
         }
         if (view.size() > viewSize) {
             GradientPreferenceComparator<GradientContainer> preferenceComparator = new GradientPreferenceComparator<GradientContainer>(selfView, utilityComp);
             int reduceSize = view.size() - viewSize;
-            for (GradientContainer toRemove : softMaxReduceSize(preferenceComparator, reduceSize)) {
+            for (GradientContainer toRemove : reduceSize(preferenceComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
-                view.remove(toRemove.getSource().getBaseAddress());
+                view.remove(toRemove.getSource().getBase());
             }
         }
         log.debug("{} remove - after shrink:{}", logPrefix, view.values());
@@ -164,24 +162,21 @@ public class GradientView {
         return copyList;
     }
 
-    public void clean(NatedAddress node) {
-        view.remove(node.getBaseAddress());
+    public void clean(DecoratedAddress node) {
+        view.remove(node.getBase());
     }
 
     /**
-     * Based on the comparator supplied, sort entries and then reduce the size
-     * of the view using SoftMax Approach.
-     *
      * @param usedComparator Comparator used for sorting.
      * @param n Number of samples to remove.
      */
-    private List<GradientContainer> softMaxReduceSize(Comparator<GradientContainer> usedComparator, int n) {
+    private List<GradientContainer> reduceSize(Comparator<GradientContainer> usedComparator, int n) {
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
         Collections.sort(sortedList, usedComparator);
         List<GradientContainer> toRemove = new ArrayList<GradientContainer>();
         while (n > 0 && !sortedList.isEmpty()) {
             n--;
-            toRemove.add(sortedList.remove(ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, shrinkSoftMaxTemperature))); //remove from list so as not to pick it again
+            toRemove.add(sortedList.remove(0)); //remove from list so as not to pick it again
         }
         return toRemove;
     }

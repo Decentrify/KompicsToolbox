@@ -29,7 +29,7 @@ import se.sics.p2ptoolbox.gradient.counter.simulation.CounterSimulationScenarios
 import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -46,7 +46,7 @@ public class CounterSimulationTest {
         LauncherComp.scenario = CounterSimulationScenarios.simpleBoot(nodes, seed, simulatedSeconds, softMaxTemperature);
         //
         try {
-            LauncherComp.simulatorClientAddress = new BasicNatedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
         } catch (UnknownHostException ex) {
             throw new RuntimeException("cannot create address for localhost");
         }

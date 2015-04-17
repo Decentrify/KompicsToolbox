@@ -18,21 +18,24 @@
  */
 package se.sics.p2ptoolbox.gradient.idsort.simulation;
 
+import com.typesafe.config.ConfigFactory;
 import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Set;
-import se.sics.p2ptoolbox.gradient.idsort.system.IdSortHostComp;
+import se.sics.p2ptoolbox.croupier.CroupierConfig;
+import se.sics.p2ptoolbox.gradient.GradientConfig;
+import se.sics.p2ptoolbox.gradient.idsort.IdSortHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -40,7 +43,6 @@ import se.sics.p2ptoolbox.util.network.impl.BasicNatedAddress;
 public class IdSortScenarioOperations {
 
     public static long seed = 1234l;
-    public static double softMaxTemperature = 1;
     private static int bootstrapSize = 5;
     private static InetAddress localHost;
     static {
@@ -63,8 +65,8 @@ public class IdSortScenarioOperations {
 
         @Override
         public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<IdSortHostComp, NatedAddress>() {
-                private NatedAddress nodeAddress;
+            return new StartNodeCmd<IdSortHostComp, DecoratedAddress>() {
+                private DecoratedAddress nodeAddress;
 
                 @Override
                 public Class getNodeComponentDefinition() {
@@ -72,16 +74,18 @@ public class IdSortScenarioOperations {
                 }
 
                 @Override
-                public IdSortHostComp.HostInit getNodeComponentInit(NatedAddress aggregatorServer, Set<NatedAddress> bootstrapNodes) {
+                public IdSortHostComp.HostInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
                     //open address
-                    nodeAddress = new BasicNatedAddress(new BasicAddress(localHost, 12345, nodeId));
+                    nodeAddress = new DecoratedAddress(new BasicAddress(localHost, 12345, nodeId));
                     /**
                      * we don't want all nodes to start their pseudo random
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    int period = 1000;
-                    return new IdSortHostComp.HostInit(nodeAddress, new ArrayList<NatedAddress>(bootstrapNodes), nodeSeed, period, softMaxTemperature);
+                    SystemConfig systemConfig = new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
+                    CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
+                    GradientConfig gradientConfig = new GradientConfig(ConfigFactory.load("application.conf"));
+                    return new IdSortHostComp.HostInit(nodeSeed, systemConfig, croupierConfig, gradientConfig);
                 }
 
                 @Override
@@ -90,7 +94,7 @@ public class IdSortScenarioOperations {
                 }
 
                 @Override
-                public NatedAddress getAddress() {
+                public DecoratedAddress getAddress() {
                     return nodeAddress;
                 }
 

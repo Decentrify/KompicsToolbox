@@ -18,9 +18,9 @@
  */
 package se.sics.p2ptoolbox.gradient.msg;
 
-import java.util.List;
+import java.util.Collection;
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * Set of peer views published by the gradient periodically.
@@ -29,9 +29,9 @@ import se.sics.p2ptoolbox.util.network.NatedAddress;
  */
 public class GradientSample<C extends Object> extends GradientMsg.OneWay {
     
-    public final List<Container<NatedAddress, C>> gradientSample;
+    public final Collection<Container<DecoratedAddress, C>> gradientSample;
     
-    public GradientSample(List<Container<NatedAddress, C>> gradientPeerViewSet) {
+    public GradientSample(Collection<Container<DecoratedAddress, C>> gradientPeerViewSet) {
         super();
         this.gradientSample = gradientPeerViewSet;
     }

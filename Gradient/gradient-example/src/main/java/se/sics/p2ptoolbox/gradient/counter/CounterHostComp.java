@@ -16,9 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.counter.system;
+package se.sics.p2ptoolbox.gradient.counter;
 
-import java.util.List;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,6 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.croupier.CroupierControlPort;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.CroupierSelectionPolicy;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.croupier.CroupierComp;
 import se.sics.p2ptoolbox.croupier.CroupierConfig;
@@ -43,8 +41,8 @@ import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.counter.CounterComp;
 import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
 import se.sics.p2ptoolbox.gradient.counter.CounterViewComparator;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -56,48 +54,44 @@ public class CounterHostComp extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private Positive<CroupierControlPort> croupierControlPort1;
-
-    private NatedAddress selfAddress;
-
+    private final SystemConfig systemConfig;
+    private final CroupierConfig croupierConfig;
+    private final GradientConfig gradientConfig;
+    private final String logPrefix;
+    
     public CounterHostComp(HostInit init) {
-        this.selfAddress = init.selfAddress;
-        log.info("{} initiating...", selfAddress);
-        log.debug("{} bootstrap sample:{}", selfAddress, init.bootstrapNodes);
+        this.systemConfig = init.systemConfig;
+        this.croupierConfig = init.croupierConfig;
+        this.gradientConfig = init.gradientConfig;
+        this.logPrefix = systemConfig.self.toString();
+        log.info("{} initiating with bootstrap:{}", logPrefix, systemConfig.bootstrapNodes);
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
-        int viewSize = 10;
-        int shuffleSize = 5;
-        int croupierOverlayId = 10;
-        int gradientOverlayId = 11;
+        CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(croupierConfig, 10, systemConfig.self, systemConfig.bootstrapNodes, init.seed);
+        Component croupier = createNConnectCroupier(croupierInit);
 
-        CroupierConfig croupierConfig1 = new CroupierConfig(viewSize, init.period, shuffleSize, CroupierSelectionPolicy.RANDOM, init.softMaxTemperature);
-        CroupierComp.CroupierInit croupierInit1 = new CroupierComp.CroupierInit(croupierConfig1, croupierOverlayId, selfAddress, init.bootstrapNodes, init.seed);
-        Component croupier1 = createNConnectCroupier(croupierInit1);
+        GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig.self, gradientConfig, 11, new CounterViewComparator(), new NoFilter(), init.seed);
+        Component gradient = createNConnectGradient(gradientInit, croupier);
 
-        GradientConfig gradientConfig1 = new GradientConfig(viewSize, init.period, shuffleSize, init.softMaxTemperature);
-        GradientComp.GradientInit gradientInit1 = new GradientComp.GradientInit(selfAddress, gradientConfig1, gradientOverlayId, new CounterViewComparator(), new NoFilter(), init.seed);
-        Component gradient1 = createNConnectGradient(gradientInit1, croupier1);
+        CounterComp.CounterInit counterInit = new CounterComp.CounterInit(systemConfig.self, init.seed, init.counterAction, init.counterRate);
+        Component compA = createNConnectExampleCounter(counterInit, croupier, gradient);
 
-        CounterComp.CounterInit exampleInit1 = new CounterComp.CounterInit(selfAddress, init.seed, init.period, init.counterRate);
-        Component compA = createNConnectExampleCounter(exampleInit1, croupier1, gradient1);
-
-        subscribe(handleDisconnected, croupier1.getPositive(CroupierControlPort.class));
+        subscribe(handleDisconnected, croupier.getPositive(CroupierControlPort.class));
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.info("{} starting...", selfAddress);
+            log.info("{} starting...", logPrefix);
         }
     };
 
     private Handler<Stop> handleStop = new Handler<Stop>() {
         @Override
         public void handle(Stop event) {
-            log.info("{} stopping...", selfAddress);
+            log.info("{} stopping...", logPrefix);
         }
     };
 
@@ -128,7 +122,7 @@ public class CounterHostComp extends ComponentDefinition {
 
         @Override
         public void handle(CroupierDisconnected event) {
-            log.info("{} croupier:{} disconnected", selfAddress, event.overlayId);
+            log.info("{} croupier:{} disconnected", logPrefix, event.overlayId);
         }
 
     };
@@ -136,19 +130,19 @@ public class CounterHostComp extends ComponentDefinition {
     public static class HostInit extends Init<CounterHostComp> {
 
         public final long seed;
-        public final NatedAddress selfAddress;
-        public final List<NatedAddress> bootstrapNodes;
-        public final int period;
+        public final SystemConfig systemConfig;
+        public final CroupierConfig croupierConfig;
+        public final GradientConfig gradientConfig;
+        public final Pair<Integer, Integer> counterAction;
         public final Pair<Double, Integer> counterRate;
-        public final double softMaxTemperature;
-
-        public HostInit(NatedAddress selfAddress, List<NatedAddress> bootstrapNodes, long seed, int period, Pair<Double, Integer> counterRate, double softMaxTemperature) {
+        
+        public HostInit(long seed, SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig, Pair<Integer, Integer> counterAction, Pair<Double, Integer> counterRate) {
             this.seed = seed;
-            this.selfAddress = selfAddress;
-            this.bootstrapNodes = bootstrapNodes;
-            this.period = period;
+            this.systemConfig = systemConfig;
+            this.croupierConfig = croupierConfig;
+            this.gradientConfig = gradientConfig;
+            this.counterAction = counterAction;
             this.counterRate = counterRate;
-            this.softMaxTemperature = softMaxTemperature;
         }
     }
 }

@@ -19,26 +19,26 @@
 package se.sics.p2ptoolbox.gradient.util;
 
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.NatedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.traits.Ageing;
 import se.sics.p2ptoolbox.util.traits.Wrapper;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientContainer<C extends Object> implements Container<NatedAddress, C>, Ageing, Wrapper<C> {
+public class GradientContainer<C extends Object> implements Container<DecoratedAddress, C>, Ageing, Wrapper<C> {
 
     private int age;
-    private NatedAddress src;
+    private DecoratedAddress src;
     private final C content;
 
-    public GradientContainer(NatedAddress src, C content, int age) {
+    public GradientContainer(DecoratedAddress src, C content, int age) {
         this.age = age;
         this.src = src;
         this.content = content;
     }
 
-    public GradientContainer(NatedAddress src, C content) {
+    public GradientContainer(DecoratedAddress src, C content) {
         this(src, content, 0);
     }
 
@@ -48,7 +48,7 @@ public class GradientContainer<C extends Object> implements Container<NatedAddre
     }
 
     @Override
-    public NatedAddress getSource() {
+    public DecoratedAddress getSource() {
         return src;
     }
 
@@ -73,6 +73,35 @@ public class GradientContainer<C extends Object> implements Container<NatedAddre
         return "<" + src + "," + age + ">:" + content;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 37 * hash + this.age;
+        hash = 37 * hash + (this.src != null ? this.src.hashCode() : 0);
+        hash = 37 * hash + (this.content != null ? this.content.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final GradientContainer<?> other = (GradientContainer<?>) obj;
+        if (this.age != other.age) {
+            return false;
+        }
+        if (this.src != other.src && (this.src == null || !this.src.equals(other.src))) {
+            return false;
+        }
+        if (this.content != other.content && (this.content == null || !this.content.equals(other.content))) {
+            return false;
+        }
+        return true;
+    }
     //*********************ComparableWrapper************************************
     @Override
     public C unwrap() {
