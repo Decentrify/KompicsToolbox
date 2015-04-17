@@ -66,6 +66,7 @@ videostream/target/
 
 
 #leader-election
+/leader-election/target/
 /leader-election/election-api/target/
 /leader-election/election-core/target/
 /leader-election/election-example/target/

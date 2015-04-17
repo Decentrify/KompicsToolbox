@@ -2,7 +2,6 @@ package se.sics.p2ptoolbox.aggregator.network;
 
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.aggregator.api.msg.AggregatedStateContainer;
-import se.sics.p2ptoolbox.aggregator.core.msg.AggregatorNetMsg;
 import se.sics.p2ptoolbox.aggregator.network.util.AggregatedStateContainerSerializer;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
 

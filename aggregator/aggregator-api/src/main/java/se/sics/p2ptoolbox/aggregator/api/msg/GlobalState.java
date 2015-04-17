@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.aggregator.api.msg;
 
-import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.aggregator.api.model.AggregatedStatePacket;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
