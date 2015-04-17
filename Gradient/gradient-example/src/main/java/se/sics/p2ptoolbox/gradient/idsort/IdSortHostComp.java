@@ -16,11 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.counter.system;
+package se.sics.p2ptoolbox.gradient.idsort;
 
 import com.typesafe.config.ConfigFactory;
 import java.util.List;
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -34,71 +33,67 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.croupier.CroupierControlPort;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.CroupierSelectionPolicy;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.croupier.CroupierComp;
 import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.GradientComp;
 import se.sics.p2ptoolbox.gradient.GradientConfig;
-import se.sics.p2ptoolbox.gradient.counter.CounterComp;
 import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
-import se.sics.p2ptoolbox.gradient.counter.CounterViewComparator;
+import se.sics.p2ptoolbox.gradient.idsort.IdSortComp;
+import se.sics.p2ptoolbox.gradient.idsort.IdViewComparator;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CounterHostComp extends ComponentDefinition {
+public class IdSortHostComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(CounterHostComp.class);
+    private static final Logger log = LoggerFactory.getLogger(IdSortHostComp.class);
 
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private Positive<CroupierControlPort> croupierControlPort1;
+    private final SystemConfig systemConfig;
+    private final CroupierConfig croupierConfig;
+    private final GradientConfig gradientConfig;
+    private final String logPrefix;
 
-    private DecoratedAddress selfAddress;
-
-    public CounterHostComp(HostInit init) {
-        this.selfAddress = init.selfAddress;
-        log.info("{} initiating...", selfAddress);
-        log.debug("{} bootstrap sample:{}", selfAddress, init.bootstrapNodes);
+    public IdSortHostComp(HostInit init) {
+        this.systemConfig = init.systemConfig;
+        this.croupierConfig = init.croupierConfig;
+        this.gradientConfig = init.gradientConfig;
+        this.logPrefix = systemConfig.self.toString();
+        log.info("{} initiating with bootstrap:{}", logPrefix, systemConfig.bootstrapNodes);
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
-        int viewSize = 10;
-        int shuffleSize = 5;
-        int croupierOverlayId = 10;
-        int gradientOverlayId = 11;
+        CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(croupierConfig, 10, systemConfig.self, systemConfig.bootstrapNodes, init.seed);
+        Component croupier = createNConnectCroupier(croupierInit);
 
-        CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
-        CroupierComp.CroupierInit croupierInit1 = new CroupierComp.CroupierInit(croupierConfig, croupierOverlayId, selfAddress, init.bootstrapNodes, init.seed);
-        Component croupier1 = createNConnectCroupier(croupierInit1);
+        GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig.self, gradientConfig, 11, new IdViewComparator(), new NoFilter(), init.seed);
+        Component gradient = createNConnectGradient(gradientInit, croupier);
 
-        GradientConfig gradientConfig1 = new GradientConfig(viewSize, init.period, shuffleSize, init.softMaxTemperature);
-        GradientComp.GradientInit gradientInit1 = new GradientComp.GradientInit(selfAddress, gradientConfig1, gradientOverlayId, new CounterViewComparator(), new NoFilter(), init.seed);
-        Component gradient1 = createNConnectGradient(gradientInit1, croupier1);
+        IdSortComp.IdSortInit exampleInit = new IdSortComp.IdSortInit(systemConfig.self);
+        Component compA = createNConnectIdSort(exampleInit, croupier, gradient);
 
-        CounterComp.CounterInit exampleInit1 = new CounterComp.CounterInit(selfAddress, init.seed, init.period, init.counterRate);
-        Component compA = createNConnectExampleCounter(exampleInit1, croupier1, gradient1);
-
-        subscribe(handleDisconnected, croupier1.getPositive(CroupierControlPort.class));
+        subscribe(handleDisconnected, croupier.getPositive(CroupierControlPort.class));
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.info("{} starting...", selfAddress);
+            log.info("{} starting...", logPrefix);
         }
     };
 
     private Handler<Stop> handleStop = new Handler<Stop>() {
         @Override
         public void handle(Stop event) {
-            log.info("{} stopping...", selfAddress);
+            log.info("{} stopping...", logPrefix);
         }
     };
 
@@ -117,9 +112,8 @@ public class CounterHostComp extends ComponentDefinition {
         return gradient;
     }
 
-    private Component createNConnectExampleCounter(CounterComp.CounterInit init, Component croupier, Component gradient) {
-        Component example = create(CounterComp.class, init);
-        connect(example.getNegative(Timer.class), timer);
+    private Component createNConnectIdSort(IdSortComp.IdSortInit exampleInit, Component croupier, Component gradient) {
+        Component example = create(IdSortComp.class, exampleInit);
         connect(example.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
         connect(example.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
         return example;
@@ -129,27 +123,22 @@ public class CounterHostComp extends ComponentDefinition {
 
         @Override
         public void handle(CroupierDisconnected event) {
-            log.info("{} croupier:{} disconnected", selfAddress, event.overlayId);
+            log.info("{} croupier:{} disconnected", logPrefix, event.overlayId);
         }
-
     };
 
-    public static class HostInit extends Init<CounterHostComp> {
+    public static class HostInit extends Init<IdSortHostComp> {
 
         public final long seed;
-        public final DecoratedAddress selfAddress;
-        public final List<DecoratedAddress> bootstrapNodes;
-        public final int period;
-        public final Pair<Double, Integer> counterRate;
-        public final double softMaxTemperature;
-
-        public HostInit(DecoratedAddress selfAddress, List<DecoratedAddress> bootstrapNodes, long seed, int period, Pair<Double, Integer> counterRate, double softMaxTemperature) {
+        public final SystemConfig systemConfig;
+        public final CroupierConfig croupierConfig;
+        public final GradientConfig gradientConfig;
+        
+        public HostInit(long seed, SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig) {
             this.seed = seed;
-            this.selfAddress = selfAddress;
-            this.bootstrapNodes = bootstrapNodes;
-            this.period = period;
-            this.counterRate = counterRate;
-            this.softMaxTemperature = softMaxTemperature;
+            this.systemConfig = systemConfig;
+            this.croupierConfig = croupierConfig;
+            this.gradientConfig = gradientConfig;
         }
     }
 }

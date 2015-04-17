@@ -48,7 +48,6 @@ public class IdSortSimulationScenarios {
             }
         };
         IdSortScenarioOperations.seed = seed;
-        IdSortScenarioOperations.softMaxTemperature = softMaxTemperature;
         scen.setSeed(seed);
         return scen;
     }

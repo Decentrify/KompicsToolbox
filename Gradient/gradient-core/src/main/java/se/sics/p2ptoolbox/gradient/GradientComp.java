@@ -34,9 +34,9 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.network.Header;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
@@ -49,7 +49,6 @@ import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
 import se.sics.p2ptoolbox.gradient.msg.GradientShuffle;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.ContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -93,7 +92,7 @@ public class GradientComp extends ComponentDefinition {
         this.overlayId = init.overlayId;
         this.logPrefix = "id:" + selfAddress + ":" + overlayId;
         log.info("{} initializing...", logPrefix);
-        this.view = new GradientView(logPrefix, init.utilityComparator, init.gradientFilter, config.viewSize, new Random(init.seed), config.softMaxTemp);
+        this.view = new GradientView(logPrefix, init.utilityComparator, init.gradientFilter, config.viewSize, new Random(init.seed), config.exchangeSMTemp);
         this.filter = init.gradientFilter;
 
         subscribe(handleStart, control);
@@ -105,7 +104,6 @@ public class GradientComp extends ComponentDefinition {
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
-
     }
 
     //*********Control**********************************************************
@@ -205,7 +203,7 @@ public class GradientComp extends ComponentDefinition {
             GradientContainer partner = view.getShuffleNode(selfView);
             view.incrementAges();
 
-            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, config.shuffleLength);
+            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, config.shuffleSize);
             DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(selfAddress, partner.getSource(), Transport.UDP), null, overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUID.randomUUID(), selfView, exchangeGC);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
@@ -255,7 +253,7 @@ public class GradientComp extends ComponentDefinition {
 
                     view.incrementAges();
 
-                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, config.shuffleLength);
+                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, config.shuffleSize);
                     DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(selfAddress, container.getHeader().getSource(), Transport.UDP), null, overlayId);
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.getId(), selfView, exchangeGC);
                     BasicContentMsg request = new BasicContentMsg(responseHeader, responseContent);
@@ -312,7 +310,7 @@ public class GradientComp extends ComponentDefinition {
             log.warn("{} double stopping periodic shuffle", logPrefix);
             return;
         }
-        CancelTimeout cpt = new CancelTimeout(shuffleCycleId);
+        CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
         shuffleCycleId = null;
         trigger(cpt, timer);
     }

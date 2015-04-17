@@ -30,6 +30,7 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
@@ -55,11 +56,12 @@ public class CounterComp extends ComponentDefinition {
     private final Address selfAddress;
     private final Random rand;
     private int counter;
-    private final long period;
+    private int counterTicks;
+    private final int period;
     private final Pair<Double, Integer> rate;
     private final String logPrefix;
 
-    private UUID shuffleCycleId;
+    private UUID counterCycleId;
 
     public CounterComp(CounterInit init) {
         this.selfAddress = init.selfAddress;
@@ -67,14 +69,15 @@ public class CounterComp extends ComponentDefinition {
         log.info("{} initiating...", logPrefix);
         this.rand = init.rand;
         this.counter = 0;
-        this.period = init.period;
-        this.rate = init.rate;
+        this.counterTicks = init.counterAction.getValue1();
+        this.period = init.counterAction.getValue0();
+        this.rate = init.counterRate;
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleCroupierSample, croupier);
         subscribe(handleGradientSample, gradient);
-        subscribe(handlePeriodicEvent, timer);
+        subscribe(handlePeriodicAction, timer);
     }
 
     Handler handleStart = new Handler<Start>() {
@@ -83,7 +86,7 @@ public class CounterComp extends ComponentDefinition {
             log.info("{} starting...", logPrefix);
             trigger(new GradientUpdate(new CounterView(counter)), gradient);
             trigger(new CroupierUpdate(new CounterView(counter)), croupier);
-            schedulePeriodicShuffle();
+            schedulePeriodicCounter();
         }
     };
 
@@ -93,35 +96,34 @@ public class CounterComp extends ComponentDefinition {
             log.info("{} stopping...", logPrefix);
         }
     };
-    
-     Handler handleCroupierSample = new Handler<CroupierSample>() {
+
+    Handler handleCroupierSample = new Handler<CroupierSample>() {
 
         @Override
         public void handle(CroupierSample sample) {
             log.info("{} Croupier public sample:{}", logPrefix, sample.publicSample);
             log.info("{} Croupier private sample:{}", logPrefix, sample.privateSample);
         }
-     };
+    };
 
     Handler handleGradientSample = new Handler<GradientSample>() {
 
         @Override
         public void handle(GradientSample sample) {
-            log.info("{} counter:{} gradient:{}", 
+            log.info("{} counter:{} gradient:{}",
                     new Object[]{logPrefix, counter, sample.gradientSample});
         }
     };
 
-    private int times = 5;
-    Handler handlePeriodicEvent = new Handler<ShuffleCycle>() {
+    Handler handlePeriodicAction = new Handler<CounterCycle>() {
 
         @Override
-        public void handle(ShuffleCycle event) {
+        public void handle(CounterCycle event) {
+            counterTicks--;
+            if (counterTicks == 0) {
+                cancelPeriodicCounter();
+            }
             if (rand.nextDouble() > rate.getValue0()) {
-                times--;
-                if(times == 0) {
-                    cancelPeriodicShuffle();
-                }
                 counter = counter + rate.getValue1();
                 trigger(new GradientUpdate(new CounterView(counter)), gradient);
                 trigger(new CroupierUpdate(new CounterView(counter)), croupier);
@@ -130,25 +132,25 @@ public class CounterComp extends ComponentDefinition {
 
     };
 
-    private void schedulePeriodicShuffle() {
-        if (shuffleCycleId != null) {
-            log.warn("{} double starting periodic shuffle", logPrefix);
+    private void schedulePeriodicCounter() {
+        if (counterCycleId != null) {
+            log.warn("{} double starting periodic counter", logPrefix);
             return;
         }
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(period, period);
-        ShuffleCycle sc = new ShuffleCycle(spt);
+        CounterCycle sc = new CounterCycle(spt);
         spt.setTimeoutEvent(sc);
-        shuffleCycleId = sc.getTimeoutId();
+        counterCycleId = sc.getTimeoutId();
         trigger(spt, timer);
     }
 
-    private void cancelPeriodicShuffle() {
-        if (shuffleCycleId == null) {
-            log.warn("{} double stopping periodic shuffle", logPrefix);
+    private void cancelPeriodicCounter() {
+        if (counterCycleId == null) {
+            log.warn("{} double stopping periodic counter", logPrefix);
             return;
         }
-        CancelTimeout cpt = new CancelTimeout(shuffleCycleId);
-        shuffleCycleId = null;
+        CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(counterCycleId);
+        counterCycleId = null;
         trigger(cpt, timer);
     }
 
@@ -156,26 +158,26 @@ public class CounterComp extends ComponentDefinition {
 
         public final Address selfAddress;
         public final Random rand;
-        public final long period;
-        public final Pair<Double, Integer> rate;
+        public final Pair<Integer, Integer> counterAction;
+        public final Pair<Double, Integer> counterRate;
 
-        public CounterInit(Address selfAddress, long seed, long period, Pair<Double, Integer> rate) {
+        public CounterInit(Address selfAddress, long seed, Pair<Integer, Integer> counterAction, Pair<Double, Integer> counterRate) {
             this.selfAddress = selfAddress;
             this.rand = new Random(seed);
-            this.period = period;
-            this.rate = rate;
+            this.counterAction = counterAction;
+            this.counterRate = counterRate;
         }
     }
 
-    public class ShuffleCycle extends Timeout {
+    public class CounterCycle extends Timeout {
 
-        public ShuffleCycle(SchedulePeriodicTimeout request) {
+        public CounterCycle(SchedulePeriodicTimeout request) {
             super(request);
         }
 
         @Override
         public String toString() {
-            return "SHUFFLE_CYCLE";
+            return "COUNTER_CYCLE";
         }
     }
 }

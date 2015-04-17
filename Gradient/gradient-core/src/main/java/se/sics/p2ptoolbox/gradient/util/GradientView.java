@@ -43,8 +43,6 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  */
 public class GradientView {
 
-    private static double shrinkSoftMaxTemperature = 1;
-
     private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
     private final Comparator<GradientContainer> ageComparator;
     private final Comparator<GradientContainer> utilityComp;
@@ -114,7 +112,7 @@ public class GradientView {
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
         if (view.size() > viewSize) {
-            for (GradientContainer toRemove : softMaxReduceSize(ageComparator, 1)) {
+            for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
                 log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
                 view.remove(toRemove.getSource().getBase());
             }
@@ -122,7 +120,7 @@ public class GradientView {
         if (view.size() > viewSize) {
             GradientPreferenceComparator<GradientContainer> preferenceComparator = new GradientPreferenceComparator<GradientContainer>(selfView, utilityComp);
             int reduceSize = view.size() - viewSize;
-            for (GradientContainer toRemove : softMaxReduceSize(preferenceComparator, reduceSize)) {
+            for (GradientContainer toRemove : reduceSize(preferenceComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
                 view.remove(toRemove.getSource().getBase());
             }
@@ -169,19 +167,16 @@ public class GradientView {
     }
 
     /**
-     * Based on the comparator supplied, sort entries and then reduce the size
-     * of the view using SoftMax Approach.
-     *
      * @param usedComparator Comparator used for sorting.
      * @param n Number of samples to remove.
      */
-    private List<GradientContainer> softMaxReduceSize(Comparator<GradientContainer> usedComparator, int n) {
+    private List<GradientContainer> reduceSize(Comparator<GradientContainer> usedComparator, int n) {
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
         Collections.sort(sortedList, usedComparator);
         List<GradientContainer> toRemove = new ArrayList<GradientContainer>();
         while (n > 0 && !sortedList.isEmpty()) {
             n--;
-            toRemove.add(sortedList.remove(ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, shrinkSoftMaxTemperature))); //remove from list so as not to pick it again
+            toRemove.add(sortedList.remove(0)); //remove from list so as not to pick it again
         }
         return toRemove;
     }

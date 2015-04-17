@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.counter.simulation;
 
+import com.typesafe.config.ConfigFactory;
 import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -26,7 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.javatuples.Pair;
-import se.sics.p2ptoolbox.gradient.counter.system.CounterHostComp;
+import se.sics.p2ptoolbox.croupier.CroupierConfig;
+import se.sics.p2ptoolbox.gradient.GradientConfig;
+import se.sics.p2ptoolbox.gradient.counter.CounterHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
@@ -34,6 +37,7 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation2;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -43,7 +47,6 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class CounterScenarioOperations {
 
     public static long seed = 1234l;
-    public static double softMaxTemperature = 1;
     private static int bootstrapSize = 5;
     private static InetAddress localHost;
     static {
@@ -53,6 +56,7 @@ public class CounterScenarioOperations {
             throw new RuntimeException(ex);
         }
     }
+    private final static Pair<Integer, Integer> counterAction = Pair.with(1000, 10);
     private final static Map<Integer, Pair<Double, Integer>> counterRateMap = new HashMap<Integer, Pair<Double, Integer>>();
     static {
         counterRateMap.put(1, Pair.with(0.95d, 5)); //medium
@@ -89,8 +93,10 @@ public class CounterScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    int period = 1000;
-                    return new CounterHostComp.HostInit(nodeAddress, new ArrayList<DecoratedAddress>(bootstrapNodes), nodeSeed, period, counterRateMap.get(counterRateType), softMaxTemperature);
+                    SystemConfig systemConfig  = new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
+                    CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
+                    GradientConfig gradientConfig = new GradientConfig(ConfigFactory.load("application.conf"));
+                    return new CounterHostComp.HostInit(nodeSeed, systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(counterRateType));
                 }
 
                 @Override
