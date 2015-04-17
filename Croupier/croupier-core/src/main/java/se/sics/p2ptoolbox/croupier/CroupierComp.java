@@ -36,6 +36,7 @@ import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
@@ -359,7 +360,7 @@ public class CroupierComp extends ComponentDefinition {
             log.warn("{} double stopping periodic shuffle", logPrefix);
             return;
         }
-        CancelTimeout cpt = new CancelTimeout(shuffleCycleId);
+        CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
         shuffleCycleId = null;
         trigger(cpt, timer);
     }
