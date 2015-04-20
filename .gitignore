@@ -89,9 +89,16 @@ lib
 /chunk-manager/cm-network/target
 /chunk-manager/cm-example/target
 
-#leftovers
-g-common/target/
-netty-test/target/
+#ip-solver
 /ip-solver/api/target/
 /ip-solver/core/target/
 /ip-solver/example/target/
+
+#caracal-client
+/caracal-client/cc-bootstrap/cc-bootstrap-api/target/
+/caracal-client/cc-bootstrap/cc-bootstrap-core/target/
+/caracal-client/cc-bootstrap/cc-bootstrap-network/target/
+
+#leftovers
+g-common/target/
+netty-test/target/
