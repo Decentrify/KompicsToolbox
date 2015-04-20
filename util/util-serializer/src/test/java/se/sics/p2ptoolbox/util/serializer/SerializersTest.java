@@ -37,7 +37,6 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
-import se.sics.p2ptoolbox.util.network.impl.BasicContentMsgSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
@@ -51,7 +50,7 @@ public class SerializersTest {
     private static InetAddress localHost;
 
     {
-        BasicSerializerSetup.registerBasicSerializers(0);
+        
         try {
             localHost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ex) {
@@ -64,7 +63,10 @@ public class SerializersTest {
 
     @BeforeClass
     public static void oneTimeSetup() {
-        TestSerializer testSerializer = new TestSerializer(255);
+        int currentId = 128;
+        
+        currentId = BasicSerializerSetup.registerBasicSerializers(currentId);
+        TestSerializer testSerializer = new TestSerializer(currentId++);
         Serializers.register(testSerializer, "testSerializer");
         Serializers.register(TestContent.class, "testSerializer");
     }
