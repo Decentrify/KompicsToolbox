@@ -11,14 +11,14 @@
         <module>g-common</module>
         <module>netty-test</module>
         <module>serialization-util</module>
-        <module>chunk-manager</module>
         <module>Croupier</module>
         <module>Gradient</module>
         <module>videostream</module>
         <module>util</module>
         <module>simulator</module>
         <module>leader-election</module>
-    </modules>
+        <module>chunk-manager</module>
+  </modules>
    
     <distributionManagement>
         <repository>
