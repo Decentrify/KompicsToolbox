@@ -17,24 +17,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.chunkmanager.msg;
+package se.sics.p2ptoolbox.chunkmanager.example.simulation;
 
-import java.util.UUID;
+import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 
 /**
- * author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Chunk {
-    public final UUID messageId;
-    public final int chunkNr;
-    public final int lastChunk;
-    public final byte[] content;
-
-    public Chunk(UUID messageId, int chunkNr, int lastChunk, byte[] content) {
-        this.messageId = messageId;
-        this.chunkNr = chunkNr;
-        this.lastChunk = lastChunk;
-        this.content = content;
-    }
+public class ChunkManagerSimulationResult {
+    public static OperationCmd.ValidationException failureCause;
 }
-

@@ -13,7 +13,9 @@
     <name>Chunk Manager</name>
     <modules>
         <module>cm-core</module>
-    </modules>
+    <module>cm-network</module>
+    <module>cm-example</module>
+  </modules>
   
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>

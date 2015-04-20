@@ -1,11 +1,32 @@
+/**
+ * This file is part of the Kompics P2P Framework.
+ *
+ * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
+ * 2009 Royal Institute of Technology (KTH)
+ *
+ * Kompics is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
 package se.sics.p2ptoolbox.chunkmanager;
 
+import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
-import org.junit.Assert;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -15,12 +36,18 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
+import se.sics.kompics.network.Header;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.timer.CancelTimeout;
+import se.sics.kompics.timer.ScheduleTimeout;
+import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.chunkmanager.msg.Chunk;
-import se.sics.p2ptoolbox.chunkmanager.util.ChunkContainer;
+import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
+import se.sics.p2ptoolbox.chunkmanager.util.ChunkPrefixHelper;
+import se.sics.p2ptoolbox.chunkmanager.util.IncompleteChunkTracker;
+import se.sics.p2ptoolbox.chunkmanager.util.CompleteChunkTracker;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 
@@ -31,16 +58,15 @@ public class ChunkManagerComp extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(ChunkManagerComp.class);
 
-    private Positive<Network> network = positive(Network.class);
-    private Negative<Network> cm = negative(Network.class);
+    private Positive<Network> requiredNetwork = requires(Network.class);
+    private Negative<Network> providedNetwork = provides(Network.class);
     private Positive<Timer> timer = positive(Timer.class);
-
-    private HashMap<UUID, ChunkContainer> incompleteReceivedMessages = new HashMap<UUID, ChunkContainer>();
-    private HashMap<UUID, ChunkContainer> incompleteReceivedMessagesTimeout = new HashMap<UUID, ChunkContainer>();
 
     private final SystemConfig systemConfig;
     private final ChunkManagerConfig config;
     private final String logPrefix;
+
+    private final Map<UUID, Pair<IncompleteChunkTracker, UUID>> incomingChunks;
 
     public ChunkManagerComp(CMInit init) {
         this.systemConfig = init.systemConfig;
@@ -48,11 +74,13 @@ public class ChunkManagerComp extends ComponentDefinition {
         this.logPrefix = systemConfig.self.toString();
         log.info("{} initiating...", logPrefix);
 
+        this.incomingChunks = new HashMap<UUID, Pair<IncompleteChunkTracker, UUID>>();
+
         subscribe(handleStart, control);
         subscribe(handleStop, control);
-        subscribe(handleMessageToSend, cm);
-        subscribe(handleIncomingMessage, network);
-        subscribe(messageReceiveTimeoutHandler, timer);
+        subscribe(handleOutgoing, providedNetwork);
+        subscribe(handleIncoming, requiredNetwork);
+        subscribe(handleCleanupTimeout, timer);
     }
 
     //**************************************************************************
@@ -69,156 +97,109 @@ public class ChunkManagerComp extends ComponentDefinition {
         }
     };
     //**************************************************************************
-    
-    Handler<BasicContentMsg> handleMessageToSend = new Handler<BasicContentMsg>() {
+
+    Handler handleOutgoing = new Handler<BasicContentMsg>() {
         @Override
         public void handle(BasicContentMsg msg) {
-            log.trace("received:{}", msg);
-            Assert.assertEquals(Transport.UDP, msg.getHeader().getProtocol());
+            log.trace("{} received:{}", logPrefix, msg);
+            if (!msg.getHeader().getProtocol().equals(Transport.UDP)) {
+                log.debug("{} forwarding non UDP message:{}", logPrefix, msg);
+                trigger(msg, requiredNetwork);
+                return;
+            }
 
             ByteBuf content = Unpooled.buffer();
             ByteBuf header = Unpooled.buffer();
             Serializers.toBinary(msg.getContent(), content);
             Serializers.toBinary(msg.getHeader(), header);
-            
-            //TODO Alex is this the actual size?
-            int headerSize = header.readableBytes();
 
             //we have to accommodate the headers info of the chunked message as well.
-            int datagramContentSize = config.datagramUsableSize - headerSize;
-            
-            //not possible to make chunks. This is a check to prevent things from going wrong if the fragment
-            //threshold size is given too low.
+            int headerSize = header.readableBytes();
+            //TODO Alex - make Chunked a trait - hardcoded extra size for fields in chunk
+            int datagramContentSize = config.datagramUsableSize - headerSize - ChunkPrefixHelper.getChunkPrefixSize();
             if (datagramContentSize <= 0) {
+                log.error("{} chunk manager is badly configured", logPrefix);
                 throw new RuntimeException("chunk manager is badly configured");
             }
+            if (content.readableBytes() < datagramContentSize) {
+                log.debug("{} forwarding UDP small message:{}", logPrefix, msg);
+                trigger(msg, requiredNetwork);
+            }
 
-            int chunkId = 0;
-            UUID messageId = UUID.randomUUID();
-            int lastChunk = (content.readableBytes() % datagramContentSize == 0 ? content.readableBytes() / datagramContentSize - 1 : content.readableBytes() / datagramContentSize);
-            while (content.readableBytes() > 0) {
-                byte[] chunkContent = new byte[datagramContentSize];
-                content.readBytes(chunkContent);
-                Chunk chunk = new Chunk(messageId, chunkId, lastChunk, chunkContent);
-
-                UUID chunkedMessageUUID = UUID.randomUUID();
-                int chunkID = 0;
-
-                for (byte[] byteData : fragmentedBytesList) {
-                    ChunkedMessage chunkedMsg = new ChunkedMessage(msg.getVodSource(), msg.getVodDestination(),
-                            chunkedMessageUUID, chunkID++, fragmentedBytesList.size(), byteData);
-
-                    trigger(chunkedMsg, network);
-                }
-            } else {
-
-                //logger.trace("ChunkManager created no chunks. " + msg.getClass() + " is small");
-                trigger(msg, network);
+            CompleteChunkTracker cct = new CompleteChunkTracker(UUID.randomUUID(), content, datagramContentSize);
+            for (Chunk chunk : cct.chunks.values()) {
+                BasicContentMsg chunkMsg = new BasicContentMsg(msg.getHeader(), chunk);
+                log.debug("{} sending chunk nr:{}", logPrefix, chunk.chunkNr);
+                trigger(chunkMsg, requiredNetwork);
             }
         }
     };
 
-    Handler<ChunkedMessage> handleIncomingMessage = new Handler<ChunkedMessage>() {
+    Handler handleIncoming = new Handler<BasicContentMsg>() {
         @Override
-        public void handle(ChunkedMessage msg) {
+        public void handle(BasicContentMsg msg) {
+            log.trace("{} received:{}", logPrefix, msg);
 
-            ChunkContainer chunkContainer = addChunkToReceivedMessages(msg);
+            if (!msg.getHeader().getProtocol().equals(Transport.UDP)) {
+                log.debug("{} forwarding non UDP message:{}", logPrefix, msg);
+                trigger(msg, providedNetwork);
+                return;
+            }
+            if (!(msg.getContent() instanceof Chunk)) {
+                log.debug("{} forwarding UDP message:{}", logPrefix, msg);
+                trigger(msg, providedNetwork);
+                return;
+            }
 
-            log.trace("Chunk #" + msg.getChunkID() + " for message # "
-                    + msg.getMessageID() + ". " + chunkContainer.getChunks().size() + " out of "
-                    + msg.getTotalChunks() + " received.");
+            Chunk chunk = (Chunk) msg.getContent();
+            
+            if (!incomingChunks.containsKey(chunk.messageId)) {
+                IncompleteChunkTracker chunkTracker = new IncompleteChunkTracker(chunk.lastChunk);
+                UUID cleanupTimeout = scheduleCleanupTimeout(chunk.messageId);
+                incomingChunks.put(chunk.messageId, Pair.with(chunkTracker, cleanupTimeout));
+            }
 
-            if (chunkContainer.isComplete()) {
+            log.debug("{} received chunk:{} for message:{}", new Object[]{logPrefix, chunk.chunkNr, chunk.messageId});
 
-                cancelTimeout(chunkContainer.getTimeoutId());
-                removeStateForChunkContainer(chunkContainer);
+            IncompleteChunkTracker chunkTracker = incomingChunks.get(chunk.messageId).getValue0();
+            chunkTracker.add(chunk);
+            if (chunkTracker.isComplete()) {
+                cancelCleanupTimeout(incomingChunks.get(chunk.messageId).getValue1());
+                incomingChunks.remove(chunk.messageId);
+                byte[] msgBytes = chunkTracker.getMsg();
 
-                try {
-                    ByteBuf fullMessageBytes = chunkContainer.getCombinedBytesOfChunks();
-
-                    DirectMsg defragmentedMessage = convertBytesToMessage(fullMessageBytes);
-                    defragmentedMessage.rewritePublicSource(msg.getSource());
-                    defragmentedMessage.rewriteDestination(msg.getDestination());
-
-                    if (defragmentedMessage != null) {
-
-                        log.trace("ChunkManager combined " + chunkContainer.getChunks().size()
-                                + " fragments to create " + defragmentedMessage.getClass());
-
-                        trigger(defragmentedMessage, cm);
-                    } else {
-                        log.warn("Unable to convert bytes into a message. Bytes might be corrupted or there is some"
-                                + "issue in the Frame Decoder");
-                    }
-
-                } catch (Exception e) {
-                    log.warn("Problem while combining chunks of the fragmented message: Exception : " + e.getMessage());
-                }
+                Header header = msg.getHeader();
+                Object content = Serializers.fromBinary(Unpooled.wrappedBuffer(msgBytes), Optional.absent());
+                BasicContentMsg rebuiltMsg = new BasicContentMsg(header, content);
+                log.debug("{} rebuilt chunked message:{}", logPrefix, rebuiltMsg);
+                trigger(rebuiltMsg, providedNetwork);
             }
         }
     };
 
-    private ChunkContainer addChunkToReceivedMessages(ChunkedMessage msg) {
-        ChunkContainer chunkContainer = incompleteReceivedMessages.get(msg.getMessageID());
-
-        if (chunkContainer == null) {
-            chunkContainer = new ChunkContainer(msg.getMessageID(), msg.getTotalChunks());
-            incompleteReceivedMessages.put(msg.getMessageID(), chunkContainer);
-
-            TimeoutId timeoutId = scheduleTimeoutForMessageReceive(chunkContainer);
-            chunkContainer.setTimeoutId(timeoutId);
-            incompleteReceivedMessagesTimeout.put(timeoutId, chunkContainer);
-        }
-
-        try {
-            chunkContainer.addChunk(new Chunk(msg.getChunkID(), msg.getChunkData()));
-        } catch (Exception e) {
-            log.warn("Unable to add chunk the message. Exception: " + e.getMessage());
-        }
-
-        return chunkContainer;
-    }
-
-    private DirectMsg convertBytesToMessage(ByteBuf byteBuf) throws Exception {
-
-        return (DirectMsg) msgDecoder.parse(byteBuf);
-    }
-
-    final Handler<ChunkedMessageReceiveTimeout> messageReceiveTimeoutHandler = new Handler<ChunkedMessageReceiveTimeout>() {
+    final Handler handleCleanupTimeout = new Handler<CleanupTimeout>() {
         @Override
-        public void handle(ChunkedMessageReceiveTimeout chunkedMessageReceiveTimeout) {
-
-            ChunkContainer chunkContainer = incompleteReceivedMessagesTimeout.get(chunkedMessageReceiveTimeout.getTimeoutId());
-            removeStateForChunkContainer(chunkContainer);
+        public void handle(CleanupTimeout timeout) {
+            if (incomingChunks.remove(timeout.messageId) == null) {
+                log.debug("{} chunked message:{} timed out", logPrefix, timeout.messageId);
+            }
         }
     };
 
-    private void removeStateForChunkContainer(ChunkContainer chunkContainer) {
-
-        if (chunkContainer != null) {
-            incompleteReceivedMessages.remove(chunkContainer.getMessageID());
-            incompleteReceivedMessagesTimeout.remove(chunkContainer.getTimeoutId());
-        }
+    private UUID scheduleCleanupTimeout(UUID messageId) {
+        ScheduleTimeout spt = new ScheduleTimeout(config.cleanupTimeout);
+        CleanupTimeout ct = new CleanupTimeout(spt, messageId);
+        spt.setTimeoutEvent(ct);
+        trigger(spt, timer);
+        return ct.getTimeoutId();
     }
 
-    private TimeoutId scheduleTimeoutForMessageReceive(ChunkContainer chunkContainer) {
-
-        //start timeout to only receive chunks of a message for a certain time
-        ScheduleTimeout st = new ScheduleTimeout(config.getReceiveMessageTimeout());
-        st.setTimeoutEvent(new ChunkedMessageReceiveTimeout(st, chunkContainer));
-
-        trigger(st, timer);
-
-        return st.getTimeoutEvent().getTimeoutId();
+    private void cancelCleanupTimeout(UUID timeoutId) {
+        CancelTimeout cpt = new CancelTimeout(timeoutId);
+        trigger(cpt, timer);
     }
 
-    private void cancelTimeout(TimeoutId timeoutId) {
-
-        CancelTimeout cancelTimeout = new CancelTimeout(timeoutId);
-        trigger(cancelTimeout, timer);
-    }
-
-    public class CMInit extends Init<ChunkManagerComp> {
+    public static class CMInit extends Init<ChunkManagerComp> {
 
         public final SystemConfig systemConfig;
         public final ChunkManagerConfig config;
@@ -227,6 +208,20 @@ public class ChunkManagerComp extends ComponentDefinition {
             this.systemConfig = systemConfig;
             this.config = config;
         }
+    }
 
+    public static class CleanupTimeout extends Timeout {
+
+        public final UUID messageId;
+
+        public CleanupTimeout(ScheduleTimeout st, UUID messageId) {
+            super(st);
+            this.messageId = messageId;
+        }
+
+        @Override
+        public String toString() {
+            return "CLEANUP_TIMEOUT";
+        }
     }
 }
