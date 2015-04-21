@@ -1,0 +1,17 @@
+[
+  {
+    "name": "gvod.heartbeat",
+    "meta": {
+      "algo": "paxos",
+      "db": "memory",
+      "vnodes": "1",
+      "rfactor": "3"
+    }
+  },
+  {
+      "name": "gvod.metadata",
+      "meta": {
+          "vnodes": "5"
+      }
+  }
+]

@@ -98,6 +98,7 @@ lib
 /caracal-client/cc-bootstrap/cc-bootstrap-api/target/
 /caracal-client/cc-bootstrap/cc-bootstrap-core/target/
 /caracal-client/cc-bootstrap/cc-bootstrap-network/target/
+/caracal-client/cc-schemasetup/target/
 
 #leftovers
 g-common/target/

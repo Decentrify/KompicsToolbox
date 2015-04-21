@@ -18,14 +18,12 @@
  */
 package se.sics.p2ptoolbox.caracalclient.bootstrap;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,11 +38,8 @@ import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.caracaldb.Address;
 import se.sics.caracaldb.global.ForwardMessage;
-import se.sics.caracaldb.global.Schema;
 import se.sics.caracaldb.global.SchemaData;
 import se.sics.caracaldb.operations.CaracalMsg;
-import se.sics.kompics.Direct;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;

@@ -13,7 +13,8 @@
     <name>Caracal Client</name>
     <modules>
         <module>cc-bootstrap</module>
-    </modules>
+    <module>cc-schemasetup</module>
+  </modules>
   
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>
