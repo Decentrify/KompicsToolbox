@@ -124,6 +124,7 @@ public class ChunkManagerComp extends ComponentDefinition {
             if (content.readableBytes() < datagramContentSize) {
                 log.debug("{} forwarding UDP small message:{}", logPrefix, msg);
                 trigger(msg, requiredNetwork);
+                return;
             }
 
             CompleteChunkTracker cct = new CompleteChunkTracker(UUID.randomUUID(), content, datagramContentSize);
