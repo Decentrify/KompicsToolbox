@@ -99,6 +99,9 @@ lib
 /caracal-client/cc-bootstrap/cc-bootstrap-core/target/
 /caracal-client/cc-bootstrap/cc-bootstrap-network/target/
 /caracal-client/cc-schemasetup/target/
+/caracal-client/cc-heartbeat/cc-heartbeat-network/target/
+/caracal-client/cc-heartbeat/cc-heartbeat-core/target/
+/caracal-client/cc-heartbeat/cc-heartbeat-api/target/
 
 #leftovers
 g-common/target/

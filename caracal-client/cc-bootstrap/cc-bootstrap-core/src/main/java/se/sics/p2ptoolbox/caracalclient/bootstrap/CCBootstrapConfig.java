@@ -52,7 +52,7 @@ public class CCBootstrapConfig {
             this.nodeListSize = config.getInt("caracal-client.bootstrap.nodeListSize");
             this.sampleSize = config.getInt("caracal-client.bootstrap.sampleSize");
         } catch(ConfigException.Missing ex) {
-            log.error("{} CCBootstrap configuration problem:{}", ex.getMessage());
+            log.error("configuration problem:{}", ex.getMessage());
             throw new RuntimeException("CCBootstrap configuration problem", ex);
         }
     }

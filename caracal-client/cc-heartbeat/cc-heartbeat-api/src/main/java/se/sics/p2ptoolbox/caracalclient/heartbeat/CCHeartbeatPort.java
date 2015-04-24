@@ -16,31 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.caracalclient.bootstrap.msg;
 
-import se.sics.kompics.Direct;
+package se.sics.p2ptoolbox.caracalclient.heartbeat;
+
+import se.sics.kompics.PortType;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.msg.CCHeartbeat;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CCSchema {
-
-    public static class Request extends Direct.Request<Response> {
-
-        public final String name;
-
-        public Request(String name) {
-            this.name = name;
-        }
-    }
-
-    public static class Response implements Direct.Response {
-        public final String name;
-        public final byte[] id;
-        
-        public Response(String name, byte[] id) {
-            this.name = name;
-            this.id = id;
-        }
-    }
+public class CCHeartbeatPort extends PortType {
+    {
+        request(CCHeartbeat.Update.class);
+        request(CCHeartbeat.Stop.class);
+    }    
 }
