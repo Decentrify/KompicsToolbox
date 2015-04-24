@@ -13,6 +13,7 @@
     
     <groupId>se.sics.p2ptoolbox.aggregator</groupId>
     <artifactId>aggregator-core</artifactId>
+    <name>Aggregator Core</name>
     <packaging>jar</packaging>
     
     

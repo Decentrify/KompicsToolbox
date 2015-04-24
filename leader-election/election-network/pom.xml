@@ -12,6 +12,7 @@
 
     <groupId>se.sics.p2ptoolbox.election</groupId>
     <artifactId>election-network</artifactId>
+    <name>Leader Election Network</name>
 
     <dependencies>
 

@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.counter.simulation;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
 import java.net.InetAddress;
@@ -93,10 +94,11 @@ public class CounterScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    SystemConfig systemConfig  = new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
-                    CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
-                    GradientConfig gradientConfig = new GradientConfig(ConfigFactory.load("application.conf"));
-                    return new CounterHostComp.HostInit(nodeSeed, systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(counterRateType));
+                    Config config = ConfigFactory.load("application.conf");
+                    SystemConfig systemConfig  = new SystemConfig(nodeSeed, nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
+                    CroupierConfig croupierConfig = new CroupierConfig(config);
+                    GradientConfig gradientConfig = new GradientConfig(config);
+                    return new CounterHostComp.HostInit(systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(counterRateType));
                 }
 
                 @Override

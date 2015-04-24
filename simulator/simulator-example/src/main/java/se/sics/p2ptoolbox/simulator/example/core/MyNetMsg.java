@@ -21,31 +21,30 @@ package se.sics.p2ptoolbox.simulator.example.core;
 
 import java.util.UUID;
 import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
-import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class MyNetMsg {
-    private static abstract class MyBasicNetMsg<C extends Object> extends BasicContentMsg<BasicAddress, BasicHeader<BasicAddress>, C> {
-        public MyBasicNetMsg(BasicAddress src, BasicAddress dst, C content) {
-            super(new BasicHeader(src, dst, Transport.UDP), content);
+    private static abstract class MyBasicNetMsg<C extends Object> extends BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, C> {
+        public MyBasicNetMsg(DecoratedAddress src, DecoratedAddress dst, C content) {
+            super(new DecoratedHeader(src, dst, Transport.UDP), content);
         }
         
     }
     
     public static class NetPing extends MyBasicNetMsg<Ping> {
-        public NetPing(BasicAddress src, BasicAddress dst, UUID pingId) {
+        public NetPing(DecoratedAddress src, DecoratedAddress dst, UUID pingId) {
             super(src, dst, new Ping(pingId));
         }
     }
     
     public static class NetPong extends MyBasicNetMsg<Pong> {
-        public NetPong(BasicAddress src, BasicAddress dst, UUID pingId) {
+        public NetPong(DecoratedAddress src, DecoratedAddress dst, UUID pingId) {
             super(src, dst, new Pong(pingId));
         }
     }
-    
 }

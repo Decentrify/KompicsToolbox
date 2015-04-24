@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
@@ -38,6 +39,9 @@ public class SystemConfigTest {
     public void test1() throws UnknownHostException {
         Config config = ConfigFactory.load("application1.conf");
         SystemConfig systemConfig = new SystemConfig(config);
+        
+        long seed = 1234;
+        Assert.assertEquals(seed, systemConfig.seed);
         
         InetAddress selfIp = InetAddress.getByName("193.10.67.178");
         int selfPort = 22222;
@@ -65,9 +69,30 @@ public class SystemConfigTest {
         Config config = ConfigFactory.load("application2.conf");
         SystemConfig systemConfig = new SystemConfig(config);
         
+        long seed = 1234;
+        Assert.assertEquals(seed, systemConfig.seed);
+        
         InetAddress selfIp = InetAddress.getByName("193.10.67.178");
         int selfPort = 22222;
         int selfId = 2;
+        DecoratedAddress self = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
+        Assert.assertEquals(self, systemConfig.self);
+        Assert.assertEquals(null, systemConfig.aggregator);
+        Assert.assertEquals(new ArrayList<DecoratedAddress>(), systemConfig.bootstrapNodes);
+    }
+    
+    @Test
+    public void test3() throws UnknownHostException {
+        Config config = ConfigFactory.load("application3.conf");
+        SystemConfig systemConfig = new SystemConfig(config);
+        
+        long seed = 1234;
+        Random rand = new Random(seed);
+        Assert.assertEquals(seed, systemConfig.seed);
+        
+        InetAddress selfIp = InetAddress.getByName("193.10.67.178");
+        int selfPort = 22222;
+        int selfId = rand.nextInt();
         DecoratedAddress self = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
         Assert.assertEquals(self, systemConfig.self);
         Assert.assertEquals(null, systemConfig.aggregator);

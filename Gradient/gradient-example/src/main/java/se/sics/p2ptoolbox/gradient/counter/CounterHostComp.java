@@ -38,9 +38,7 @@ import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.GradientComp;
 import se.sics.p2ptoolbox.gradient.GradientConfig;
-import se.sics.p2ptoolbox.gradient.counter.CounterComp;
 import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
-import se.sics.p2ptoolbox.gradient.counter.CounterViewComparator;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
 
@@ -69,13 +67,13 @@ public class CounterHostComp extends ComponentDefinition {
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
-        CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(croupierConfig, 10, systemConfig.self, systemConfig.bootstrapNodes, init.seed);
+        CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(systemConfig, croupierConfig, 10);
         Component croupier = createNConnectCroupier(croupierInit);
 
-        GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig.self, gradientConfig, 11, new CounterViewComparator(), new NoFilter(), init.seed);
+        GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig, gradientConfig, 11, new CounterViewComparator(), new NoFilter());
         Component gradient = createNConnectGradient(gradientInit, croupier);
 
-        CounterComp.CounterInit counterInit = new CounterComp.CounterInit(systemConfig.self, init.seed, init.counterAction, init.counterRate);
+        CounterComp.CounterInit counterInit = new CounterComp.CounterInit(systemConfig.self, systemConfig.seed, init.counterAction, init.counterRate);
         Component compA = createNConnectExampleCounter(counterInit, croupier, gradient);
 
         subscribe(handleDisconnected, croupier.getPositive(CroupierControlPort.class));
@@ -129,15 +127,13 @@ public class CounterHostComp extends ComponentDefinition {
 
     public static class HostInit extends Init<CounterHostComp> {
 
-        public final long seed;
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
         public final GradientConfig gradientConfig;
         public final Pair<Integer, Integer> counterAction;
         public final Pair<Double, Integer> counterRate;
         
-        public HostInit(long seed, SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig, Pair<Integer, Integer> counterAction, Pair<Double, Integer> counterRate) {
-            this.seed = seed;
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig, Pair<Integer, Integer> counterAction, Pair<Double, Integer> counterRate) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
             this.gradientConfig = gradientConfig;

@@ -18,12 +18,8 @@
  */
 package se.sics.p2ptoolbox.chunkmanager.example.system;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Set;
-import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -38,6 +34,7 @@ import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
+import se.sics.p2ptoolbox.chunkmanager.ChunkManagerConfig;
 import se.sics.p2ptoolbox.chunkmanager.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.chunkmanager.example.network.ExampleSerializerSetup;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
@@ -51,11 +48,9 @@ public class Launcher extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
-    private static long seed;
     private static Address partner;
     
-    public static void setArgs(long setSeed, Address setPartner) {
-        seed = setSeed;
+    public static void setArgs(Address setPartner) {
         partner = setPartner;
     }
 
@@ -72,10 +67,12 @@ public class Launcher extends ComponentDefinition {
         ExampleSerializerSetup.oneTimeSetup();
 
         timer = create(JavaTimer.class, Init.NONE);
-        SystemConfig systemConfig = new SystemConfig(ConfigFactory.load("application.conf"));
+        Config config = ConfigFactory.load("application.conf");
+        SystemConfig systemConfig = new SystemConfig(config);
         network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
 
-        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(seed, "application.conf", partner));
+        ChunkManagerConfig cmConfig = new ChunkManagerConfig(config);
+        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(systemConfig, cmConfig, partner));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 

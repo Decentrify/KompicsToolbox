@@ -10,7 +10,6 @@
         <module>aggregator</module>
         <module>g-common</module>
         <module>netty-test</module>
-        <module>serialization-util</module>
         <module>Croupier</module>
         <module>Gradient</module>
         <module>videostream</module>

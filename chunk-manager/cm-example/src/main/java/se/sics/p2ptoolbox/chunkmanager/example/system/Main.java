@@ -21,7 +21,6 @@ package se.sics.p2ptoolbox.chunkmanager.example.system;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import org.javatuples.Triplet;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
@@ -34,19 +33,17 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class Main {
     
     public static void main(String[] args) throws UnknownHostException {
-        Long seed = null;
         Address partner;
         
-        if(args.length >= 4) {
-            seed = Long.valueOf(args[0]);
-            InetAddress ip = InetAddress.getByName(args[1]);
-            int port = Integer.parseInt(args[2]);
-            int id = Integer.parseInt(args[3]);
+        if(args.length >= 3) {
+            InetAddress ip = InetAddress.getByName(args[0]);
+            int port = Integer.parseInt(args[1]);
+            int id = Integer.parseInt(args[2]);
             partner = new DecoratedAddress(new BasicAddress(ip, port, id));
         } else {
             throw new RuntimeException("no seed argument");
         }
-        Launcher.setArgs(seed, partner);
+        Launcher.setArgs(partner);
         start();
         try {
             Kompics.waitForTermination();

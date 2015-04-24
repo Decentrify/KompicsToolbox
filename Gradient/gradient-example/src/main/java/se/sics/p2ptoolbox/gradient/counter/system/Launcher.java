@@ -49,11 +49,9 @@ public class Launcher extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
-    private static long seed;
     private static String nodeType;
 
-    public static void setArgs(long setSeed, String setNodeType) {
-        seed = setSeed;
+    public static void setArgs(String setNodeType) {
         nodeType = setNodeType;
     }
     
@@ -86,7 +84,7 @@ public class Launcher extends ComponentDefinition {
         CroupierConfig croupierConfig = new CroupierConfig(config);
         GradientConfig gradientConfig = new GradientConfig(config);
         
-        host = create(CounterHostComp.class, new CounterHostComp.HostInit(seed, systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(nodeType.toLowerCase())));
+        host = create(CounterHostComp.class, new CounterHostComp.HostInit(systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(nodeType.toLowerCase())));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 

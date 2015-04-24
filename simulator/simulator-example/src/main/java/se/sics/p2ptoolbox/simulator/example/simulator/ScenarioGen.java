@@ -42,13 +42,14 @@ import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
 import se.sics.p2ptoolbox.simulator.dsl.distribution.ConstantDistribution;
 import se.sics.p2ptoolbox.simulator.example.core.MyNetMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class ScenarioGen {
 
-    private static final Map<Integer, BasicAddress> nodeAddressMap = new HashMap<Integer, BasicAddress>();
+    private static final Map<Integer, DecoratedAddress> nodeAddressMap = new HashMap<Integer, DecoratedAddress>();
 
     static {
         InetAddress localHost;
@@ -57,15 +58,15 @@ public class ScenarioGen {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        nodeAddressMap.put(1, new BasicAddress(localHost, 12345, 1));
-        nodeAddressMap.put(2, new BasicAddress(localHost, 12345, 2));
+        nodeAddressMap.put(1, new DecoratedAddress(new BasicAddress(localHost, 12345, 1)));
+        nodeAddressMap.put(2, new DecoratedAddress(new BasicAddress(localHost, 12345, 2)));
     }
 
     static Operation1<StartNodeCmd, Integer> startNodeOp = new Operation1<StartNodeCmd, Integer>() {
 
         @Override
         public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<MyComponent, BasicAddress>() {
+            return new StartNodeCmd<MyComponent, DecoratedAddress>() {
 
                 @Override
                 public Integer getNodeId() {
@@ -78,12 +79,12 @@ public class ScenarioGen {
                 }
 
                 @Override
-                public MyComponent.MyInit getNodeComponentInit(BasicAddress aggregatorServer, Set<BasicAddress> bootstrapNodes) {
+                public MyComponent.MyInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
                     return new MyComponent.MyInit(nodeAddressMap.get(nodeId), aggregatorServer);
                 }
 
                 @Override
-                public BasicAddress getAddress() {
+                public DecoratedAddress getAddress() {
                     return nodeAddressMap.get(nodeId);
                 }
 
@@ -99,13 +100,13 @@ public class ScenarioGen {
     static Operation1<NetworkOpCmd, Integer> networkPingOp = new Operation1<NetworkOpCmd, Integer>() {
 
         public NetworkOpCmd generate(final Integer nodeId) {
-            return new NetworkOpCmd<BasicAddress>() {
-                private BasicAddress destination = nodeAddressMap.get(nodeId);
-                private BasicAddress origin;
+            return new NetworkOpCmd<DecoratedAddress>() {
+                private DecoratedAddress destination = nodeAddressMap.get(nodeId);
+                private DecoratedAddress origin;
                 private UUID pingId = UUID.randomUUID();
 
                 @Override
-                public Msg getNetworkMsg(BasicAddress origin) {
+                public Msg getNetworkMsg(DecoratedAddress origin) {
                     this.origin = origin;
                     return new MyNetMsg.NetPing(origin, destination, pingId);
                 }

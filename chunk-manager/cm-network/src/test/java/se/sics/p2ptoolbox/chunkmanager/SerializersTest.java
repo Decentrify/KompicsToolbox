@@ -21,10 +21,6 @@ package se.sics.p2ptoolbox.chunkmanager;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,8 +30,6 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
 import se.sics.p2ptoolbox.chunkmanager.util.ChunkPrefixHelper;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
 
 /**
@@ -45,7 +39,7 @@ public class SerializersTest {
 
     @BeforeClass
     public static void oneTimeSetup() {
-        int currentId = 0;
+        int currentId = 128;
         BasicSerializerSetup.registerBasicSerializers(currentId);
         currentId = currentId + BasicSerializerSetup.serializerIds;
         

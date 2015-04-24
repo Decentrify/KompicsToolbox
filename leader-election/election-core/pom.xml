@@ -12,6 +12,7 @@
 
     <groupId>se.sics.p2ptoolbox.election</groupId>
     <artifactId>election-core</artifactId>
+    <name>Leader Election Core</name>
 
     <dependencies>
         

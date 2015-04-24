@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
@@ -36,15 +37,24 @@ public class SystemConfig {
 
     private final static Logger log = LoggerFactory.getLogger(SystemConfig.class);
 
-    public DecoratedAddress self = null;
-    public DecoratedAddress aggregator = null;
+    public long seed;
+    public DecoratedAddress self;
+    public DecoratedAddress aggregator;
     public List<DecoratedAddress> bootstrapNodes = new ArrayList<DecoratedAddress>();
+    private Random rand;
 
     public SystemConfig(Config config) {
         try {
+            seed = config.getLong("system.seed");
+            rand = new Random(seed);
             InetAddress selfIp = InetAddress.getByName(config.getString("system.self.ip"));
             int selfPort = config.getInt("system.self.port");
-            int selfId = config.getInt("system.self.id");
+            int selfId;
+            try {
+                selfId = config.getInt("system.self.id");
+            } catch (ConfigException.Missing ex) {
+                selfId = rand.nextInt();
+            }
             this.self = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
             log.info("self address:{}", self);
         } catch (UnknownHostException ex) {
@@ -65,6 +75,7 @@ public class SystemConfig {
             throw new RuntimeException("bad system config - aggregator address", ex);
         } catch (ConfigException.Missing ex) {
             log.info("no aggregator address");
+            this.aggregator = null;
         }
 
         List<String> boostrapNodeNames;
@@ -79,7 +90,7 @@ public class SystemConfig {
             try {
                 InetAddress bootstrapIp = InetAddress.getByName(config.getString("system.bootstrap." + bootstrapNodeName + ".ip"));
                 int bootstrapPort = config.getInt("system.bootstrap." + bootstrapNodeName + ".port");
-                int bootstrapId = config.getInt("system.bootstrap." + bootstrapNodeName +  ".id");
+                int bootstrapId = config.getInt("system.bootstrap." + bootstrapNodeName + ".id");
                 bootstrapNodes.add(new DecoratedAddress(new BasicAddress(bootstrapIp, bootstrapPort, bootstrapId)));
             } catch (UnknownHostException ex) {
                 log.error("bad bootstrap address");
@@ -91,8 +102,9 @@ public class SystemConfig {
             log.info("bootstrap nodes:{}", bootstrapNodes);
         }
     }
-    
-    public SystemConfig(DecoratedAddress self, DecoratedAddress aggregator, List<DecoratedAddress> bootstrapNodes) {
+
+    public SystemConfig(long seed, DecoratedAddress self, DecoratedAddress aggregator, List<DecoratedAddress> bootstrapNodes) {
+        this.seed = seed;
         this.self = self;
         this.aggregator = aggregator;
         this.bootstrapNodes = bootstrapNodes;

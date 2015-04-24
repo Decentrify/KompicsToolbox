@@ -18,8 +18,6 @@
  */
 package se.sics.p2ptoolbox.gradient.idsort;
 
-import com.typesafe.config.ConfigFactory;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -40,11 +38,8 @@ import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.GradientComp;
 import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
-import se.sics.p2ptoolbox.gradient.idsort.IdSortComp;
-import se.sics.p2ptoolbox.gradient.idsort.IdViewComparator;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -71,10 +66,10 @@ public class IdSortHostComp extends ComponentDefinition {
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
-        CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(croupierConfig, 10, systemConfig.self, systemConfig.bootstrapNodes, init.seed);
+        CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(systemConfig, croupierConfig, 10);
         Component croupier = createNConnectCroupier(croupierInit);
 
-        GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig.self, gradientConfig, 11, new IdViewComparator(), new NoFilter(), init.seed);
+        GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig, gradientConfig, 11, new IdViewComparator(), new NoFilter());
         Component gradient = createNConnectGradient(gradientInit, croupier);
 
         IdSortComp.IdSortInit exampleInit = new IdSortComp.IdSortInit(systemConfig.self);
@@ -129,13 +124,11 @@ public class IdSortHostComp extends ComponentDefinition {
 
     public static class HostInit extends Init<IdSortHostComp> {
 
-        public final long seed;
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
         public final GradientConfig gradientConfig;
         
-        public HostInit(long seed, SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig) {
-            this.seed = seed;
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
             this.gradientConfig = gradientConfig;

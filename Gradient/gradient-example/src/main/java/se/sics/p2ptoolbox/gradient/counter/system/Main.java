@@ -28,16 +28,14 @@ import se.sics.kompics.Kompics;
 public class Main {
     
     public static void main(String[] args) {
-        Long seed = null;
         String nodeType;
         
-        if(args.length >= 2) {
-            seed = Long.valueOf(args[0]);
-            nodeType = args[1];
+        if(args.length >= 1) {
+            nodeType = args[0];
         } else {
-            throw new RuntimeException("incomplete arguments - expected: seed nodeType(medium/fast/slow)");
+            throw new RuntimeException("incomplete arguments - expected: nodeType(medium/fast/slow)");
         }
-        Launcher.setArgs(seed, nodeType);
+        Launcher.setArgs(nodeType);
         start();
         try {
             Kompics.waitForTermination();

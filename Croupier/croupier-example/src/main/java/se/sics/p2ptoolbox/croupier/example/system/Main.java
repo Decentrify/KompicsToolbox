@@ -19,7 +19,6 @@
 
 package se.sics.p2ptoolbox.croupier.example.system;
 
-import org.javatuples.Triplet;
 import se.sics.kompics.Kompics;
 
 /**
@@ -29,14 +28,6 @@ import se.sics.kompics.Kompics;
 public class Main {
     
     public static void main(String[] args) {
-        Long seed = null;
-        
-        if(args.length >= 1) {
-            seed = Long.valueOf(args[0]);
-        } else {
-            throw new RuntimeException("no seed argument");
-        }
-        Launcher.setArgs(seed);
         start();
         try {
             Kompics.waitForTermination();

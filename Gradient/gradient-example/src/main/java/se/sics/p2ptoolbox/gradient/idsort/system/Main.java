@@ -28,14 +28,6 @@ import se.sics.kompics.Kompics;
 public class Main {
     
     public static void main(String[] args) {
-        Long seed = null;
-        
-        if(args.length >= 1) {
-            seed = Long.valueOf(args[0]);
-        } else {
-            throw new RuntimeException("incomplete arguments - expected: seed");
-        }
-        Launcher.setArgs(seed);
         start();
         try {
             Kompics.waitForTermination();

@@ -12,7 +12,7 @@
 
     <groupId>se.sics.p2ptoolbox.election</groupId>
     <artifactId>election-example</artifactId>
-
+    <name>Leader Election Example</name>
 
     <properties>
         <simulator.version>1.3-SNAPSHOT</simulator.version>

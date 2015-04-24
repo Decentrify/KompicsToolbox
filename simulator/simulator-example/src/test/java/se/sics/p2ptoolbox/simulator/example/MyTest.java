@@ -26,15 +26,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import se.sics.kompics.Kompics;
-import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.simulation.SimulatorScheduler;
-import se.sics.p2ptoolbox.simulator.SimulationContext;
-import se.sics.p2ptoolbox.simulator.SystemStatusHandler;
-import se.sics.p2ptoolbox.simulator.example.core.MyNetMsg;
 import se.sics.p2ptoolbox.simulator.example.simulator.MyExperimentResult;
 import se.sics.p2ptoolbox.simulator.example.simulator.ScenarioGen;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  *
@@ -49,30 +46,10 @@ public class MyTest {
         LauncherComp.scheduler = new SimulatorScheduler();
         LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
         try {
-            LauncherComp.simulatorClientAddress = new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1);
+            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
         } catch (UnknownHostException ex) {
             throw new RuntimeException("cannot create address for localhost");
         }
-//        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
-//
-//            public Class getStatusMsgType() {
-//                return MyNetMsg.NetStatus1.class;
-//            }
-//
-//            public void handle(KompicsEvent msg, SimulationContext context) {
-//                System.out.println("handling status1");
-//            }
-//        });
-//        LauncherComp.systemStatusHandlers.add(new SystemStatusHandler() {
-//
-//            public Class getStatusMsgType() {
-//                return MyNetMsg.NetStatus2.class;
-//            }
-//
-//            public void handle(KompicsEvent msg, SimulationContext context) {
-//                System.out.println("handling status2");
-//            }
-//        });
         
         Kompics.setScheduler(LauncherComp.scheduler);
         Kompics.createAndStart(LauncherComp.class, 1);
