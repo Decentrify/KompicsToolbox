@@ -18,12 +18,8 @@
  */
 package se.sics.p2ptoolbox.croupier.example.system;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Set;
-import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -37,11 +33,10 @@ import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
+import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.croupier.example.network.ExampleSerializerSetup;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -49,12 +44,6 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class Launcher extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
-
-    private static long seed;
-
-    public static void setArgs(long setSeed) {
-        seed = setSeed;
-    }
 
     private Component timer;
     private Component network;
@@ -69,10 +58,12 @@ public class Launcher extends ComponentDefinition {
         ExampleSerializerSetup.oneTimeSetup();
 
         timer = create(JavaTimer.class, Init.NONE);
-        SystemConfig systemConfig = new SystemConfig(ConfigFactory.load("application.conf"));
+        Config config = ConfigFactory.load("application.conf");
+        SystemConfig systemConfig = new SystemConfig(config);
         network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
 
-        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(seed, "application.conf"));
+        CroupierConfig croupierConfig = new CroupierConfig(config);
+        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(systemConfig, croupierConfig));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 

@@ -60,7 +60,7 @@ public class SerializersTest {
 
     @BeforeClass
     public static void oneTimeSetup() {
-        int currentId = 0;
+        int currentId = 128;
         BasicSerializerSetup.registerBasicSerializers(currentId);
         currentId = currentId + BasicSerializerSetup.serializerIds;
         currentId = CroupierSerializerSetup.registerSerializers(currentId);

@@ -46,7 +46,6 @@ public class ExampleHostComp extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private final long seed;
     private final SystemConfig systemConfig;
     private final ChunkManagerConfig cmConfig;
     private final Address partner;
@@ -54,7 +53,6 @@ public class ExampleHostComp extends ComponentDefinition {
     private final String logPrefix;
 
     public ExampleHostComp(HostInit init) {
-        this.seed = init.seed;
         this.systemConfig = init.systemConfig;
         this.cmConfig = init.cmConfig;
         this.partner = init.partner;
@@ -77,7 +75,7 @@ public class ExampleHostComp extends ComponentDefinition {
     }
 
     private Component createNConnectExampleComp(Component chunkManager) {
-        Component example = create(ExampleComp.class, new ExampleComp.ExampleInit(systemConfig.self, partner, seed));
+        Component example = create(ExampleComp.class, new ExampleComp.ExampleInit(systemConfig.self, partner, systemConfig.seed));
         connect(example.getNegative(Network.class), chunkManager.getPositive(Network.class));
         return example;
     }
@@ -98,21 +96,18 @@ public class ExampleHostComp extends ComponentDefinition {
 
     public static class HostInit extends Init<ExampleHostComp> {
 
-        public final long seed;
         public final SystemConfig systemConfig;
         public final ChunkManagerConfig cmConfig;
         public final Address partner;
 
-        public HostInit(long seed, String configFile, Address partner) {
-            this.seed = seed;
+        public HostInit(String configFile, Address partner) {
             Config config = ConfigFactory.load(configFile);
             this.systemConfig = new SystemConfig(config);
             this.cmConfig = new ChunkManagerConfig(config);
             this.partner = partner;
         }
 
-        public HostInit(long seed, SystemConfig systemConfig, ChunkManagerConfig cmConfig, Address partner) {
-            this.seed = seed;
+        public HostInit(SystemConfig systemConfig, ChunkManagerConfig cmConfig, Address partner) {
             this.systemConfig = systemConfig;
             this.cmConfig = cmConfig;
             this.partner = partner;

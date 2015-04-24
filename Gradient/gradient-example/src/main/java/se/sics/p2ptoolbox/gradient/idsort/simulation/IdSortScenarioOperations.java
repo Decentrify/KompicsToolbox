@@ -82,10 +82,10 @@ public class IdSortScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    SystemConfig systemConfig = new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
+                    SystemConfig systemConfig = new SystemConfig(nodeSeed, nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
                     CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
                     GradientConfig gradientConfig = new GradientConfig(ConfigFactory.load("application.conf"));
-                    return new IdSortHostComp.HostInit(nodeSeed, systemConfig, croupierConfig, gradientConfig);
+                    return new IdSortHostComp.HostInit(systemConfig, croupierConfig, gradientConfig);
                 }
 
                 @Override

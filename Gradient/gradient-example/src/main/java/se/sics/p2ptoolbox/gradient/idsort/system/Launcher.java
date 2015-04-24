@@ -20,8 +20,6 @@ package se.sics.p2ptoolbox.gradient.idsort.system;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import java.util.HashMap;
-import java.util.Map;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +47,6 @@ public class Launcher extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
 
-    private static long seed;
-
-    public static void setArgs(long setSeed) {
-        seed = setSeed;
-    }
-    
     private Component timer;
     private Component network;
     private Component host;
@@ -77,7 +69,7 @@ public class Launcher extends ComponentDefinition {
         GradientConfig gradientConfig = new GradientConfig(config);
         Pair<Integer, Integer> counterAction = Pair.with(1000, 30);
         
-        host = create(IdSortHostComp.class, new IdSortHostComp.HostInit(seed, systemConfig, croupierConfig, gradientConfig));
+        host = create(IdSortHostComp.class, new IdSortHostComp.HostInit(systemConfig, croupierConfig, gradientConfig));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 

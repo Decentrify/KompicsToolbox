@@ -12,6 +12,7 @@
 
     <groupId>se.sics.p2ptoolbox.aggregator</groupId>
     <artifactId>aggregator-api</artifactId>
+    <name>Aggregator API</name>
 
     <dependencies>
         <!--<dependency>-->

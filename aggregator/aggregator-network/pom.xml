@@ -12,6 +12,7 @@
 
     <groupId>se.sics.p2ptoolbox.aggregator</groupId>
     <artifactId>aggregator-network</artifactId>
+    <name>Aggregator Network</name>
     <packaging>jar</packaging>
 
     <dependencies>

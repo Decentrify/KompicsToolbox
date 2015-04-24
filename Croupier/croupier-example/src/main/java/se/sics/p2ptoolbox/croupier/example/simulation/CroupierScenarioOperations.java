@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.croupier.example.simulation;
 
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -80,8 +81,10 @@ public class CroupierScenarioOperations {
                      * generators with same seed else they might behave the same
                      */
                     long nodeSeed = seed + nodeId;
-                    CroupierConfig croupierConfig = new CroupierConfig(ConfigFactory.load("application.conf"));
-                    return new ExampleHostComp.HostInit(nodeSeed, new SystemConfig(nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes)), croupierConfig);
+                    Config config = ConfigFactory.load("application.conf");
+                    SystemConfig systemConfig = new SystemConfig(nodeSeed, nodeAddress, aggregatorServer, new ArrayList<DecoratedAddress>(bootstrapNodes));
+                    CroupierConfig croupierConfig = new CroupierConfig(config);
+                    return new ExampleHostComp.HostInit(systemConfig, croupierConfig);
                 }
 
                 @Override

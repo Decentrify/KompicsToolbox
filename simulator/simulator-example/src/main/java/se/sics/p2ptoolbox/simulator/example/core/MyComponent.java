@@ -29,7 +29,7 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -41,8 +41,8 @@ public class MyComponent extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private BasicAddress self;
-    private BasicAddress statusServer;
+    private DecoratedAddress self;
+    private DecoratedAddress statusServer;
 
     public MyComponent(MyInit init) {
         log.debug("initiating test node:{}", init.self);
@@ -72,8 +72,6 @@ public class MyComponent extends ComponentDefinition {
             trigger(new MyNetMsg.NetPong(self, ping.getHeader().getSource(), ping.getContent().id), network);
             
             log.info("sending status msgs");
-//            trigger(new MyNetMsg.NetStatus1(self, statusServer), network);
-//            trigger(new MyNetMsg.NetStatus2(self, statusServer), network);
         }
     };
 
@@ -85,21 +83,13 @@ public class MyComponent extends ComponentDefinition {
         }
     };
 
-//    private void scheduleStatusTimeout() {
-//        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
-//        StatusTimeout timeout = new StatusTimeout(spt);
-//        spt.setTimeoutEvent(timeout);
-//
-//        log.debug("scheduling timeout {}", timeout);
-//        trigger(spt, timer);
-//    }
 
     public static class MyInit extends Init<MyComponent> {
 
-        public final BasicAddress self;
-        public final BasicAddress statusServer;
+        public final DecoratedAddress self;
+        public final DecoratedAddress statusServer;
 
-        public MyInit(BasicAddress self, BasicAddress statusServer) {
+        public MyInit(DecoratedAddress self, DecoratedAddress statusServer) {
             this.self = self;
             this.statusServer = statusServer;
         }

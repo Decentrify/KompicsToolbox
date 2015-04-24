@@ -18,8 +18,6 @@
  */
 package se.sics.p2ptoolbox.croupier.example.core;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -49,14 +47,12 @@ public class ExampleHostComp extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private final long seed;
     private final SystemConfig systemConfig;
     private final CroupierConfig croupierConfig;
 
     private final String logPrefix;
 
     public ExampleHostComp(HostInit init) {
-        this.seed = init.seed;
         this.systemConfig = init.systemConfig;
         this.croupierConfig = init.croupierConfig;
         this.logPrefix = systemConfig.self.toString();
@@ -72,14 +68,14 @@ public class ExampleHostComp extends ComponentDefinition {
     }
 
     private Component createNConnectCroupier(int overlayId) {
-        Component croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(croupierConfig, overlayId, systemConfig.self, systemConfig.bootstrapNodes, seed));
+        Component croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(systemConfig, croupierConfig, overlayId));
         connect(croupier.getNegative(Network.class), network, new IntegerOverlayFilter(overlayId));
         connect(croupier.getNegative(Timer.class), timer);
         return croupier;
     }
 
     private Component createNConnectCompA(Component croupier) {
-        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(systemConfig.self, seed));
+        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(systemConfig.self, systemConfig.seed));
         connect(croupier.getPositive(CroupierPort.class), compA.getNegative(CroupierPort.class));
         return compA;
     }
@@ -107,19 +103,10 @@ public class ExampleHostComp extends ComponentDefinition {
 
     public static class HostInit extends Init<ExampleHostComp> {
 
-        public final long seed;
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
 
-        public HostInit(long seed, String configFile) {
-            this.seed = seed;
-            Config config = ConfigFactory.load(configFile);
-            this.systemConfig = new SystemConfig(config);
-            this.croupierConfig = new CroupierConfig(config);
-        }
-
-        public HostInit(long seed, SystemConfig systemConfig, CroupierConfig croupierConfig) {
-            this.seed = seed;
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
         }

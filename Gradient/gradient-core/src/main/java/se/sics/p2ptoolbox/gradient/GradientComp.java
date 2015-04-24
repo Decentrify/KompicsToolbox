@@ -49,6 +49,7 @@ import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
 import se.sics.p2ptoolbox.gradient.msg.GradientShuffle;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.util.Container;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -67,9 +68,8 @@ public class GradientComp extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
 
-    // == Declare variables.
-    private final DecoratedAddress selfAddress;
-    private final GradientConfig config;
+    private final SystemConfig systemConfig;
+    private final GradientConfig gradientConfig;
     private final int overlayId;
     private final String logPrefix;
 
@@ -87,12 +87,12 @@ public class GradientComp extends ComponentDefinition {
     Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
 
     public GradientComp(GradientInit init) {
-        this.selfAddress = init.selfAddress;
-        this.config = init.gradientConfig;
+        this.systemConfig = init.systemConfig;
+        this.gradientConfig = init.gradientConfig;
         this.overlayId = init.overlayId;
-        this.logPrefix = "id:" + selfAddress + ":" + overlayId;
+        this.logPrefix = "id:" + systemConfig.self.getBase().toString() + ":" + overlayId;
         log.info("{} initializing...", logPrefix);
-        this.view = new GradientView(logPrefix, init.utilityComparator, init.gradientFilter, config.viewSize, new Random(init.seed), config.exchangeSMTemp);
+        this.view = new GradientView(logPrefix, init.utilityComparator, init.gradientFilter, gradientConfig.viewSize, new Random(systemConfig.seed), gradientConfig.exchangeSMTemp);
         this.filter = init.gradientFilter;
 
         subscribe(handleStart, control);
@@ -140,7 +140,7 @@ public class GradientComp extends ComponentDefinition {
             if (selfView != null && filter.cleanOldView(selfView.getContent(), update.view)) {
                 view.clean(update.view);
             }
-            selfView = new GradientContainer(selfAddress, update.view);
+            selfView = new GradientContainer(systemConfig.self, update.view);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
@@ -203,8 +203,8 @@ public class GradientComp extends ComponentDefinition {
             GradientContainer partner = view.getShuffleNode(selfView);
             view.incrementAges();
 
-            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, config.shuffleSize);
-            DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(selfAddress, partner.getSource(), Transport.UDP), null, overlayId);
+            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, gradientConfig.shuffleSize);
+            DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(systemConfig.self, partner.getSource(), Transport.UDP), null, overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUID.randomUUID(), selfView, exchangeGC);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
             log.debug("{} sending:{} to:{}", new Object[]{logPrefix, requestContent.exchangeNodes, partner.getSource()});
@@ -240,7 +240,7 @@ public class GradientComp extends ComponentDefinition {
                         throw new RuntimeException("message not belonging to gradient overlay");
                     }
                     DecoratedAddress reqSrc = container.getHeader().getSource();
-                    if (selfAddress.getBase().equals(reqSrc.getBase())) {
+                    if (systemConfig.self.getBase().equals(reqSrc.getBase())) {
                         log.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
@@ -253,8 +253,8 @@ public class GradientComp extends ComponentDefinition {
 
                     view.incrementAges();
 
-                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, config.shuffleSize);
-                    DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(selfAddress, container.getHeader().getSource(), Transport.UDP), null, overlayId);
+                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, gradientConfig.shuffleSize);
+                    DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(systemConfig.self, container.getHeader().getSource(), Transport.UDP), null, overlayId);
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.getId(), selfView, exchangeGC);
                     BasicContentMsg request = new BasicContentMsg(responseHeader, responseContent);
                     log.debug("{} sending:{} to:{}", new Object[]{logPrefix, responseContent.exchangeNodes, container.getHeader().getSource()});
@@ -276,7 +276,7 @@ public class GradientComp extends ComponentDefinition {
                         throw new RuntimeException("message not belonging to gradient overlay");
                     }
                     DecoratedAddress respSrc = container.getHeader().getSource();
-                    if (selfAddress.getBase().equals(respSrc.getBase())) {
+                    if (systemConfig.self.getBase().equals(respSrc.getBase())) {
                         log.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
@@ -298,7 +298,7 @@ public class GradientComp extends ComponentDefinition {
             log.warn("{} double starting periodic shuffle", logPrefix);
             return;
         }
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(gradientConfig.shufflePeriod, gradientConfig.shufflePeriod);
         ShuffleCycle sc = new ShuffleCycle(spt);
         spt.setTimeoutEvent(sc);
         shuffleCycleId = sc.getTimeoutId();
@@ -320,7 +320,7 @@ public class GradientComp extends ComponentDefinition {
             log.warn("{} double starting shuffle timeout", logPrefix);
             return;
         }
-        ScheduleTimeout spt = new ScheduleTimeout(config.shufflePeriod / 2);
+        ScheduleTimeout spt = new ScheduleTimeout(gradientConfig.shufflePeriod / 2);
         ShuffleTimeout sc = new ShuffleTimeout(spt, dest);
         spt.setTimeoutEvent(sc);
         shuffleTimeoutId = sc.getTimeoutId();
@@ -365,21 +365,19 @@ public class GradientComp extends ComponentDefinition {
 
     public static class GradientInit extends Init<GradientComp> {
 
-        public final DecoratedAddress selfAddress;
+        public final SystemConfig systemConfig;
         public final GradientConfig gradientConfig;
         public final int overlayId;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
-        public final long seed;
 
-        public GradientInit(DecoratedAddress selfAddress, GradientConfig config, int overlayId,
-                Comparator utilityComparator, GradientFilter gradientFilter, long seed) {
-            this.selfAddress = selfAddress;
+        public GradientInit(SystemConfig systemConfig, GradientConfig config, int overlayId,
+                Comparator utilityComparator, GradientFilter gradientFilter) {
+            this.systemConfig = systemConfig;
             this.gradientConfig = config;
             this.overlayId = overlayId;
             this.utilityComparator = utilityComparator;
             this.gradientFilter = gradientFilter;
-            this.seed = seed;
         }
     }
 }
