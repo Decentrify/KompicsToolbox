@@ -1,21 +1,22 @@
 package se.sics.p2ptoolbox.election.example.simulator;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.gvod.address.Address;
 import se.sics.gvod.net.VodAddress;
+import se.sics.p2ptoolbox.election.core.ElectionConfig;
 import se.sics.p2ptoolbox.election.example.main.LCPComparator;
 import se.sics.p2ptoolbox.election.example.main.HostManagerComp;
 import se.sics.p2ptoolbox.election.example.main.TestFilter;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Helper Class for the Leader Election Protocol Operations Simulation.
@@ -27,15 +28,21 @@ public class LeaderOperationsHelper {
     private static Logger logger = LoggerFactory.getLogger(LeaderOperationsHelper.class);
     private static ConsistentHashtable<Long> ringNodes = new ConsistentHashtable<Long>();
     private static Long identifierSpaceSize = (long) 3000;
-
-    private static Collection<DecoratedAddress> addressCollection = new ArrayList<DecoratedAddress>();
+    private static long seed = 54321;
+    private static Map<Long, DecoratedAddress> addressCollection = new HashMap<Long, DecoratedAddress>();
     private static LinkedList<DecoratedAddress> copy = new LinkedList<DecoratedAddress>();
 
     private static InetAddress ip = null;
-
+    private static SystemConfig systemConfig;
+    private static ElectionConfig electionConfig;
+    
     static {
         try {
+            
             ip = InetAddress.getLocalHost();
+            Config config = ConfigFactory.load("application.conf");
+            electionConfig = new ElectionConfig(config);
+            
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -44,20 +51,21 @@ public class LeaderOperationsHelper {
 
 
 
-    public static HostManagerComp.HostManagerCompInit generateComponentInit (long id){
+    public static HostManagerComp.HostManagerCompInit generateComponentInit (long id, DecoratedAddress aggregatorAddress, Set<DecoratedAddress> bootstrapNodes){
 
         logger.info(" Generating address for peer with id: {} ", id);
-
-
         Address address = new Address(ip, 9999, (int) id);
 
         BasicAddress basic = new BasicAddress(ip, 9999, (int)id);
         DecoratedAddress selfAddress = new DecoratedAddress(basic);
-
-        addressCollection.add(selfAddress);
+        
+        addressCollection.put(id, selfAddress);
         copy.add(selfAddress);
-
-        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(selfAddress, 30000,  new LCPComparator(), 2, new TestFilter());
+        systemConfig = new SystemConfig(seed, selfAddress, aggregatorAddress, new ArrayList<DecoratedAddress>(bootstrapNodes));
+        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator(), new TestFilter());
+        
+        System.exit(-1);
+        
         return init;
     }
 
@@ -75,7 +83,7 @@ public class LeaderOperationsHelper {
 
 
     public static Collection<DecoratedAddress> getPeersAddressCollection(){
-        return addressCollection;
+        return addressCollection.values();
     }
 
 
@@ -100,9 +108,8 @@ public class LeaderOperationsHelper {
 
 
 
-    public static BasicAddress getBasicAddress(long id){
-        BasicAddress basic = new BasicAddress(ip, 9999, (int)id);
-        return basic;
+    public static DecoratedAddress getBasicAddress(long id){
+        return addressCollection.get(id);
     }
 
 
