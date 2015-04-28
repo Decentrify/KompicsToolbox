@@ -19,25 +19,25 @@
 
 package se.sics.p2ptoolbox.caracalclient.heartbeat.msg;
 
+import se.sics.kompics.KompicsEvent;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CCHeartbeat {
-    public static class Update implements CCHMsg.OneWay {
-        public final byte[] heartbeatId;
-        public final Object heartbeatPiggyBack;
+    public static class Start implements KompicsEvent {
+        public final byte[] overlay;
         
-        public Update(byte[] heartbeatId, Object heartbeatPiggyBack) {
-            this.heartbeatId = heartbeatId;
-            this.heartbeatPiggyBack = heartbeatPiggyBack;
+        public Start(byte[] overlay) {
+            this.overlay = overlay;
         }
     }
     
-    public static class Stop implements CCHMsg.OneWay {
-        public final byte[] heartbeatId;
+    public static class Stop implements KompicsEvent {
+        public final byte[] overlay;
         
-        public Stop(byte[] heartbeatId) {
-            this.heartbeatId = heartbeatId;
+        public Stop(byte[] overlay) {
+            this.overlay = overlay;
         }
     }
 }

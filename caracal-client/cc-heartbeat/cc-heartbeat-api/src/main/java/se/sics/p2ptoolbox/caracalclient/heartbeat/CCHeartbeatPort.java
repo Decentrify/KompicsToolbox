@@ -20,14 +20,19 @@
 package se.sics.p2ptoolbox.caracalclient.heartbeat;
 
 import se.sics.kompics.PortType;
+import se.sics.p2ptoolbox.caracalclient.common.op.CCSimpleReady;
 import se.sics.p2ptoolbox.caracalclient.heartbeat.msg.CCHeartbeat;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.msg.CCOverlaySample;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CCHeartbeatPort extends PortType {
     {
-        request(CCHeartbeat.Update.class);
+        request(CCHeartbeat.Start.class);
         request(CCHeartbeat.Stop.class);
+        request(CCOverlaySample.Request.class);
+        indication(CCOverlaySample.Response.class);
+        indication(CCSimpleReady.class);
     }    
 }

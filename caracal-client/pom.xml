@@ -15,6 +15,7 @@
         <module>cc-bootstrap</module>
     <module>cc-schemasetup</module>
     <module>cc-heartbeat</module>
+    <module>cc-common</module>
   </modules>
   
     <properties>

@@ -19,10 +19,16 @@
 
 package se.sics.p2ptoolbox.caracalclient.bootstrap.msg;
 
+import se.sics.caracaldb.global.SchemaData;
 import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CCReady implements KompicsEvent {
+    public SchemaData caracalSchemaData;
+    
+    public CCReady(SchemaData caracalSchemaData) {
+        this.caracalSchemaData = caracalSchemaData;
+    }
 }

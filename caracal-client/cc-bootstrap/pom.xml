@@ -14,5 +14,12 @@
     <modules>
         <module>cc-bootstrap-api</module>
         <module>cc-bootstrap-core</module>
-  </modules>
+    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>se.sics.p2ptoolbox.caracal-client</groupId>
+            <artifactId>cc-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

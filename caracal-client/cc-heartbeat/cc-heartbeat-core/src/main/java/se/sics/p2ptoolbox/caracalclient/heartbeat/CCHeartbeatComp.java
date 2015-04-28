@@ -19,39 +19,54 @@
 package se.sics.p2ptoolbox.caracalclient.heartbeat;
 
 import com.google.common.io.BaseEncoding;
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Ints;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.caracaldb.Key.KeyBuilder;
+import se.sics.caracaldb.Key;
+import se.sics.caracaldb.KeyRange;
 import se.sics.caracaldb.operations.PutRequest;
+import se.sics.caracaldb.operations.RangeQuery;
+import se.sics.caracaldb.store.ActionFactory;
+import se.sics.caracaldb.store.Limit;
+import se.sics.caracaldb.store.RangeReq;
+import se.sics.caracaldb.store.TFFactory;
 import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Direct;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.caracalclient.bootstrap.CCBootstrapPort;
+import se.sics.p2ptoolbox.caracalclient.common.op.CCOpEvent;
 import se.sics.p2ptoolbox.caracalclient.bootstrap.msg.CCReady;
-import se.sics.p2ptoolbox.caracalclient.bootstrap.msg.CCSchema;
+import se.sics.p2ptoolbox.caracalclient.common.op.CCOpManager;
+import se.sics.p2ptoolbox.caracalclient.common.op.CCOperation;
+import se.sics.p2ptoolbox.caracalclient.common.op.CCSimpleReady;
 import se.sics.p2ptoolbox.caracalclient.heartbeat.msg.CCHeartbeat;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.msg.CCOverlaySample;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.op.CCHeartbeatOp;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.op.CCOverlaySampleOp;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.util.CCKeyFactory;
+import se.sics.p2ptoolbox.caracalclient.heartbeat.util.CCValueFactory;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CCHeartbeatComp extends ComponentDefinition {
+public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(CCHeartbeatComp.class);
 
@@ -59,38 +74,42 @@ public class CCHeartbeatComp extends ComponentDefinition {
     Positive<CCBootstrapPort> caracal = requires(CCBootstrapPort.class);
     Positive<Timer> timer = requires(Timer.class);
     Negative<CCHeartbeatPort> provided = provides(CCHeartbeatPort.class);
-    
-    private final DecoratedAddress self;
-    private final CCHeartbeatConfig ccHeartbeatConfig;
+
+    private final SystemConfig systemConfig;
+    private final CCHeartbeatConfig heartbeatConfig;
     private final String logPrefix;
     private final Random rand;
-    
+
     private UUID heartbeatTId;
     private byte[] schemaPrefix;
-    private Map<ByteBuffer, byte[]> heartbeatPiggyBack;
-    
+    private Set<ByteBuffer> heartbeats;
+    private final Map<UUID, CCOperation> activeOps;
+
     public CCHeartbeatComp(CCHeartbeatInit init) {
-        this.self = init.self;
-        this.ccHeartbeatConfig = init.hConfig;
-        this.logPrefix = self.toString();
-        this.rand = new Random(init.seed);
-        this.heartbeatPiggyBack = new HashMap<ByteBuffer, byte[]>();
-        
+        this.systemConfig = init.systemConfig;
+        this.heartbeatConfig = init.heartbeatConfig;
+        this.logPrefix = systemConfig.self.toString();
+        this.rand = new Random(systemConfig.seed);
+        this.heartbeats = new HashSet<ByteBuffer>();
+        this.activeOps = new HashMap<UUID, CCOperation>();
+
         LOG.info("{} initiating...", logPrefix);
-        
+
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleReady, caracal);
-        subscribe(handleSchemaResponse, caracal);
         subscribe(handleHeartbeatUpdate, provided);
         subscribe(handleHeartbeatStop, provided);
         subscribe(handleHeartbeat, timer);
+        subscribe(handleOverlaySampleRequest, provided);
+        subscribe(handleCCOpResponse, caracal);
+        subscribe(handleCCOpTimeout, caracal);
     }
     //**************************************************************************
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            LOG.info("{} received start - waiting for ready", logPrefix);
+            LOG.info("{} waiting for ready", logPrefix);
         }
     };
     Handler handleStop = new Handler<Stop>() {
@@ -102,61 +121,98 @@ public class CCHeartbeatComp extends ComponentDefinition {
     Handler handleReady = new Handler<CCReady>() {
         @Override
         public void handle(CCReady event) {
-            LOG.info("{} received ready - getting caracal schema prefix", logPrefix);
-            CCSchema.Request schemaRequest = new CCSchema.Request(ccHeartbeatConfig.schemaName);
-            trigger(schemaRequest, caracal);
-        }
-    };
-    Handler handleSchemaResponse = new Handler<CCSchema.Response>() {
-        @Override
-        public void handle(CCSchema.Response resp) {
-            LOG.info("{} received caracal schema prefix - starting...");
-            if(resp.name.equals(ccHeartbeatConfig.schemaName)) {
-                throw new RuntimeException("unexpected schema response");
+            LOG.info("{} received ready and schema prefix - starting...", logPrefix);
+            schemaPrefix = event.caracalSchemaData.getId(heartbeatConfig.schemaName);
+            if (schemaPrefix == null) {
+                throw new RuntimeException("schema undefined - make sure you ran the SchemaSetup");
             }
-            schemaPrefix = resp.id;
-            scheduleHeartbeatCheck();
+            scheduleSanityCheck();
+            trigger(new CCSimpleReady(), provided);
         }
     };
     //**************************************************************************
-    Handler handleHeartbeatUpdate = new Handler<CCHeartbeat.Update>() {
+    Handler handleHeartbeatUpdate = new Handler<CCHeartbeat.Start>() {
         @Override
-        public void handle(CCHeartbeat.Update update) {
-            LOG.info("{} updating piggyback information for:{}", logPrefix, BaseEncoding.base16().encode(update.heartbeatId));
-            ByteBuffer bb = ByteBuffer.wrap(update.heartbeatId);
-            heartbeatPiggyBack.put(bb, update.heartbeatPiggyBack);
+        public void handle(CCHeartbeat.Start update) {
+            LOG.info("{} updating piggyback information for heartbeat:{}", logPrefix, BaseEncoding.base16().encode(update.overlay));
+            if (update.overlay.length > 127) {
+                throw new RuntimeException("overlay identifier is too long - try to stick to 127 bytes");
+            }
+            ByteBuffer bKey = ByteBuffer.wrap(update.overlay);
+            heartbeats.add(bKey);
         }
     };
-    
+
     Handler handleHeartbeatStop = new Handler<CCHeartbeat.Stop>() {
         @Override
         public void handle(CCHeartbeat.Stop update) {
-            LOG.info("{} stopping heartbeat:{}", logPrefix,  BaseEncoding.base16().encode(update.heartbeatId));
-            ByteBuffer bb = ByteBuffer.wrap(update.heartbeatId);
-            heartbeatPiggyBack.remove(bb);
+            LOG.info("{} stopping heartbeat:{}", logPrefix, BaseEncoding.base16().encode(update.overlay));
+            ByteBuffer bb = ByteBuffer.wrap(update.overlay);
+            heartbeats.remove(bb);
         }
     };
-    
-    Handler handleHeartbeat = new Handler<HeartbeatTimeout>() {
 
+    Handler handleHeartbeat = new Handler<HeartbeatTimeout>() {
         @Override
         public void handle(HeartbeatTimeout event) {
             LOG.info("{} heartbeat", logPrefix);
-            for(Map.Entry<ByteBuffer, byte[]> e: heartbeatPiggyBack.entrySet()) {
-                KeyBuilder kb = new KeyBuilder(schemaPrefix);
-                kb.append(e.getKey().array());
-                kb.append(Ints.toByteArray(rand.nextInt(ccHeartbeatConfig.heartbeatSize)));
+            byte[] value = CCValueFactory.getHeartbeatValue(systemConfig.self);
+            for (ByteBuffer overlay : heartbeats) {
+                Key heartbeatKey = CCKeyFactory.getHeartbeatKey(schemaPrefix, overlay.array(), rand.nextInt(heartbeatConfig.heartbeatSize));
+                PutRequest put = new PutRequest(UUID.randomUUID(), heartbeatKey, value);
+                LOG.debug("{} sending heartbeat for:{}", logPrefix, BaseEncoding.base16().encode(overlay.array()));
+                CCOperation op = new CCHeartbeatOp(UUID.randomUUID(), CCHeartbeatComp.this, put);
+                activeOps.put(op.getId(), op);
+                op.start();
             }
         }
-        
     };
-    
-    private void scheduleHeartbeatCheck() {
+    //**************************************************************************
+    Handler handleOverlaySampleRequest = new Handler<CCOverlaySample.Request>() {
+        @Override
+        public void handle(CCOverlaySample.Request event) {
+            LOG.debug("{} received sample request for:{}", logPrefix, BaseEncoding.base16().encode(event.overlay));
+            KeyRange overlaySampleRange = CCKeyFactory.getHeartbeatRange(schemaPrefix, event.overlay);
+            RangeQuery.Request range = new RangeQuery.Request(UUID.randomUUID(), overlaySampleRange, Limit.toItems(heartbeatConfig.heartbeatSize), TFFactory.noTF(), ActionFactory.noop(), RangeQuery.Type.SEQUENTIAL);
+            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), CCHeartbeatComp.this, event, range);
+            activeOps.put(op.getId(), op);
+            op.start();
+        }
+    };
+
+    Handler handleCCOpResponse = new Handler<CCOpEvent.Response>() {
+        @Override
+        public void handle(CCOpEvent.Response event) {
+            LOG.trace("{} received:{}", new Object[]{logPrefix, event.opResp});
+            for (CCOperation op : activeOps.values()) {
+                if (op.ownResp(event.opResp.id)) {
+                    op.handle(event.opResp);
+                    return;
+                }
+            }
+            throw new RuntimeException("unexpected response");
+        }
+    };
+
+    Handler handleCCOpTimeout = new Handler<CCOpEvent.Timeout>() {
+        @Override
+        public void handle(CCOpEvent.Timeout event) {
+            LOG.debug("{} op timed out:{}", logPrefix, event.opReq);
+            for (CCOperation op : activeOps.values()) {
+                if (op.ownResp(event.opReq.id)) {
+                    op.fail();
+                }
+            }
+            throw new RuntimeException("unexpected response");
+        }
+    };
+
+    private void scheduleSanityCheck() {
         if (heartbeatTId != null) {
             LOG.warn("{} double starting heartbeat", logPrefix);
             return;
         }
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(ccHeartbeatConfig.heartbeatPeriod, ccHeartbeatConfig.heartbeatPeriod);
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(heartbeatConfig.heartbeatPeriod, heartbeatConfig.heartbeatPeriod);
         HeartbeatTimeout sc = new HeartbeatTimeout(spt);
         spt.setTimeoutEvent(sc);
         heartbeatTId = sc.getTimeoutId();
@@ -173,18 +229,43 @@ public class CCHeartbeatComp extends ComponentDefinition {
         trigger(cpt, timer);
     }
 
+    //****************CCOpManager***********************************************
+    @Override
+    public void completed(UUID opId, KompicsEvent resp) {
+        CCOperation op = activeOps.remove(opId);
+        LOG.debug("{} completed:{}", logPrefix, op);
+        if (resp == null) {
+            //heartbeat completed; do nothing
+        }
+        LOG.error("{} did not expect this resp - operation:{} logic bug", logPrefix, op);
+        throw new RuntimeException("operation logic");
+    }
+
+    @Override
+    public void completed(UUID opId, Direct.Request req, Direct.Response resp) {
+        CCOperation op = activeOps.remove(opId);
+        LOG.debug("{} completed:{}", logPrefix, op);
+        answer(req, resp);
+    }
+
+    @Override
+    public void send(CCOpEvent.Request req) {
+        LOG.trace("{} send:{}", logPrefix, req);
+        trigger(req, caracal);
+    }
+    //**************************************************************************
+
     public static class CCHeartbeatInit extends Init<CCHeartbeatComp> {
-        public final DecoratedAddress self;
-        public final CCHeartbeatConfig hConfig;
-        public final long seed;
-        
-        public CCHeartbeatInit(DecoratedAddress self, CCHeartbeatConfig hConfig, long seed) {
-            this.self = self;
-            this.hConfig = hConfig;
-            this.seed = seed;
+
+        public final SystemConfig systemConfig;
+        public final CCHeartbeatConfig heartbeatConfig;
+
+        public CCHeartbeatInit(SystemConfig systemConfig, CCHeartbeatConfig hConfig) {
+            this.systemConfig = systemConfig;
+            this.heartbeatConfig = hConfig;
         }
     }
-    
+
     public class HeartbeatTimeout extends Timeout {
 
         public HeartbeatTimeout(SchedulePeriodicTimeout request) {
@@ -196,6 +277,4 @@ public class CCHeartbeatComp extends ComponentDefinition {
             return "HEARTBEAT_TIMEOUT";
         }
     }
-    
-    
 }

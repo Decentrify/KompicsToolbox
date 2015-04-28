@@ -16,23 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.caracalclient.bootstrap;
+package se.sics.p2ptoolbox.caracalclient.common.op;
 
-import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.caracalclient.bootstrap.msg.CCDisconnected;
-import se.sics.p2ptoolbox.caracalclient.bootstrap.msg.CCReady;
-import se.sics.p2ptoolbox.caracalclient.common.op.CCOpEvent;
+import se.sics.kompics.Direct;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CCBootstrapPort extends PortType {
-    {
-        indication(CCReady.class);
-        indication(CCDisconnected.class);
+public class CCOpFailed {
+    public static class DirectResponse implements Direct.Response {
+        public final Direct.Request req;
         
-        request(CCOpEvent.Request.class);
-        indication(CCOpEvent.Response.class);
-        indication(CCOpEvent.Timeout.class);
+        public DirectResponse(Direct.Request req) {
+            this.req = req;
+        }
     }
 }

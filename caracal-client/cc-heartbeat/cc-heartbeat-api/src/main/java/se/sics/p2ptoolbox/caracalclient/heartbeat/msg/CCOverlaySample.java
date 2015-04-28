@@ -18,12 +18,30 @@
  */
 package se.sics.p2ptoolbox.caracalclient.heartbeat.msg;
 
-import se.sics.kompics.KompicsEvent;
+import java.util.Set;
+import se.sics.kompics.Direct;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CCHMsg {
-    public static interface OneWay extends KompicsEvent {
+public class CCOverlaySample {
+
+    public static class Request extends Direct.Request<Response> {
+        public final byte[] overlay;
+        
+        public Request(byte[] overlay) {
+            this.overlay = overlay;
+        }
+    }
+
+    public static class Response implements Direct.Response {
+        public final byte[] overlay;
+        public final Set<DecoratedAddress> overlaySample;
+        
+        public Response(byte[] overlay, Set<DecoratedAddress> overlaySample) {
+            this.overlay = overlay;
+            this.overlaySample = overlaySample;
+        }
     }
 }

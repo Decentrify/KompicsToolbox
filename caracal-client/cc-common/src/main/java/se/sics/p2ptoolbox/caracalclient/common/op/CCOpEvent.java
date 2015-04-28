@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.caracalclient.bootstrap.msg;
+package se.sics.p2ptoolbox.caracalclient.common.op;
 
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.operations.CaracalOp;
@@ -26,7 +26,7 @@ import se.sics.kompics.Direct;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CCOp {
+public class CCOpEvent {
     public static class Request extends Direct.Request {
         public final CaracalOp opReq;
         public final Key forwardTo;
@@ -64,7 +64,7 @@ public class CCOp {
         
         @Override
         public String toString() {
-            return "TIMEOUT<" +  opReq.toString() + ">";
+            return "Client_Timeout:" + opReq.toString();
         }
     }
 }

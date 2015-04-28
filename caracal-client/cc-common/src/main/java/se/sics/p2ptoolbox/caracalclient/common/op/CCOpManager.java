@@ -16,31 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.caracalclient.bootstrap.msg;
 
+package se.sics.p2ptoolbox.caracalclient.common.op;
+
+import java.util.UUID;
 import se.sics.kompics.Direct;
+import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CCSchema {
-
-    public static class Request extends Direct.Request<Response> {
-
-        public final String name;
-
-        public Request(String name) {
-            this.name = name;
-        }
-    }
-
-    public static class Response implements Direct.Response {
-        public final String name;
-        public final byte[] id;
-        
-        public Response(String name, byte[] id) {
-            this.name = name;
-            this.id = id;
-        }
-    }
+public interface CCOpManager {
+    public void completed(UUID opId, KompicsEvent resp);
+    public void completed(UUID opId, Direct.Request req, Direct.Response resp);
+    public void send(CCOpEvent.Request req);
 }
