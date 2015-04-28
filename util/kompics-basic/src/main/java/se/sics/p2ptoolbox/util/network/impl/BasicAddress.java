@@ -61,12 +61,6 @@ public class BasicAddress implements Address, IntegerIdentifiable {
         if(!this.isa.equals(other.asSocket())) {
             return false;
         }
-        if(!(other instanceof IntegerIdentifiable)) {
-            throw new RuntimeException("Mix of indentifiable and non identifiable addresses");
-        }
-        if(id != ((IntegerIdentifiable)other).getId()) {
-            return false;
-        }
         return true;
     }
 
