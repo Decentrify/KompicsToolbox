@@ -21,6 +21,7 @@
 package se.sics.p2ptoolbox.croupier;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -70,7 +71,7 @@ public class CroupierComp extends ComponentDefinition {
     Negative<CroupierPort> croupierPort = negative(CroupierPort.class);
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
-    
+
     private final SystemConfig systemConfig;
     private final CroupierConfig croupierConfig;
     private final String logPrefix;
@@ -90,6 +91,7 @@ public class CroupierComp extends ComponentDefinition {
         this.overlayId = init.overlayId;
         this.logPrefix = "<oid:" + overlayId + ",nid:" + systemConfig.self.getBase().toString() + ">";
         this.bootstrapNodes = new ArrayList<DecoratedAddress>(systemConfig.bootstrapNodes);
+        cleanSelf();
 
         log.info("{} initiating with bootstrap nodes:{} ...", logPrefix, bootstrapNodes);
 
@@ -110,7 +112,7 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
     }
-    
+
     Handler<Start> handleStart = new Handler<Start>() {
 
         @Override
@@ -164,12 +166,23 @@ public class CroupierComp extends ComponentDefinition {
             log.debug("{} joining using nodes:{}", logPrefix, join.peers);
 
             bootstrapNodes.addAll(join.peers);
+            cleanSelf();
             if (!connected()) {
                 startShuffle();
             }
         }
     };
 
+    private void cleanSelf() {
+        Iterator<DecoratedAddress> it = bootstrapNodes.iterator();
+        while (it.hasNext()) {
+            DecoratedAddress node = it.next();
+            if (node.getBase().equals(systemConfig.self.getBase())) {
+                it.remove();
+            }
+        }
+    }
+    
     Handler<CroupierUpdate> handleUpdate = new Handler<CroupierUpdate>() {
         @Override
         public void handle(CroupierUpdate update) {
