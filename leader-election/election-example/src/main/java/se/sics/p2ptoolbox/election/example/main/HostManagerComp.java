@@ -1,5 +1,6 @@
 package se.sics.p2ptoolbox.election.example.main;
 
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
@@ -8,14 +9,12 @@ import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.p2ptoolbox.election.api.ports.TestPort;
-import se.sics.p2ptoolbox.election.core.ElectionInit;
-import se.sics.p2ptoolbox.election.core.ElectionLeader;
-import se.sics.p2ptoolbox.election.core.ElectionConfig;
-import se.sics.p2ptoolbox.election.core.ElectionFollower;
+import se.sics.p2ptoolbox.election.core.*;
 import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
 import se.sics.p2ptoolbox.election.example.data.PeersUpdate;
 import se.sics.p2ptoolbox.election.example.msg.AddPeers;
 import se.sics.p2ptoolbox.election.example.ports.ApplicationPort;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
@@ -36,24 +35,16 @@ public class HostManagerComp extends ComponentDefinition{
     Logger logger = LoggerFactory.getLogger(HostManagerComp.class);
 
     private DecoratedAddress selfAddress;
-    private long leaseTimeout;
     private LeaderDescriptor selfView;
 
     Component electionLeader, electionFollower;
     Component gradientMockUp;
-
+    
 
     public HostManagerComp(HostManagerCompInit init){
 
         doInit(init);
-
-        // Create Configuration for election components.
-        ElectionConfig.ElectionConfigBuilder builder = new ElectionConfig.ElectionConfigBuilder(init.viewSize);
-        builder.setLeaseTime(leaseTimeout)
-                .setConvergenceRounds(4)
-                .setConvergenceTest(0.9d);
-
-        ElectionConfig config = builder.buildElectionConfig();
+        ElectionConfig config = init.electionConfig;
 
         // Create necessary components.
         electionLeader = create(ElectionLeader.class, new ElectionInit<ElectionLeader>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter));
@@ -83,10 +74,8 @@ public class HostManagerComp extends ComponentDefinition{
 
     private void doInit(HostManagerCompInit init) {
 
-        selfAddress = init.selfAddress;
-        leaseTimeout = init.leaseTimeout;
+        selfAddress = init.systemConfig.self;
         selfView = new LeaderDescriptor(selfAddress.getId());
-
     }
 
 
@@ -114,19 +103,16 @@ public class HostManagerComp extends ComponentDefinition{
      */
     public static class HostManagerCompInit extends Init<HostManagerComp>{
 
-        DecoratedAddress selfAddress;
-        long leaseTimeout;
         Comparator<LCPeerView> lcpComparator;
-        private int viewSize;
         private LeaderFilter filter;
+        private SystemConfig systemConfig;
+        private ElectionConfig electionConfig;
 
-
-        public HostManagerCompInit(DecoratedAddress selfAddress, long leaseTimeout, Comparator<LCPeerView> lcpComparator, int viewSize, LeaderFilter filter){
-
-            this.selfAddress = selfAddress;
-            this.leaseTimeout = leaseTimeout;
+        public HostManagerCompInit(SystemConfig systemConfig, ElectionConfig electionConfig, Comparator<LCPeerView> lcpComparator, LeaderFilter filter){
+            
+            this.systemConfig = systemConfig;
+            this.electionConfig = electionConfig;
             this.lcpComparator = lcpComparator;
-            this.viewSize = viewSize;
             this.filter = filter;
 
         }

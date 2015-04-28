@@ -1,20 +1,27 @@
 package se.sics.p2ptoolbox.election.core;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Configuration Class for the Election Module.
- * Created by babbarshaer on 2015-03-27.
+ * Configuration file for the election module.
+ *  
+ * Created by babbarshaer on 2015-04-25.
  */
 public class ElectionConfig {
-    
-    private long leaderLeaseTime;
-    private long followerLeaseTime;
-    private int viewSize;
+
+    private static Logger logger  = LoggerFactory.getLogger(ElectionConfig.class);
+    private final long leaderLeaseTime;
+    private final long followerLeaseTime;
+    private final int viewSize;
     private final int convergenceRounds;
     private final double convergenceTest;
     private final int maxLeaderGroupSize;
 
-    private ElectionConfig(long leaderLeaseTime,long followerLeaseTime, int viewSize, int convergenceRounds, double convergenceTest, int maxLeaderGroupSize) {
-        
+    public ElectionConfig(long leaderLeaseTime, long followerLeaseTime, int viewSize, int convergenceRounds, double convergenceTest, int maxLeaderGroupSize) {
+
         this.leaderLeaseTime = leaderLeaseTime;
         this.followerLeaseTime = followerLeaseTime;
         this.viewSize = viewSize;
@@ -23,74 +30,53 @@ public class ElectionConfig {
         this.maxLeaderGroupSize = maxLeaderGroupSize;
     }
 
+    public ElectionConfig(Config config){
+        
+        try{
+            
+            this.viewSize = config.getInt("election.viewSize");
+            this.maxLeaderGroupSize = config.getInt("election.maxLeaderGroupSize");
+            this.leaderLeaseTime = config.getLong("election.leaderLeaseTime");
+            this.followerLeaseTime = config.getLong("election.followerLeaseTime");
+            this.convergenceRounds = config.getInt("election.convergenceRounds");
+            this.convergenceTest = config.getDouble("election.convergenceTest");
+            
+            if(leaderLeaseTime >= followerLeaseTime){
+                throw new RuntimeException("Leader Lease should always be less than follower lease");
+            }
+            
+            logger.info("Election Config :  viewSize:{}, maxLeaderGroupSize:{}, leaderLeaderTime:{}, followerLeaseTime:{}, convergenceRounds:{}, convergenceTest:{}",
+                    new Object[]{this.viewSize, this.maxLeaderGroupSize, this.leaderLeaseTime, this.followerLeaseTime, this.convergenceRounds, this.convergenceTest});
+        }
+        catch(ConfigException.Missing ex){
+            logger.warn("Configuration Missing ", ex);
+            throw new RuntimeException("Configuration Missing ",ex);
+        }
+        
+        
+    }
 
+    public long getLeaderLeaseTime() {
+        return leaderLeaseTime;
+    }
+
+    public long getFollowerLeaseTime() {
+        return followerLeaseTime;
+    }
 
     public int getViewSize() {
         return viewSize;
     }
 
-    public long getLeaderLeaseTime(){
-        return this.leaderLeaseTime;
-    }
-    
-    public long getFollowerLeaseTime(){
-        return this.followerLeaseTime;
+    public int getConvergenceRounds() {
+        return convergenceRounds;
     }
 
-    public int getConvergenceRounds(){
-        return this.convergenceRounds;
-    }
-    
-    public double getConvergenceTest(){
-        return this.convergenceTest;
+    public double getConvergenceTest() {
+        return convergenceTest;
     }
 
-    public int getMaxLeaderGroupSize(){
-        return this.maxLeaderGroupSize;
+    public int getMaxLeaderGroupSize() {
+        return maxLeaderGroupSize;
     }
-    
-    /**
-     * Builder Class for the Election Configuration.
-     * Created by babbarshaer on 2015-03-27.
-     */
-    public static class ElectionConfigBuilder {
-
-        private int viewSize;
-        private long leaseTime = 60000; // 60 seconds
-        private int convergenceRounds = 6;
-        private double convergenceTest = 0.8d;
-        private int maxLeaderGroupSize = 10;
-        private long extendedLeaseTime;
-
-        public ElectionConfigBuilder(int viewSize){
-            this.viewSize = viewSize;
-            this.extendedLeaseTime = this.leaseTime  + (long)(this.leaseTime * (0.2));
-        }
-
-        public ElectionConfigBuilder setLeaseTime(long leaseTime){
-            this.leaseTime = leaseTime;
-            this.extendedLeaseTime = this.leaseTime  + (long)(this.leaseTime * (0.2));
-            return this;
-        }
-        
-        public ElectionConfigBuilder setConvergenceRounds(int convergenceRounds){
-            this.convergenceRounds = convergenceRounds;
-            return this;
-        }
-        
-        public ElectionConfigBuilder setConvergenceTest(double convergenceTest){
-            this.convergenceTest = convergenceTest;
-            return this;
-        }
-
-        public ElectionConfigBuilder setMaxLeaderGroupSize(int maxLeaderGroupSize){
-            this.maxLeaderGroupSize= maxLeaderGroupSize;
-            return this;
-        }        
-        
-        public ElectionConfig buildElectionConfig(){
-            return new ElectionConfig(this.leaseTime,this.extendedLeaseTime, this.viewSize, convergenceRounds, convergenceTest, this.maxLeaderGroupSize);
-        }
-    }
-    
 }

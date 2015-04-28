@@ -35,7 +35,7 @@ public class LeaderElectionOperations{
 
         public StartNodeCmd generate(final Long id){
 
-            return new StartNodeCmd<HostManagerComp, BasicAddress>() {
+            return new StartNodeCmd<HostManagerComp, DecoratedAddress>() {
 
                 long nodeId = LeaderOperationsHelper.getNodeId(id);
 
@@ -55,12 +55,12 @@ public class LeaderElectionOperations{
                 }
 
                 @Override
-                public Init<HostManagerComp> getNodeComponentInit(BasicAddress aggregatorServer, Set<BasicAddress> bootstrapNodes) {
-                    return LeaderOperationsHelper.generateComponentInit(nodeId);
+                public Init<HostManagerComp> getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
+                    return LeaderOperationsHelper.generateComponentInit(nodeId, aggregatorServer, bootstrapNodes);
                 }
 
                 @Override
-                public BasicAddress getAddress() {
+                public DecoratedAddress getAddress() {
                     return LeaderOperationsHelper.getBasicAddress(nodeId);
                 }
 
@@ -120,7 +120,7 @@ public class LeaderElectionOperations{
 
         public StartNodeCmd generate(final Long id){
 
-            return new StartNodeCmd<HostManagerComp, BasicAddress>() {
+            return new StartNodeCmd<HostManagerComp, DecoratedAddress>() {
 
                 int nodeId = Integer.MIN_VALUE;
 
@@ -140,12 +140,12 @@ public class LeaderElectionOperations{
                 }
 
                 @Override
-                public Init<HostManagerComp> getNodeComponentInit(BasicAddress aggregatorServer, Set<BasicAddress> bootstrapNodes) {
-                    return LeaderOperationsHelper.generateComponentInit(nodeId);
+                public Init<HostManagerComp> getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
+                    return LeaderOperationsHelper.generateComponentInit(nodeId, aggregatorServer, bootstrapNodes);
                 }
 
                 @Override
-                public BasicAddress getAddress() {
+                public DecoratedAddress getAddress() {
                     return LeaderOperationsHelper.getBasicAddress(nodeId);
                 }
 

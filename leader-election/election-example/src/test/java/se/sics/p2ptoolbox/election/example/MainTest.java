@@ -31,7 +31,7 @@ public class MainTest {
 
         VodConfig.init(new String[]{});
         System.out.println("Starting the serializers registration.");
-        int startId=0;
+        int startId=128;
 
         BasicSerializerSetup.registerBasicSerializers(startId);
         startId += BasicSerializerSetup.serializerIds;
