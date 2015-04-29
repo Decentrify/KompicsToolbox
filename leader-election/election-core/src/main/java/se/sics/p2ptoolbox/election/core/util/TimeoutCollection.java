@@ -1,6 +1,7 @@
 package se.sics.p2ptoolbox.election.core.util;
 
 
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 
@@ -23,6 +24,14 @@ public class TimeoutCollection {
     }
     
     // Election Leader.
+    public static class PeriodicVoting extends Timeout{
+
+        public PeriodicVoting(SchedulePeriodicTimeout request) {
+            super(request);
+        }
+    }
+
+
     public static class PromiseRoundTimeout extends Timeout{
 
         public PromiseRoundTimeout(ScheduleTimeout request) {

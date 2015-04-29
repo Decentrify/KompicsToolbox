@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.timer.CancelTimeout;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.network.Network;
@@ -101,6 +102,7 @@ public class ElectionLeader extends ComponentDefinition {
         subscribe(startHandler, control);
         subscribe(gradientSampleHandler, gradientPort);
         subscribe(viewUpdateHandler, electionPort);
+        subscribe(periodicVotingHandler, timerPositive);
 
         // Test Sample
         subscribe(mockedUpdateHandler, testPortNegative);
@@ -158,9 +160,31 @@ public class ElectionLeader extends ComponentDefinition {
     Handler<Start> startHandler = new Handler<Start>() {
         @Override
         public void handle(Start event) {
+
             logger.trace("{}: Leader Election Component is up", selfAddress.getId());
+
+            SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(0, 8000);
+            spt.setTimeoutEvent(new TimeoutCollection.PeriodicVoting(spt));
+            trigger(spt, timerPositive);
         }
     };
+
+
+    /**
+     * Check if the periodic voting needs to be started based on the data in terms of the convergence
+     * protocols.
+     *
+     */
+    Handler<TimeoutCollection.PeriodicVoting> periodicVotingHandler = new Handler<TimeoutCollection.PeriodicVoting>() {
+        @Override
+        public void handle(TimeoutCollection.PeriodicVoting periodicVoting) {
+
+            logger.debug("Triggering periodic voting timeout ");
+            checkIfLeader();
+        }
+    };
+
+
 
 
     Handler<MockedGradientUpdate> mockedUpdateHandler = new Handler<MockedGradientUpdate>() {
@@ -286,7 +310,7 @@ public class ElectionLeader extends ComponentDefinition {
             higherUtilityNodes = lowerAndHigherViewPair.getValue1();
 
             // Check if the node is ready to be a leader.
-            checkIfLeader();
+//            checkIfLeader();
         }
     };
 
@@ -365,7 +389,7 @@ public class ElectionLeader extends ComponentDefinition {
                 @Override
                 public void handle(Promise.Response response, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Response> event) {
 
-                    logger.debug("{}: Received Promise Response from : {} ", selfAddress.getId(), event.getSource().getId());
+                    logger.warn("{}: Received Promise Response from : {} ", selfAddress.getId(), event.getSource().getId());
                     int numPromises = electionRoundTracker.addPromiseResponseAndGetSize(response);
 
                     if (numPromises >= electionRoundTracker.getLeaderGroupInformationSize()) {
@@ -440,7 +464,6 @@ public class ElectionLeader extends ComponentDefinition {
                 }
 
                 if (applicationAck) {
-
                     applicationAck = false;
                     resetElectionMetaData();
                 }
