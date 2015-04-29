@@ -84,7 +84,7 @@ public class ElectionSerializerSetup {
         Serializers.register(leaseCommitRequestSerializer, ElectionSerializerEnum.leaseCommitRequest.serializerName);
         Serializers.register(ElectionSerializerEnum.leaseCommitRequest.serializedClass, ElectionSerializerEnum.leaseCommitRequest.serializerName);
 
-        LeaseCommitSerializer.Request leaseCommitResponseSerializer = new LeaseCommitSerializer.Request(currentId++);
+        LeaseCommitSerializer.Response leaseCommitResponseSerializer = new LeaseCommitSerializer.Response(currentId++);
         Serializers.register(leaseCommitResponseSerializer, ElectionSerializerEnum.leaseCommitResponse.serializerName);
         Serializers.register(ElectionSerializerEnum.leaseCommitResponse.serializedClass, ElectionSerializerEnum.leaseCommitResponse.serializerName);
 
