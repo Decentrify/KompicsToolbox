@@ -14,7 +14,8 @@
         <module>cc-heartbeat-api</module>
         <module>cc-heartbeat-core</module>
         <module>cc-heartbeat-network</module>
-    </modules>
+    <module>cc-heartbeat-example</module>
+  </modules>
     <dependencies>
         <dependency>
             <groupId>se.sics.p2ptoolbox.caracal-client</groupId>
