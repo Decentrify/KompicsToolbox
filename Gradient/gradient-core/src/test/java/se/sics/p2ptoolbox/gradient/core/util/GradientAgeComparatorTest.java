@@ -39,9 +39,9 @@ public class GradientAgeComparatorTest {
         List<GradientContainer> myList;
 
         myList = new ArrayList<GradientContainer>();
-        myList.add(new GradientContainer(null, null, 3));
-        myList.add(new GradientContainer(null, null, 0));
-        myList.add(new GradientContainer(null, null, 2));
+        myList.add(new GradientContainer(null, null, 3, 1));
+        myList.add(new GradientContainer(null, null, 0, 2));
+        myList.add(new GradientContainer(null, null, 2, 3));
         Collections.sort(myList, new GradientContainerAgeComparator());
         Assert.assertEquals(0, myList.get(0).getAge());
         Assert.assertEquals(2, myList.get(1).getAge());

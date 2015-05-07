@@ -35,6 +35,7 @@ import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.croupier.CroupierSerializerSetup;
 import se.sics.p2ptoolbox.gradient.msg.GradientShuffle;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
+import se.sics.p2ptoolbox.gradient.util.GradientLocalView;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
@@ -88,13 +89,13 @@ public class SerializersTest {
         parents2.add(simpleAdr5);
         natedAdr2 = new DecoratedAddress(new BasicAddress(localHost, 20000, 2), parents2);
 
-        container1 = new GradientContainer(simpleAdr1, new TestContent(1));
-        container2 = new GradientContainer(simpleAdr2, new TestContent(2));
-        container3 = new GradientContainer(natedAdr1, new TestContent(3));
+        container1 = new GradientContainer(simpleAdr1, new TestContent(1), 0, 1);
+        container2 = new GradientContainer(simpleAdr2, new TestContent(2), 1, 2);
+        container3 = new GradientContainer(natedAdr1, new TestContent(3), 2, 3);
     }
 
     @Test
-    public void testCroupierContainer() {
+    public void testGradientContainer() {
         Serializer serializer = Serializers.lookupSerializer(GradientContainer.class);
         GradientContainer original, copy;
         ByteBuf serializedOriginal, serializedCopy;
@@ -104,6 +105,21 @@ public class SerializersTest {
         serializer.toBinary(original, serializedOriginal);
         serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
         copy = (GradientContainer) serializer.fromBinary(serializedCopy, Optional.absent());
+
+        Assert.assertEquals(original, copy);
+    }
+    
+    @Test
+    public void testGradientLocalView() {
+        Serializer serializer = Serializers.lookupSerializer(GradientLocalView.class);
+        GradientLocalView original, copy;
+        ByteBuf serializedOriginal, serializedCopy;
+
+        original = new GradientLocalView(1, 1);
+        serializedOriginal = Unpooled.buffer();
+        serializer.toBinary(original, serializedOriginal);
+        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
+        copy = (GradientLocalView) serializer.fromBinary(serializedCopy, Optional.absent());
 
         Assert.assertEquals(original, copy);
     }

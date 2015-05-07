@@ -111,7 +111,6 @@ public class CounterHostComp extends ComponentDefinition {
     private Component createNConnectExampleCounter(CounterComp.CounterInit init, Component croupier, Component gradient) {
         Component example = create(CounterComp.class, init);
         connect(example.getNegative(Timer.class), timer);
-        connect(example.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
         connect(example.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
         return example;
     }

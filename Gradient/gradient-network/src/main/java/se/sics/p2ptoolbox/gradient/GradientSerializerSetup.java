@@ -24,6 +24,8 @@ import se.sics.p2ptoolbox.gradient.msg.GradientShuffle;
 import se.sics.p2ptoolbox.gradient.msg.GradientShuffleSerializer;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.gradient.util.GradientContainerSerializer;
+import se.sics.p2ptoolbox.gradient.util.GradientLocalView;
+import se.sics.p2ptoolbox.gradient.util.GradientLocalViewSerializer;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
 
 
@@ -32,11 +34,12 @@ import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
  */
 public class GradientSerializerSetup {
 
-    public static int serializerIds = 3;
+    public static int serializerIds = 4;
 
     public static enum GradientSerializers {
 
         GradientContainer(GradientContainer.class, "gradientContainerSerializer"),
+        GradientLocalView(GradientLocalView.class, "gradientLocalViewSerializer"),
         GradientShuffleRequest(GradientShuffle.Request.class, "gradientShuffleRequestSerializer"),
         GradientShuffleResponse(GradientShuffle.Response.class, "gradientShuffleResponseSerializer");
 
@@ -64,6 +67,10 @@ public class GradientSerializerSetup {
         GradientContainerSerializer gradientContainerSerializer = new GradientContainerSerializer(currentId++);
         Serializers.register(gradientContainerSerializer, GradientSerializers.GradientContainer.serializerName);
         Serializers.register(GradientSerializers.GradientContainer.serializedClass, GradientSerializers.GradientContainer.serializerName);
+        
+        GradientLocalViewSerializer gradientLocalViewSerializer = new GradientLocalViewSerializer(currentId++);
+        Serializers.register(gradientLocalViewSerializer, GradientSerializers.GradientLocalView.serializerName);
+        Serializers.register(GradientSerializers.GradientLocalView.serializedClass, GradientSerializers.GradientLocalView.serializerName);
 
         GradientShuffleSerializer.Request gradientShuffleRequestSerializer = new GradientShuffleSerializer.Request(currentId++);
         Serializers.register(gradientShuffleRequestSerializer, GradientSerializers.GradientShuffleRequest.serializerName);

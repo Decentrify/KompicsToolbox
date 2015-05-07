@@ -109,7 +109,6 @@ public class IdSortHostComp extends ComponentDefinition {
 
     private Component createNConnectIdSort(IdSortComp.IdSortInit exampleInit, Component croupier, Component gradient) {
         Component example = create(IdSortComp.class, exampleInit);
-        connect(example.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
         connect(example.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
         return example;
     }

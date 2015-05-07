@@ -23,18 +23,17 @@ import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientContainerSerializer implements Serializer {
+public class GradientLocalViewSerializer implements Serializer {
     private final int id;
     
-    public GradientContainerSerializer(int id) {
+    public GradientLocalViewSerializer(int id) {
         this.id = id;
     }
-    
+
     @Override
     public int identifier() {
         return id;
@@ -42,19 +41,15 @@ public class GradientContainerSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        GradientContainer obj = (GradientContainer)o;
-        buf.writeInt(obj.getAge());
-        Serializers.lookupSerializer(DecoratedAddress.class).toBinary(obj.getSource(), buf);
+        GradientLocalView obj = (GradientLocalView)o;
         buf.writeInt(obj.rank);
-        Serializers.toBinary(obj.getContent(), buf);
+        Serializers.toBinary(obj.appView, buf);
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        int age = buf.readInt();
-        DecoratedAddress src = (DecoratedAddress)Serializers.lookupSerializer(DecoratedAddress.class).fromBinary(buf, hint);
         int rank = buf.readInt();
-        Object content = Serializers.fromBinary(buf, hint);
-        return new GradientContainer(src, content, age, rank);
+        Object appView = Serializers.fromBinary(buf, hint);
+        return new GradientLocalView(appView, rank);
     }
 }

@@ -5,7 +5,7 @@
     <parent>
         <groupId>se.sics.p2ptoolbox.gradient</groupId>
         <artifactId>gradient</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.3-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.p2ptoolbox.gradient</groupId>
     <artifactId>gradient-network</artifactId>
