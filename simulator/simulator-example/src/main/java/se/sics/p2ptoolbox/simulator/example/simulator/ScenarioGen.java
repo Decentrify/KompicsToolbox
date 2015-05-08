@@ -80,7 +80,7 @@ public class ScenarioGen {
 
                 @Override
                 public MyComponent.MyInit getNodeComponentInit(DecoratedAddress aggregatorServer, Set<DecoratedAddress> bootstrapNodes) {
-                    return new MyComponent.MyInit(nodeAddressMap.get(nodeId), aggregatorServer);
+                    return new MyComponent.MyInit(nodeAddressMap.get(nodeId), aggregatorServer, bootstrapNodes);
                 }
 
                 @Override
@@ -200,7 +200,7 @@ public class ScenarioGen {
 
                 startPeers.start();
                 networkPing.startAfterTerminationOf(1000, startPeers);
-                fetchSimulationResult.startAfterTerminationOf(1000, networkPing);
+                fetchSimulationResult.startAfterTerminationOf(10000, networkPing);
                 terminateAfterTerminationOf(1000, fetchSimulationResult);
 
             }

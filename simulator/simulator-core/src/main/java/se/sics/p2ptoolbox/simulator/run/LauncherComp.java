@@ -18,6 +18,8 @@
  */
 package se.sics.p2ptoolbox.simulator.run;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -28,6 +30,7 @@ import se.sics.p2ptoolbox.simulator.core.P2pSimulatorInit;
 import se.sics.p2ptoolbox.simulator.core.network.impl.UniformRandomModel;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Kompics;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.simulation.SimulatorScheduler;
@@ -36,21 +39,38 @@ import se.sics.p2ptoolbox.simulator.ExperimentPort;
 import se.sics.p2ptoolbox.simulator.SimMngrComponent;
 import se.sics.p2ptoolbox.simulator.SystemStatusHandler;
 import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class LauncherComp extends ComponentDefinition {
+
     private static final Logger log = LoggerFactory.getLogger(LauncherComp.class);
-    
-    public static SimulatorScheduler scheduler;
-    public static SimulationScenario scenario;
+
+    private static SimulatorScheduler simulatorScheduler = new SimulatorScheduler();
+    private static SimulationScenario scenario = SimulationScenario.load(System.getProperty("scenario"));
+
     public static Address simulatorClientAddress;
     public static final Set<SystemStatusHandler> systemStatusHandlers = new HashSet<SystemStatusHandler>();
-    
-    {
+
+    static {
+        try {
+            simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+        } catch (UnknownHostException ex) {
+            throw new RuntimeException("cannot create address for localhost");
+        }
+    }
+
+    public static void main(String[] args) {
+        Kompics.setScheduler(simulatorScheduler);
+        Kompics.createAndStart(LauncherComp.class, 1);
+    }
+
+    public LauncherComp(){
         P2pSimulator.setSimulationPortType(ExperimentPort.class);
-        Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(scheduler, scenario, new UniformRandomModel(1, 10)));
+        Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(simulatorScheduler, scenario, new UniformRandomModel(100, 200)));
         Component simManager = create(SimMngrComponent.class, new SimMngrComponent.SimMngrInit(new Random(), simulatorClientAddress, systemStatusHandlers));
         connect(simManager.getNegative(Network.class), simulator.getPositive(Network.class));
         connect(simManager.getNegative(Timer.class), simulator.getPositive(Timer.class));

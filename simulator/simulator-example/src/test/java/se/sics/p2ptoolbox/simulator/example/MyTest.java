@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.simulation.SimulatorScheduler;
+import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
 import se.sics.p2ptoolbox.simulator.example.simulator.MyExperimentResult;
 import se.sics.p2ptoolbox.simulator.example.simulator.ScenarioGen;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
@@ -43,35 +44,38 @@ public class MyTest {
     
     @Test
     public void simpleBoot() {
-        LauncherComp.scheduler = new SimulatorScheduler();
-        LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
-        try {
-            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException("cannot create address for localhost");
-        }
         
-        Kompics.setScheduler(LauncherComp.scheduler);
-        Kompics.createAndStart(LauncherComp.class, 1);
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-        
-        Assert.assertEquals(null, MyExperimentResult.failureCause);
+        ScenarioGen.simpleBoot(seed).simulate(LauncherComp.class);
+//        
+//        LauncherComp.scheduler = new SimulatorScheduler();
+//        LauncherComp.scenario = ScenarioGen.simpleBoot(seed);
+//        try {
+//            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+//        } catch (UnknownHostException ex) {
+//            throw new RuntimeException("cannot create address for localhost");
+//        }
+//        
+//        Kompics.setScheduler(LauncherComp.scheduler);
+//        Kompics.createAndStart(LauncherComp.class, 1);
+//        try {
+//            Kompics.waitForTermination();
+//        } catch (InterruptedException ex) {
+//            throw new RuntimeException(ex.getMessage());
+//        }
+//        
+//        Assert.assertEquals(null, MyExperimentResult.failureCause);
     }
     
-    @Test
-    public void simpleNetworkModelChange() {
-        LauncherComp.scheduler = new SimulatorScheduler();
-        LauncherComp.scenario = ScenarioGen.simpleChangeNetworkModel(seed);
-        Kompics.setScheduler(LauncherComp.scheduler);
-        Kompics.createAndStart(LauncherComp.class, 1);
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-    }
+//    @Test
+//    public void simpleNetworkModelChange() {
+//        LauncherComp.scheduler = new SimulatorScheduler();
+//        LauncherComp.scenario = ScenarioGen.simpleChangeNetworkModel(seed);
+//        Kompics.setScheduler(LauncherComp.scheduler);
+//        Kompics.createAndStart(LauncherComp.class, 1);
+//        try {
+//            Kompics.waitForTermination();
+//        } catch (InterruptedException ex) {
+//            throw new RuntimeException(ex.getMessage());
+//        }
+//    }
 }
