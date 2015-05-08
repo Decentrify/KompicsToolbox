@@ -16,13 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient;
+package se.sics.p2ptoolbox.tgradient;
 
-import se.sics.p2ptoolbox.gradient.util.GradientView;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +44,9 @@ import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
+import se.sics.p2ptoolbox.gradient.GradientConfig;
+import se.sics.p2ptoolbox.gradient.GradientFilter;
+import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
 import se.sics.p2ptoolbox.gradient.msg.GradientShuffle;
@@ -53,14 +55,12 @@ import se.sics.p2ptoolbox.gradient.temp.UpdatePort;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.gradient.util.GradientLocalView;
 import se.sics.p2ptoolbox.gradient.util.ViewConfig;
-import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.compare.WrapperComparator;
+import se.sics.p2ptoolbox.tgradient.util.TGParentView;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
-import se.sics.p2ptoolbox.util.traits.Ageing;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
@@ -70,46 +70,52 @@ import se.sics.p2ptoolbox.util.traits.OverlayMember;
  * gradient sample, to the application.
  *
  */
-public class GradientComp extends ComponentDefinition {
+public class TreeGradientComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
+    private static final Logger log = LoggerFactory.getLogger(TreeGradientComp.class);
 
     private final SystemConfig systemConfig;
     private final GradientConfig gradientConfig;
+    private final TreeGradientConfig tGradientConfig;
     private final int overlayId;
     private final String logPrefix;
 
     private GradientFilter filter;
     private GradientContainer selfView;
-    private final GradientView view;
-    private final Comparator<GradientContainer> utilityComp;
-    
+    private final TGParentView parents;
+
     private UUID shuffleCycleId;
     private UUID shuffleTimeoutId;
+    
+    private Collection<GradientContainer> neighbours;
 
     // == Identify Ports.
-    Negative<GradientPort> gradientPort = provides(GradientPort.class);
-    Negative<UpdatePort> outUpdatePort = provides(UpdatePort.class);
+    Negative<GradientPort> tGradientPort = provides(GradientPort.class);
+    Positive<UpdatePort> updatePort = requires(UpdatePort.class);
+    Positive<GradientPort> gradientPort = requires(GradientPort.class);
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
     Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
 
-    public GradientComp(GradientInit init) {
+    public TreeGradientComp(TreeGradientInit init) {
         this.systemConfig = init.systemConfig;
         this.gradientConfig = init.gradientConfig;
+        this.tGradientConfig = init.tGradientConfig;
         this.overlayId = init.overlayId;
         this.logPrefix = "id:" + systemConfig.self.getBase().toString() + ":" + overlayId;
         log.info("{} initializing...", logPrefix);
-        this.utilityComp = new WrapperComparator<GradientContainer>(init.utilityComparator);
         ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.exchangeSMTemp, gradientConfig.oldThreshold);
-        this.view = new GradientView(logPrefix, init.utilityComparator, init.gradientFilter, new Random(systemConfig.seed), viewConfig);
+        this.parents = new TGParentView(logPrefix, viewConfig, tGradientConfig, init.gradientFilter, new Random(systemConfig.seed));
         this.filter = init.gradientFilter;
+        this.neighbours = new HashSet<GradientContainer>();
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
-        subscribe(handleUpdate, gradientPort);
+        subscribe(handleRankUpdate, updatePort);
+        subscribe(handleUpdate, tGradientPort);
         subscribe(handleCroupierSample, croupierPort);
+        subscribe(handleGradientSample, gradientPort);
         subscribe(handleShuffleRequest, network);
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
@@ -134,7 +140,7 @@ public class GradientComp extends ComponentDefinition {
 
     //**************************************************************************
     private boolean haveShufflePartners() {
-        return !view.isEmpty();
+        return !parents.isEmpty();
     }
 
     private boolean connected() {
@@ -142,20 +148,33 @@ public class GradientComp extends ComponentDefinition {
     }
 
     //**************************************************************************
+    Handler handleRankUpdate = new Handler<RankUpdate>() {
+        @Override
+        public void handle(RankUpdate update) {
+            log.trace("{} {}", logPrefix, update);
+            //TODO Alex - update mixup is possible
+            if(selfView == null) {
+                throw new RuntimeException("update mixup");
+            }
+            selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), update.rank);
+            if (!connected() && haveShufflePartners()) {
+                schedulePeriodicShuffle();
+            }
+        }
+    };
+
     Handler<GradientUpdate> handleUpdate = new Handler<GradientUpdate>() {
         @Override
         public void handle(GradientUpdate update) {
             log.trace("{} {}", logPrefix, update);
-            log.debug("{} updating self peer view:{}", new Object[]{logPrefix, update.view});
             if (selfView != null && filter.cleanOldView(selfView.getContent(), update.view)) {
-                view.clean(update.view);
+                neighbours = new ArrayList<GradientContainer>();
+                parents.clean(update.view);
             }
-            int rank = (selfView == null ? Integer.MAX_VALUE :  selfView.rank);
+            int rank = (selfView == null ? Integer.MAX_VALUE : selfView.rank);
             selfView = new GradientContainer(systemConfig.self, update.view, 0, rank);
-            if (!connected() && haveShufflePartners()) {
-                schedulePeriodicShuffle();
-            }
-            trigger(new CroupierUpdate(new GradientLocalView(update.view, selfView.rank)), croupierPort);
+            trigger(update, gradientPort);
+            trigger(new CroupierUpdate(update.view), croupierPort);
         }
     };
 
@@ -166,26 +185,37 @@ public class GradientComp extends ComponentDefinition {
     Handler handleCroupierSample = new Handler<CroupierSample<GradientLocalView>>() {
         @Override
         public void handle(CroupierSample<GradientLocalView> sample) {
+            if (selfView.rank == Integer.MAX_VALUE) {
+                return;
+            }
             log.trace("{} {}", logPrefix, sample);
             log.debug("{} \nCroupier public sample:{} \nCroupier private sample:{}",
                     new Object[]{logPrefix, sample.publicSample, sample.privateSample});
 
-            Set<GradientContainer> gradientCopy = new HashSet<GradientContainer>();
-            for (Container<DecoratedAddress, GradientLocalView> container : sample.publicSample) {
-                int age = 0;
-                if (container instanceof Ageing) {
-                    age = ((Ageing) container).getAge();
-                }
-                gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
+            //TODO Alex - maybe clean later - idiot java can't do covariance and contravariance
+            parents.merge((Collection<GradientContainer>)(Collection)sample.privateSample, selfView);
+            parents.merge((Collection<GradientContainer>)(Collection)sample.publicSample, selfView);
+            if (!connected() && haveShufflePartners()) {
+                schedulePeriodicShuffle();
             }
-            for (Container<DecoratedAddress, GradientLocalView> container : sample.privateSample) {
-                int age = 0;
-                if (container instanceof Ageing) {
-                    age = ((Ageing) container).getAge();
-                }
-                gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
+        }
+    };
+
+    /**
+     * Samples from linear gradient used for bootstrapping gradient as well as
+     * faster convergence(random samples)
+     */
+    Handler handleGradientSample = new Handler<GradientSample<GradientLocalView>>() {
+        @Override
+        public void handle(GradientSample<GradientLocalView> sample) {
+            if (selfView.rank == Integer.MAX_VALUE) {
+                return;
             }
-            view.merge(gradientCopy, selfView);
+            log.trace("{} {}", logPrefix, sample);
+            log.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientSample});
+
+            neighbours = (Collection<GradientContainer>)(Collection)sample.gradientSample; //again java stupid generics
+            parents.merge(neighbours, selfView);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
@@ -198,41 +228,36 @@ public class GradientComp extends ComponentDefinition {
     Handler<ShuffleCycle> handleShuffleCycle = new Handler<ShuffleCycle>() {
         @Override
         public void handle(ShuffleCycle event) {
-            log.trace("{} {}", logPrefix);
-            
-            if(view.checkIfTop(selfView) && selfView.rank != 0) {
-                selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), 0);
-                log.debug("{} am top", logPrefix, view.getAllCopy());
-                trigger(new CroupierUpdate(new GradientLocalView(selfView.getContent(), selfView.rank)), croupierPort);
-                trigger(new RankUpdate(selfView.rank), outUpdatePort);
+            if (selfView.rank == Integer.MAX_VALUE) {
+                return;
             }
-            log.debug("{} rank:{}", logPrefix, selfView.rank);
-            
+
+            log.trace("{} {}", logPrefix);
+
             if (!haveShufflePartners()) {
                 log.warn("{} no shuffle partners - disconnected", logPrefix);
                 cancelPeriodicShuffle();
                 return;
             }
 
-            if (!view.isEmpty()) {
-                log.info("{} view:{}", logPrefix, view.getAllCopy());
-                trigger(new GradientSample(view.getAllCopy()), gradientPort);
+            if (!parents.isEmpty()) {
+                log.info("{} view:{}", logPrefix, parents.getAllCopy());
+                trigger(new GradientSample(parents.getAllCopy()), tGradientPort);
             }
 
             // NOTE:
-            GradientContainer partner = view.getShuffleNode(selfView);
-            view.incrementAges();
+            GradientContainer partner = parents.getShuffleNode(selfView);
+            parents.incrementAges();
 
-            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, gradientConfig.shuffleSize);
             DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(systemConfig.self, partner.getSource(), Transport.UDP), null, overlayId);
-            GradientShuffle.Request requestContent = new GradientShuffle.Request(UUID.randomUUID(), selfView, exchangeGC);
+            GradientShuffle.Request requestContent = new GradientShuffle.Request(UUID.randomUUID(), selfView, neighbours);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
             log.debug("{} sending:{} to:{}", new Object[]{logPrefix, requestContent.exchangeNodes, partner.getSource()});
             trigger(request, network);
             scheduleShuffleTimeout(partner.getSource());
         }
     };
-    
+
     Handler<ShuffleTimeout> handleShuffleTimeout = new Handler<ShuffleTimeout>() {
 
         @Override
@@ -244,7 +269,7 @@ public class GradientComp extends ComponentDefinition {
             } else {
                 log.debug("{} node:{} timed out", logPrefix, event.dest);
                 shuffleTimeoutId = null;
-                view.clean(event.dest);
+                parents.clean(event.dest);
             }
         }
     };
@@ -271,23 +296,22 @@ public class GradientComp extends ComponentDefinition {
                         return;
                     }
 
-                    view.incrementAges();
+                    parents.incrementAges();
 
-                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, gradientConfig.shuffleSize);
                     DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(systemConfig.self, container.getHeader().getSource(), Transport.UDP), null, overlayId);
-                    GradientShuffle.Response responseContent = new GradientShuffle.Response(content.getId(), selfView, exchangeGC);
+                    GradientShuffle.Response responseContent = new GradientShuffle.Response(content.getId(), selfView, neighbours);
                     BasicContentMsg request = new BasicContentMsg(responseHeader, responseContent);
                     log.debug("{} sending:{} to:{}", new Object[]{logPrefix, responseContent.exchangeNodes, container.getHeader().getSource()});
                     trigger(request, network);
 
-                    view.merge(content.exchangeNodes, selfView);
-                    view.merge(content.selfGC, selfView);
+                    parents.merge(content.exchangeNodes, selfView);
+                    parents.merge(content.selfGC, selfView);
                 }
             };
 
     ClassMatchedHandler handleShuffleResponse
             = new ClassMatchedHandler<GradientShuffle.Response, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, GradientShuffle.Response>>() {
-
+                
                 @Override
                 public void handle(GradientShuffle.Response content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, GradientShuffle.Response> container) {
                     DecoratedHeader<DecoratedAddress> header = container.getHeader();
@@ -308,19 +332,8 @@ public class GradientComp extends ComponentDefinition {
                     }
                     cancelShuffleTimeout();
 
-                    view.merge(content.exchangeNodes, selfView);
-                    view.merge(content.selfGC, selfView);
-                    
-                    if(utilityComp.compare(selfView, content.selfGC) >= 0) {
-                        return;
-                    }
-                    int nodeDist = view.getDistTo(selfView, content.selfGC);
-                    if(content.selfGC.rank != Integer.MAX_VALUE && selfView.rank != content.selfGC.rank + nodeDist) {
-                        selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), content.selfGC.rank + nodeDist);
-                        log.debug("{} new rank:{} partner:{} partner rank:{}", new Object[]{logPrefix, selfView.rank, content.selfGC.getSource(), content.selfGC.rank});
-                        trigger(new CroupierUpdate(new GradientLocalView(selfView.getContent(), selfView.rank)), croupierPort);
-                        trigger(new RankUpdate(selfView.rank), outUpdatePort);
-                    }
+                    parents.merge(content.exchangeNodes, selfView);
+                    parents.merge(content.selfGC, selfView);
                 }
             };
 
@@ -394,20 +407,20 @@ public class GradientComp extends ComponentDefinition {
         }
     }
 
-    public static class GradientInit extends Init<GradientComp> {
+    public static class TreeGradientInit extends Init<TreeGradientComp> {
 
         public final SystemConfig systemConfig;
         public final GradientConfig gradientConfig;
+        public final TreeGradientConfig tGradientConfig;
         public final int overlayId;
-        public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
 
-        public GradientInit(SystemConfig systemConfig, GradientConfig config, int overlayId,
-                Comparator utilityComparator, GradientFilter gradientFilter) {
+        public TreeGradientInit(SystemConfig systemConfig, GradientConfig gradientConfig, TreeGradientConfig tGradientConfig, int overlayId,
+                GradientFilter gradientFilter) {
             this.systemConfig = systemConfig;
-            this.gradientConfig = config;
+            this.gradientConfig = gradientConfig;
+            this.tGradientConfig = tGradientConfig;
             this.overlayId = overlayId;
-            this.utilityComparator = utilityComparator;
             this.gradientFilter = gradientFilter;
         }
     }

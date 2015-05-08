@@ -17,17 +17,21 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util;
+package se.sics.p2ptoolbox.gradient.simulation.util;
+
+import se.sics.p2ptoolbox.gradient.GradientFilter;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Java6Util {
-    public static int compareInt(int o1, int o2) {
-        if(o1 == o2) {
-            return 0;
-        }
-        return o1 < o2 ? -1 : 1;
+public class NoFilter implements GradientFilter<Object> {
+
+    public boolean retainOther(Object selfPV, Object otherPV) {
+        return true;
+    }
+
+    public boolean cleanOldView(Object newSelfPV, Object oldSelfPV) {
+        return false;
     }
     
 }

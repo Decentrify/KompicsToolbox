@@ -17,17 +17,25 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util;
+package se.sics.p2ptoolbox.tgradient;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Java6Util {
-    public static int compareInt(int o1, int o2) {
-        if(o1 == o2) {
-            return 0;
+public class TreeGradientConfig {
+    public final int kCenterNodes;
+    public final int branching;
+
+    public TreeGradientConfig(Config config) {
+        try {
+            this.kCenterNodes = config.getInt("treegradient.kCenterNodes");
+            this.branching = config.getInt("treegradient.branching");
+        } catch (ConfigException.Missing ex) {
+//            log.error("missing configuration parameter - {}", ex.getMessage());
+            throw new RuntimeException(ex);
         }
-        return o1 < o2 ? -1 : 1;
     }
-    
 }

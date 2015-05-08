@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * 2009 Royal Institute of Technology (KTH)
+ * Copyright (C) 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * Croupier is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -17,17 +17,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util;
+package se.sics.p2ptoolbox.tgradient.idsort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Java6Util {
-    public static int compareInt(int o1, int o2) {
-        if(o1 == o2) {
-            return 0;
-        }
-        return o1 < o2 ? -1 : 1;
-    }
+public class IdView {
+    public final int id;
     
+    public IdView(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "" + id;
+    }
 }

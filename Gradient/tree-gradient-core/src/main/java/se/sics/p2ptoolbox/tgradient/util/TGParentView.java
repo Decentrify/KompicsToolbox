@@ -16,7 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.util;
+
+package se.sics.p2ptoolbox.tgradient.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,38 +33,39 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.Address;
-import se.sics.p2ptoolbox.gradient.GradientComp;
-import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.GradientFilter;
+import se.sics.p2ptoolbox.gradient.util.GradientContainer;
+import se.sics.p2ptoolbox.gradient.util.GradientContainerAgeComparator;
+import se.sics.p2ptoolbox.gradient.util.ViewConfig;
+import se.sics.p2ptoolbox.tgradient.TreeGradientComp;
+import se.sics.p2ptoolbox.tgradient.TreeGradientConfig;
 import se.sics.p2ptoolbox.util.InvertedComparator;
 import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
-import se.sics.p2ptoolbox.util.compare.WrapperComparator;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientView {
-
-    private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
+public class TGParentView {
+  private static final Logger log = LoggerFactory.getLogger(TreeGradientComp.class);
     private final Comparator<GradientContainer> ageComparator;
-    private final Comparator<GradientContainer> utilityComp;
     private final GradientFilter filter;
 
     private final ViewConfig config;
+    private final TreeGradientConfig tGradientConfig;
     private final Random rand;
     private final String logPrefix;
 
     private final Map<Address, GradientContainer> view;
 
-    public GradientView(String logPrefix, Comparator utilityComparator, GradientFilter filter, Random rand, ViewConfig config) {
-        this.utilityComp = new WrapperComparator<GradientContainer>(utilityComparator);
+    public TGParentView(String logPrefix, ViewConfig config, TreeGradientConfig tGradientConfig, GradientFilter filter, Random rand) {
         this.ageComparator = new InvertedComparator<GradientContainer>(new GradientContainerAgeComparator()); //we want old ages in the begining
         this.filter = filter;
         this.view = new HashMap<Address, GradientContainer>();
         this.rand = rand;
         this.logPrefix = logPrefix;
         this.config = config;
+        this.tGradientConfig = tGradientConfig;
     }
 
     public boolean isEmpty() {
@@ -77,7 +79,6 @@ public class GradientView {
     }
 
     public void clean(Object selfView) {
-
         Iterator<Map.Entry<Address, GradientContainer>> iterator = view.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Address, GradientContainer> entry = iterator.next();
@@ -104,10 +105,10 @@ public class GradientView {
             GradientContainer currentGc = view.get(gc.getSource().getBase());
             if (currentGc != null) {
                 if (currentGc.getAge() > gc.getAge()) {
-                    view.put(gc.getSource().getBase(), gc);
+                    view.put(gc.getSource().getBase(), gc.getCopy());
                 }
             } else {
-                view.put(gc.getSource().getBase(), gc);
+                view.put(gc.getSource().getBase(), gc.getCopy());
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
@@ -120,9 +121,9 @@ public class GradientView {
             }
         }
         if (view.size() > config.viewSize) {
-            GradientPreferenceComparator<GradientContainer> preferenceComparator = new GradientPreferenceComparator<GradientContainer>(selfView, utilityComp);
+            Comparator<GradientContainer> preferenceDeleteComparator = new InvertedComparator<GradientContainer>(new ParentPreferenceComparator(selfView, tGradientConfig.branching, tGradientConfig.kCenterNodes));
             int reduceSize = view.size() - config.viewSize;
-            for (GradientContainer toRemove : reduceSize(preferenceComparator, reduceSize)) {
+            for (GradientContainer toRemove : reduceSize(preferenceDeleteComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
                 view.remove(toRemove.getSource().getBase());
             }
@@ -130,6 +131,15 @@ public class GradientView {
         log.debug("{} remove - after shrink:{}", logPrefix, view.values());
     }
 
+    public List<GradientContainer> getAllCopy() {
+        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
+        List<GradientContainer> copyList = new ArrayList<GradientContainer>();
+        for (GradientContainer gc : sortedList) {
+            copyList.add(gc.getCopy());
+        }
+        return copyList;
+    }
+    
     public GradientContainer getShuffleNode(GradientContainer selfCPV) {
         if (view.isEmpty()) {
             return null;
@@ -137,60 +147,14 @@ public class GradientView {
 
         int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, config.exchangeSMTemp);
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Comparator<GradientContainer> selfPrefferenceComparator = new InvertedComparator<GradientContainer>(new GradientPreferenceComparator<GradientContainer>(selfCPV, utilityComp));
+        Comparator<GradientContainer> selfPrefferenceComparator = new ParentPreferenceComparator(selfCPV, tGradientConfig.branching, tGradientConfig.kCenterNodes);
         Collections.sort(sortedList, selfPrefferenceComparator);
 
         return sortedList.get(shuffleNodeIndex);
     }
 
-    public Set<GradientContainer> getExchangeCopy(GradientContainer partnerCPV, int n) {
-        Comparator<GradientContainer> partnerPrefferenceComparator = new InvertedComparator<GradientContainer>(new GradientPreferenceComparator<GradientContainer>(partnerCPV, utilityComp));
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Collections.sort(sortedList, partnerPrefferenceComparator);
-        Set<GradientContainer> copySet = new HashSet<GradientContainer>();
-        for (int i = 0; i < n && i < sortedList.size(); i++) {
-            copySet.add(sortedList.get(i).getCopy());
-        }
-        return copySet;
-    }
-
-    public List<GradientContainer> getAllCopy() {
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Collections.sort(sortedList, utilityComp);
-        List<GradientContainer> copyList = new ArrayList<GradientContainer>();
-        for (GradientContainer gc : sortedList) {
-            copyList.add(gc.getCopy());
-        }
-        return copyList;
-    }
-
     public void clean(DecoratedAddress node) {
         view.remove(node.getBase());
-    }
-
-    public boolean checkIfTop(GradientContainer selfView) {
-        if (view.size() < config.viewSize) {
-            return false;
-        }
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Collections.sort(sortedList, utilityComp);
-        return utilityComp.compare(selfView, sortedList.get(sortedList.size() - 1)) > 0;
-    }
-
-    public int getDistTo(GradientContainer selfView, GradientContainer targetView) {
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Collections.sort(sortedList, utilityComp);
-        int dist = 0;
-        for (GradientContainer gc : sortedList) {
-            if (utilityComp.compare(selfView, gc) >= 0) {
-                continue;
-            }
-            if (utilityComp.compare(targetView, gc) < 0) {
-                break;
-            }
-            dist++;
-        }
-        return dist;
     }
 
     /**

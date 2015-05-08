@@ -68,7 +68,7 @@ public class GradientContainer<C extends Object> implements Container<DecoratedA
     
     @Override
     public String toString() {
-        return "<" + src + "," + age + ">:" + content;
+        return "<" + src + "," + age + ">:rank:" + rank + ":value:" + content;
     }
 
     @Override

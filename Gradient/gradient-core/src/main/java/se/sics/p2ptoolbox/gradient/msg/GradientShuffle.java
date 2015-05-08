@@ -1,6 +1,6 @@
 package se.sics.p2ptoolbox.gradient.msg;
 
-import java.util.Set;
+import java.util.Collection;
 import java.util.UUID;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
@@ -17,9 +17,9 @@ public class GradientShuffle {
 
         protected final UUID id;
         public final GradientContainer selfGC;
-        public final Set<GradientContainer> exchangeNodes;
+        public final Collection<GradientContainer> exchangeNodes;
         
-        public Basic(UUID id, GradientContainer selfGC, Set<GradientContainer> exchangeNodes) {
+        public Basic(UUID id, GradientContainer selfGC, Collection<GradientContainer> exchangeNodes) {
             this.id = id;
             this.selfGC = selfGC;
             this.exchangeNodes = exchangeNodes;
@@ -32,7 +32,7 @@ public class GradientShuffle {
     }
     
     public static class Request extends Basic {
-        public Request(UUID id, GradientContainer selfGC, Set<GradientContainer> sample) {
+        public Request(UUID id, GradientContainer selfGC, Collection<GradientContainer> sample) {
             super(id, selfGC, sample);
         }
         
@@ -73,7 +73,7 @@ public class GradientShuffle {
     }
     
     public static class Response extends Basic {
-        public Response(UUID id, GradientContainer selfGC, Set<GradientContainer> sample) {
+        public Response(UUID id, GradientContainer selfGC, Collection<GradientContainer> sample) {
             super(id,  selfGC, sample);
         }
         

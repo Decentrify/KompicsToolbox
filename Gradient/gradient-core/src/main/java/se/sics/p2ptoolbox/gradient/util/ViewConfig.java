@@ -17,17 +17,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util;
+package se.sics.p2ptoolbox.gradient.util;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Java6Util {
-    public static int compareInt(int o1, int o2) {
-        if(o1 == o2) {
-            return 0;
-        }
-        return o1 < o2 ? -1 : 1;
-    }
+public class ViewConfig {
+    public final int viewSize;
+    public final double exchangeSMTemp;
+    public final int oldThreshold;
     
+    public ViewConfig(int viewSize, double exchangeSMTemp, int oldThreshold) {
+        this.viewSize = viewSize;
+        this.exchangeSMTemp = exchangeSMTemp;
+        this.oldThreshold = oldThreshold;
+    }
 }

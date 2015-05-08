@@ -1,3 +1,5 @@
+package se.sics.p2ptoolbox.tgradient;
+
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
@@ -17,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.gradient.example;
+
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -25,8 +27,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.simulation.SimulatorScheduler;
-import se.sics.p2ptoolbox.gradient.idsort.simulation.IdSortSimulationScenarios;
-import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
+import se.sics.p2ptoolbox.gradient.simulation.util.GradientSimulationResult;
+import se.sics.p2ptoolbox.tgradient.idsort.simulation.IdSortSimulationScenarios;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -37,7 +39,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class IdSortSimulationTest {
     @Test
     public void simpleBootTest() {
-        simpleBoot(1500, 1234, 100, 1000);
+        simpleBoot(50, 1234, 200, 1000);
     }
 
     private void simpleBoot(int nodes, long seed, int simulatedSeconds, int softMaxTemperature) {
