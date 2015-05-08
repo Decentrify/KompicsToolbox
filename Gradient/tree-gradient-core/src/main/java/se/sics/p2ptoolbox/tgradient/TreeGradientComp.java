@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +57,13 @@ import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.gradient.util.GradientLocalView;
 import se.sics.p2ptoolbox.gradient.util.ViewConfig;
 import se.sics.p2ptoolbox.tgradient.util.TGParentView;
+import se.sics.p2ptoolbox.util.Container;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
+import se.sics.p2ptoolbox.util.traits.Ageing;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
@@ -188,13 +191,26 @@ public class TreeGradientComp extends ComponentDefinition {
             if (selfView.rank == Integer.MAX_VALUE) {
                 return;
             }
-            log.trace("{} {}", logPrefix, sample);
+            log.debug("{} {}", logPrefix, sample);
             log.debug("{} \nCroupier public sample:{} \nCroupier private sample:{}",
                     new Object[]{logPrefix, sample.publicSample, sample.privateSample});
-
-            //TODO Alex - maybe clean later - idiot java can't do covariance and contravariance
-            parents.merge((Collection<GradientContainer>)(Collection)sample.privateSample, selfView);
-            parents.merge((Collection<GradientContainer>)(Collection)sample.publicSample, selfView);
+            
+            Collection<GradientContainer> gradientCopy = new HashSet<GradientContainer>();
+            for (Container<DecoratedAddress, GradientLocalView> container : sample.publicSample) {
+                int age = 0;
+                if (container instanceof Ageing) {
+                    age = ((Ageing) container).getAge();
+                }
+                gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
+            }
+            for (Container<DecoratedAddress, GradientLocalView> container : sample.privateSample) {
+                int age = 0;
+                if (container instanceof Ageing) {
+                    age = ((Ageing) container).getAge();
+                }
+                gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
+            }
+//             parents.merge(gradientCopy, selfView);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
@@ -338,6 +354,7 @@ public class TreeGradientComp extends ComponentDefinition {
             };
 
     private void schedulePeriodicShuffle() {
+        log.warn("{} period:{}", logPrefix, gradientConfig.shufflePeriod);
         if (shuffleCycleId != null) {
             log.warn("{} double starting periodic shuffle", logPrefix);
             return;

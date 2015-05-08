@@ -64,7 +64,7 @@ public class GradientPreferenceComparatorTest {
         int kCenterSize = 3;
         int branchingFactor = 2;
         ParentPreferenceComparator ppc = new ParentPreferenceComparator(base, branchingFactor, kCenterSize);
-        System.out.println("ideal parent:" + (base.rank - kCenterSize) / branchingFactor);
+        System.out.println("me:"+ base.rank + " ideal parent:" + (base.rank - kCenterSize) / branchingFactor);
         Assert.assertEquals(0, ppc.compare(tgc11, tgc11));
         Assert.assertEquals(1, ppc.compare(tgc11, tgc12));
         Assert.assertEquals(-1, ppc.compare(tgc12, tgc11));

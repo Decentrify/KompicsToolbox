@@ -78,7 +78,7 @@ public class IdSortHostComp extends ComponentDefinition {
         Component gradient = createNConnectGradient(gradientInit, croupier);
 
         TreeGradientComp.TreeGradientInit tGradientInit = new TreeGradientComp.TreeGradientInit(systemConfig, gradientConfig, tGradientConfig, 12, new NoFilter());
-        Component tGradient = createNConnectTGradient(tGradientInit, gradient);
+        Component tGradient = createNConnectTGradient(tGradientInit, gradient, croupier);
 
         
         IdSortComp.IdSortInit exampleInit = new IdSortComp.IdSortInit(systemConfig.self);
@@ -116,12 +116,13 @@ public class IdSortHostComp extends ComponentDefinition {
         return gradient;
     }
     
-    private Component createNConnectTGradient(TreeGradientComp.TreeGradientInit tGradientInit, Component gradient) {
+    private Component createNConnectTGradient(TreeGradientComp.TreeGradientInit tGradientInit, Component gradient, Component croupier) {
         Component tGradient = create(TreeGradientComp.class, tGradientInit);
         connect(tGradient.getNegative(Network.class), network, new IntegerOverlayFilter(tGradientInit.overlayId));
         connect(tGradient.getNegative(Timer.class), timer);
         connect(tGradient.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
         connect(tGradient.getNegative(UpdatePort.class), gradient.getPositive(UpdatePort.class));
+        connect(tGradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
         return tGradient;
     }
 

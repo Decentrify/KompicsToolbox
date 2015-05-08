@@ -73,7 +73,7 @@ public class IdSortComp extends ComponentDefinition {
 
         @Override
         public void handle(GradientSample sample) {
-            log.info("{} tree-gradient:{}", new Object[]{logPrefix, sample.gradientSample});
+            log.warn("{} time:{} tree-gradient:{}", new Object[]{logPrefix, System.currentTimeMillis(), sample.gradientSample});
 //            if(((IntegerIdentifiable)selfAddress).getId() % 2 == 0) {
 //                trigger(new GradientUpdate(new IdView(((IntegerIdentifiable)selfAddress).getId() + 1000)), gradient);
 //            }
