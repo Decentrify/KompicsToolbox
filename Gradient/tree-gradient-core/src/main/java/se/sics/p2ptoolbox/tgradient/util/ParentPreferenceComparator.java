@@ -32,6 +32,7 @@ public class ParentPreferenceComparator implements Comparator<GradientContainer>
     private final int branching;
     private final int kCenterSize;
     private final int idealParentRank;
+    private int lastParentReplicaRank;
 
     /**
      * lower(first) entries are less preferred
@@ -41,6 +42,15 @@ public class ParentPreferenceComparator implements Comparator<GradientContainer>
         this.branching = branching;
         this.kCenterSize = kCenterSize;
         this.idealParentRank = (base.rank - kCenterSize) / branching;
+        int myLevel = 0;
+        if (base.rank > kCenterSize) {
+            myLevel = (int) Math.floor(Math.log((double) base.rank / kCenterSize + 1) / Math.log(branching));
+        }
+        this.lastParentReplicaRank = -1; //indexes start from 0
+        for (int i = 0; i < myLevel; i++) {
+            this.lastParentReplicaRank += (int) (kCenterSize * Math.pow(branching, i));
+        }
+//        System.out.println(myLevel + " " + idealParentRank + " " + lastParentReplicaRank);
     }
 
     @Override
@@ -54,20 +64,51 @@ public class ParentPreferenceComparator implements Comparator<GradientContainer>
         if (o2.rank == idealParentRank) {
             return 1;
         }
-        if (o1.rank > idealParentRank && o2.rank > idealParentRank) {
+        
+        //best range
+        if (firstRange(o1) && firstRange(o2)) {
             return Java6Util.compareInt(o1.rank, o2.rank); //prefer smaller one
         }
-        if (o1.rank < idealParentRank && o2.rank < idealParentRank) {
+        //second range
+        if (secondRange(o1) && secondRange(o2)) {
             return -1 * Java6Util.compareInt(o1.rank, o2.rank); //prefer larger one 
         }
-
-        //at this point i know o1 and o2 are on different sides of parent - and i prefer the larger one
-        if(o1.rank > base.rank) {
-            return 1;
+        
+        if (thirdRange(o1) && thirdRange(o2)) {
+            return Java6Util.compareInt(o1.rank, o2.rank); //prefer smaller one 
         }
-        if(o2.rank > base.rank) {
+        
+        if(firstRange(o1)) {
             return -1;
         }
-        return -1 * Java6Util.compareInt(o1.rank, o2.rank);
+        if(firstRange(o2)) {
+            return 1;
+        }
+        if(secondRange(o1)) {
+            return -1;
+        }
+        if(secondRange(o2)) {
+            return 1;
+        }
+        if(thirdRange(o1)) {
+            return -1;
+        }
+        if(thirdRange(o2)) {
+            return 1;
+        }
+        
+        return Java6Util.compareInt(o1.rank, o2.rank);
+    }
+    
+    private boolean firstRange(GradientContainer o) {
+        return o.rank >= idealParentRank && o.rank <= lastParentReplicaRank;
+    }
+    
+    private boolean secondRange(GradientContainer o) {
+        return o.rank < idealParentRank;
+    }
+    
+    private boolean thirdRange(GradientContainer o) {
+        return o.rank > lastParentReplicaRank && o.rank < base.rank;
     }
 }

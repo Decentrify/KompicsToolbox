@@ -18,11 +18,9 @@
  */
 package se.sics.p2ptoolbox.tgradient.util;
 
-import com.google.common.primitives.Ints;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import se.sics.p2ptoolbox.gradient.util.GradientPreferenceComparator;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import junit.framework.Assert;
@@ -38,54 +36,151 @@ import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 @RunWith(JUnit4.class)
 public class GradientPreferenceComparatorTest {
 
-    List<TestGradientContainer> nodeList;
-
-    @Before
-    public void setup() {
-        nodeList = new ArrayList<TestGradientContainer>();
+    @Test
+    public void testEqualPreference() {
+        List<TestGradientContainer> nodeList = new ArrayList<TestGradientContainer>();
         Random rand = new Random(1234l);
         for (int i = 0; i < 50; i++) {
             nodeList.add(new TestGradientContainer(rand.nextInt(300)));
         }
         System.out.println(nodeList);
 
-    }
-
-    @Test
-    public void testEqualPreference() {
-        TestGradientContainer base = new TestGradientContainer(100);
+        TestGradientContainer base = new TestGradientContainer(120);
         TestGradientContainer tgc11 = new TestGradientContainer(11);
         TestGradientContainer tgc12 = new TestGradientContainer(12);
         TestGradientContainer tgc71 = new TestGradientContainer(71);
         TestGradientContainer tgc72 = new TestGradientContainer(72);
         TestGradientContainer tgc101 = new TestGradientContainer(101);
         TestGradientContainer tgc102 = new TestGradientContainer(102);
+        TestGradientContainer tgc131 = new TestGradientContainer(131);
+        TestGradientContainer tgc132 = new TestGradientContainer(132);
 
         int kCenterSize = 3;
-        int branchingFactor = 2;
-        ParentPreferenceComparator ppc = new ParentPreferenceComparator(base, branchingFactor, kCenterSize);
-        System.out.println("me:"+ base.rank + " ideal parent:" + (base.rank - kCenterSize) / branchingFactor);
+        int branching = 2;
+        ParentPreferenceComparator ppc = new ParentPreferenceComparator(base, branching, kCenterSize);
+
+        int myLevel = 0;
+
+        if (base.rank > kCenterSize) {
+            myLevel = (int) Math.floor(Math.log((double) base.rank / kCenterSize + 1) / Math.log(branching));
+        }
+        int lastParent = -1; //indexes start from 0
+        for (int i = 0; i < myLevel; i++) {
+            lastParent += (int) (kCenterSize * Math.pow(branching, i));
+        }
+        int idealParent = (base.rank - kCenterSize) / branching;
+
+        System.out.println("me:" + base.rank + " ideal parent:" + idealParent + " lastParent:" + lastParent);
         Assert.assertEquals(0, ppc.compare(tgc11, tgc11));
+
         Assert.assertEquals(1, ppc.compare(tgc11, tgc12));
         Assert.assertEquals(-1, ppc.compare(tgc12, tgc11));
-        
-        Assert.assertEquals(-1, ppc.compare(tgc101, tgc102));
-        Assert.assertEquals(1, ppc.compare(tgc102, tgc101));
-        
+
         Assert.assertEquals(-1, ppc.compare(tgc71, tgc72));
         Assert.assertEquals(1, ppc.compare(tgc72, tgc71));
-        
-        Assert.assertEquals(-1, ppc.compare(tgc11, tgc101));
-        Assert.assertEquals(1, ppc.compare(tgc101, tgc11));
-        
+
+        Assert.assertEquals(-1, ppc.compare(tgc101, tgc102));
+        Assert.assertEquals(1, ppc.compare(tgc102, tgc101));
+
+        Assert.assertEquals(-1, ppc.compare(tgc131, tgc132));
+        Assert.assertEquals(1, ppc.compare(tgc132, tgc131));
+
         Assert.assertEquals(1, ppc.compare(tgc11, tgc71));
         Assert.assertEquals(-1, ppc.compare(tgc71, tgc11));
-        
-        Assert.assertEquals(1, ppc.compare(tgc101, tgc71));
+
+        Assert.assertEquals(-1, ppc.compare(tgc11, tgc101));
+        Assert.assertEquals(1, ppc.compare(tgc101, tgc11));
+
+        Assert.assertEquals(-1, ppc.compare(tgc11, tgc131));
+        Assert.assertEquals(1, ppc.compare(tgc131, tgc11));
+
         Assert.assertEquals(-1, ppc.compare(tgc71, tgc101));
+        Assert.assertEquals(1, ppc.compare(tgc101, tgc71));
+
+        Assert.assertEquals(-1, ppc.compare(tgc71, tgc131));
+        Assert.assertEquals(1, ppc.compare(tgc131, tgc71));
+
+        Assert.assertEquals(-1, ppc.compare(tgc101, tgc131));
+        Assert.assertEquals(1, ppc.compare(tgc131, tgc101));
 
         Collections.sort(nodeList, ppc);
         System.out.println(nodeList);
+    }
+
+    @Test
+    public void test1() {
+        int kCenterSize = 3;
+        int branching = 2;
+        TestGradientContainer base = new TestGradientContainer(3);
+        ParentPreferenceComparator ppc = new ParentPreferenceComparator(base, branching, kCenterSize);
+
+        List<TestGradientContainer> expected = new ArrayList<TestGradientContainer>();
+        expected.add(new TestGradientContainer(0));
+        expected.add(new TestGradientContainer(2));
+        expected.add(new TestGradientContainer(4));
+
+        List<TestGradientContainer> nodeList = new ArrayList<TestGradientContainer>();
+        nodeList.add(new TestGradientContainer(4));
+        nodeList.add(new TestGradientContainer(2));
+        nodeList.add(new TestGradientContainer(0));
+
+        Collections.sort(nodeList, ppc);
+        System.out.println(nodeList);
+        Assert.assertEquals(expected, nodeList);
+    }
+
+    @Test
+    public void test2() {
+        int kCenterSize = 3;
+        int branching = 2;
+        TestGradientContainer base = new TestGradientContainer(5);
+        ParentPreferenceComparator ppc = new ParentPreferenceComparator(base, branching, kCenterSize);
+
+        List<TestGradientContainer> expected = new ArrayList<TestGradientContainer>();
+        expected.add(new TestGradientContainer(0));
+        expected.add(new TestGradientContainer(2));
+        expected.add(new TestGradientContainer(4));
+        expected.add(new TestGradientContainer(6));
+
+        List<TestGradientContainer> nodeList = new ArrayList<TestGradientContainer>();
+        nodeList.add(new TestGradientContainer(6));
+        nodeList.add(new TestGradientContainer(0));
+        nodeList.add(new TestGradientContainer(4));
+        nodeList.add(new TestGradientContainer(2));
+
+        Collections.sort(nodeList, ppc);
+        System.out.println(nodeList);
+        Assert.assertEquals(expected, nodeList);
+    }
+
+    @Test
+    public void test3() {
+        int kCenterSize = 3;
+        int branching = 2;
+        TestGradientContainer base = new TestGradientContainer(10);
+        ParentPreferenceComparator ppc = new ParentPreferenceComparator(base, branching, kCenterSize);
+
+        List<TestGradientContainer> expected = new ArrayList<TestGradientContainer>();
+        expected.add(new TestGradientContainer(3));
+        expected.add(new TestGradientContainer(5));
+        expected.add(new TestGradientContainer(8));
+        expected.add(new TestGradientContainer(2));
+        expected.add(new TestGradientContainer(0));
+        expected.add(new TestGradientContainer(9));
+        expected.add(new TestGradientContainer(11));
+
+        List<TestGradientContainer> nodeList = new ArrayList<TestGradientContainer>();
+        nodeList.add(new TestGradientContainer(11));
+        nodeList.add(new TestGradientContainer(9));
+        nodeList.add(new TestGradientContainer(0));
+        nodeList.add(new TestGradientContainer(8));
+        nodeList.add(new TestGradientContainer(3));
+        nodeList.add(new TestGradientContainer(5));
+        nodeList.add(new TestGradientContainer(2));
+
+        Collections.sort(nodeList, ppc);
+        System.out.println(nodeList);
+        Assert.assertEquals(expected, nodeList);
     }
 
     private static class TestObj {
