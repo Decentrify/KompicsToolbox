@@ -45,7 +45,7 @@ public class MyTest {
     @Test
     public void simpleBoot() {
         
-//        ScenarioGen.simpleBoot(seed).simulate(LauncherComp.class);
+        ScenarioGen.simpleBoot(seed).simulate(LauncherComp.class);
     }
 //        
 //        LauncherComp.scheduler = new SimulatorScheduler();

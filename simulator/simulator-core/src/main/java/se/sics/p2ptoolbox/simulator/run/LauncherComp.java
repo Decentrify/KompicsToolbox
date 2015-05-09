@@ -70,7 +70,7 @@ public class LauncherComp extends ComponentDefinition {
 
     public LauncherComp(){
         P2pSimulator.setSimulationPortType(ExperimentPort.class);
-        Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(simulatorScheduler, scenario, new UniformRandomModel(100, 200)));
+        Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(simulatorScheduler, scenario, null));
         Component simManager = create(SimMngrComponent.class, new SimMngrComponent.SimMngrInit(new Random(), simulatorClientAddress, systemStatusHandlers));
         connect(simManager.getNegative(Network.class), simulator.getPositive(Network.class));
         connect(simManager.getNegative(Timer.class), simulator.getPositive(Timer.class));
