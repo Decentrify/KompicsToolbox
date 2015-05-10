@@ -231,6 +231,8 @@ public class ElectionLeader extends ComponentDefinition {
 
             logger.trace(" {}: Received view update from the application: {} ", selfAddress.getId(), selfLCView.toString());
 
+            isConverged= false;
+            convergenceCounter =0;
 
             // This part of tricky to understand. The follower component works independent of the leader component.
             // In order to prevent the leader from successive tries while waiting on the update from the application regarding being in the group membership or not, currently
@@ -264,11 +266,8 @@ public class ElectionLeader extends ComponentDefinition {
                 leaseTimeoutId = null;
 
                 terminateBeingLeader();
-
-                // reset the convergence parameters for application to again achieve convergence.
-                isConverged = false;
-                convergenceCounter = 0;
             }
+
         }
     };
 
@@ -420,7 +419,11 @@ public class ElectionLeader extends ComponentDefinition {
 
                             trigger(st, timerPositive);
 
-                        } else {
+                        } 
+                        else {
+                            
+                            isConverged= false;
+                            convergenceCounter =0;
                             inElection = false;
                             electionRoundTracker.resetTracker();
                         }
@@ -536,42 +539,51 @@ public class ElectionLeader extends ComponentDefinition {
         public void handle(TimeoutCollection.LeaseTimeout event) {
 
             logger.debug(" Special : Lease Timed out at Leader End: {} , trying to extend the lease", selfAddress.getId());
-            if (isExtensionPossible()) {
+            
+            if(leaseTimeoutId != null && leaseTimeoutId.equals(event.getTimeoutId())){
 
-                logger.warn("Trying to extend the leadership.");
+                if (isExtensionPossible()) {
 
-                int leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
-                Collection<LEContainer> lowerNodes = createLeaderGroupNodes(leaderGroupSize);
+                    logger.warn("{}: Trying to extend the leadership.", selfAddress.getId());
 
-                if (lowerNodes.size() < leaderGroupSize) {
+                    int leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
+                    Collection<LEContainer> lowerNodes = createLeaderGroupNodes(leaderGroupSize);
 
-                    logger.error("{}: Terminate being the leader as state seems to be corrupted.", selfAddress.getId());
+                    if (lowerNodes.size() < leaderGroupSize) {
+
+                        logger.error("{}: Terminate being the leader as state seems to be corrupted.", selfAddress.getId());
+                        terminateBeingLeader();
+                        return;
+                    }
+
+                    lowerNodes.add(new LEContainer(selfAddress, selfLCView));
+
+
+                    UUID roundId = UUID.randomUUID();
+
+                    ExtensionRequest request = new ExtensionRequest(selfAddress, publicKey, selfLCView, roundId);
+
+                    for (LEContainer container : lowerNodes) {
+
+                        DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, container.getSource(), Transport.UDP);
+                        BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest> extensionRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest>(header, request);
+                        trigger(extensionRequest, networkPositive);
+                    }
+
+                    // Extend the lease.
+                    ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
+                    st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
+                    leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
+                    trigger(st, timerPositive);
+
+                } else {
+                    logger.warn("{}: Will Not extend the lease anymore.", selfAddress.getId());
                     terminateBeingLeader();
-                    return;
                 }
+            }
+            else{
+                logger.debug(" ~~~~~~~~~~~~~~ {}: Lease Timeout not found .... ~~~~~~~~~~~~~~~~~", selfAddress.getId());
 
-                lowerNodes.add(new LEContainer(selfAddress, selfLCView));
-
-
-                UUID roundId = UUID.randomUUID();
-
-                ExtensionRequest request = new ExtensionRequest(selfAddress, publicKey, selfLCView, roundId);
-
-                for (LEContainer container : lowerNodes) {
-
-                    DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, container.getSource(), Transport.UDP);
-                    BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest> extensionRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest>(header, request);
-                    trigger(extensionRequest, networkPositive);
-                }
-
-                // Extend the lease.
-                ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
-                st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
-                trigger(st, timerPositive);
-
-            } else {
-                logger.warn("{}: Will Not extend the lease anymore.", selfAddress.getId());
-                terminateBeingLeader();
             }
         }
     };
