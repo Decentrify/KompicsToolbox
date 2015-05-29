@@ -42,24 +42,24 @@ public class CounterSimulationTest {
 //        simpleBoot(10, 1234, 100, 1000);
     }
 
-    private void simpleBoot(int nodes, long seed, int simulatedSeconds, double softMaxTemperature) {
-        LauncherComp.scheduler = new SimulatorScheduler();
-        LauncherComp.scenario = CounterSimulationScenarios.simpleBoot(nodes, seed, simulatedSeconds, softMaxTemperature);
-        //
-        try {
-            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException("cannot create address for localhost");
-        }
-
-        Kompics.setScheduler(LauncherComp.scheduler);
-        Kompics.createAndStart(LauncherComp.class, 1);
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-
-        Assert.assertEquals(null, GradientSimulationResult.failureCause);
-    }
+//    private void simpleBoot(int nodes, long seed, int simulatedSeconds, double softMaxTemperature) {
+//        LauncherComp.scheduler = new SimulatorScheduler();
+//        LauncherComp.scenario = CounterSimulationScenarios.simpleBoot(nodes, seed, simulatedSeconds, softMaxTemperature);
+//        //
+//        try {
+//            LauncherComp.simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+//        } catch (UnknownHostException ex) {
+//            throw new RuntimeException("cannot create address for localhost");
+//        }
+//
+//        Kompics.setScheduler(LauncherComp.scheduler);
+//        Kompics.createAndStart(LauncherComp.class, 1);
+//        try {
+//            Kompics.waitForTermination();
+//        } catch (InterruptedException ex) {
+//            throw new RuntimeException(ex.getMessage());
+//        }
+//
+//        Assert.assertEquals(null, GradientSimulationResult.failureCause);
+//    }
 }
