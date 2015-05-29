@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.tgradient.util;
 
 import java.util.ArrayList;
@@ -47,7 +46,8 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class TGParentView {
-  private static final Logger log = LoggerFactory.getLogger(TreeGradientComp.class);
+
+    private static final Logger log = LoggerFactory.getLogger(TreeGradientComp.class);
     private final Comparator<GradientContainer> ageComparator;
     private final GradientFilter filter;
 
@@ -115,14 +115,17 @@ public class TGParentView {
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
-        if (view.size() > config.viewSize) {
-            for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
-                if (toRemove.getAge() >= config.oldThreshold) {
-                    log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
-                    view.remove(toRemove.getSource().getBase());
-                }
+        //Should enable cleaning old descriptors even when view is incomplete
+        //Even if this cleanup empties the view, we can wait for Croupier to provide new samples
+        //We should only remove descriptors older than a defined threshold so we don't disconnect
+//        if (view.size() > config.viewSize) {
+        for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
+            if (toRemove.getAge() >= config.oldThreshold) {
+                log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
+                view.remove(toRemove.getSource().getBase());
             }
         }
+//        }
         if (view.size() > config.viewSize) {
             Comparator<GradientContainer> preferenceDeleteComparator = new InvertedComparator<GradientContainer>(new ParentPreferenceComparator(selfView, tGradientConfig.branching, tGradientConfig.kCenterNodes));
             int reduceSize = view.size() - config.viewSize;
@@ -142,7 +145,7 @@ public class TGParentView {
         }
         return copyList;
     }
-    
+
     public GradientContainer getShuffleNode(GradientContainer selfCPV) {
         if (view.isEmpty()) {
             return null;
