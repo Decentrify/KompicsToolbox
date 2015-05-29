@@ -18,6 +18,9 @@
  */
 package se.sics.p2ptoolbox.simulator.example.core;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -43,16 +46,19 @@ public class MyComponent extends ComponentDefinition {
 
     private DecoratedAddress self;
     private DecoratedAddress statusServer;
+    private List<DecoratedAddress> bootstrapNodes;
 
     public MyComponent(MyInit init) {
         log.debug("initiating test node:{}", init.self);
 
         this.self = init.self;
         this.statusServer = init.statusServer;
+        this.bootstrapNodes = new ArrayList<DecoratedAddress>(init.bootstrapNodes);
 
         subscribe(handleStart, control);
         subscribe(handleNetPing, network);
         subscribe(handleNetPong, network);
+        subscribe(handleTimeout, timer);
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {
@@ -60,6 +66,7 @@ public class MyComponent extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             log.debug("starting test node:{}", self);
+            schedulePeriodicShuffle();
         }
 
     };
@@ -69,8 +76,9 @@ public class MyComponent extends ComponentDefinition {
         @Override
         public void handle(MyNetMsg.NetPing ping) {
             log.debug("{} received net ping from {}", self, ping.getHeader().getSource());
-            trigger(new MyNetMsg.NetPong(self, ping.getHeader().getSource(), ping.getContent().id), network);
-            
+            if (bootstrapNodes.size() > 0) {
+                trigger(new MyNetMsg.NetPong(self, bootstrapNodes.get(0), ping.getContent().id), network);
+            }
             log.info("sending status msgs");
         }
     };
@@ -82,20 +90,37 @@ public class MyComponent extends ComponentDefinition {
             log.debug("{} received net pong from {}", self, event.getHeader().getSource());
         }
     };
+    
+    private Handler handleTimeout = new Handler<StatusTimeout>() {
 
+        @Override
+        public void handle(StatusTimeout timeout) {
+            log.debug("{} time:{}", self, System.currentTimeMillis());
+        }
+    };
+    
+    private void schedulePeriodicShuffle() {
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
+        StatusTimeout sc = new StatusTimeout(spt);
+        spt.setTimeoutEvent(sc);
+        trigger(spt, timer);
+    }
 
     public static class MyInit extends Init<MyComponent> {
 
         public final DecoratedAddress self;
         public final DecoratedAddress statusServer;
+        public final Set<DecoratedAddress> bootstrapNodes;
 
-        public MyInit(DecoratedAddress self, DecoratedAddress statusServer) {
+        public MyInit(DecoratedAddress self, DecoratedAddress statusServer, Set<DecoratedAddress> bootstrapNodes) {
             this.self = self;
             this.statusServer = statusServer;
+            this.bootstrapNodes = bootstrapNodes;
         }
     }
-    
+
     public static class StatusTimeout extends Timeout {
+
         public StatusTimeout(SchedulePeriodicTimeout spt) {
             super(spt);
         }

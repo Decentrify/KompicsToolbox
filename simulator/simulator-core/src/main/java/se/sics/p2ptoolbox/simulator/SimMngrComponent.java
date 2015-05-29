@@ -188,12 +188,13 @@ public class SimMngrComponent extends ComponentDefinition {
 
         @Override
         public void handle(KillNodeCmd cmd) {
-            log.info("received stop cmd:{} for node:{}", cmd, cmd.getNodeId());
+            log.info("received kill cmd:{} for node:{}", cmd, cmd.getNodeId());
 
-            if (!systemNodes.containsKey(cmd.getNodeId())) {
+            Pair<Component, Component> node = systemNodes.remove(cmd.getNodeId());
+            if (node == null) {
                 throw new RuntimeException("node does not exist");
             }
-            Pair<Component, Component> node = systemNodes.get(cmd.getNodeId());
+            simulationContext.killNode(cmd.getNodeId());
             if (node.getValue1() != null) {
                 disconnect(node.getValue1().getNegative(Network.class), network);
             } else {

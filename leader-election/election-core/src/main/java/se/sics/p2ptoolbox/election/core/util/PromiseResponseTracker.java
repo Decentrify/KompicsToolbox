@@ -66,6 +66,7 @@ public class PromiseResponseTracker {
         
         if(electionRoundId == null || !response.electionRoundId.equals(electionRoundId)){
             logger.warn("Received a response that is not currently tracked.");
+            return 0;
         }
 
         isPromiseAccepted = isPromiseAccepted && response.acceptCandidate;
