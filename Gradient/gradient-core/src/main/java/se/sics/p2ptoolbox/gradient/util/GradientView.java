@@ -114,14 +114,17 @@ public class GradientView {
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
-        if (view.size() > config.viewSize) {
-            for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
-                if (toRemove.getAge() >= config.oldThreshold) {
-                    log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
-                    view.remove(toRemove.getSource().getBase());
-                }
+        //Should enable cleaning old descriptors even when view is incomplete
+        //Even if this cleanup empties the view, we can wait for Croupier to provide new samples
+        //We should only remove descriptors older than a defined threshold so we don't disconnect
+//        if (view.size() > config.viewSize) {
+        for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
+            if (toRemove.getAge() >= config.oldThreshold) {
+                log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
+                view.remove(toRemove.getSource().getBase());
             }
         }
+//        }
         if (view.size() > config.viewSize) {
             GradientPreferenceComparator<GradientContainer> preferenceComparator = new GradientPreferenceComparator<GradientContainer>(selfView, utilityComp);
             int reduceSize = view.size() - config.viewSize;
