@@ -32,14 +32,12 @@ public class CCBootstrapConfig {
     
     public final long sanityCheckTimeout;
     public final long caracalTimeout;
-    public final int msgRetries;
     public final int nodeListSize;
     public final int sampleSize;
     
-    public CCBootstrapConfig(long sanityCheckTimeout, long caracalTimeout, int msgRetries, int caracalNodeSize, int sampleSize) {
+    public CCBootstrapConfig(long sanityCheckTimeout, long caracalTimeout, int caracalNodeSize, int sampleSize) {
         this.sanityCheckTimeout = sanityCheckTimeout;
         this.caracalTimeout = caracalNodeSize;
-        this.msgRetries = msgRetries;
         this.nodeListSize = caracalNodeSize;
         this.sampleSize = sampleSize;
     }
@@ -48,7 +46,6 @@ public class CCBootstrapConfig {
         try{
             this.sanityCheckTimeout = config.getLong("caracal-client.bootstrap.sanityCheckTimeout");
             this.caracalTimeout = config.getLong("caracal-client.bootstrap.caracalTimeout");
-            this.msgRetries = config.getInt("caracal-client.bootstrap.msgRetries");
             this.nodeListSize = config.getInt("caracal-client.bootstrap.nodeListSize");
             this.sampleSize = config.getInt("caracal-client.bootstrap.sampleSize");
         } catch(ConfigException.Missing ex) {

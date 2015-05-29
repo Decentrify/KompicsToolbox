@@ -32,18 +32,21 @@ public class CCHeartbeatConfig {
     public final long heartbeatPeriod;
     public final String schemaName;
     public final int heartbeatSize;
+    public final long sanityCheckPeriod;
     
-    public CCHeartbeatConfig(long heartbeatPeriod, String schemaName, int heartbeatSize) {
+    public CCHeartbeatConfig(long heartbeatPeriod, String schemaName, int heartbeatSize, long sanityCheckPeriod) {
         this.heartbeatPeriod = heartbeatPeriod;
         this.schemaName = schemaName;
         this.heartbeatSize = heartbeatSize;
+        this.sanityCheckPeriod = sanityCheckPeriod;
     }
     
     public CCHeartbeatConfig(Config config) {
         try{
             this.heartbeatPeriod = config.getLong("caracal-client.heartbeat.period");
             this.schemaName = config.getString("caracal-client.heartbeat.schemaName");
-            this.heartbeatSize = config.getInt("caracal-client.heartbeat.schemaName");
+            this.heartbeatSize = config.getInt("caracal-client.heartbeat.heartbeatSize");
+            this.sanityCheckPeriod = config.getLong("caracal-client.heartbeat.sanityCheckPeriod");
         } catch(ConfigException.Missing ex) {
             LOG.error("configuration problem:{}", ex.getMessage());
             throw new RuntimeException("CCHeartbeat configuration problem", ex);

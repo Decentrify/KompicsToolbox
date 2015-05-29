@@ -78,8 +78,8 @@ public class CCBootstrapComp extends ComponentDefinition {
     private Map<UUID, Triplet<CCOpEvent.Request, Address, UUID>> activeRequests; //<messageId, <request, caracalNode, timeoutId>>
 
     public CCBootstrapComp(CCBootstrapInit init) {
-        this.rand = new Random(init.seed);
         this.systemConfig = init.systemConfig;
+        this.rand = new Random(systemConfig.seed);
         this.ccSelf = new se.sics.caracaldb.Address(systemConfig.self.getIp(), systemConfig.self.getPort(), null);
         this.ccBootstrapConfig = init.ccBootstrapConfig;
         this.logPrefix = systemConfig.self.toString();
@@ -87,8 +87,8 @@ public class CCBootstrapComp extends ComponentDefinition {
             log.error("{} no bootstrap caracal nodes provided - cannot boot", logPrefix);
             throw new RuntimeException("no bootstrap caracal nodes provided - cannot boot");
         }
-        this.activeNodes = new ArrayList<Address>();
-        this.deadNodes = new ArrayList<Address>(init.caracalNodes);
+        this.activeNodes = new ArrayList<Address>(init.caracalNodes);
+        this.deadNodes = new ArrayList<Address>();
         this.activeRequests = new HashMap<UUID, Triplet<CCOpEvent.Request, Address, UUID>>();
         log.info("{} initiating with bootstrap nodes:{}", logPrefix, activeNodes);
 
@@ -118,8 +118,6 @@ public class CCBootstrapComp extends ComponentDefinition {
             log.info("{} stopping...", logPrefix);
         }
     };
-    //**************************************************************************
-
     Handler handleSanityCheck = new Handler<SanityCheckTimeout>() {
         @Override
         public void handle(SanityCheckTimeout event) {
@@ -142,7 +140,7 @@ public class CCBootstrapComp extends ComponentDefinition {
             }
         }
     };
-
+    //**************************************************************************
     Handler handleSample = new Handler<Sample>() {
         @Override
         public void handle(Sample msg) {
@@ -218,7 +216,7 @@ public class CCBootstrapComp extends ComponentDefinition {
             if(deadNodes.size() > ccBootstrapConfig.nodeListSize) {
                 deadNodes.remove(0);
             }
-            log.debug("{} timed out message:{} on caracal node:{}", 
+            log.info("{} timed out message:{} on caracal node:{}", 
                     new Object[]{logPrefix, timeout.messageId, requestInfo.getValue1()});
             answer(requestInfo.getValue0(), new CCOpEvent.Timeout(requestInfo.getValue0().opReq));
         }
@@ -231,7 +229,7 @@ public class CCBootstrapComp extends ComponentDefinition {
 
     private void scheduleSanityCheck() {
         if (sanityCheckTId != null) {
-            log.warn("{} double starting sanityChec", logPrefix);
+            log.warn("{} double starting sanityCheck", logPrefix);
             return;
         }
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(ccBootstrapConfig.sanityCheckTimeout, ccBootstrapConfig.sanityCheckTimeout);
@@ -266,13 +264,11 @@ public class CCBootstrapComp extends ComponentDefinition {
 
     public static class CCBootstrapInit extends Init<CCBootstrapComp> {
 
-        public final long seed;
         public final SystemConfig systemConfig;
         public final CCBootstrapConfig ccBootstrapConfig;
         public final List<Address> caracalNodes;
 
-        public CCBootstrapInit(long seed, SystemConfig systemConfig, CCBootstrapConfig ccBootstrapConfig, List<Address> caracalNodes) {
-            this.seed = seed;
+        public CCBootstrapInit(SystemConfig systemConfig, CCBootstrapConfig ccBootstrapConfig, List<Address> caracalNodes) {
             this.systemConfig = systemConfig;
             this.ccBootstrapConfig = ccBootstrapConfig;
             this.caracalNodes = caracalNodes;

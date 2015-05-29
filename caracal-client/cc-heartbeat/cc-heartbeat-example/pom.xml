@@ -18,5 +18,16 @@
             <artifactId>cc-heartbeat-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>se.sics.p2ptoolbox.caracal-client.bootstrap</groupId>
+            <artifactId>cc-bootstrap-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.5.6</version>
+        </dependency>
     </dependencies>
 </project>

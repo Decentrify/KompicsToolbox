@@ -34,7 +34,6 @@ import se.sics.caracaldb.operations.PutRequest;
 import se.sics.caracaldb.operations.RangeQuery;
 import se.sics.caracaldb.store.ActionFactory;
 import se.sics.caracaldb.store.Limit;
-import se.sics.caracaldb.store.RangeReq;
 import se.sics.caracaldb.store.TFFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Direct;
@@ -84,6 +83,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     private byte[] schemaPrefix;
     private Set<ByteBuffer> heartbeats;
     private final Map<UUID, CCOperation> activeOps;
+    private UUID sanityCheckTId;
 
     public CCHeartbeatComp(CCHeartbeatInit init) {
         this.systemConfig = init.systemConfig;
@@ -116,6 +116,8 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         @Override
         public void handle(Stop event) {
             LOG.info("{} stopping...", logPrefix);
+            cancelHeartbeat();
+            cancelSanityCheck();
         }
     };
     Handler handleReady = new Handler<CCReady>() {
@@ -124,18 +126,30 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
             LOG.info("{} received ready and schema prefix - starting...", logPrefix);
             schemaPrefix = event.caracalSchemaData.getId(heartbeatConfig.schemaName);
             if (schemaPrefix == null) {
+                LOG.error("{} schema undefined - make sure you ran the SchemaSetup", logPrefix);
                 throw new RuntimeException("schema undefined - make sure you ran the SchemaSetup");
             }
+            scheduleHeartbeat();
             scheduleSanityCheck();
             trigger(new CCSimpleReady(), provided);
+        }
+    };
+    Handler handleSanityCheck = new Handler<SanityCheckTimeout>() {
+        @Override
+        public void handle(SanityCheckTimeout event) {
+            LOG.trace("{} event", logPrefix);
+
+            LOG.info("{} memory usage - activeOps:{}, heartbeats:{}",
+                    new Object[]{logPrefix, activeOps.size(), heartbeats.size()});
         }
     };
     //**************************************************************************
     Handler handleHeartbeatUpdate = new Handler<CCHeartbeat.Start>() {
         @Override
         public void handle(CCHeartbeat.Start update) {
-            LOG.info("{} updating piggyback information for heartbeat:{}", logPrefix, BaseEncoding.base16().encode(update.overlay));
+            LOG.info("{} updating heartbeat:{}", logPrefix, BaseEncoding.base16().encode(update.overlay));
             if (update.overlay.length > 127) {
+                LOG.error("{} overlay identifier is too long - try to stick to 127 bytes", logPrefix);
                 throw new RuntimeException("overlay identifier is too long - try to stick to 127 bytes");
             }
             ByteBuffer bKey = ByteBuffer.wrap(update.overlay);
@@ -190,7 +204,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
                     return;
                 }
             }
-            throw new RuntimeException("unexpected response");
+            LOG.warn("{} unexpected response:{}", logPrefix, event);
         }
     };
 
@@ -203,11 +217,11 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
                     op.fail();
                 }
             }
-            throw new RuntimeException("unexpected response");
+            LOG.warn("{} unexpected response:{}", logPrefix, event);
         }
     };
 
-    private void scheduleSanityCheck() {
+    private void scheduleHeartbeat() {
         if (heartbeatTId != null) {
             LOG.warn("{} double starting heartbeat", logPrefix);
             return;
@@ -219,13 +233,35 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         trigger(spt, timer);
     }
 
-    private void cancelSanityCheck() {
+    private void cancelHeartbeat() {
         if (heartbeatTId == null) {
             LOG.warn("{} double stopping sanityCheck", logPrefix);
             return;
         }
         CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(heartbeatTId);
         heartbeatTId = null;
+        trigger(cpt, timer);
+    }
+    
+    private void scheduleSanityCheck() {
+        if (sanityCheckTId != null) {
+            LOG.warn("{} double starting sanityCheck", logPrefix);
+            return;
+        }
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(heartbeatConfig.sanityCheckPeriod, heartbeatConfig.sanityCheckPeriod);
+        SanityCheckTimeout sc = new SanityCheckTimeout(spt);
+        spt.setTimeoutEvent(sc);
+        sanityCheckTId = sc.getTimeoutId();
+        trigger(spt, timer);
+    }
+
+    private void cancelSanityCheck() {
+        if (sanityCheckTId == null) {
+            LOG.warn("{} double stopping sanityCheck", logPrefix);
+            return;
+        }
+        CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(sanityCheckTId);
+        sanityCheckTId = null;
         trigger(cpt, timer);
     }
 
@@ -236,9 +272,10 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         LOG.debug("{} completed:{}", logPrefix, op);
         if (resp == null) {
             //heartbeat completed; do nothing
+            return;
         }
-        LOG.error("{} did not expect this resp - operation:{} logic bug", logPrefix, op);
-        throw new RuntimeException("operation logic");
+        LOG.warn("{} did not expect this resp - operation:{} logic bug", logPrefix, op);
+//        throw new RuntimeException("operation logic");
     }
 
     @Override
@@ -275,6 +312,18 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         @Override
         public String toString() {
             return "HEARTBEAT_TIMEOUT";
+        }
+    }
+    
+    public class SanityCheckTimeout extends Timeout {
+
+        public SanityCheckTimeout(SchedulePeriodicTimeout request) {
+            super(request);
+        }
+
+        @Override
+        public String toString() {
+            return "SANITYCHECK_TIMEOUT";
         }
     }
 }
