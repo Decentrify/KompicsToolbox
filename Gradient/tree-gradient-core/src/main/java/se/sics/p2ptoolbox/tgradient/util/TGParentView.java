@@ -100,6 +100,9 @@ public class TGParentView {
                 continue;
             }
             if (!filter.retainOther(selfView.getContent(), gc.getContent())) {
+                //The Filter says the new descriptor should not be in the view.
+                //If we have an old descriptor in the view, we should remove it.
+                view.remove(gc.getSource().getBase());
                 continue;
             }
             GradientContainer currentGc = view.get(gc.getSource().getBase());

@@ -16,13 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.gradient;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface GradientFilter<E extends Object> {
+
+    /**
+     * @return true if otherPV should be retained in the view, compared to the
+     * selfPV
+     */
     public boolean retainOther(E selfPV, E otherPV);
+
+    /**
+     * @return true if when changing from oldSelfPV to newSelfPV, a cleanup of
+     * gradient view should occur. 
+     */
     public boolean cleanOldView(E newSelfPV, E oldSelfPV);
 }
