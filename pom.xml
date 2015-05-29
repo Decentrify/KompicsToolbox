@@ -17,7 +17,7 @@
         <module>simulator</module>
         <module>leader-election</module>
         <module>chunk-manager</module>
-    </modules>
+  </modules>
    
     <distributionManagement>
         <repository>

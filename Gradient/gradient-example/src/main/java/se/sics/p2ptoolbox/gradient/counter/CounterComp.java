@@ -31,13 +31,9 @@ import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
-import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
-import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
 import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
@@ -50,7 +46,6 @@ public class CounterComp extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(CounterComp.class);
 
     private Positive gradient = requires(GradientPort.class);
-    private Positive croupier = requires(CroupierPort.class);
     private Positive timer = requires(Timer.class);
 
     private final Address selfAddress;
@@ -75,7 +70,6 @@ public class CounterComp extends ComponentDefinition {
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
-        subscribe(handleCroupierSample, croupier);
         subscribe(handleGradientSample, gradient);
         subscribe(handlePeriodicAction, timer);
     }
@@ -85,7 +79,6 @@ public class CounterComp extends ComponentDefinition {
         public void handle(Start event) {
             log.info("{} starting...", logPrefix);
             trigger(new GradientUpdate(new CounterView(counter)), gradient);
-            trigger(new CroupierUpdate(new CounterView(counter)), croupier);
             schedulePeriodicCounter();
         }
     };
@@ -94,15 +87,6 @@ public class CounterComp extends ComponentDefinition {
         @Override
         public void handle(Stop event) {
             log.info("{} stopping...", logPrefix);
-        }
-    };
-
-    Handler handleCroupierSample = new Handler<CroupierSample>() {
-
-        @Override
-        public void handle(CroupierSample sample) {
-            log.info("{} Croupier public sample:{}", logPrefix, sample.publicSample);
-            log.info("{} Croupier private sample:{}", logPrefix, sample.privateSample);
         }
     };
 
@@ -126,7 +110,6 @@ public class CounterComp extends ComponentDefinition {
             if (rand.nextDouble() > rate.getValue0()) {
                 counter = counter + rate.getValue1();
                 trigger(new GradientUpdate(new CounterView(counter)), gradient);
-                trigger(new CroupierUpdate(new CounterView(counter)), croupier);
             }
         }
 

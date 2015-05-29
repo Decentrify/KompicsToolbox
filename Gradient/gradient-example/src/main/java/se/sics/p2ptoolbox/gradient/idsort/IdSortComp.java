@@ -28,9 +28,6 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
-import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
-import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
 import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
@@ -44,7 +41,6 @@ public class IdSortComp extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(IdSortComp.class);
 
     private Positive gradient = requires(GradientPort.class);
-    private Positive croupier = requires(CroupierPort.class);
 
     private final Address selfAddress;
     private final String logPrefix;
@@ -58,7 +54,6 @@ public class IdSortComp extends ComponentDefinition {
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
-        subscribe(handleCroupierSample, croupier);
         subscribe(handleGradientSample, gradient);
     }
 
@@ -67,7 +62,6 @@ public class IdSortComp extends ComponentDefinition {
         public void handle(Start event) {
             log.info("{} starting...", logPrefix);
             trigger(new GradientUpdate(new IdView(((IntegerIdentifiable)selfAddress).getId())), gradient);
-            trigger(new CroupierUpdate(new IdView(((IntegerIdentifiable)selfAddress).getId())), croupier);
         }
     };
 
@@ -78,15 +72,6 @@ public class IdSortComp extends ComponentDefinition {
         }
     };
     
-     Handler handleCroupierSample = new Handler<CroupierSample>() {
-
-        @Override
-        public void handle(CroupierSample sample) {
-            log.info("{} croupier public sample:{}", logPrefix, sample.publicSample); 
-            log.info("{} croupier private sample:{}", logPrefix, sample.privateSample);
-        }
-     };
-
     Handler handleGradientSample = new Handler<GradientSample>() {
 
         @Override

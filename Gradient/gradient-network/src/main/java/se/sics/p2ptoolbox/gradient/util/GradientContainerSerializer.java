@@ -45,6 +45,7 @@ public class GradientContainerSerializer implements Serializer {
         GradientContainer obj = (GradientContainer)o;
         buf.writeInt(obj.getAge());
         Serializers.lookupSerializer(DecoratedAddress.class).toBinary(obj.getSource(), buf);
+        buf.writeInt(obj.rank);
         Serializers.toBinary(obj.getContent(), buf);
     }
 
@@ -52,7 +53,8 @@ public class GradientContainerSerializer implements Serializer {
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         int age = buf.readInt();
         DecoratedAddress src = (DecoratedAddress)Serializers.lookupSerializer(DecoratedAddress.class).fromBinary(buf, hint);
+        int rank = buf.readInt();
         Object content = Serializers.fromBinary(buf, hint);
-        return new GradientContainer(src, content, age);
+        return new GradientContainer(src, content, age, rank);
     }
 }

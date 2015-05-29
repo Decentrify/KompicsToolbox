@@ -35,6 +35,14 @@ public class IdSortSimulationScenarios {
                         raise(nodes, IdSortScenarioOperations.startNodeOp, new BasicIntSequentialDistribution(1));
                     }
                 };
+                
+                StochasticProcess newPeers = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(nodes, IdSortScenarioOperations.startNodeOp, new BasicIntSequentialDistribution(1 + nodes));
+                    }
+                };
+                
                 StochasticProcess fetchSimulationResult = new StochasticProcess() {
                     {
                         eventInterArrivalTime(constant(1000));
@@ -43,7 +51,8 @@ public class IdSortSimulationScenarios {
                 };
 
                 startPeers.start();
-                fetchSimulationResult.startAfterTerminationOf(simulatedSeconds * 1000, startPeers);
+                newPeers.startAfterTerminationOf(simulatedSeconds*1000, startPeers);
+                fetchSimulationResult.startAfterTerminationOf(simulatedSeconds * 1000, newPeers);
                 terminateAfterTerminationOf(5000, fetchSimulationResult);
             }
         };

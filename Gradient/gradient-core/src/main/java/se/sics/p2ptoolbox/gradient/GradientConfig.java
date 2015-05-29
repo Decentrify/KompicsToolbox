@@ -37,6 +37,7 @@ public class GradientConfig {
     public final int shufflePeriod;
     public final int shuffleTimeout;
     public final double exchangeSMTemp;
+    public final int oldThreshold;
 
     public GradientConfig(Config config) {
         try {
@@ -49,19 +50,21 @@ public class GradientConfig {
                 throw new RuntimeException("shufflePeriod / shuffleTimeout missconfiguration");
             }
             this.exchangeSMTemp = config.getDouble("gradient.exchangeSMTemp");
-            log.info("view size:{} shuffle size:{} period:{} timeout:{} exchangeSMTemp:{}", 
-                    new Object[]{viewSize, shuffleSize, shufflePeriod, shuffleTimeout, exchangeSMTemp});
+            this.oldThreshold = config.getInt("gradient.oldThreshold");
+            log.info("view size:{} shuffle size:{} period:{} timeout:{} exchangeSMTemp:{} oldThreshold:{}", 
+                    new Object[]{viewSize, shuffleSize, shufflePeriod, shuffleTimeout, exchangeSMTemp, oldThreshold});
         } catch (ConfigException.Missing ex) {
             log.error("missing configuration parameter - {}", ex.getMessage());
             throw new RuntimeException(ex);
         }
     }
     
-    public GradientConfig(int viewSize, int shuffleSize, int shufflePeriod, int shuffleTimeout, double exchangeSMTemp){
+    public GradientConfig(int viewSize, int shuffleSize, int shufflePeriod, int shuffleTimeout, double exchangeSMTemp, int oldThreshold){
         this.viewSize = viewSize;
         this.shuffleSize = shuffleSize;
         this.shufflePeriod = shufflePeriod;
         this.shuffleTimeout = shuffleTimeout;
         this.exchangeSMTemp = exchangeSMTemp;
+        this.oldThreshold = oldThreshold;
     }
 }

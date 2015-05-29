@@ -37,7 +37,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class IdSortSimulationTest {
     @Test
     public void simpleBootTest() {
-        simpleBoot(15, 1234, 100, 1000);
+        simpleBoot(1500, 1234, 100, 1000);
     }
 
     private void simpleBoot(int nodes, long seed, int simulatedSeconds, int softMaxTemperature) {

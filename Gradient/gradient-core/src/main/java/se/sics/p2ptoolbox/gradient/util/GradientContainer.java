@@ -30,16 +30,14 @@ public class GradientContainer<C extends Object> implements Container<DecoratedA
 
     private int age;
     private DecoratedAddress src;
+    public final int rank;
     private final C content;
 
-    public GradientContainer(DecoratedAddress src, C content, int age) {
+    public GradientContainer(DecoratedAddress src, C content, int age, int rank) {
         this.age = age;
         this.src = src;
+        this.rank = rank;
         this.content = content;
-    }
-
-    public GradientContainer(DecoratedAddress src, C content) {
-        this(src, content, 0);
     }
 
     @Override
@@ -65,12 +63,12 @@ public class GradientContainer<C extends Object> implements Container<DecoratedA
      * shallow copy - only age is not shared
      */
     public GradientContainer<C> getCopy() {
-        return new GradientContainer(src, content, age);
+        return new GradientContainer(src, content, age, rank);
     }
     
     @Override
     public String toString() {
-        return "<" + src + "," + age + ">:" + content;
+        return "<" + src + "," + age + ">:rank:" + rank + ":value:" + content;
     }
 
     @Override

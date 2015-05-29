@@ -29,4 +29,5 @@ public class Java6Util {
         }
         return o1 < o2 ? -1 : 1;
     }
+    
 }

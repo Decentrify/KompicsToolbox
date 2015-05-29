@@ -19,6 +19,7 @@
 package se.sics.p2ptoolbox.gradient.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.gradient.GradientComp;
+import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.GradientFilter;
 import se.sics.p2ptoolbox.util.InvertedComparator;
 import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
@@ -48,22 +50,20 @@ public class GradientView {
     private final Comparator<GradientContainer> utilityComp;
     private final GradientFilter filter;
 
-    private final int viewSize;
+    private final ViewConfig config;
     private final Random rand;
-    private final double softMaxTemp;
     private final String logPrefix;
 
     private final Map<Address, GradientContainer> view;
 
-    public GradientView(String logPrefix, Comparator utilityComparator, GradientFilter filter, int viewSize, Random rand, double softMaxTemp) {
+    public GradientView(String logPrefix, Comparator utilityComparator, GradientFilter filter, Random rand, ViewConfig config) {
         this.utilityComp = new WrapperComparator<GradientContainer>(utilityComparator);
         this.ageComparator = new InvertedComparator<GradientContainer>(new GradientContainerAgeComparator()); //we want old ages in the begining
         this.filter = filter;
         this.view = new HashMap<Address, GradientContainer>();
-        this.viewSize = viewSize;
         this.rand = rand;
-        this.softMaxTemp = softMaxTemp;
         this.logPrefix = logPrefix;
+        this.config = config;
     }
 
     public boolean isEmpty() {
@@ -93,12 +93,15 @@ public class GradientView {
         merge(newSet, selfView);
     }
 
-    public void merge(Set<GradientContainer> newSample, GradientContainer selfView) {
+    public void merge(Collection<GradientContainer> newSample, GradientContainer selfView) {
         for (GradientContainer gc : newSample) {
             if (gc.getSource().getBase().equals(selfView.getSource().getBase())) {
                 continue;
             }
             if (!filter.retainOther(selfView.getContent(), gc.getContent())) {
+                //The Filter says the new descriptor should not be in the view.
+                //If we have an old descriptor in the view, we should remove it.
+                view.remove(gc.getSource().getBase());
                 continue;
             }
             GradientContainer currentGc = view.get(gc.getSource().getBase());
@@ -111,15 +114,17 @@ public class GradientView {
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
-        if (view.size() > viewSize) {
+        if (view.size() > config.viewSize) {
             for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
-                log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
-                view.remove(toRemove.getSource().getBase());
+                if (toRemove.getAge() >= config.oldThreshold) {
+                    log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
+                    view.remove(toRemove.getSource().getBase());
+                }
             }
         }
-        if (view.size() > viewSize) {
+        if (view.size() > config.viewSize) {
             GradientPreferenceComparator<GradientContainer> preferenceComparator = new GradientPreferenceComparator<GradientContainer>(selfView, utilityComp);
-            int reduceSize = view.size() - viewSize;
+            int reduceSize = view.size() - config.viewSize;
             for (GradientContainer toRemove : reduceSize(preferenceComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
                 view.remove(toRemove.getSource().getBase());
@@ -133,7 +138,7 @@ public class GradientView {
             return null;
         }
 
-        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, softMaxTemp);
+        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, config.exchangeSMTemp);
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
         Comparator<GradientContainer> selfPrefferenceComparator = new InvertedComparator<GradientContainer>(new GradientPreferenceComparator<GradientContainer>(selfCPV, utilityComp));
         Collections.sort(sortedList, selfPrefferenceComparator);
@@ -164,6 +169,31 @@ public class GradientView {
 
     public void clean(DecoratedAddress node) {
         view.remove(node.getBase());
+    }
+
+    public boolean checkIfTop(GradientContainer selfView) {
+        if (view.size() < config.viewSize) {
+            return false;
+        }
+        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
+        Collections.sort(sortedList, utilityComp);
+        return utilityComp.compare(selfView, sortedList.get(sortedList.size() - 1)) > 0;
+    }
+
+    public int getDistTo(GradientContainer selfView, GradientContainer targetView) {
+        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
+        Collections.sort(sortedList, utilityComp);
+        int dist = 0;
+        for (GradientContainer gc : sortedList) {
+            if (utilityComp.compare(selfView, gc) >= 0) {
+                continue;
+            }
+            if (utilityComp.compare(targetView, gc) < 0) {
+                break;
+            }
+            dist++;
+        }
+        return dist;
     }
 
     /**
