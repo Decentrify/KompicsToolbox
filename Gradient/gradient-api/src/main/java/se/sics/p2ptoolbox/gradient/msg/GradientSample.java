@@ -28,11 +28,12 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  * Created by babbarshaer on 2015-02-26.
  */
 public class GradientSample<C extends Object> extends GradientMsg.OneWay {
-    
+    public final C selfView;
     public final Collection<Container<DecoratedAddress, C>> gradientSample;
     
-    public GradientSample(Collection<Container<DecoratedAddress, C>> gradientPeerViewSet) {
+    public GradientSample(C selfView, Collection<Container<DecoratedAddress, C>> gradientPeerViewSet) {
         super();
+        this.selfView = selfView;
         this.gradientSample = gradientPeerViewSet;
     }
 }

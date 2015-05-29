@@ -1,9 +1,0 @@
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/msg/LeaderUpdate.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/msg/ElectionState.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/LEContainer.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/ports/LeaderElectionPort.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/msg/mock/MockedGradientUpdate.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/msg/ViewUpdate.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/msg/LeaderState.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/LCPeerView.java
-/home/babbar/workspace/globalcommon/leader-election/election-api/src/main/java/se/sics/p2ptoolbox/election/api/ports/TestPort.java
