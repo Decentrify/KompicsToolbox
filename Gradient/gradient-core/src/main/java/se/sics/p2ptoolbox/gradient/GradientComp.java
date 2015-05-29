@@ -216,7 +216,7 @@ public class GradientComp extends ComponentDefinition {
 
             if (!view.isEmpty()) {
                 log.info("{} view:{}", logPrefix, view.getAllCopy());
-                trigger(new GradientSample(view.getAllCopy()), gradientPort);
+                trigger(new GradientSample(selfView.getContent(), view.getAllCopy()), gradientPort);
             }
 
             // NOTE:

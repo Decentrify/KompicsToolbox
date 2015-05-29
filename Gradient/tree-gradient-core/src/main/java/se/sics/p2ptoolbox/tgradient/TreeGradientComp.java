@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -258,7 +257,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
             if (!parents.isEmpty()) {
                 log.info("{} view:{}", logPrefix, parents.getAllCopy());
-                trigger(new GradientSample(parents.getAllCopy()), tGradientPort);
+                trigger(new GradientSample(selfView.getContent(), parents.getAllCopy()), tGradientPort);
             }
 
             // NOTE:
