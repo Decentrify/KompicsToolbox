@@ -22,6 +22,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -45,7 +46,12 @@ public class SystemConfig {
 
     public SystemConfig(Config config) {
         try {
-            seed = config.getLong("system.seed");
+            try {
+                seed = config.getLong("system.seed");
+            } catch (ConfigException.Missing ex) {
+                Random r = new SecureRandom();
+                seed = r.nextLong();
+            }
             rand = new Random(seed);
             InetAddress selfIp = InetAddress.getByName(config.getString("system.self.ip"));
             int selfPort = config.getInt("system.self.port");
