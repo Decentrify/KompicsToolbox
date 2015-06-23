@@ -1,10 +1,7 @@
 package se.sics.p2ptoolbox.election.api.ports;
 
 import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.election.api.msg.ElectionState;
-import se.sics.p2ptoolbox.election.api.msg.LeaderState;
-import se.sics.p2ptoolbox.election.api.msg.LeaderUpdate;
-import se.sics.p2ptoolbox.election.api.msg.ViewUpdate;
+import se.sics.p2ptoolbox.election.api.msg.*;
 
 /**
  * Main Port to communicate with the Leader Election Module.
@@ -17,6 +14,7 @@ public class LeaderElectionPort extends PortType{{
 
     indication(LeaderState.ElectedAsLeader.class);
     indication(LeaderState.TerminateBeingLeader.class);
+    indication(ExtensionUpdate.class);
 
     indication(ElectionState.EnableLGMembership.class);
     indication(ElectionState.DisableLGMembership.class);

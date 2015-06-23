@@ -4,6 +4,7 @@ import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.security.PublicKey;
+import java.util.List;
 
 /**
  * Indication event from the election component,

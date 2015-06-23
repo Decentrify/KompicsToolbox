@@ -12,6 +12,7 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.LEContainer;
+import se.sics.p2ptoolbox.election.api.msg.ExtensionUpdate;
 import se.sics.p2ptoolbox.election.api.msg.LeaderState;
 import se.sics.p2ptoolbox.election.api.msg.ViewUpdate;
 import se.sics.p2ptoolbox.election.api.msg.mock.MockedGradientUpdate;
@@ -66,6 +67,7 @@ public class ElectionLeader extends ComponentDefinition {
     private DecoratedAddress selfAddress;
     private Map<BasicAddress, LEContainer> addressContainerMap;
     private LeaderFilter filter;
+    private int leaderGroupSize;
 
     // Promise Sub Protocol.
     private UUID electionRoundId;
@@ -131,6 +133,7 @@ public class ElectionLeader extends ComponentDefinition {
         isConverged = false;
         electionRoundTracker = new PromiseResponseTracker();
 
+        this.leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
         this.selfLCView = init.initialView;
         this.selfLEContainer = new LEContainer(selfAddress, selfLCView);
         this.addressContainerMap = new HashMap<BasicAddress, LEContainer>();
@@ -345,9 +348,7 @@ public class ElectionLeader extends ComponentDefinition {
         applicationAck = false;
 
         Promise.Request request = new Promise.Request(selfAddress, selfLCView, electionRoundId);
-        int leaderGroupSize = Math.min(Math.round((float) config.getViewSize() / 2), config.getMaxLeaderGroupSize());
         Collection<LEContainer> leaderGroupNodes = createLeaderGroupNodes(leaderGroupSize);
-
 
         if (leaderGroupNodes.size() < leaderGroupSize) {
             logger.error(" {} : Not asserting self as leader as the leader group size is less than required.", selfAddress.getId());
@@ -546,29 +547,29 @@ public class ElectionLeader extends ComponentDefinition {
 
                     logger.warn("{}: Trying to extend the leadership.", selfAddress.getId());
 
-                    int leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
-                    Collection<LEContainer> lowerNodes = createLeaderGroupNodes(leaderGroupSize);
-
-                    if (lowerNodes.size() < leaderGroupSize) {
+                    Collection<DecoratedAddress> lgNodes = constructLGNodes(leaderGroupSize);
+                    if (lgNodes.size() < leaderGroupSize) {
 
                         logger.error("{}: Terminate being the leader as state seems to be corrupted.", selfAddress.getId());
                         terminateBeingLeader();
                         return;
                     }
 
-                    lowerNodes.add(new LEContainer(selfAddress, selfLCView));
-
-
+                    lgNodes.add(selfAddress);
                     UUID roundId = UUID.randomUUID();
-
                     ExtensionRequest request = new ExtensionRequest(selfAddress, publicKey, selfLCView, roundId);
 
-                    for (LEContainer container : lowerNodes) {
+                    for (DecoratedAddress memberAddress : lgNodes) {
 
-                        DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, container.getSource(), Transport.UDP);
+                        DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, memberAddress, Transport.UDP);
                         BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest> extensionRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest>(header, request);
                         trigger(extensionRequest, networkPositive);
                     }
+
+
+                    // Inform the application about the updated group membership.
+                    ExtensionUpdate extensionUpdate = new ExtensionUpdate(new ArrayList<DecoratedAddress>(lgNodes));
+                    trigger(extensionUpdate, electionPort);
 
                     // Extend the lease.
                     ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
@@ -580,10 +581,6 @@ public class ElectionLeader extends ComponentDefinition {
                     logger.warn("{}: Will Not extend the lease anymore.", selfAddress.getId());
                     terminateBeingLeader();
                 }
-            }
-            else{
-                logger.debug(" ~~~~~~~~~~~~~~ {}: Lease Timeout not found .... ~~~~~~~~~~~~~~~~~", selfAddress.getId());
-
             }
         }
     };
@@ -616,11 +613,11 @@ public class ElectionLeader extends ComponentDefinition {
 
             SortedSet<LCPeerView> updatedSortedContainerSet = new TreeSet<LCPeerView>(lcPeerViewComparator);
 
-            for (LEContainer container : addressContainerMap.values()) {
-                updatedSortedContainerSet.add(container.getLCPeerView().disableLGMembership());
+            for( LEContainer container : addressContainerMap.values() ) {
+                updatedSortedContainerSet.add( container.getLCPeerView().disableLGMembership());
             }
-            LCPeerView updatedTempSelfView = selfLCView.disableLGMembership();
 
+            LCPeerView updatedTempSelfView = selfLCView.disableLGMembership();
             if (updatedSortedContainerSet.tailSet(updatedTempSelfView).size() != 0) {
                 extensionPossible = false;
             }
@@ -628,6 +625,53 @@ public class ElectionLeader extends ComponentDefinition {
 
         return extensionPossible;
     }
+
+
+    /**
+     * The leader needs to inform the application and other nodes about the
+     * updated group membership. This method constructs the updated group member based on
+     * the utility.
+     *
+     * @param groupSize group size.
+     * @return leader group nodes.
+     */
+    private Collection<DecoratedAddress> constructLGNodes (int groupSize){
+
+        Collection<DecoratedAddress> groupNodes = new ArrayList<DecoratedAddress>();
+        TreeSet<LEContainer> lgDisabledSet = disableLGMembership(addressContainerMap.values());
+
+        Iterator<LEContainer> itr = lgDisabledSet.descendingIterator();
+        while(itr.hasNext() && groupSize > 0){
+            groupNodes.add(itr.next().getSource());
+            groupSize --;
+        }
+
+        return groupNodes;
+    }
+
+
+    /**
+     * Construct an a sorted set with nodes which has the leader group membership
+     * checked off.
+     *
+     * @return Sorted Set.
+     */
+    private TreeSet<LEContainer> disableLGMembership(Collection<LEContainer> collection){
+
+        TreeSet<LEContainer> set = new TreeSet<LEContainer>(leContainerComparator);
+
+        LEContainer update;
+        for(LEContainer container : collection) {
+
+            update = new LEContainer( container.getSource(),
+                    container.getLCPeerView().disableLGMembership());
+
+            set.add(update);
+        }
+
+        return set;
+    }
+
 
 
     /**
@@ -641,7 +685,6 @@ public class ElectionLeader extends ComponentDefinition {
         Collection<LEContainer> collection = new ArrayList<LEContainer>();
 
         if (size <= lowerUtilityNodes.size()) {
-
             Iterator<LEContainer> iterator = ((TreeSet) lowerUtilityNodes).descendingIterator();
             while (iterator.hasNext() && size > 0) {
 
