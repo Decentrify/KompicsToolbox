@@ -33,6 +33,10 @@ public class BasicLossyLinkModel implements NetworkModel {
     private final Random rand;
     
     public BasicLossyLinkModel(int id, NetworkModel baseNM, int lossRatePercentage, Random rand) {
+
+        if( lossRatePercentage > 100 || lossRatePercentage < 0 ){
+            throw new RuntimeException("Loss Percentage Range 0  - 100 ");
+        }
         this.id = id;
         this.baseNM = baseNM;
         this.lossRatePercentage = lossRatePercentage;
@@ -42,7 +46,9 @@ public class BasicLossyLinkModel implements NetworkModel {
     @Override
     public long getLatencyMs(Msg message) {
         int lossChance = rand.nextInt(101);
-        if(lossChance >= lossRatePercentage) {
+        if(lossChance > (100 - lossRatePercentage)) {
+
+            System.out.println(" Choking the link .... ");
             return -1;
         }
         return baseNM.getLatencyMs(message);
