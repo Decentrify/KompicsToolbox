@@ -176,7 +176,7 @@ public class TreeGradientComp extends ComponentDefinition {
             int rank = (selfView == null ? Integer.MAX_VALUE : selfView.rank);
             selfView = new GradientContainer(systemConfig.self, update.view, 0, rank);
             trigger(update, gradientPort);
-            trigger(new CroupierUpdate(update.view), croupierPort);
+//            trigger(new CroupierUpdate(update.view), croupierPort);
         }
     };
 
