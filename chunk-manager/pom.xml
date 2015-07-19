@@ -2,38 +2,42 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>global-common</artifactId>
-        <groupId>se.kth.co</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <groupId>se.sics</groupId>
+        <artifactId>kompics-toolbox</artifactId>
+        <version>2.0-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox</groupId>
+    <groupId>se.sics.ktoolbox</groupId>
     <artifactId>chunk-manager</artifactId>
-    <version>1.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
     <name>Chunk Manager</name>
+    <version>1.2-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <modules>
         <module>cm-core</module>
-    <module>cm-network</module>
-    <module>cm-example</module>
-  </modules>
+        <module>cm-network</module>
+        <module>cm-example</module>
+    </modules>
   
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <java.compiler.version>1.6</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kompics.version>0.8.0-SNAPSHOT</kompics.version>
-        <util.version>1.3-SNAPSHOT</util.version>
+        <kompics.version>0.8.1-SNAPSHOT</kompics.version>
+        <util.version>1.4-SNAPSHOT</util.version>
+        <logger.version>1.5.6</logger.version>
+        <tuples.version>1.2</tuples.version>
+        <guava.version>18.0</guava.version>
+        <config.version>1.2.1</config.version>
     </properties>
   
     <dependencies>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <groupId>se.sics.ktoolbox.util</groupId>
             <artifactId>basic</artifactId>
             <version>${util.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <groupId>se.sics.ktoolbox.util</groupId>
             <artifactId>kompics-basic</artifactId>
             <version>${util.version}</version>
         </dependency>
@@ -58,40 +62,26 @@
             <artifactId>kompics-component-netty-network</artifactId>
             <version>${kompics.version}</version>
         </dependency>
-        
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.5.6</version>
-        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
-            <version>1.5.6</version>
+            <version>${logger.version}</version>
         </dependency>
         <dependency>
             <groupId>org.javatuples</groupId>
             <artifactId>javatuples</artifactId>
-            <version>1.2</version>
-            <type>jar</type>
+            <version>${tuples.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>18.0</version>
-            <type>jar</type>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
-            <version>1.2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <type>jar</type>
+            <version>${config.version}</version>
         </dependency>
     </dependencies>
 </project>

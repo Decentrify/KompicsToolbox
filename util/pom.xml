@@ -2,13 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>global-common</artifactId>
-        <groupId>se.kth.co</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <artifactId>kompics-toolbox</artifactId>
+        <groupId>se.sics</groupId>
+        <version>2.0-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox</groupId>
+    <groupId>se.sics.ktoolbox</groupId>
     <artifactId>util</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Util</name>
     <modules>
@@ -21,47 +21,42 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kompics.version>0.8.1-SNAPSHOT</kompics.version>
+        <junit.version>4.11</junit.version>
+        <guava.version>18.0</guava.version>
+        <tuples.version>1.2</tuples.version>
+        <config.version>1.2.1</config.version>
+        <logger.version>1.5.6</logger.version>
     </properties>
     
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <type>jar</type>
-        </dependency>
-
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>18.0</version>
-            <type>jar</type>
+            <version>${guava.version}</version>
         </dependency>
-                
         <dependency>
             <groupId>org.javatuples</groupId>
             <artifactId>javatuples</artifactId>
-            <version>1.2</version>
-            <type>jar</type>
+            <version>${tuples.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>${config.version}</version>
         </dependency>
         
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.5.6</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+            <version>${junit.version}</version>
         </dependency>
-        
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
-            <version>1.5.6</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.typesafe</groupId>
-            <artifactId>config</artifactId>
-            <version>1.2.1</version>
+            <version>${logger.version}</version>
         </dependency>
     </dependencies>
 </project>

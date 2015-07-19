@@ -7,11 +7,10 @@ import se.sics.gvod.common.msgs.MessageEncodingException;
 import se.sics.gvod.net.util.UserTypesDecoderFactory;
 import se.sics.gvod.net.util.UserTypesEncoderFactory;
 import se.sics.kompics.network.netty.serialization.Serializer;
-import sun.misc.BASE64Encoder;
-
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import sun.misc.BASE64Encoder;
 
 
 /**

@@ -3,23 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>se.sics.p2ptoolbox.aggregator</groupId>
+        <groupId>se.sics.ktoolbox</groupId>
         <artifactId>aggregator</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
-
-    <groupId>se.sics.p2ptoolbox.aggregator</groupId>
+    <groupId>se.sics.ktoolbox.aggregator</groupId>
     <artifactId>aggregator-api</artifactId>
     <name>Aggregator API</name>
-
-    <dependencies>
-        <!--<dependency>-->
-            <!--<groupId>se.sics.p2ptoolbox</groupId>-->
-            <!--<artifactId>serialization-util</artifactId>-->
-            <!--<version>${p2ptoolbox.serialization.version}</version>-->
-        <!--</dependency>-->
-    </dependencies>
-
 </project>
