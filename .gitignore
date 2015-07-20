@@ -43,18 +43,24 @@ lib
 /netty-test/target/
 /chunk-manager/target/
 /util/target/
-/Croupier/croupier-api/target/
+/croupier/croupier-api/target/
 /serialization-util/target/
-/Croupier/croupier-core/target/
-/Croupier/croupier-example/target/
-Croupier/target/
-videostream/target/
+/croupier/croupier-core/target/
+/croupier/croupier-example/target/
+/croupier/croupier-network/target/
+/croupier/target/
+
+/videostream/target/
 
 
 #gradient
-/Gradient/gradient-api/target/
-/Gradient/gradient-core/target/
-/Gradient/gradient-example/target/
+/gradient/gradient-api/target/
+/gradient/gradient-core/target/
+/gradient/gradient-example/target/
+/gradient/gradient-network/target/
+/gradient/tree-gradient-core/target/
+/gradient/tree-gradient-example/target/
+/gradient/target/
 
 #aggregator
 /aggregator/target/
@@ -72,26 +78,23 @@ videostream/target/
 /leader-election/election-example/target/
 /leader-election/election-network/target/
 
-Gradient/target/
 /video-stream/target/
 /videostream/core/target/
 /videostream/example/target/
 /videostream/ws-example/target/
+
 /util/basic/target/
 /util/kompics-basic/target/
 /util/vod-net-helper/target/
+
 /simulator/simulator-core/target/
 /simulator/simulator-dsl/target/
 /simulator/simulator-example/target/
 /simulator/simulator-basic/target/
-/Croupier/croupier-network/target/
-/Gradient/gradient-network/target/
 /util/util-serializer/target/
 
 #chunk-manager
 /chunk-manager/cm-core/target
 /chunk-manager/cm-network/target
 /chunk-manager/cm-example/target
-/tree-gradient/tgradient-core/target/
-/Gradient/tree-gradient-core/target/
-/Gradient/tree-gradient-example/target/
+

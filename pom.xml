@@ -11,9 +11,9 @@
         <module>croupier</module>
         <module>gradient</module>
         <module>chunk-manager</module>
-        <module>aggregator</module>
+        <module>aggregator</module> 
         <module>videostream</module> <!-- commented main... fix later-->
-        <module>leader-election</module>
+        <module>leader-election</module> 
 <!--        
         <module>g-common</module>
         <module>netty-test</module>

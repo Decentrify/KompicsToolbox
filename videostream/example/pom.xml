@@ -13,7 +13,7 @@
     <url>http://maven.apache.org</url>
     <dependencies>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.videostream</groupId>
+            <groupId>se.sics.ktoolbox.videostream</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
