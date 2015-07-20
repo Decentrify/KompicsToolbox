@@ -27,6 +27,7 @@
         <tuples.version>1.2</tuples.version>
         <config.version>1.2.1</config.version>
         <logger.version>1.5.6</logger.version>
+        <netty.version>5.0.0.Alpha1</netty.version>
     </properties>
     
     <dependencies>
