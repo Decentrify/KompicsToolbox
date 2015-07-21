@@ -26,18 +26,21 @@ import se.sics.ktoolbox.ipsolver.msg.GetIp;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class IpHelper {
-    public static boolean filter(InetAddress addr, EnumSet<GetIp.NetworkInterfacesMask> filterSet) {
+    public static boolean filter(InetAddress addr, EnumSet<GetIp.NetworkInterfacesMask> networkInterfaces) {
+        if(networkInterfaces.contains(GetIp.NetworkInterfacesMask.ALL)) {
+            return false;
+        }
         if (isLoopback(addr)) {
-            return filterSet.contains(GetIp.NetworkInterfacesMask.IGNORE_LOOPBACK);
+            return !networkInterfaces.contains(GetIp.NetworkInterfacesMask.LOOPBACK);
         }
         if (isTenDot(addr)) {
-            return filterSet.contains(GetIp.NetworkInterfacesMask.IGNORE_TEN_DOT_PRIVATE);
+            return !networkInterfaces.contains(GetIp.NetworkInterfacesMask.TEN_DOT_PRIVATE);
         }
         if (isPrivate(addr)) {
-            return filterSet.contains(GetIp.NetworkInterfacesMask.IGNORE_PRIVATE);
+            return !networkInterfaces.contains(GetIp.NetworkInterfacesMask.PRIVATE);
         }
         //at this point we know the address is public, otherwise we would have returned already
-        return filterSet.contains(GetIp.NetworkInterfacesMask.IGNORE_PUBLIC);
+        return !networkInterfaces.contains(GetIp.NetworkInterfacesMask.PUBLIC);
     }
 
     public static boolean isLoopback(InetAddress adr) {

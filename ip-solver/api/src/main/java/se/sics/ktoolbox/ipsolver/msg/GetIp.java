@@ -28,36 +28,23 @@ import se.sics.ktoolbox.ipsolver.util.IpAddressStatus;
 
 /**
  * implements Direct.Request/Response - use with answer and not trigger
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class GetIp {
 
     public static class Req extends Request {
 
-        public final int upnpMappedPort;
-        public final Protocol protocol;
-        public final EnumSet<NetworkInterfacesMask> filterInterfaces;
+        public final EnumSet<NetworkInterfacesMask> netInterfaces;
 
-        public Req(Protocol protocol, EnumSet<NetworkInterfacesMask> filterInterfaces, int upnpMapPort) {
+        public Req(EnumSet<NetworkInterfacesMask> netInterfaces) {
             super();
-            this.upnpMappedPort = upnpMapPort;
-            this.protocol = protocol;
-            this.filterInterfaces = EnumSet.copyOf(filterInterfaces);
-        }
-
-        /**
-         * Ignores any loopback addresses
-         */
-        public Req() {
-            this(EnumSet.of(NetworkInterfacesMask.IGNORE_LOOPBACK));
-        }
-
-        public Req(EnumSet<NetworkInterfacesMask> ignoreNetInterfaces) {
-            this(Protocol.NONE_SPECIFIED, ignoreNetInterfaces, 0);
+            this.netInterfaces = netInterfaces;
         }
     }
 
     public static class Resp implements Response {
+
         public final List<IpAddressStatus> addrs;
         public final InetAddress boundIp;
 
@@ -98,14 +85,16 @@ public class GetIp {
     }
 
     public static enum Protocol {
+
         UDP, TCP, NONE_SPECIFIED
     };
-    
+
     public static enum NetworkInterfacesMask {
-        IGNORE_PRIVATE /* 192.168.*.* IP addresses*/,
-        IGNORE_TEN_DOT_PRIVATE /* 10.*.*.* IP addresses*/,
-        IGNORE_LOOPBACK ,
-        IGNORE_PUBLIC /*all public IP addresses - non 192., 10.0, and 127. addresses*/,
-        NO_MASK
+
+        PRIVATE,
+        TEN_DOT_PRIVATE,
+        LOOPBACK,
+        PUBLIC,
+        ALL
     };
 }

@@ -14,7 +14,8 @@
     <modules>
         <module>api</module>
         <module>core</module>
-    </modules>
+    <module>example</module>
+  </modules>
   
     <properties>
         <maven.compiler.source>1.6</maven.compiler.source>

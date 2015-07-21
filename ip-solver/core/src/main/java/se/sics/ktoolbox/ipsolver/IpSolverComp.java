@@ -36,10 +36,8 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.ktoolbox.ipsolver.util.IpAddressStatus;
 import se.sics.ktoolbox.ipsolver.util.IpHelper;
@@ -51,7 +49,6 @@ public class IpSolverComp extends ComponentDefinition {
 
     private static final Logger LOG = LoggerFactory.getLogger(IpSolverComp.class);
     private Negative<IpSolverPort> ipSolver = negative(IpSolverPort.class);
-    private Positive<Timer> timer = positive(Timer.class);
 
     private final String logPrefix = "";
 
@@ -86,7 +83,7 @@ public class IpSolverComp extends ComponentDefinition {
         public void handle(GetIp.Req req) {
             LOG.debug("{}GetIp request", logPrefix);
             try {
-                Set<IpAddressStatus> niSet = getLocalNetworkInterfaces(req.filterInterfaces);
+                Set<IpAddressStatus> niSet = getLocalNetworkInterfaces(req.netInterfaces);
                 //TODO Alex - sort the addresses based on the IpComparator?
                 ArrayList<IpAddressStatus> addressList = new ArrayList<IpAddressStatus>(niSet);
                 InetAddress boundIp = InetAddress.getLocalHost();
@@ -102,7 +99,7 @@ public class IpSolverComp extends ComponentDefinition {
         }
     };
     
-    Set<IpAddressStatus> getLocalNetworkInterfaces(EnumSet<GetIp.NetworkInterfacesMask> filterSet) throws SocketException {
+    Set<IpAddressStatus> getLocalNetworkInterfaces(EnumSet<GetIp.NetworkInterfacesMask> netInterfaces) throws SocketException {
         Set<IpAddressStatus> addresses = new HashSet<IpAddressStatus>();
 
         Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
@@ -125,7 +122,7 @@ public class IpSolverComp extends ComponentDefinition {
                     continue;
                 }
 
-                if (IpHelper.filter(addr, filterSet)) {
+                if (!IpHelper.filter(addr, netInterfaces)) {
                     int networkPrefixLength = ifaceAddr.getNetworkPrefixLength();
                     int mtu = ni.getMTU();
                     boolean isUp = ni.isUp();

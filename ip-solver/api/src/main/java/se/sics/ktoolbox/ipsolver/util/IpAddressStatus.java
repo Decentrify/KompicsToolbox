@@ -97,4 +97,9 @@ public class IpAddressStatus {
         hash = 67 * hash + (this.addr != null ? this.addr.hashCode() : 0);
         return hash;
     }
+    
+    @Override
+    public String toString() {
+        return "NI:" + networkInterface.toString() + " addr:" + addr.toString() + " up:" + up + " mtu:" + mtu + " netPrefixLength:" + networkPrefixLength;
+    }
 }
