@@ -19,6 +19,7 @@
         <module>netty-test</module>
         <module>simulator</module>
         -->
+    <module>ip-solver</module>
   </modules>
    
     <distributionManagement>

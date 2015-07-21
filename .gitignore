@@ -92,3 +92,5 @@ lib
 #leftovers
 g-common/target/
 netty-test/target/
+/ip-solver/api/target/
+/ip-solver/core/target/
