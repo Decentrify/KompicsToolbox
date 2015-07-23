@@ -32,7 +32,7 @@ import se.sics.p2ptoolbox.util.managedStore.FileMngr;
 public class VideoStreamMngrImpl implements VideoStreamManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(VideoStreamMngrImpl.class);
-    private static final int piecesToSend = 5*1000;
+    private static final int piecesToSend = 1000;
     private final FileMngr fm;
     private final int pieceSize;
     private final long fileSize;
