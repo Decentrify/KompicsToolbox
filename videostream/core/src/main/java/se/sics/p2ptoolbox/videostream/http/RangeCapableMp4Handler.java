@@ -20,13 +20,11 @@ package se.sics.p2ptoolbox.videostream.http;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +57,7 @@ public class RangeCapableMp4Handler extends BaseHandler {
                 System.exit(1);
                 return;
             }
-            log.info("method:{} from:{} for range[{},{}]", 
+            log.info("method:{} from:{} for range[{},{}]",
                     new Object[]{exchange.getRequestMethod(), exchange.getRequestHeaders().get("referer"), range.getValue0(), range.getValue1()});
             byte[] content;
             if (range.getValue1() == null) {
@@ -67,17 +65,22 @@ public class RangeCapableMp4Handler extends BaseHandler {
             } else {
                 content = playMngr.getContent(range.getValue0(), range.getValue1());
             }
-            
+
             long rangeLength = content.length;
             long rangeEnd = range.getValue0() + (rangeLength == 0 ? 0 : rangeLength - 1);
             log.info("sending range[{},{}] range length:{}", new Object[]{range.getValue0(), rangeEnd, content.length});
             setRangeHeaders(exchange.getResponseHeaders(), contentLength, range.getValue0(), rangeEnd, rangeLength);
-            exchange.sendResponseHeaders(RANGE_CODE, rangeLength);
-            exchange.getResponseBody().write(content);
-            exchange.getResponseBody().flush();
-            exchange.getResponseBody().close();
-            log.debug("method:{} response code:{} response headers:{}",
+            try {
+                exchange.sendResponseHeaders(RANGE_CODE, rangeLength);
+                exchange.getResponseBody().write(content);
+                exchange.getResponseBody().flush();
+                exchange.getResponseBody().close();
+                log.debug("method:{} response code:{} response headers:{}",
                     new Object[]{exchange.getRequestMethod(), exchange.getResponseCode(), exchange.getResponseHeaders().entrySet()});
+            } catch (IOException ex) {
+                log.error("exception while writting back:{}", ex.getMessage());
+                throw ex;
+            }
         }
     }
 
