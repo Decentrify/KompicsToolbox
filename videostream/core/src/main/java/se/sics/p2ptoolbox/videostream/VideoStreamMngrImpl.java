@@ -33,6 +33,7 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(VideoStreamMngrImpl.class);
     private static final int piecesToSend = 1000;
+    private static final int waitTime = 20;
     private final FileMngr fm;
     private final int pieceSize;
     private final long fileSize;
@@ -70,15 +71,22 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
         }
 
         int restToSend = piecesToSend;
-        if(!fm.hasPiece(pieceIdx)) {
+        if (!fm.hasPiece(pieceIdx)) {
             playPos.set(pieceIdx);
         }
-        while(!fm.hasPiece(pieceIdx)) {
+
+        int currWaitTime = 0;
+        while (!fm.hasPiece(pieceIdx)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
                 LOG.error("error while waiting for pieces");
                 System.exit(1);
+            }
+            currWaitTime++;
+            if (currWaitTime > waitTime) {
+                LOG.warn("problem retrieving pieces");
+                return new byte[]{};
             }
         }
         while (fm.hasPiece(pieceIdx) && pieceIdx < endPieceIdx && restToSend > 0) {
@@ -130,5 +138,5 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
     public void stop() {
         playPos.set(0);
     }
-    
+
 }
