@@ -4,8 +4,6 @@
 *.jar
 *.war
 *.ear
-target/*
-/g-common/target/
 *.out
 
 # External tool builders
@@ -29,8 +27,6 @@ pocs
 #ignore IntelliJ IDEA files
 .idea
 *.iml
-/g-common/target/
-
 
 #lib
 lib
@@ -38,30 +34,33 @@ lib
 # log files
 *.log*
 
-/simulator/target/
-/serialization-util/target/
-/netty-test/target/
-/chunk-manager/target/
+#Util
 /util/target/
-/Croupier/croupier-api/target/
-/serialization-util/target/
-/Croupier/croupier-core/target/
-/Croupier/croupier-example/target/
-Croupier/target/
-videostream/target/
+/util/basic/target/
+/util/kompics-basic/target/
+/util/util-serializer/target/
 
+#Croupier
+/croupier/target/
+/croupier/croupier-api/target/
+/croupier/croupier-core/target/
+/croupier/croupier-example/target/
+/croupier/croupier-network/target/
 
 #gradient
-/Gradient/gradient-api/target/
-/Gradient/gradient-core/target/
-/Gradient/gradient-example/target/
+/gradient/target/
+/gradient/gradient-api/target/
+/gradient/gradient-core/target/
+/gradient/gradient-example/target/
+/gradient/gradient-network/target/
+/gradient/tree-gradient-core/target/
+/gradient/tree-gradient-example/target/
 
 #aggregator
 /aggregator/target/
 /aggregator/aggregator-api/target/
 /aggregator/aggregator-core/target/
 /aggregator/aggregator-example/target/
-/aggregator/aggregator-network/src/test/
 /aggregator/aggregator-network/target/
 
 
@@ -72,26 +71,27 @@ videostream/target/
 /leader-election/election-example/target/
 /leader-election/election-network/target/
 
-Gradient/target/
-/video-stream/target/
+#videostream
+/videostream/target/
 /videostream/core/target/
 /videostream/example/target/
 /videostream/ws-example/target/
-/util/basic/target/
-/util/kompics-basic/target/
-/util/vod-net-helper/target/
+
+#simulator
+/simulator/target/
 /simulator/simulator-core/target/
 /simulator/simulator-dsl/target/
 /simulator/simulator-example/target/
 /simulator/simulator-basic/target/
-/Croupier/croupier-network/target/
-/Gradient/gradient-network/target/
-/util/util-serializer/target/
 
 #chunk-manager
 /chunk-manager/cm-core/target
 /chunk-manager/cm-network/target
 /chunk-manager/cm-example/target
-/tree-gradient/tgradient-core/target/
-/Gradient/tree-gradient-core/target/
-/Gradient/tree-gradient-example/target/
+
+#leftovers
+g-common/target/
+netty-test/target/
+/ip-solver/api/target/
+/ip-solver/core/target/
+/ip-solver/example/target/

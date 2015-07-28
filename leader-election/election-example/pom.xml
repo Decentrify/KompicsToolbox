@@ -3,14 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>se.sics.p2ptoolbox.election</groupId>
+        <groupId>se.sics.ktoolbox</groupId>
         <artifactId>leader-election</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
-
-    <groupId>se.sics.p2ptoolbox.election</groupId>
+    <groupId>se.sics.ktoolbox.election</groupId>
     <artifactId>election-example</artifactId>
     <name>Leader Election Example</name>
 
@@ -19,26 +17,20 @@
     </properties>
 
     <dependencies>
-
         <dependency>
-            <groupId>se.sics.p2ptoolbox.election</groupId>
+            <groupId>se.sics.ktoolbox.election</groupId>
             <artifactId>election-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
-            <groupId>se.sics.p2ptoolbox.election</groupId>
+            <groupId>se.sics.ktoolbox.election</groupId>
             <artifactId>election-network</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>se.sics.p2ptoolbox.simulator</groupId>
             <artifactId>simulator-core</artifactId>
             <version>${simulator.version}</version>
         </dependency>
-
     </dependencies>
-    
-    
 </project>

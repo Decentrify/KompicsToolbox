@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>se.sics</groupId>
+        <artifactId>kompics-toolbox</artifactId>
+        <version>2.0-SNAPSHOT</version>
+    </parent>
+    <groupId>se.sics.ktoolbox</groupId>
+    <artifactId>gradient</artifactId>
+    <name>Gradient</name>
+    <version>1.5-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>gradient-api</module>
+        <module>gradient-core</module>
+        <module>gradient-example</module>
+        <module>gradient-network</module>
+        <module>tree-gradient-core</module>
+        <module>tree-gradient-example</module>
+    </modules>
+    
+    <properties>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <kompics.version>0.8.1-SNAPSHOT</kompics.version>
+        <croupier.version>1.6-SNAPSHOT</croupier.version>
+        <util.version>1.4-SNAPSHOT</util.version>
+        <guava.version>18.0</guava.version>
+        <tuples.version>1.2</tuples.version>
+        <logger.version>1.5.6</logger.version>
+        <config.version>1.2.1</config.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>se.sics.kompics</groupId>
+            <artifactId>kompics-core</artifactId>
+            <version>${kompics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.kompics.basic</groupId>
+            <artifactId>kompics-port-timer</artifactId>
+            <version>${kompics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.kompics.basic</groupId>
+            <artifactId>kompics-port-network</artifactId>
+            <version>${kompics.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>se.sics.ktoolbox.croupier</groupId>
+            <artifactId>croupier-core</artifactId>
+            <version>${croupier.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.ktoolbox.util</groupId>
+            <artifactId>basic</artifactId>
+            <version>${util.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>${tuples.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <scope>test</scope>
+            <version>${logger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>${config.version}</version>
+        </dependency>
+    </dependencies>
+</project>

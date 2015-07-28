@@ -3,20 +3,18 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>se.sics.p2ptoolbox</groupId>
+        <groupId>se.sics.ktoolbox</groupId>
         <artifactId>util</artifactId>
-        <version>1.3-SNAPSHOT</version>
+        <version>1.4-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox.util</groupId>
+    <groupId>se.sics.ktoolbox.util</groupId>
     <artifactId>kompics-basic</artifactId>
     <name>Util Basic Kompics</name>
     <url>http://maven.apache.org</url>
-    <properties>
-        <kompics.version>0.8.0-SNAPSHOT</kompics.version>
-    </properties>
+    
     <dependencies>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.util</groupId>
+            <groupId>se.sics.ktoolbox.util</groupId>
             <artifactId>basic</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -24,13 +22,23 @@
             <groupId>se.sics.kompics</groupId>
             <artifactId>kompics-core</artifactId>
             <version>${kompics.version}</version>
-            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>se.sics.kompics.basic</groupId>
             <artifactId>kompics-port-network</artifactId>
             <version>${kompics.version}</version>
-            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

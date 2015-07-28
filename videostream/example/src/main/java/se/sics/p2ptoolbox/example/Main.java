@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 import se.sics.p2ptoolbox.util.managedStore.FileMngr;
-import se.sics.p2ptoolbox.util.managedStore.StorageFactory;
 import se.sics.p2ptoolbox.util.managedStore.StorageMngrFactory;
 import se.sics.p2ptoolbox.videostream.VideoStreamMngrImpl;
 import se.sics.p2ptoolbox.videostream.http.BaseHandler;

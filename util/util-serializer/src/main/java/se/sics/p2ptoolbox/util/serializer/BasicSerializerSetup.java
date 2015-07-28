@@ -20,7 +20,6 @@ package se.sics.p2ptoolbox.util.serializer;
 
 import se.sics.p2ptoolbox.util.network.impl.BasicHeaderSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddressSerializer;
-import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
@@ -93,7 +92,8 @@ public class BasicSerializerSetup {
         Serializers.register(basicContentMsgSerializer, "basicContentMsgSerializer");
         Serializers.register(BasicContentMsg.class, "basicContentMsgSerializer");
 
-        Assert.assertEquals(serializerIds + startingId, currentId);
+        assert startingId + serializerIds == currentId;
+        
         return currentId;
     }
 }
