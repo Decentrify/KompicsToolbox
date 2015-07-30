@@ -4,8 +4,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.address.Address;
-import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.election.core.ElectionConfig;
 import se.sics.p2ptoolbox.election.example.main.LCPComparator;
 import se.sics.p2ptoolbox.election.example.main.HostManagerComp;
@@ -54,7 +52,6 @@ public class LeaderOperationsHelper {
     public static HostManagerComp.HostManagerCompInit generateComponentInit (long id, DecoratedAddress aggregatorAddress, Set<DecoratedAddress> bootstrapNodes){
 
         logger.info(" Generating address for peer with id: {} ", id);
-        Address address = new Address(ip, 9999, (int) id);
 
         BasicAddress basic = new BasicAddress(ip, 9999, (int)id);
         DecoratedAddress selfAddress = new DecoratedAddress(basic);

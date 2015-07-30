@@ -3,10 +3,11 @@ package se.sics.p2ptoolbox.election.network.util;
 import com.google.common.base.Optional;
 import com.google.common.io.BaseEncoding;
 import io.netty.buffer.ByteBuf;
-import se.sics.gvod.common.msgs.MessageEncodingException;
-import se.sics.gvod.net.util.UserTypesDecoderFactory;
-import se.sics.gvod.net.util.UserTypesEncoderFactory;
 import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.p2ptoolbox.util.helper.EncodingException;
+import se.sics.p2ptoolbox.util.helper.UserDecoderFactory;
+import se.sics.p2ptoolbox.util.helper.UserEncoderFactory;
+
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -38,14 +39,14 @@ public class PublicKeySerializer implements Serializer {
 
         try{
             if(publicKey == null){
-                UserTypesEncoderFactory.writeStringLength65536(byteBuf, "");
+                UserEncoderFactory.writeStringLength65536(byteBuf, "");
             }
             else{
-                UserTypesEncoderFactory.writeStringLength65536(byteBuf,  BaseEncoding.base64().encode(publicKey.getEncoded()));
+                UserEncoderFactory.writeStringLength65536(byteBuf,  BaseEncoding.base64().encode(publicKey.getEncoded()));
             }
         }
-        catch (MessageEncodingException e) {
-            throw new RuntimeException(e);
+        catch (EncodingException e) {
+            e.printStackTrace();
         }
 
     }
@@ -55,7 +56,7 @@ public class PublicKeySerializer implements Serializer {
 
 
         try {
-            String stringKey = UserTypesDecoderFactory.readStringLength65536(byteBuf);
+            String stringKey = UserDecoderFactory.readStringLength65536(byteBuf);
 
             if(stringKey == null){
                 return null;
