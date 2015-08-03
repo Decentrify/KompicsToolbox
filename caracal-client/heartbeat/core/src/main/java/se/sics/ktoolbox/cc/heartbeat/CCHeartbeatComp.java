@@ -101,9 +101,10 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleReady, caracal);
+        subscribe(handleSanityCheck, timer);
+        subscribe(handleHeartbeat, timer);
         subscribe(handleHeartbeatUpdate, provided);
         subscribe(handleHeartbeatStop, provided);
-        subscribe(handleHeartbeat, timer);
         subscribe(handleOverlaySampleRequest, provided);
         subscribe(handleCCOpResponse, caracal);
         subscribe(handleCCOpTimeout, caracal);
@@ -126,15 +127,18 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     Handler handleReady = new Handler<CCReady>() {
         @Override
         public void handle(CCReady event) {
-            LOG.info("{} received ready and schema prefix - starting...", logPrefix);
+            LOG.info("{} received ready and schema prefix", logPrefix);
+            if (schemaPrefix == null) {
+                LOG.info("{} starting...", logPrefix);
+                scheduleHeartbeat();
+                scheduleSanityCheck();
+                trigger(new CCSimpleReady(), provided);
+            }
             schemaPrefix = event.caracalSchemaData.getId(heartbeatConfig.heartbeatSchemaName());
             if (schemaPrefix == null) {
                 LOG.error("{} schema undefined - make sure carcal has the schema:{} setup", logPrefix, heartbeatConfig.heartbeatSchemaName());
                 throw new RuntimeException("schema undefined - make sure you ran the SchemaSetup");
             }
-            scheduleHeartbeat();
-            scheduleSanityCheck();
-            trigger(new CCSimpleReady(), provided);
         }
     };
     Handler handleSanityCheck = new Handler<SanityCheckTimeout>() {
@@ -146,8 +150,9 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
                     new Object[]{logPrefix, activeOps.size(), heartbeats.size()});
         }
     };
+
     private void cleanOps() {
-        for(UUID opId : opsToRemove) {
+        for (UUID opId : opsToRemove) {
             activeOps.remove(opId);
         }
     }
@@ -196,7 +201,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
             LOG.debug("{} received sample request for:{}", logPrefix, BaseEncoding.base16().encode(event.overlay));
             KeyRange overlaySampleRange = CCKeyFactory.getHeartbeatRange(schemaPrefix, event.overlay);
             RangeQuery.Request range = new RangeQuery.Request(UUID.randomUUID(), overlaySampleRange, Limit.toItems(heartbeatConfig.heartbeatSize()), TFFactory.noTF(), ActionFactory.noop(), RangeQuery.Type.SEQUENTIAL);
-            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), CCHeartbeatComp.this, event, range);
+            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), systemConfig.self, CCHeartbeatComp.this, event, range);
             activeOps.put(op.getId(), op);
             op.start();
         }
@@ -223,6 +228,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
             for (CCOperation op : activeOps.values()) {
                 if (op.ownResp(event.opReq.id)) {
                     op.fail();
+                    return;
                 }
             }
             LOG.warn("{} unexpected response:{}", logPrefix, event);
@@ -250,7 +256,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         heartbeatTId = null;
         trigger(cpt, timer);
     }
-    
+
     private void scheduleSanityCheck() {
         if (sanityCheckTId != null) {
             LOG.warn("{} double starting sanityCheck", logPrefix);
@@ -323,7 +329,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
             return "HEARTBEAT_TIMEOUT";
         }
     }
-    
+
     public class SanityCheckTimeout extends Timeout {
 
         public SanityCheckTimeout(SchedulePeriodicTimeout request) {

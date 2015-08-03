@@ -22,7 +22,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.caracaldb.MessageRegistrator;
+import se.sics.caracaldb.Address;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -68,7 +68,9 @@ public class Launcher extends ComponentDefinition {
         timer = create(JavaTimer.class, Init.NONE);
         Config config = ConfigFactory.load();
         SystemConfig systemConfig = new SystemConfig(config);
-        network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
+        Address ccSelf = new Address(systemConfig.self.getIp(), systemConfig.self.getPort(), null);
+        
+        network = create(NettyNetwork.class, new NettyInit(ccSelf));
 
         CaracalClientConfig ccConfig = new CaracalClientConfig(config);
         ccBootstrap = create(CCBootstrapComp.class, new CCBootstrapComp.CCBootstrapInit(systemConfig, ccConfig, BootstrapNodes.readCaracalBootstrap(config)));

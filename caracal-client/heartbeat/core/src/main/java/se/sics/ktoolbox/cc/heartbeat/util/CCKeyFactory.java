@@ -31,14 +31,12 @@ public class CCKeyFactory {
     public static Key getHeartbeatKey(byte[] schemaPrefix, byte[] overlay, int slot) {
         Key.KeyBuilder key = new Key.KeyBuilder(schemaPrefix);
         key.append(overlay);
-        key.append(new byte[]{(byte)overlay.length});
         key.append(Ints.toByteArray(slot));
         return key.get();
     }
     
     public static KeyRange getHeartbeatRange(byte[] schemaPrefix, byte[] overlay) {
         Key.KeyBuilder prefix = new Key.KeyBuilder(schemaPrefix);
-        prefix.append(new byte[]{(byte)overlay.length});
         prefix.append(overlay);
         return KeyRange.prefix(prefix.get());
     }
