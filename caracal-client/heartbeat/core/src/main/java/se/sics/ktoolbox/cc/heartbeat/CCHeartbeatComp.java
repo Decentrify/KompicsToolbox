@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.Key;
@@ -81,7 +82,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     private final Random rand;
 
     private byte[] schemaPrefix;
-    private Set<ByteBuffer> heartbeats;
+    private Set<Pair<Byte, ByteBuffer>> heartbeats;
     private final Map<UUID, CCOperation> activeOps;
     private final Set<UUID> opsToRemove;
     private UUID sanityCheckTId;
@@ -92,7 +93,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         this.heartbeatConfig = init.heartbeatConfig;
         this.logPrefix = systemConfig.self.getBase().toString();
         this.rand = new Random(systemConfig.seed);
-        this.heartbeats = new HashSet<ByteBuffer>();
+        this.heartbeats = new HashSet<Pair<Byte, ByteBuffer>>();
         this.activeOps = new HashMap<UUID, CCOperation>();
         this.opsToRemove = new HashSet<UUID>();
 
@@ -103,7 +104,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         subscribe(handleReady, caracal);
         subscribe(handleSanityCheck, timer);
         subscribe(handleHeartbeat, timer);
-        subscribe(handleHeartbeatUpdate, provided);
+        subscribe(handleHeartbeatStart, provided);
         subscribe(handleHeartbeatStop, provided);
         subscribe(handleOverlaySampleRequest, provided);
         subscribe(handleCCOpResponse, caracal);
@@ -157,37 +158,40 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         }
     }
     //**************************************************************************
-    Handler handleHeartbeatUpdate = new Handler<CCHeartbeat.Start>() {
+    Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
         @Override
-        public void handle(CCHeartbeat.Start update) {
-            LOG.info("{} updating heartbeat:{}", logPrefix, BaseEncoding.base16().encode(update.overlay));
-            if (update.overlay.length > 127) {
+        public void handle(CCHeartbeat.Start start) {
+            LOG.info("{} updating heartbeat:{}-{}", 
+                    new Object[]{logPrefix, BaseEncoding.base16().encode(new byte[]{start.serviceId}), BaseEncoding.base16().encode(start.overlayId)});
+            if (start.overlayId.length > 127) {
                 LOG.error("{} overlay identifier is too long - try to stick to 127 bytes", logPrefix);
                 throw new RuntimeException("overlay identifier is too long - try to stick to 127 bytes");
             }
-            ByteBuffer bKey = ByteBuffer.wrap(update.overlay);
-            heartbeats.add(bKey);
+            ByteBuffer bKey = ByteBuffer.wrap(start.overlayId);
+            heartbeats.add(Pair.with(start.serviceId, bKey));
         }
     };
 
     Handler handleHeartbeatStop = new Handler<CCHeartbeat.Stop>() {
         @Override
-        public void handle(CCHeartbeat.Stop update) {
-            LOG.info("{} stopping heartbeat:{}", logPrefix, BaseEncoding.base16().encode(update.overlay));
-            ByteBuffer bb = ByteBuffer.wrap(update.overlay);
-            heartbeats.remove(bb);
+        public void handle(CCHeartbeat.Stop stop) {
+            LOG.info("{} stopping heartbeat:{}-{}", 
+                    new Object[]{logPrefix, BaseEncoding.base16().encode(new byte[]{stop.serviceId}), BaseEncoding.base16().encode(stop.overlayId)});
+            ByteBuffer bKey = ByteBuffer.wrap(stop.overlayId);
+            heartbeats.remove(Pair.with(stop.serviceId, bKey));
         }
     };
 
     Handler handleHeartbeat = new Handler<HeartbeatTimeout>() {
         @Override
         public void handle(HeartbeatTimeout event) {
-            LOG.info("{} heartbeat", logPrefix);
+            LOG.debug("{} heartbeat", logPrefix);
             byte[] value = CCValueFactory.getHeartbeatValue(systemConfig.self);
-            for (ByteBuffer overlay : heartbeats) {
-                Key heartbeatKey = CCKeyFactory.getHeartbeatKey(schemaPrefix, overlay.array(), rand.nextInt(heartbeatConfig.heartbeatSize()));
+            for (Pair<Byte, ByteBuffer> overlay : heartbeats) {
+                Key heartbeatKey = CCKeyFactory.getHeartbeatKey(schemaPrefix, overlay.getValue0(), overlay.getValue1().array(), rand.nextInt(heartbeatConfig.heartbeatSize()));
                 PutRequest put = new PutRequest(UUID.randomUUID(), heartbeatKey, value);
-                LOG.debug("{} sending heartbeat for:{}", logPrefix, BaseEncoding.base16().encode(overlay.array()));
+                LOG.debug("{} sending heartbeat for:{}-{}", 
+                        new Object[]{logPrefix, BaseEncoding.base16().encode(new byte[]{overlay.getValue0()}), BaseEncoding.base16().encode(overlay.getValue1().array())});
                 CCOperation op = new CCHeartbeatOp(UUID.randomUUID(), CCHeartbeatComp.this, put);
                 activeOps.put(op.getId(), op);
                 op.start();
@@ -198,8 +202,9 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     Handler handleOverlaySampleRequest = new Handler<CCOverlaySample.Request>() {
         @Override
         public void handle(CCOverlaySample.Request event) {
-            LOG.debug("{} received sample request for:{}", logPrefix, BaseEncoding.base16().encode(event.overlay));
-            KeyRange overlaySampleRange = CCKeyFactory.getHeartbeatRange(schemaPrefix, event.overlay);
+            LOG.debug("{} received sample request for:{}-{}", 
+                    new Object[]{logPrefix, BaseEncoding.base16().encode(new byte[]{event.serviceId}), BaseEncoding.base16().encode(event.overlayId)});
+            KeyRange overlaySampleRange = CCKeyFactory.getHeartbeatRange(schemaPrefix, event.serviceId, event.overlayId);
             RangeQuery.Request range = new RangeQuery.Request(UUID.randomUUID(), overlaySampleRange, Limit.toItems(heartbeatConfig.heartbeatSize()), TFFactory.noTF(), ActionFactory.noop(), RangeQuery.Type.SEQUENTIAL);
             CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), systemConfig.self, CCHeartbeatComp.this, event, range);
             activeOps.put(op.getId(), op);

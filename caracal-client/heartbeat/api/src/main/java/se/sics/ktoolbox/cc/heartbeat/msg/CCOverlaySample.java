@@ -28,19 +28,23 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class CCOverlaySample {
 
     public static class Request extends Direct.Request<Response> {
-        public final byte[] overlay;
+        public final byte serviceId;
+        public final byte[] overlayId;
         
-        public Request(byte[] overlay) {
-            this.overlay = overlay;
+        public Request(byte serviceId, byte[] overlayId) {
+            this.serviceId = serviceId;
+            this.overlayId = overlayId;
         }
     }
 
     public static class Response implements Direct.Response {
-        public final byte[] overlay;
+        public final byte serviceId;
+        public final byte[] overlayId;
         public final Set<DecoratedAddress> overlaySample;
         
-        public Response(byte[] overlay, Set<DecoratedAddress> overlaySample) {
-            this.overlay = overlay;
+        public Response(byte serviceId, byte[] overlayId, Set<DecoratedAddress> overlaySample) {
+            this.serviceId = serviceId;
+            this.overlayId = overlayId;
             this.overlaySample = overlaySample;
         }
     }
