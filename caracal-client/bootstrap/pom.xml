@@ -2,24 +2,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
+        <groupId>se.sics.ktoolbox</groupId>
         <artifactId>caracal-client</artifactId>
-        <groupId>se.sics.p2ptoolbox.caracal-client</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox.caracal-client.heartbeat</groupId>
-    <artifactId>cc-heartbeat</artifactId>
+    <groupId>se.sics.ktoolbox.cc</groupId>
+    <artifactId>bootstrap</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>CC Heartbeat</name>
+    <name>CC Bootstrap</name>
     <modules>
-        <module>cc-heartbeat-api</module>
-        <module>cc-heartbeat-core</module>
-        <module>cc-heartbeat-network</module>
-    <module>cc-heartbeat-example</module>
-  </modules>
+        <module>api</module>
+        <module>core</module>
+    </modules>
     <dependencies>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.caracal-client</groupId>
-            <artifactId>cc-common</artifactId>
+            <groupId>se.sics.ktoolbox.cc</groupId>
+            <artifactId>common</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

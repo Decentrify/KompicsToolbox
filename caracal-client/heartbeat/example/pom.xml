@@ -3,31 +3,30 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>se.sics.p2ptoolbox.caracal-client.heartbeat</groupId>
-        <artifactId>cc-heartbeat</artifactId>
+        <groupId>se.sics.ktoolbox.cc</groupId>
+        <artifactId>heartbeat</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox.caracal-client.heartbeat</groupId>
-    <artifactId>cc-heartbeat-example</artifactId>
+    <groupId>se.sics.ktoolbox.cc.heartbeat</groupId>
+    <artifactId>example</artifactId>
     <name>CC Heartbeat Example</name>
     <url>http://maven.apache.org</url>
   
     <dependencies>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.caracal-client.heartbeat</groupId>
-            <artifactId>cc-heartbeat-core</artifactId>
+            <groupId>se.sics.ktoolbox.cc.heartbeat</groupId>
+            <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.caracal-client.bootstrap</groupId>
-            <artifactId>cc-bootstrap-core</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>jar</type>
+            <groupId>se.sics.ktoolbox.cc.bootstrap</groupId>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>1.5.6</version>
+            <version>${logger.version}</version>
         </dependency>
     </dependencies>
 </project>

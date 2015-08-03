@@ -3,19 +3,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>se.sics.p2ptoolbox.caracal-client</groupId>
+        <groupId>se.sics.ktoolbox</groupId>
         <artifactId>caracal-client</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.p2ptoolbox.caracal-client</groupId>
-    <artifactId>cc-schemasetup</artifactId>
+    <groupId>se.sics.ktoolbox.cc</groupId>
+    <artifactId>schemasetup</artifactId>
     <name>CC Schema Setup</name>
     <url>http://maven.apache.org</url>
     
     <dependencies>
         <dependency>
-            <groupId>se.sics.p2ptoolbox.caracal-client.bootstrap</groupId>
-            <artifactId>cc-bootstrap-core</artifactId>
+            <groupId>se.sics.ktoolbox.cc.bootstrap</groupId>
+            <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

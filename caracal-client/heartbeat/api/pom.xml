@@ -3,12 +3,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>se.sics.p2ptoolbox.caracal-client.heartbeat</groupId>
-    <artifactId>cc-heartbeat</artifactId>
+    <groupId>se.sics.ktoolbox.cc</groupId>
+    <artifactId>heartbeat</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <groupId>se.sics.p2ptoolbox.caracal-client.heartbeat</groupId>
-  <artifactId>cc-heartbeat-network</artifactId>
-  <name>CC Heartbeat Network</name>
+  <groupId>se.sics.ktoolbox.cc.heartbeat</groupId>
+  <artifactId>api</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <name>CC Heartbeat API</name>
   <url>http://maven.apache.org</url>
 </project>
