@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.cc.heartbeat.example.core;
 
+import com.google.common.io.BaseEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -84,23 +85,24 @@ public class ExampleComp extends ComponentDefinition {
         public void handle(CCSimpleReady event) {
             log.info("{} received CCReady", logPrefix);
             scheduleSample();
-            trigger(new CCHeartbeat.Start(overlay1), overlaySample);
-            trigger(new CCHeartbeat.Start(overlay2), overlaySample);
+            trigger(new CCHeartbeat.Start((byte) 1, overlay1), overlaySample);
+            trigger(new CCHeartbeat.Start((byte) 1, overlay2), overlaySample);
         }
     };
     //**************************************************************************
     Handler handleSampleTimeout = new Handler<SampleTimeout>() {
         @Override
         public void handle(SampleTimeout event) {
-            trigger(new CCOverlaySample.Request(overlay1), overlaySample);
-            trigger(new CCOverlaySample.Request(overlay2), overlaySample);
+            trigger(new CCOverlaySample.Request((byte)1, overlay1), overlaySample);
+            trigger(new CCOverlaySample.Request((byte)1, overlay2), overlaySample);
         }
     };
 
     Handler handleOverlaySample = new Handler<CCOverlaySample.Response>() {
         @Override
         public void handle(CCOverlaySample.Response event) {
-            log.info("{} overlay:{}, sample:{}", new Object[]{logPrefix, event.overlay, event.overlaySample});
+            log.info("{} overlay:{}-{}, sample:{}", 
+                    new Object[]{logPrefix, BaseEncoding.base16().encode(new byte[]{event.serviceId}), BaseEncoding.base16().encode(event.overlayId), event.overlaySample});
         }
     };
 

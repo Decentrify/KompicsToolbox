@@ -80,12 +80,12 @@ public class CCOverlaySampleOp implements CCOperation {
             if (rangeResp.code.equals(ResponseCode.SUCCESS)) {
                 Set<DecoratedAddress> sample = CCValueFactory.extractHeartbeatSrc(rangeResp.data.values());
                 sample.remove(self);
-                opMngr.completed(opId, req, new CCOverlaySample.Response(req.overlay, sample));
+                opMngr.completed(opId, req, new CCOverlaySample.Response(req.serviceId, req.overlayId, sample));
                 return;
             } else {
                 //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issues a retry
                 LOG.warn("caracal answer:{} - delivering empty answer - hope to succeed in the future", rangeResp.code);
-                opMngr.completed(opId, req, new CCOverlaySample.Response(req.overlay, new HashSet<DecoratedAddress>()));
+                opMngr.completed(opId, req, new CCOverlaySample.Response(req.serviceId, req.overlayId, new HashSet<DecoratedAddress>()));
 //                opMngr.completed(opId, req, new CCOpFailed.DirectResponse(req));
                 return;
             }
@@ -98,7 +98,7 @@ public class CCOverlaySampleOp implements CCOperation {
         pendingResp = null;
         //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issues a retry
         LOG.warn("caracal answer failed - delivering empty answer - hope to succeed in the future");
-        opMngr.completed(opId, req, new CCOverlaySample.Response(req.overlay, new HashSet<DecoratedAddress>()));
+        opMngr.completed(opId, req, new CCOverlaySample.Response(req.serviceId, req.overlayId, new HashSet<DecoratedAddress>()));
 //        opMngr.completed(opId, req, new CCOpFailed.DirectResponse(req));
     }
 }

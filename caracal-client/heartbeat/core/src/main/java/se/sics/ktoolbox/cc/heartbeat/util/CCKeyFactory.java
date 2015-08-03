@@ -20,6 +20,7 @@ package se.sics.ktoolbox.cc.heartbeat.util;
 
 import com.google.common.primitives.Ints;
 import java.nio.ByteBuffer;
+import org.javatuples.Pair;
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.KeyRange;
 
@@ -28,25 +29,30 @@ import se.sics.caracaldb.KeyRange;
  */
 public class CCKeyFactory {
 
-    public static Key getHeartbeatKey(byte[] schemaPrefix, byte[] overlay, int slot) {
+    public static Key getHeartbeatKey(byte[] schemaPrefix, byte serviceId, byte[] overlayId, int slot) {
         Key.KeyBuilder key = new Key.KeyBuilder(schemaPrefix);
-        key.append(overlay);
+        key.append(new byte[]{serviceId});
+        key.append(new byte[]{(byte) overlayId.length});
+        key.append(overlayId);
         key.append(Ints.toByteArray(slot));
         return key.get();
     }
-    
-    public static KeyRange getHeartbeatRange(byte[] schemaPrefix, byte[] overlay) {
+
+    public static KeyRange getHeartbeatRange(byte[] schemaPrefix, byte serviceId, byte[] overlayId) {
         Key.KeyBuilder prefix = new Key.KeyBuilder(schemaPrefix);
-        prefix.append(overlay);
+        prefix.append(new byte[]{serviceId});
+        prefix.append(new byte[]{(byte) overlayId.length});
+        prefix.append(overlayId);
         return KeyRange.prefix(prefix.get());
     }
-    
-    public static byte[] extractOverlay(byte[] schemaPrefix, Key key) {
+
+    public static Pair<Byte, byte[]> extractOverlay(byte[] schemaPrefix, Key key) {
         ByteBuffer bbKey = key.getWrapper();
         bbKey.position(schemaPrefix.length);
+        byte serviceId = bbKey.get();
         int overlaySize = bbKey.get();
-        byte[] overlay = new byte[overlaySize];
-        bbKey.get(overlay);
-        return overlay;
+        byte[] overlayId = new byte[overlaySize];
+        bbKey.get(overlayId);
+        return Pair.with(serviceId, overlayId);
     }
 }
