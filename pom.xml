@@ -14,14 +14,10 @@
         <module>aggregator</module> 
         <module>videostream</module>
         <module>leader-election</module> 
-<!--        
-        <module>g-common</module>
-        <module>netty-test</module>
-        <module>simulator</module>
-        -->
-    <module>ip-solver</module>
-  </modules>
-   
+        <module>ip-solver</module>
+        <module>caracal-client</module>
+    </modules>
+
     <distributionManagement>
         <repository>
             <id>sics-release-repository</id>
