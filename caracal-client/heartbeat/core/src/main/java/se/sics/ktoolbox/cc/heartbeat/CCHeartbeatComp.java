@@ -83,6 +83,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     private byte[] schemaPrefix;
     private Set<ByteBuffer> heartbeats;
     private final Map<UUID, CCOperation> activeOps;
+    private final Set<UUID> opsToRemove;
     private UUID sanityCheckTId;
     private UUID heartbeatTId;
 
@@ -93,6 +94,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         this.rand = new Random(systemConfig.seed);
         this.heartbeats = new HashSet<ByteBuffer>();
         this.activeOps = new HashMap<UUID, CCOperation>();
+        this.opsToRemove = new HashSet<UUID>();
 
         LOG.info("{} initiating...", logPrefix);
 
@@ -139,11 +141,16 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         @Override
         public void handle(SanityCheckTimeout event) {
             LOG.trace("{} event", logPrefix);
-
+            cleanOps();
             LOG.info("{} memory usage - activeOps:{}, heartbeats:{}",
                     new Object[]{logPrefix, activeOps.size(), heartbeats.size()});
         }
     };
+    private void cleanOps() {
+        for(UUID opId : opsToRemove) {
+            activeOps.remove(opId);
+        }
+    }
     //**************************************************************************
     Handler handleHeartbeatUpdate = new Handler<CCHeartbeat.Start>() {
         @Override
@@ -269,7 +276,8 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     //****************CCOpManager***********************************************
     @Override
     public void completed(UUID opId, KompicsEvent resp) {
-        CCOperation op = activeOps.remove(opId);
+        CCOperation op = activeOps.get(opId);
+        opsToRemove.add(opId);
         LOG.debug("{} completed:{}", logPrefix, op);
         if (resp == null) {
             //heartbeat completed; do nothing
@@ -280,7 +288,8 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
 
     @Override
     public void completed(UUID opId, Direct.Request req, Direct.Response resp) {
-        CCOperation op = activeOps.remove(opId);
+        CCOperation op = activeOps.get(opId);
+        opsToRemove.add(opId);
         LOG.debug("{} completed:{}", logPrefix, op);
         answer(req, resp);
     }

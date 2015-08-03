@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.cc.heartbeat.example.core;
+package se.sics.ktoolbox.cc.heartbeat.example.system;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -39,6 +39,9 @@ import se.sics.ktoolbox.cc.bootstrap.CCBootstrapPort;
 import se.sics.ktoolbox.cc.common.config.CaracalClientConfig;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatComp;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
+import se.sics.ktoolbox.cc.heartbeat.example.config.BootstrapNodes;
+import se.sics.ktoolbox.cc.heartbeat.example.config.CaracalClientSerializerSetup;
+import se.sics.ktoolbox.cc.heartbeat.example.core.ExampleComp;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 
 /**
@@ -60,7 +63,7 @@ public class Launcher extends ComponentDefinition {
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
-        MessageRegistrator.register();
+        CaracalClientSerializerSetup.registerSerializers();
 
         timer = create(JavaTimer.class, Init.NONE);
         Config config = ConfigFactory.load();

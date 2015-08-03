@@ -91,8 +91,8 @@ public class CCBootstrapComp extends ComponentDefinition {
             LOG.error("{} no bootstrap caracal nodes provided - cannot boot", logPrefix);
             throw new RuntimeException("no bootstrap caracal nodes provided - cannot boot");
         }
-        this.activeNodes = new ArrayList<Address>(init.caracalNodes);
-        this.deadNodes = new ArrayList<Address>();
+        this.activeNodes = new ArrayList<Address>();
+        this.deadNodes = new ArrayList<Address>(init.caracalNodes);
         this.activeRequests = new HashMap<UUID, Triplet<CCOpEvent.Request, Address, UUID>>();
         LOG.info("{} initiating with bootstrap nodes:{}", logPrefix, activeNodes);
 
@@ -134,10 +134,12 @@ public class CCBootstrapComp extends ComponentDefinition {
                 SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(activeNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
                 LOG.trace("{} sending:{}", logPrefix, req);
                 trigger(req, network);
-            } else {
+            } else if(!deadNodes.isEmpty()){
                 SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(deadNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
                 LOG.trace("{} sending:{}", logPrefix, req);
                 trigger(req, network);
+            } else {
+                LOG.warn("{} no active/dead nodes - no way to contact caracal");
             }
         }
 

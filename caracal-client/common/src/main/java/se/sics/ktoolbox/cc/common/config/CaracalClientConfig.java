@@ -41,7 +41,7 @@ public class CaracalClientConfig implements CCBootstrapConfig, CCHeartbeatConfig
 
     public CaracalClientConfig(Config config) {
         try {
-            this.sanityCheckPeriod = config.getLong("system.sanityCheckTimeout");
+            this.sanityCheckPeriod = config.getLong("system.sanityCheckPeriod");
             
             this.caracalTimeout = config.getLong("caracal-client.bootstrap.caracalTimeout");
             this.bootstrapSize = config.getInt("caracal-client.bootstrap.size");

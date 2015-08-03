@@ -17,17 +17,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.bootstrap;
+package se.sics.ktoolbox.cc.heartbeat.example.config;
 
 import se.sics.caracaldb.MessageRegistrator;
+import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCBootstrapSerializerSetup {
+public class CaracalClientSerializerSetup {
     
     public static int registerSerializers() {
         MessageRegistrator.register();
-        return 128;
+        int serializerId = 128;
+        serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
+        return serializerId;
     }
 }

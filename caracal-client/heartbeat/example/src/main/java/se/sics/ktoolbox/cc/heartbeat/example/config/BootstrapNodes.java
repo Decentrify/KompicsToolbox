@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.heartbeat.example.core;
+package se.sics.ktoolbox.cc.heartbeat.example.config;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
