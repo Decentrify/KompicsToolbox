@@ -23,8 +23,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,14 +52,6 @@ public class SystemConfigTest {
         int aggregatorId = 201;
         DecoratedAddress aggregator = new DecoratedAddress(new BasicAddress(aggregatorIp, aggregatorPort, aggregatorId));
         Assert.assertEquals(aggregator, systemConfig.aggregator);
-
-        InetAddress bootstrapIp = InetAddress.getByName("cloud1.sics.se");
-        int bootstrapPort = 22222;
-        int bootstrapId = 1;
-        DecoratedAddress bootstrap = new DecoratedAddress(new BasicAddress(bootstrapIp, bootstrapPort, bootstrapId));
-        List<DecoratedAddress> bootstrapNodes = new ArrayList<DecoratedAddress>();
-        bootstrapNodes.add(bootstrap);
-        Assert.assertEquals(bootstrapNodes, systemConfig.bootstrapNodes);
     }
     
     @Test
@@ -78,7 +68,6 @@ public class SystemConfigTest {
         DecoratedAddress self = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
         Assert.assertEquals(self, systemConfig.self);
         Assert.assertEquals(null, systemConfig.aggregator);
-        Assert.assertEquals(new ArrayList<DecoratedAddress>(), systemConfig.bootstrapNodes);
     }
     
     @Test
@@ -96,6 +85,5 @@ public class SystemConfigTest {
         DecoratedAddress self = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
         Assert.assertEquals(self, systemConfig.self);
         Assert.assertEquals(null, systemConfig.aggregator);
-        Assert.assertEquals(new ArrayList<DecoratedAddress>(), systemConfig.bootstrapNodes);
     }
 }

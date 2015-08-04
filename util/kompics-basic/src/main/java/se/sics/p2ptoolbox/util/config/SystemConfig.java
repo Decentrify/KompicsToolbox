@@ -23,7 +23,6 @@ import com.typesafe.config.ConfigException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -44,7 +43,6 @@ public class SystemConfig {
     public long seed;
     public DecoratedAddress self;
     public DecoratedAddress aggregator;
-    public List<DecoratedAddress> bootstrapNodes = new ArrayList<DecoratedAddress>();
     private Random rand;
     
 
@@ -120,28 +118,11 @@ public class SystemConfig {
             LOG.info("no bootstrap nodes");
             return;
         }
-
-        for (String bootstrapNodeName : boostrapNodeNames) {
-            try {
-                InetAddress bootstrapIp = InetAddress.getByName(config.getString("system.bootstrap." + bootstrapNodeName + ".ip"));
-                int bootstrapPort = config.getInt("system.bootstrap." + bootstrapNodeName + ".port");
-                int bootstrapId = config.getInt("system.bootstrap." + bootstrapNodeName + ".id");
-                bootstrapNodes.add(new DecoratedAddress(new BasicAddress(bootstrapIp, bootstrapPort, bootstrapId)));
-            } catch (UnknownHostException ex) {
-                LOG.error("bad bootstrap address");
-                throw new RuntimeException("bad system config - bootstrap address", ex);
-            } catch (ConfigException.Missing ex) {
-                LOG.error("bad bootstrap address");
-                throw new RuntimeException("bad system config - bootstrap address", ex);
-            }
-            LOG.info("bootstrap nodes:{}", bootstrapNodes);
-        }
     }
 
-    public SystemConfig(long seed, DecoratedAddress self, DecoratedAddress aggregator, List<DecoratedAddress> bootstrapNodes) {
+    public SystemConfig(long seed, DecoratedAddress self, DecoratedAddress aggregator) {
         this.seed = seed;
         this.self = self;
         this.aggregator = aggregator;
-        this.bootstrapNodes = bootstrapNodes;
     }
 }
