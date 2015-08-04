@@ -26,21 +26,17 @@ import se.sics.kompics.KompicsEvent;
  */
 public class CCHeartbeat {
     public static class Start implements KompicsEvent {
-        public final byte serviceId;
         public final byte[] overlayId;
         
-        public Start(byte serviceId, byte[] overlayId) {
-            this.serviceId = serviceId;
+        public Start(byte[] overlayId) {
             this.overlayId = overlayId;
         }
     }
     
     public static class Stop implements KompicsEvent {
-        public final byte serviceId;
         public final byte[] overlayId;
         
-        public Stop(byte serviceId, byte[] overlayId) {
-            this.serviceId = serviceId;
+        public Stop(byte[] overlayId) {
             this.overlayId = overlayId;
         }
     }
