@@ -110,14 +110,6 @@ public class SystemConfig {
             LOG.info("no aggregator address");
             this.aggregator = null;
         }
-
-        List<String> boostrapNodeNames;
-        try {
-            boostrapNodeNames = config.getStringList("system.bootstrap.nodes");
-        } catch (ConfigException.Missing ex) {
-            LOG.info("no bootstrap nodes");
-            return;
-        }
     }
 
     public SystemConfig(long seed, DecoratedAddress self, DecoratedAddress aggregator) {

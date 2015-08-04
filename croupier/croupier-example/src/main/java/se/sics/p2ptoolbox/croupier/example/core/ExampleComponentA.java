@@ -29,8 +29,10 @@ import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
+import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
+import se.sics.p2ptoolbox.util.config.BootstrapConfig;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

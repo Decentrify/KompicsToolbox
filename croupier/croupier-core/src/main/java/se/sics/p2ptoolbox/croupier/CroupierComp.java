@@ -90,8 +90,7 @@ public class CroupierComp extends ComponentDefinition {
         this.croupierConfig = init.croupierConfig;
         this.overlayId = init.overlayId;
         this.logPrefix = "<oid:" + overlayId + ",nid:" + systemConfig.self.getBase().toString() + ">";
-        this.bootstrapNodes = new ArrayList<DecoratedAddress>(systemConfig.bootstrapNodes);
-        cleanSelf();
+        this.bootstrapNodes = new ArrayList<DecoratedAddress>();
 
         log.info("{} initiating with bootstrap nodes:{} ...", logPrefix, bootstrapNodes);
 
