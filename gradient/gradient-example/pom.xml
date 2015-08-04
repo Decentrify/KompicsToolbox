@@ -39,11 +39,6 @@
             <version>${kompics.version}</version>
         </dependency>
         
-        <dependency>
-            <groupId>se.sics.p2ptoolbox.simulator</groupId>
-            <artifactId>simulator-core</artifactId>
-            <version>1.3-SNAPSHOT</version>
-        </dependency>
     </dependencies>
     
     <build>
