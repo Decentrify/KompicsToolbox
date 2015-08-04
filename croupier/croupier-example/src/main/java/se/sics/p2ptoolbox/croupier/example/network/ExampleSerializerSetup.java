@@ -46,7 +46,7 @@ public class ExampleSerializerSetup {
     }
     
     public static void oneTimeSetup() {
-        int currentId = 0;
+        int currentId = 128;
         BasicSerializerSetup.registerBasicSerializers(currentId);
         currentId += BasicSerializerSetup.serializerIds;
         

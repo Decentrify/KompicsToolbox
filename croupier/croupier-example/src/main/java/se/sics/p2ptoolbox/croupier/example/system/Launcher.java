@@ -36,6 +36,8 @@ import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.croupier.example.network.ExampleSerializerSetup;
+import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
+import se.sics.p2ptoolbox.util.config.BootstrapConfig;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 
 /**
@@ -63,7 +65,8 @@ public class Launcher extends ComponentDefinition {
         network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
 
         CroupierConfig croupierConfig = new CroupierConfig(config);
-        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(systemConfig, croupierConfig));
+        BootstrapConfig bootstrapConfig = new BootstrapConfig(config);
+        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(systemConfig, croupierConfig, bootstrapConfig.bootstrapNodes));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 

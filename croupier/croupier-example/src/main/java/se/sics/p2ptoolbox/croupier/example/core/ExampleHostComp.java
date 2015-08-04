@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.croupier.example.core;
 
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -34,8 +35,10 @@ import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.CroupierControlPort;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
+import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -49,41 +52,44 @@ public class ExampleHostComp extends ComponentDefinition {
 
     private final SystemConfig systemConfig;
     private final CroupierConfig croupierConfig;
+    private final Set<DecoratedAddress> bootstrapNodes;
+    
+    private Component croupier;
+    private Component compA;
 
     private final String logPrefix;
 
     public ExampleHostComp(HostInit init) {
         this.systemConfig = init.systemConfig;
         this.croupierConfig = init.croupierConfig;
+        this.bootstrapNodes = init.bootstrapNodes;
         this.logPrefix = systemConfig.self.toString();
         log.info("{} initiating...", logPrefix);
-        log.debug("{} bootstrap sample:{}", logPrefix, systemConfig.bootstrapNodes);
 
-        Component croupier = createNConnectCroupier(10);
-        Component compA = createNConnectCompA(croupier);
+        createNConnectCroupier(10);
+        createNConnectCompA();
 
         subscribe(handleDisconnected, croupier.getPositive(CroupierControlPort.class));
         subscribe(handleStart, control);
         subscribe(handleStop, control);
     }
 
-    private Component createNConnectCroupier(int overlayId) {
-        Component croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(systemConfig, croupierConfig, overlayId));
+    private void createNConnectCroupier(int overlayId) {
+        croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(systemConfig, croupierConfig, overlayId));
         connect(croupier.getNegative(Network.class), network, new IntegerOverlayFilter(overlayId));
         connect(croupier.getNegative(Timer.class), timer);
-        return croupier;
     }
 
-    private Component createNConnectCompA(Component croupier) {
-        Component compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(systemConfig.self, systemConfig.seed));
+    private void createNConnectCompA() {
+        compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(systemConfig.self, systemConfig.seed));
         connect(croupier.getPositive(CroupierPort.class), compA.getNegative(CroupierPort.class));
-        return compA;
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
             log.info("{} starting...", logPrefix);
+            trigger(new CroupierJoin(bootstrapNodes), croupier.getPositive(CroupierControlPort.class));
         }
     };
 
@@ -105,10 +111,12 @@ public class ExampleHostComp extends ComponentDefinition {
 
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
+        public final Set<DecoratedAddress> bootstrapNodes;
 
-        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig) {
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, Set<DecoratedAddress> bootstrapNodes) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
+            this.bootstrapNodes = bootstrapNodes;
         }
     }
 }
