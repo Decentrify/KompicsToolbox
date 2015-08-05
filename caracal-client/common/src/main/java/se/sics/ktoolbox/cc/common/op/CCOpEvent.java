@@ -57,9 +57,11 @@ public class CCOpEvent {
     
     public static class Timeout implements Direct.Response {
         public final CaracalOp opReq;
+        public final Key forwardTo;
         
-        public Timeout(CaracalOp opReq) {
+        public Timeout(CaracalOp opReq, Key forwardTo) {
             this.opReq = opReq;
+            this.forwardTo = forwardTo;
         }
         
         @Override
