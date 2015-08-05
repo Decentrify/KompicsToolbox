@@ -199,7 +199,7 @@ public class CCBootstrapComp extends ComponentDefinition {
             LOG.trace("{} received:{}", logPrefix, request);
             if (activeNodes.isEmpty()) {
                 LOG.info("{} disconnected - cannot serve requests");
-                answer(request, new CCOpEvent.Timeout(request.opReq));
+                answer(request, new CCOpEvent.Timeout(request.opReq, request.forwardTo));
                 return;
             }
 
@@ -248,7 +248,7 @@ public class CCBootstrapComp extends ComponentDefinition {
             }
             LOG.info("{} timed out message:{} on caracal node:{}",
                     new Object[]{logPrefix, timeout.messageId, requestInfo.getValue1()});
-            answer(requestInfo.getValue0(), new CCOpEvent.Timeout(requestInfo.getValue0().opReq));
+            answer(requestInfo.getValue0(), new CCOpEvent.Timeout(requestInfo.getValue0().opReq, requestInfo.getValue0().forwardTo));
         }
     };
 
