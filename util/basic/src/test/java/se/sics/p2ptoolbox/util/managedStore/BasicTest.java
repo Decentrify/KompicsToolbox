@@ -22,6 +22,7 @@ import com.google.common.io.BaseEncoding;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,7 +49,7 @@ public class BasicTest {
     int generateSize = 5;
     int pieceSize = 1024;
     int blockSize = 1024 * 1024;
-    int randomRuns = 10;
+    int randomRuns = 1000;
 
     public void setup(Random rand) throws IOException, HashUtil.HashBuilderException {
         cleanup(rand);
@@ -85,8 +86,11 @@ public class BasicTest {
     @Test
     public void testRandom() throws IOException, HashUtil.HashBuilderException {
         Random rand;
+        Random seedGen = new SecureRandom();
         for (int i = 0; i < randomRuns; i++) {
-            rand = new Random(i);
+            int seed = seedGen.nextInt();
+            LOG.info("random test seed:{}", seed);
+            rand = new Random(seed);
             setup(rand);
             run(rand, new RandomDownloader(hashAlg, rand, pieceSize, new RandomBlockSetter()), 100, 0.3);
             cleanup(rand);
@@ -95,7 +99,9 @@ public class BasicTest {
 
     @Test
     public void testReverse() throws IOException, HashUtil.HashBuilderException {
-        Random rand = new Random(1234);
+        int seed = 1234;
+        LOG.info("reverse test seed:{}", seed);
+        Random rand = new Random(seed);
         setup(rand);
         run(rand, new RandomDownloader(hashAlg, rand, pieceSize, new ReverseBlockSetter()), 100, 0);
         cleanup(rand);
@@ -120,8 +126,8 @@ public class BasicTest {
         Triplet<FileMngr, BlockMngr, ArrayList<Integer>> download2 = Triplet.with(download2FileMngr, downloadBlock, new ArrayList<Integer>());
         downloader.populateBlock(download2);
 
-        LOG.info("status file1:{} file2:{} pPieces1:{} pPieces2:{}",
-                new Object[]{download1FileMngr.contiguous(0), download2FileMngr.contiguous(0), download1.getValue2().size(), download2.getValue2().size()});
+//        LOG.info("status file1:{} file2:{} pPieces1:{} pPieces2:{}",
+//                new Object[]{download1FileMngr.contiguous(0), download2FileMngr.contiguous(0), download1.getValue2().size(), download2.getValue2().size()});
         while (!(download1FileMngr.isComplete(0) && download2FileMngr.isComplete(0))) {
 //            LOG.info("status file1:{} file2:{}", download1FileMngr.contiguous(0), download2FileMngr.contiguous(0));
             if (!download1FileMngr.isComplete(0)) {
@@ -135,7 +141,7 @@ public class BasicTest {
                 download2 = downloader.processIntermediate(download2, hashMngr);
             }
         }
-        LOG.info("done1:{} done2:{}", download1FileMngr.isComplete(0), download2FileMngr.isComplete(0));
+//        LOG.info("done1:{} done2:{}", download1FileMngr.isComplete(0), download2FileMngr.isComplete(0));
     }
 
     public static interface Downloader {
@@ -162,7 +168,7 @@ public class BasicTest {
         }
 
         public void populateBlock(Triplet<FileMngr, BlockMngr, ArrayList<Integer>> peer) {
-            LOG.info("nr of pieces:{}", peer.getValue1().nrPieces());
+//            LOG.info("nr of pieces:{}", peer.getValue1().nrPieces());
             for (int i = 0; i < peer.getValue1().nrPieces(); i++) {
                 peer.getValue2().add(i);
             }
@@ -196,7 +202,7 @@ public class BasicTest {
 
             if (blockMngr.isComplete()) {
                 int blockNr = fileMngr.nextBlock(0, new HashSet<Integer>());
-                LOG.info("block:{} completed has hash:{}", blockNr, hashMngr.hasHash(blockNr));
+//                LOG.info("block:{} completed has hash:{}", blockNr, hashMngr.hasHash(blockNr));
                 if (!stateAux.getValue2().isEmpty()) {
                     throw new RuntimeException("pending pieces error");
                 }
@@ -210,7 +216,7 @@ public class BasicTest {
                     if (fileMngr.isComplete(0)) {
                         return Triplet.with(fileMngr, null, null);
                     }
-                    LOG.info("block nr:{} size:{}", blockNr, fileMngr.blockSize(blockNr));
+//                    LOG.info("block nr:{} size:{}", blockNr, fileMngr.blockSize(blockNr));
                     blockMngr = StorageMngrFactory.getSimpleBlockMngr(fileMngr.blockSize(blockNr), pieceSize);
                     stateAux = Triplet.with(fileMngr, blockMngr, new ArrayList<Integer>());
                     populateBlock(stateAux);
