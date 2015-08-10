@@ -18,7 +18,6 @@
  */
 package se.sics.p2ptoolbox.util.managedStore;
 
-import com.google.common.io.BaseEncoding;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,8 +27,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 import org.javatuples.Triplet;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +51,7 @@ public class BasicTest {
     public void setup(Random rand) throws IOException, HashUtil.HashBuilderException {
         cleanup(rand);
         File uploadFile = new File(uploadFilePath);
+        uploadFile.getParentFile().mkdirs();
         uploadFile.createNewFile();
         generateFile(uploadFile, rand);
         HashUtil.makeHashes(uploadFilePath, hashFilePath, hashAlg, blockSize);
@@ -69,6 +67,7 @@ public class BasicTest {
         byte[] data = new byte[1500];
         rand.nextBytes(data);
         out.write(data);
+        out.flush();
         out.close();
     }
 
