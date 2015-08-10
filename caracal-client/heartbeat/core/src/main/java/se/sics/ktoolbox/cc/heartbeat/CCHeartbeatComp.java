@@ -146,8 +146,12 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         public void handle(SanityCheckTimeout event) {
             LOG.trace("{} event", logPrefix);
             cleanOps();
+            Set<String> stringHeartbeats = new HashSet<String>();
+            for(ByteBuffer bb : heartbeats) {
+                stringHeartbeats.add(BaseEncoding.base16().encode(bb.array()));
+            }
             LOG.info("{} memory usage - activeOps:{}, heartbeats:{}",
-                    new Object[]{logPrefix, activeOps.size(), heartbeats.size()});
+                    new Object[]{logPrefix, activeOps.size(), stringHeartbeats});
         }
     };
 
