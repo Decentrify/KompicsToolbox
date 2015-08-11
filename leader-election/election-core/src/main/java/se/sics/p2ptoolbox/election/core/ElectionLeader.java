@@ -345,7 +345,7 @@ public class ElectionLeader extends ComponentDefinition {
         electionRoundId = UUID.randomUUID();
         applicationAck = false;
 
-        Collection<DecoratedAddress> leaderGroupAddress = lcRuleSet.initiateLeadership(selfAddress, addressContainerMap.values());
+        Collection<DecoratedAddress> leaderGroupAddress = lcRuleSet.initiateLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
         if (leaderGroupAddress.size() < leaderGroupSize) {
             logger.error(" {} : Not asserting self as leader as the leader group size is less than required.", selfAddress.getId());
@@ -542,7 +542,7 @@ public class ElectionLeader extends ComponentDefinition {
             
             if(leaseTimeoutId != null && leaseTimeoutId.equals(event.getTimeoutId())){
 
-                Collection<DecoratedAddress> lgNodes = lcRuleSet.continueLeadership(selfAddress, addressContainerMap.values());
+                Collection<DecoratedAddress> lgNodes = lcRuleSet.continueLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
                 if(lgNodes != null && lgNodes.size() > leaderGroupSize) {
 
