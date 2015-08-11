@@ -22,22 +22,22 @@ public abstract class LCRuleSet extends RuleSet{
      * executes the condition as defined by the application and in case the outcome is empty
      * gives up the attempt to become the leader.
      *
-     * @param selfAddress self address
+     * @param selfContainer self address
      * @param viewSample view
      * @return cohorts
      */
-    public abstract Collection<DecoratedAddress> initiateLeadership (DecoratedAddress selfAddress, Collection<LEContainer> viewSample);
+    public abstract Collection<DecoratedAddress> initiateLeadership (LEContainer selfContainer, Collection<LEContainer> viewSample, int leaderGroupSize);
 
 
     /**
      * Once a node becomes the leader, it will periodically execute the leadership extension protocol
      * in which the node will initiate the extension protocol based on the outcome of the invocation.
      *
-     * @param selfAddress self address
+     * @param selfContainer self address
      * @param viewSample view sample
      * @return cohorts
      */
-    public abstract Collection<DecoratedAddress> continueLeadership(DecoratedAddress selfAddress, Collection<LEContainer> viewSample);
+    public abstract Collection<DecoratedAddress> continueLeadership(LEContainer selfContainer, Collection<LEContainer> viewSample, int leaderGroupSize);
 
 
     /**
