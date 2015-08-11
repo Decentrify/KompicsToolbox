@@ -380,18 +380,6 @@ public class ElectionLeader extends ComponentDefinition {
             trigger(promiseRequest, networkPositive);
         }
 
-//        for (LEContainer leaderGroupNode : leaderGroupNodes) {
-//
-//            DecoratedAddress lgMemberAddr = leaderGroupNode.getSource();
-//            leaderGroupAddress.add(lgMemberAddr);
-//
-//            logger.warn("Sending Promise Request to : " + lgMemberAddr.getId());
-//
-//            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, lgMemberAddr, Transport.UDP);
-//            BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request> promiseRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request>(header, request);
-//            trigger(promiseRequest, networkPositive);
-//        }
-
         electionRoundTracker.startTracking(electionRoundId, leaderGroupAddress);
 
         ScheduleTimeout st = new ScheduleTimeout(5000);
