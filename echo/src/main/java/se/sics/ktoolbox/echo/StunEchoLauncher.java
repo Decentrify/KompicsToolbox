@@ -20,6 +20,12 @@ package se.sics.ktoolbox.echo;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -27,8 +33,6 @@ import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Kompics;
-import se.sics.kompics.KompicsEvent;
-import se.sics.kompics.Negative;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
@@ -52,7 +56,7 @@ public class StunEchoLauncher extends ComponentDefinition {
 
     public static Type type;
     public static Address self;
-    public static Address target;
+    public static Address pingTarget;
 
     private static Logger LOG = LoggerFactory.getLogger(StunEchoLauncher.class);
     private String logPrefix = "";
@@ -83,7 +87,8 @@ public class StunEchoLauncher extends ComponentDefinition {
             subscribe(handlePong, networkComp.getPositive(Network.class));
 
             if (type.equals(Type.PING)) {
-                DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, target, Transport.UDP), null, 0);
+                LOG.info("{} sending PING from:{} to:{}", new Object[]{logPrefix, self, pingTarget});
+                DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, pingTarget, Transport.UDP), null, 0);
                 ContentMsg request = new BasicContentMsg(requestHeader, new Ping());
                 trigger(request, networkComp.getPositive(Network.class));
             }
@@ -99,15 +104,7 @@ public class StunEchoLauncher extends ComponentDefinition {
     };
 
     private void connectNetwork() {
-        InetAddress ip = null;
-        try {
-            ip = InetAddress.getByName("0.0.0.0");
-        } catch (UnknownHostException ex) {
-            LOG.error("{}target binding exception");
-            System.exit(1);
-        }
-        Address bind = new DecoratedAddress(new BasicAddress(ip, self.getPort(), -1));
-        networkComp = create(NettyNetwork.class, new NettyInit(bind));
+        networkComp = create(NettyNetwork.class, new NettyInit(self));
         trigger(Start.event, networkComp.control());
     }
 
@@ -117,7 +114,7 @@ public class StunEchoLauncher extends ComponentDefinition {
                 public void handle(Ping content, BasicContentMsg<Address, DecoratedHeader<Address>, Ping> container) {
                     LOG.info("{}received ping from:{}", logPrefix, container.getSource());
                     DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, container.getSource(), Transport.UDP), null, 0);
-                    ContentMsg request = new BasicContentMsg(requestHeader, new Pong(container.getSource()));
+                    ContentMsg request = new BasicContentMsg(requestHeader, new Pong());
                     trigger(request, networkComp.getPositive(Network.class));
                 }
             };
@@ -127,7 +124,7 @@ public class StunEchoLauncher extends ComponentDefinition {
                 @Override
                 public void handle(Pong content, BasicContentMsg<Address, DecoratedHeader<Address>, Pong> container) {
                     LOG.info("{}received pong from:{} with pingSrc:{}",
-                            new Object[]{logPrefix, container.getSource(), content.pingSrc});
+                            new Object[]{logPrefix, container.getSource(), container.getSource()});
                 }
             };
 
@@ -137,48 +134,7 @@ public class StunEchoLauncher extends ComponentDefinition {
     }
 
     public static void main(String[] args) {
-        if (args.length > 1) {
-            if (args[0].equals("-ping")) {
-                type = StunEchoLauncher.Type.PING;
-                InetAddress ipS = null;
-                try {
-                    ipS = InetAddress.getByName(args[1]);
-                    self = new DecoratedAddress(new BasicAddress(ipS, 34543, 0));
-                } catch (UnknownHostException ex) {
-                    LOG.error("{}target binding exception");
-                    System.exit(1);
-                }
-                if (args.length > 2) {
-                    InetAddress ip = null;
-                    try {
-                        ip = InetAddress.getByName(args[2]);
-                        target = new DecoratedAddress(new BasicAddress(ip, 34544, 1));
-                    } catch (UnknownHostException ex) {
-                        LOG.error("{}target binding exception");
-                        System.exit(1);
-                    }
-                } else {
-                    LOG.error("-ping should have a target");
-                    System.exit(1);
-                }
-            } else if (args[0].equals("-pong")) {
-                type = StunEchoLauncher.Type.PONG;
-                InetAddress ipS = null;
-                try {
-                    ipS = InetAddress.getByName(args[1]);
-                    self = new DecoratedAddress(new BasicAddress(ipS, 34544, 1));
-                } catch (UnknownHostException ex) {
-                    LOG.error("{}target binding exception");
-                    System.exit(1);
-                }
-            } else {
-                LOG.error("type should be -ping/-pong and self");
-                System.exit(1);
-            }
-        } else {
-            LOG.error("-ping/-pong required");
-            System.exit(1);
-        }
+        parseArgs(args);
 
         if (Kompics.isOn()) {
             Kompics.shutdown();
@@ -187,6 +143,56 @@ public class StunEchoLauncher extends ComponentDefinition {
         try {
             Kompics.waitForTermination();
         } catch (InterruptedException ex) {
+            System.exit(1);
+        }
+    }
+
+    private static void parseArgs(String[] args) {
+        Options options = new Options();
+        Option ping = new Option("ping", true, "ping target address");
+        Option self = new Option("self", true, "public self ip or own nat address");
+        options.addOption(ping);
+        options.addOption(self);
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = null;
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException ex) {
+            LOG.error("command line parsing error");
+            System.exit(1);
+        }
+
+        if (cmd.hasOption(ping.getOpt())) {
+            StunEchoLauncher.type = Type.PING;
+            InetAddress ip = null;
+            try {
+                ip = InetAddress.getByName(cmd.getOptionValue(ping.getOpt()));
+            } catch (UnknownHostException ex) {
+                LOG.error("ping target binding error");
+                System.exit(1);
+            }
+            StunEchoLauncher.pingTarget = new DecoratedAddress(new BasicAddress(ip, 34544, 1)); 
+        } else {
+            StunEchoLauncher.type = Type.PONG;
+        }
+        if (cmd.hasOption(self.getOpt())) {
+            InetAddress ip = null;
+            try {
+                ip = InetAddress.getByName(cmd.getOptionValue(self.getOpt()));
+            } catch (UnknownHostException ex) {
+                LOG.error("self binding error");
+                System.exit(1);
+            }
+            switch (StunEchoLauncher.type) {
+                case PING:
+                    StunEchoLauncher.self = new DecoratedAddress(new BasicAddress(ip, 34543, 0));
+                    break;
+                case PONG:
+                    StunEchoLauncher.self = new DecoratedAddress(new BasicAddress(ip, 34544, 1));
+                    break;
+            }
+        } else {
+            LOG.error("missing self address");
             System.exit(1);
         }
     }

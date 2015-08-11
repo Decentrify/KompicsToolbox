@@ -26,9 +26,6 @@ import se.sics.kompics.network.Address;
  */
 public class Pong implements KompicsEvent {
 
-    public Address pingSrc;
-
-    public Pong(Address pingSrc) {
-        this.pingSrc = pingSrc;
+    public Pong() {
     }
 }

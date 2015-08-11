@@ -19,9 +19,13 @@
 package se.sics.ktoolbox.echo;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.network.Address;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Ping implements KompicsEvent {
+    
+    public Ping() {
+    }
 }

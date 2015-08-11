@@ -38,11 +38,12 @@ public class PingSerializer implements Serializer {
         return id;
     }
 
-    public void toBinary(Object o, ByteBuf bb) {
-        Ping obj = (Ping)o;
+     @Override
+    public void toBinary(Object o, ByteBuf buf) {
     }
 
-    public Object fromBinary(ByteBuf bb, Optional<Object> optnl) {
+    @Override
+    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         return new Ping();
     }
 }

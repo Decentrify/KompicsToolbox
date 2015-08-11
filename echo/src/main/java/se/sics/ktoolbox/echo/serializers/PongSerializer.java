@@ -21,9 +21,7 @@ package se.sics.ktoolbox.echo.serializers;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.netty.serialization.Serializer;
-import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.echo.Pong;
 
 /**
@@ -42,11 +40,9 @@ public class PongSerializer implements Serializer {
 
     public void toBinary(Object o, ByteBuf bb) {
         Pong obj = (Pong)o;
-        Serializers.toBinary(obj.pingSrc, bb);
     }
 
     public Pong fromBinary(ByteBuf bb, Optional<Object> optnl) {
-        Address pingSrc = (Address)Serializers.fromBinary(bb, optnl);
-        return new Pong(pingSrc);
+        return new Pong();
     }
 }
