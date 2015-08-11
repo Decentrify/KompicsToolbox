@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.election.example.main;
 
-import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
@@ -47,8 +46,8 @@ public class HostManagerComp extends ComponentDefinition{
         ElectionConfig config = init.electionConfig;
 
         // Create necessary components.
-        electionLeader = create(ElectionLeader.class, new ElectionInit<ElectionLeader>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter));
-        electionFollower = create(ElectionFollower.class, new ElectionInit<ElectionFollower>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter));
+        electionLeader = create(ElectionLeader.class, new ElectionInit<ElectionLeader>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter, null, null));
+        electionFollower = create(ElectionFollower.class, new ElectionInit<ElectionFollower>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter, null, null));
         gradientMockUp = create(GradientMockUp.class, new GradientMockUp.GradientMockUpInit(selfAddress));
 
         // Make the necessary connections.

@@ -16,6 +16,7 @@ import se.sics.p2ptoolbox.election.api.msg.ViewUpdate;
 import se.sics.p2ptoolbox.election.api.msg.mock.MockedGradientUpdate;
 import se.sics.p2ptoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.p2ptoolbox.election.api.ports.TestPort;
+import se.sics.p2ptoolbox.election.api.rules.CohortsRuleSet;
 import se.sics.p2ptoolbox.election.core.data.ExtensionRequest;
 import se.sics.p2ptoolbox.election.core.data.LeaseCommitUpdated;
 import se.sics.p2ptoolbox.election.core.data.Promise;
@@ -43,7 +44,7 @@ public class ElectionFollower extends ComponentDefinition {
     LCPeerView selfLCView;
     LEContainer selfContainer;
     private LeaderFilter filter;
-
+    private CohortsRuleSet cohortsRuleSet;
     private ElectionConfig config;
     private SortedSet<LEContainer> higherUtilityNodes;
     private SortedSet<LEContainer> lowerUtilityNodes;
@@ -92,6 +93,7 @@ public class ElectionFollower extends ComponentDefinition {
     private void doInit(ElectionInit<ElectionFollower> init) {
 
         config = init.electionConfig;
+        cohortsRuleSet = init.cohortsRuleSet;
         selfAddress = init.selfAddress;
         addressContainerMap = new HashMap<BasicAddress, LEContainer>();
 
@@ -242,10 +244,8 @@ public class ElectionFollower extends ComponentDefinition {
 
                  } else {
 
-                     LCPeerView nodeToCompareTo = getHighestUtilityNode();
-                     if (lcPeerViewComparator.compare(requestLeaderView, nodeToCompareTo) < 0) {
-                         acceptCandidate = false;
-                     }
+                     acceptCandidate = cohortsRuleSet.validate( new LEContainer(event.getContent().leaderAddress, event.getContent().leaderView),
+                             new LEContainer(selfAddress, selfLCView), addressContainerMap.values());
                  }
              }
 
