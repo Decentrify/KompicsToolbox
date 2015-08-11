@@ -361,17 +361,36 @@ public class ElectionLeader extends ComponentDefinition {
         inElection = true;
         Collection<DecoratedAddress> leaderGroupAddress = new ArrayList<DecoratedAddress>();
 
-        for (LEContainer leaderGroupNode : leaderGroupNodes) {
+        for(LEContainer leaderGroupNode : leaderGroupNodes){
+            leaderGroupAddress.add(leaderGroupNode.getSource());
+        }
 
-            DecoratedAddress lgMemberAddr = leaderGroupNode.getSource();
-            leaderGroupAddress.add(lgMemberAddr);
+//      Ask Application if the node is allowed to initiate the leadership.
+        boolean initiateLeadership = filter.initiateLeadership(leaderGroupAddress);
+        if(!initiateLeadership) {
+            logger.warn("{}: Unable to initiate leadership based on the response from the filter", selfAddress.getId());
+            return;
+        }
 
-            logger.warn("Sending Promise Request to : " + lgMemberAddr.getId());
+        for(DecoratedAddress address : leaderGroupAddress){
 
-            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, lgMemberAddr, Transport.UDP);
+            logger.debug("Sending promise request to : {}", address.getId());
+            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, address, Transport.UDP);
             BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request> promiseRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request>(header, request);
             trigger(promiseRequest, networkPositive);
         }
+
+//        for (LEContainer leaderGroupNode : leaderGroupNodes) {
+//
+//            DecoratedAddress lgMemberAddr = leaderGroupNode.getSource();
+//            leaderGroupAddress.add(lgMemberAddr);
+//
+//            logger.warn("Sending Promise Request to : " + lgMemberAddr.getId());
+//
+//            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, lgMemberAddr, Transport.UDP);
+//            BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request> promiseRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request>(header, request);
+//            trigger(promiseRequest, networkPositive);
+//        }
 
         electionRoundTracker.startTracking(electionRoundId, leaderGroupAddress);
 
@@ -558,6 +577,16 @@ public class ElectionLeader extends ComponentDefinition {
                     lgNodes.add(selfAddress);
                     UUID roundId = UUID.randomUUID();
                     ExtensionRequest request = new ExtensionRequest(selfAddress, publicKey, selfLCView, roundId);
+
+
+//                  Check for application based extension.
+                    boolean extensionPossible = filter.initiateLeadership(lgNodes);
+
+                    if(!extensionPossible){
+                        logger.warn("{}: Extension not possible with the current cohorts: {}", selfAddress.getId(), lgNodes);
+                        terminateBeingLeader();
+                        return;
+                    }
 
                     for (DecoratedAddress memberAddress : lgNodes) {
 
