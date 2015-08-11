@@ -22,10 +22,10 @@ public abstract class CohortsRuleSet extends RuleSet{
      * In case the leader tries to assert self as a leader, the cohorts can reject the promise using the
      * method. The full semantics actually set by the application.
      *
-     * @param leaderDescriptor descriptor of leader
-     * @param selfDescriptor self descriptor
+     * @param leaderContainer descriptor of leader
+     * @param selfContainer self descriptor
      * @param viewSample sample
      * @return valid / not valid
      */
-    public abstract boolean validate( LCPeerView leaderDescriptor, LCPeerView selfDescriptor, Collection<LEContainer> viewSample);
+    public abstract boolean validate( LEContainer leaderContainer, LEContainer selfContainer, Collection<LEContainer> viewSample);
 }
