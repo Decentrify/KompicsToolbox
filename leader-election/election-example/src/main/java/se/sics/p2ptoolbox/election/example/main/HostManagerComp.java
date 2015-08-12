@@ -9,7 +9,6 @@ import se.sics.p2ptoolbox.election.api.LCPeerView;
 import se.sics.p2ptoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.p2ptoolbox.election.api.ports.TestPort;
 import se.sics.p2ptoolbox.election.core.*;
-import se.sics.p2ptoolbox.election.core.util.LeaderFilter;
 import se.sics.p2ptoolbox.election.example.data.PeersUpdate;
 import se.sics.p2ptoolbox.election.example.msg.AddPeers;
 import se.sics.p2ptoolbox.election.example.ports.ApplicationPort;
@@ -46,8 +45,8 @@ public class HostManagerComp extends ComponentDefinition{
         ElectionConfig config = init.electionConfig;
 
         // Create necessary components.
-        electionLeader = create(ElectionLeader.class, new ElectionInit<ElectionLeader>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter, null, null));
-        electionFollower = create(ElectionFollower.class, new ElectionInit<ElectionFollower>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, init.filter, null, null));
+        electionLeader = create(ElectionLeader.class, new ElectionInit<ElectionLeader>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, null, null));
+        electionFollower = create(ElectionFollower.class, new ElectionInit<ElectionFollower>(selfAddress, selfView, 100, config, null, null, init.lcpComparator, null, null));
         gradientMockUp = create(GradientMockUp.class, new GradientMockUp.GradientMockUpInit(selfAddress));
 
         // Make the necessary connections.
@@ -103,16 +102,14 @@ public class HostManagerComp extends ComponentDefinition{
     public static class HostManagerCompInit extends Init<HostManagerComp>{
 
         Comparator<LCPeerView> lcpComparator;
-        private LeaderFilter filter;
         private SystemConfig systemConfig;
         private ElectionConfig electionConfig;
 
-        public HostManagerCompInit(SystemConfig systemConfig, ElectionConfig electionConfig, Comparator<LCPeerView> lcpComparator, LeaderFilter filter){
+        public HostManagerCompInit(SystemConfig systemConfig, ElectionConfig electionConfig, Comparator<LCPeerView> lcpComparator){
             
             this.systemConfig = systemConfig;
             this.electionConfig = electionConfig;
             this.lcpComparator = lcpComparator;
-            this.filter = filter;
 
         }
     }

@@ -25,7 +25,6 @@ public class ElectionInit<T extends ComponentDefinition> extends  Init <T> {
     public final PublicKey publicKey;
     public final PrivateKey privateKey;
     public final Comparator<LCPeerView> comparator;
-    public final LeaderFilter filter;
     public final LCRuleSet lcRuleSet;
     public final CohortsRuleSet cohortsRuleSet;
 
@@ -36,7 +35,7 @@ public class ElectionInit<T extends ComponentDefinition> extends  Init <T> {
                         PublicKey publicKey,
                         PrivateKey privateKey,
                         Comparator<LCPeerView> comparator,
-                        LeaderFilter filter, LCRuleSet lcRuleSet, CohortsRuleSet cohortsRuleSet){
+                        LCRuleSet lcRuleSet, CohortsRuleSet cohortsRuleSet){
 
         this.selfAddress = selfAddress;
         this.seed = seed;
@@ -45,7 +44,6 @@ public class ElectionInit<T extends ComponentDefinition> extends  Init <T> {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.comparator = comparator;
-        this.filter = filter;
         this.lcRuleSet = lcRuleSet;
         this.cohortsRuleSet = cohortsRuleSet;
     }
