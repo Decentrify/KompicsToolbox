@@ -16,6 +16,7 @@
         <module>leader-election</module> 
         <module>ip-solver</module>
         <module>caracal-client</module>
+        <module>nat-echo</module>
     </modules>
 
     <distributionManagement>

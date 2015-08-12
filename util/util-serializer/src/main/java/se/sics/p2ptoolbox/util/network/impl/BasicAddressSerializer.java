@@ -21,7 +21,9 @@ package se.sics.p2ptoolbox.util.network.impl;
 import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +81,11 @@ public class BasicAddressSerializer implements Serializer {
         byte portUpper = buf.readByte();
         byte portLower = buf.readByte();
         int addressPort = Ints.fromBytes((byte) 0, (byte) 0, portUpper, portLower);
-
+        if(hint.isPresent() && hint.get() instanceof InetSocketAddress) {
+            InetSocketAddress adr = (InetSocketAddress)hint.get();
+            addressIp = adr.getAddress();
+            addressPort = adr.getPort();
+        } 
         int addressId = buf.readInt();
         
         return new BasicAddress(addressIp, addressPort, addressId);

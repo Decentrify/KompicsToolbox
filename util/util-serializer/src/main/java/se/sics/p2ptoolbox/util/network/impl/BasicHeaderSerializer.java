@@ -20,14 +20,16 @@ package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.DatagramPacket;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicHeaderSerializer implements Serializer {
+public class BasicHeaderSerializer implements DatagramSerializer {
 
     private final int id;
 
@@ -44,8 +46,9 @@ public class BasicHeaderSerializer implements Serializer {
     public void toBinary(Object o, ByteBuf buf) {
         BasicHeader obj = (BasicHeader) o;
 
-        Serializers.toBinary(obj.getSource(), buf);
-        Serializers.toBinary(obj.getDestination(), buf);
+        Serializer decAdrS = Serializers.lookupSerializer(DecoratedAddress.class);
+        decAdrS.toBinary(obj.getSource(), buf);
+        decAdrS.toBinary(obj.getDestination(), buf);
 
         switch (obj.getProtocol()) {
             case UDP:
@@ -70,9 +73,15 @@ public class BasicHeaderSerializer implements Serializer {
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        DecoratedAddress src = (DecoratedAddress) Serializers.fromBinary(buf, hint);
-        DecoratedAddress dst = (DecoratedAddress) Serializers.fromBinary(buf, hint);
-        
+        return fromBinary(buf, (DatagramPacket)null);
+    }
+
+    @Override
+    public Object fromBinary(ByteBuf buf, DatagramPacket datagram) {
+        Serializer decAdrS = Serializers.lookupSerializer(DecoratedAddress.class);
+        DecoratedAddress src = (DecoratedAddress)decAdrS.fromBinary(buf, Optional.fromNullable((Object)datagram.sender()));
+        DecoratedAddress dst = (DecoratedAddress)decAdrS.fromBinary(buf, Optional.fromNullable((Object)datagram.recipient()));
+
         byte protocolByte = buf.readByte();
         Transport protocol;
         switch (protocolByte) {
@@ -96,5 +105,4 @@ public class BasicHeaderSerializer implements Serializer {
         }
         return new BasicHeader(src, dst, protocol);
     }
-
 }

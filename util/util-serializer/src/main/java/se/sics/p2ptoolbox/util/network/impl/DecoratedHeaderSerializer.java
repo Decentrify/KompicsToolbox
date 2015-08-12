@@ -16,12 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.DatagramPacket;
 import org.javatuples.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.util.BitBuffer;
@@ -31,13 +34,15 @@ import se.sics.p2ptoolbox.util.traits.OverlayMember;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class DecoratedHeaderSerializer implements Serializer {
+public class DecoratedHeaderSerializer implements DatagramSerializer {
+    private static final Logger LOG = LoggerFactory.getLogger(Serializer.class);
+
     private final int id;
-    
+
     public DecoratedHeaderSerializer(int id) {
         this.id = id;
     }
-    
+
     @Override
     public int identifier() {
         return id;
@@ -53,32 +58,42 @@ public class DecoratedHeaderSerializer implements Serializer {
         flags.write(Pair.with(0, obj.hasTrait(OverlayMember.class)));
         flags.write(Pair.with(1, obj.hasTrait(Forwardable.class)));
         buf.writeBytes(flags.finalise());
-        
-        if(obj.hasTrait(OverlayMember.class)) {
+
+        if (obj.hasTrait(OverlayMember.class)) {
             buf.writeInt(obj.getOverlayId());
         }
-        if(obj.hasTrait(Forwardable.class)) {
+        if (obj.hasTrait(Forwardable.class)) {
             Serializers.lookupSerializer(Route.class).toBinary(obj.getRoute(), buf);
         }
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        BasicHeader base = (BasicHeader)Serializers.lookupSerializer(BasicHeader.class).fromBinary(buf, hint);
-        
+        return fromBinary(buf, (DatagramPacket)null);
+    }
+
+    @Override
+    public Object fromBinary(ByteBuf buf, DatagramPacket datagram) {
+        Serializer headerS = Serializers.lookupSerializer(BasicHeader.class);
+        if(!(headerS instanceof DatagramSerializer)) {
+            LOG.error("The basic header serializer is not a datagram serializer");
+            System.exit(1);
+        }
+        DatagramSerializer dHeaderS = (DatagramSerializer)headerS;
+        BasicHeader base = (BasicHeader) dHeaderS.fromBinary(buf, datagram);
+
         Route route = null;
         Integer overlayId = null;
-        
+
         byte[] bFlags = new byte[1];
         buf.readBytes(bFlags);
         boolean[] flags = BitBuffer.extract(2, bFlags);
-        if(flags[0]) {
+        if (flags[0]) {
             overlayId = buf.readInt();
         }
         if (flags[1]) {
-            route = (Route)Serializers.lookupSerializer(Route.class).fromBinary(buf, hint);
+            route = (Route) Serializers.lookupSerializer(Route.class).fromBinary(buf, Optional.absent());
         }
         return new DecoratedHeader(base, route, overlayId);
     }
-    
 }

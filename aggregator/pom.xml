@@ -26,7 +26,7 @@
         <maven.compiler.target>1.6</maven.compiler.target>
         <java.compiler.version>1.6</java.compiler.version>
         <kompics.version>0.8.1-SNAPSHOT</kompics.version>
-        <util.version>1.5-SNAPSHOT</util.version>
+        <util.version>1.6-SNAPSHOT</util.version>
     </properties>
 
     <dependencies>
