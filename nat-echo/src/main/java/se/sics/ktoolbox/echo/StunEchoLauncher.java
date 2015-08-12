@@ -123,8 +123,8 @@ public class StunEchoLauncher extends ComponentDefinition {
             = new ClassMatchedHandler<Pong, BasicContentMsg<Address, DecoratedHeader<Address>, Pong>>() {
                 @Override
                 public void handle(Pong content, BasicContentMsg<Address, DecoratedHeader<Address>, Pong> container) {
-                    LOG.info("{}received pong from:{}",
-                            new Object[]{logPrefix, container.getSource()});
+                    LOG.info("{}received pong from:{} at:{}",
+                            new Object[]{logPrefix, container.getSource(), container.getDestination()});
                 }
             };
 

@@ -16,25 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.DatagramPacket;
 import se.sics.kompics.network.Header;
-import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicContentMsgSerializer implements Serializer {
+public class BasicContentMsgSerializer implements DatagramSerializer {
 
     private final int id;
+
     public BasicContentMsgSerializer(int id) {
         this.id = id;
     }
-    
+
     @Override
     public int identifier() {
         return id;
@@ -42,15 +43,20 @@ public class BasicContentMsgSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        BasicContentMsg obj = (BasicContentMsg)o;
+        BasicContentMsg obj = (BasicContentMsg) o;
         Serializers.toBinary(obj.getHeader(), buf);
         Serializers.toBinary(obj.getContent(), buf);
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        Header header = (Header)Serializers.fromBinary(buf, hint);
-        Object content = Serializers.fromBinary(buf, hint);
+        return fromBinary(buf, (DatagramPacket)null);
+    }
+
+    @Override
+    public Object fromBinary(ByteBuf buf, DatagramPacket datagram) {
+        Header header = (Header) Serializers.fromBinary(buf, datagram);
+        Object content = Serializers.fromBinary(buf, Optional.absent());
         return new BasicContentMsg(header, content);
     }
 }

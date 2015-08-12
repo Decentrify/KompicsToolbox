@@ -21,6 +21,7 @@ package se.sics.p2ptoolbox.util.network.impl;
 import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
