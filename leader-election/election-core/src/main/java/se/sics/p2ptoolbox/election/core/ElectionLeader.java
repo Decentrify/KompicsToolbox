@@ -66,7 +66,6 @@ public class ElectionLeader extends ComponentDefinition {
     private LCRuleSet lcRuleSet;
     private DecoratedAddress selfAddress;
     private Map<BasicAddress, LEContainer> addressContainerMap;
-    private LeaderFilter filter;
     private int leaderGroupSize;
 
     // Promise Sub Protocol.
@@ -126,7 +125,6 @@ public class ElectionLeader extends ComponentDefinition {
         this.config = init.electionConfig;
         this.lcRuleSet = init.lcRuleSet;
         this.selfAddress = init.selfAddress;
-        this.filter = init.filter;
         this.publicKey = init.publicKey;
 
         // voting protocol.
@@ -347,7 +345,7 @@ public class ElectionLeader extends ComponentDefinition {
 
         Collection<DecoratedAddress> leaderGroupAddress = lcRuleSet.initiateLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
-        if (leaderGroupAddress.size() < leaderGroupSize) {
+        if (leaderGroupAddress.isEmpty() || leaderGroupAddress.size() < leaderGroupSize) {
             logger.error(" {} : Not asserting self as leader as the leader group size is less than required.", selfAddress.getId());
             return;
         }
@@ -357,13 +355,6 @@ public class ElectionLeader extends ComponentDefinition {
         leaderGroupAddress.add(selfAddress);
 
         inElection = true;
-//      Ask Application if the node is allowed to initiate the leadership.
-        boolean initiateLeadership = filter.initiateLeadership(leaderGroupAddress);
-        if(!initiateLeadership) {
-            logger.warn("{}: Unable to initiate leadership based on the response from the filter", selfAddress.getId());
-            return;
-        }
-
         for(DecoratedAddress address : leaderGroupAddress){
 
             logger.debug("Sending promise request to : {}", address.getId());
@@ -544,22 +535,17 @@ public class ElectionLeader extends ComponentDefinition {
 
                 Collection<DecoratedAddress> lgNodes = lcRuleSet.continueLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
-                if(lgNodes != null && lgNodes.size() > leaderGroupSize) {
+                if(lgNodes.isEmpty() || lgNodes.size()< leaderGroupSize){
+                    logger.warn("{}: Will Not extend the lease anymore.", selfAddress.getId());
+                    terminateBeingLeader();
+                }
+                else {
 
                     logger.warn("{}: Trying to extend the leadership.", selfAddress.getId());
 
                     lgNodes.add(selfAddress);
                     UUID roundId = UUID.randomUUID();
                     ExtensionRequest request = new ExtensionRequest(selfAddress, publicKey, selfLCView, roundId);
-
-//                  Check for application based extension.
-                    boolean extensionPossible = filter.initiateLeadership(lgNodes);
-
-                    if(!extensionPossible){
-                        logger.warn("{}: Extension not possible with the current cohorts: {}", selfAddress.getId(), lgNodes);
-                        terminateBeingLeader();
-                        return;
-                    }
 
                     for (DecoratedAddress memberAddress : lgNodes) {
 
@@ -577,10 +563,6 @@ public class ElectionLeader extends ComponentDefinition {
                     st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
                     leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
                     trigger(st, timerPositive);
-
-                } else {
-                    logger.warn("{}: Will Not extend the lease anymore.", selfAddress.getId());
-                    terminateBeingLeader();
                 }
             }
         }

@@ -43,7 +43,6 @@ public class ElectionFollower extends ComponentDefinition {
     DecoratedAddress selfAddress;
     LCPeerView selfLCView;
     LEContainer selfContainer;
-    private LeaderFilter filter;
     private CohortsRuleSet cohortsRuleSet;
     private ElectionConfig config;
     private SortedSet<LEContainer> higherUtilityNodes;
@@ -99,7 +98,6 @@ public class ElectionFollower extends ComponentDefinition {
 
         selfLCView = init.initialView;
         selfContainer = new LEContainer(selfAddress, selfLCView);
-        filter = init.filter;
 
         lcPeerViewComparator = init.comparator;
         this.leContainerComparator = new Comparator<LEContainer>() {
