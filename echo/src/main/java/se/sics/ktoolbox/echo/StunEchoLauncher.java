@@ -81,7 +81,7 @@ public class StunEchoLauncher extends ComponentDefinition {
 
         @Override
         public void handle(Start e) {
-            LOG.info("{}starting");
+            LOG.info("{}starting", logPrefix);
             connectNetwork();
             subscribe(handlePing, networkComp.getPositive(Network.class));
             subscribe(handlePong, networkComp.getPositive(Network.class));
@@ -123,8 +123,8 @@ public class StunEchoLauncher extends ComponentDefinition {
             = new ClassMatchedHandler<Pong, BasicContentMsg<Address, DecoratedHeader<Address>, Pong>>() {
                 @Override
                 public void handle(Pong content, BasicContentMsg<Address, DecoratedHeader<Address>, Pong> container) {
-                    LOG.info("{}received pong from:{} with pingSrc:{}",
-                            new Object[]{logPrefix, container.getSource(), container.getSource()});
+                    LOG.info("{}received pong from:{}",
+                            new Object[]{logPrefix, container.getSource()});
                 }
             };
 
@@ -171,7 +171,7 @@ public class StunEchoLauncher extends ComponentDefinition {
                 LOG.error("ping target binding error");
                 System.exit(1);
             }
-            StunEchoLauncher.pingTarget = new DecoratedAddress(new BasicAddress(ip, 34544, 1)); 
+            StunEchoLauncher.pingTarget = new DecoratedAddress(new BasicAddress(ip, 34543, 1)); 
         } else {
             StunEchoLauncher.type = Type.PONG;
         }
@@ -188,7 +188,7 @@ public class StunEchoLauncher extends ComponentDefinition {
                     StunEchoLauncher.self = new DecoratedAddress(new BasicAddress(ip, 34543, 0));
                     break;
                 case PONG:
-                    StunEchoLauncher.self = new DecoratedAddress(new BasicAddress(ip, 34544, 1));
+                    StunEchoLauncher.self = new DecoratedAddress(new BasicAddress(ip, 34543, 1));
                     break;
             }
         } else {

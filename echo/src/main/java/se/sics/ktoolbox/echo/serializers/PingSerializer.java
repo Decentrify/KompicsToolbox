@@ -38,7 +38,7 @@ public class PingSerializer implements Serializer {
         return id;
     }
 
-     @Override
+    @Override
     public void toBinary(Object o, ByteBuf buf) {
     }
 
