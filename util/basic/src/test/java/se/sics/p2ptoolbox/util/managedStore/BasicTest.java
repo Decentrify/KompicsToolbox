@@ -46,7 +46,7 @@ public class BasicTest {
     int generateSize = 5;
     int pieceSize = 1024;
     int blockSize = 1024 * 1024;
-    int randomRuns = 1000;
+    int randomRuns = 100;
 
     public void setup(Random rand) throws IOException, HashUtil.HashBuilderException {
         cleanup(rand);
