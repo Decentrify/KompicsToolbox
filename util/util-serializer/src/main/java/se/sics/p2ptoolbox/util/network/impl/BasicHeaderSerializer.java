@@ -73,14 +73,19 @@ public class BasicHeaderSerializer implements DatagramSerializer {
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        return fromBinary(buf, (DatagramPacket)null);
+        return fromBinary(buf, (DatagramPacket) null);
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, DatagramPacket datagram) {
         Serializer decAdrS = Serializers.lookupSerializer(DecoratedAddress.class);
-        DecoratedAddress src = (DecoratedAddress)decAdrS.fromBinary(buf, Optional.fromNullable((Object)datagram.sender()));
-        DecoratedAddress dst = (DecoratedAddress)decAdrS.fromBinary(buf, Optional.fromNullable((Object)datagram.recipient()));
+        DecoratedAddress src;
+        if (datagram != null) {
+            src = (DecoratedAddress) decAdrS.fromBinary(buf, Optional.fromNullable((Object) datagram.sender()));
+        } else {
+            src = (DecoratedAddress) decAdrS.fromBinary(buf, Optional.absent());
+        }
+        DecoratedAddress dst = (DecoratedAddress) decAdrS.fromBinary(buf, Optional.absent());
 
         byte protocolByte = buf.readByte();
         Transport protocol;
