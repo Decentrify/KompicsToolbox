@@ -4,7 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Start;
+import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
+import se.sics.ktoolbox.cc.heartbeat.msg.CCHeartbeat;
+import se.sics.ktoolbox.cc.heartbeat.msg.CCOverlaySample;
 
 /**
  * Simulation version of the Heartbeat component used to
@@ -15,11 +19,14 @@ import se.sics.kompics.Start;
 public class CCHeartbeatSimComp extends ComponentDefinition{
 
     private Logger logger = LoggerFactory.getLogger(CCHeartbeatSimComp.class);
-
+    private Negative<CCHeartbeatPort> heartbeatPort  = provides(CCHeartbeatPort.class);
 
     public CCHeartbeatSimComp(CCHeartbeatSimInit init){
         doInit(init);
         subscribe(startHandler, control);
+        subscribe(startHeartbeatHandler, heartbeatPort);
+        subscribe(stopHeartbeatHandler, heartbeatPort);
+        subscribe(overlaySampleRequest, heartbeatPort);
     }
 
     private void doInit(CCHeartbeatSimInit init) {
@@ -33,4 +40,30 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
             logger.debug("Component booted up.");
         }
     };
+
+
+    Handler<CCHeartbeat.Start> startHeartbeatHandler = new Handler<CCHeartbeat.Start>() {
+        @Override
+        public void handle(CCHeartbeat.Start event) {
+            logger.debug("Received starting of heartbeat request from the application.");
+        }
+    };
+
+
+    Handler<CCHeartbeat.Stop> stopHeartbeatHandler = new Handler<CCHeartbeat.Stop>() {
+        @Override
+        public void handle(CCHeartbeat.Stop event) {
+            logger.debug("Received stopping of heartbeat request from the application.");
+        }
+    };
+
+
+    Handler<CCOverlaySample.Request> overlaySampleRequest = new Handler<CCOverlaySample.Request>() {
+        @Override
+        public void handle(CCOverlaySample.Request event) {
+            logger.debug("Received overlay sample request from the application.");
+        }
+    };
+
+
 }
