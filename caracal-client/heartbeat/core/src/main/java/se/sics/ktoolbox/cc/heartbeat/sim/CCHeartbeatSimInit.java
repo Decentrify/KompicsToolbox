@@ -11,9 +11,11 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  */
 public class CCHeartbeatSimInit extends Init<CCHeartbeatSimComp>{
 
-    public DecoratedAddress selfAddress;
+    public final DecoratedAddress selfAddress;
+    public final DecoratedAddress caracalClientAddress;
 
-    public CCHeartbeatSimInit(DecoratedAddress selfAddress){
+    public CCHeartbeatSimInit(DecoratedAddress selfAddress, DecoratedAddress caracalClientAddress){
         this.selfAddress = selfAddress;
+        this.caracalClientAddress = caracalClientAddress;
     }
 }
