@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
@@ -30,6 +31,7 @@ public class CCSimMain extends ComponentDefinition {
 
     private Map<byte[], List<DecoratedAddress>> serviceAddressMap;
     private int slotLength;
+    private DecoratedAddress selfAddress;
 
     public CCSimMain(CCSimMainInit init){
 
@@ -65,6 +67,19 @@ public class CCSimMain extends ComponentDefinition {
         @Override
         public void handle(OverlaySample.Request content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Request> context) {
             logger.debug("Received overlay sample request.");
+
+            Set<DecoratedAddress> address = new HashSet<DecoratedAddress>();
+            List<DecoratedAddress> serviceAddressList =  serviceAddressMap.get(content.overlayIdentifier);
+
+            if(serviceAddressList != null){
+                address.addAll(serviceAddressList);
+            }
+
+            OverlaySample.Response response = new OverlaySample.Response(content.overlayIdentifier, address);
+            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, context.getSource(), Transport.UDP);
+            BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Response> contentMsg = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Response>(header, response);
+
+            trigger(contentMsg, network);
         }
     };
 

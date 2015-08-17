@@ -128,6 +128,20 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
     };
 
 
+
+    /**
+     * Handler for the response over the network from the caracal client
+     * containing the information about the additional nodes under the same service.
+     */
+    ClassMatchedHandler<OverlaySample.Response, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Response>> overlaySampleResponse = new ClassMatchedHandler<OverlaySample.Response, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Response>>() {
+        @Override
+        public void handle(OverlaySample.Response content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Response> context) {
+            logger.debug("Received overlay sample response from the caracal client.");
+            CCOverlaySample.Response response = new CCOverlaySample.Response(content.overlayIdentifier, content.neighbors);
+            trigger(response, heartbeatPort);
+        }
+    };
+
     /**
      * Timeout class indicating the transfer of heartbeats from the application to
      * the main caracal client.
