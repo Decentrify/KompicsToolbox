@@ -5,14 +5,20 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.cc.heartbeat.msg.CCHeartbeat;
 import se.sics.ktoolbox.cc.heartbeat.msg.CCOverlaySample;
 import se.sics.ktoolbox.cc.heartbeat.sim.msg.OverlaySample;
+import se.sics.ktoolbox.cc.heartbeat.sim.msg.PutRequest;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Simulation version of the Heartbeat component used to
@@ -29,6 +35,8 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
 
     private DecoratedAddress caracalClientAddress;
     private DecoratedAddress selfAddress;
+    private Set<byte[]> heartbeats;
+
 
     public CCHeartbeatSimComp(CCHeartbeatSimInit init){
         doInit(init);
@@ -36,12 +44,14 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
         subscribe(startHeartbeatHandler, heartbeatPort);
         subscribe(stopHeartbeatHandler, heartbeatPort);
         subscribe(overlaySampleRequest, heartbeatPort);
+        subscribe(heartbeatTimeout, timer);
     }
 
     private void doInit(CCHeartbeatSimInit init) {
         logger.debug("Performing the initialization tasks for the Heartbeat simulator component.");
         this.selfAddress = init.selfAddress;
         this.caracalClientAddress = init.caracalClientAddress;
+        this.heartbeats = new HashSet<byte[]>();
     }
 
 
@@ -49,22 +59,53 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
         @Override
         public void handle(Start event) {
             logger.debug("Component booted up.");
+            SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(3000, 3000);
+            spt.setTimeoutEvent(new HeartbeatTimeout(spt));
+            trigger(spt, timer);
         }
     };
 
 
+    /**
+     * Initiating the heartbeats for a particular
+     * service identified by the overlay identifier.
+     */
     Handler<CCHeartbeat.Start> startHeartbeatHandler = new Handler<CCHeartbeat.Start>() {
         @Override
         public void handle(CCHeartbeat.Start event) {
             logger.debug("Received starting of heartbeat request from the application.");
+            heartbeats.add(event.overlayId);
         }
     };
 
 
+    /**
+     * Handler indicating the stopping of the heartbeat
+     * for a particular overlay identifier.
+     */
     Handler<CCHeartbeat.Stop> stopHeartbeatHandler = new Handler<CCHeartbeat.Stop>() {
         @Override
         public void handle(CCHeartbeat.Stop event) {
             logger.debug("Received stopping of heartbeat request from the application.");
+            heartbeats.remove(event.overlayId);
+        }
+    };
+
+
+    /**
+     * Time to send the service identifiers that are collected to the
+     * caracal client to be stored there.
+     */
+    Handler<HeartbeatTimeout> heartbeatTimeout = new Handler<HeartbeatTimeout>() {
+        @Override
+        public void handle(HeartbeatTimeout event) {
+            logger.debug("Triggering registered heartbeats to simulated caracal client.");
+
+            PutRequest request = new PutRequest(selfAddress, new HashSet<byte[]>(heartbeats));
+            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, caracalClientAddress, Transport.UDP);
+            BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PutRequest> contentMsg = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PutRequest>(header, request);
+
+            trigger(contentMsg, network);
         }
     };
 
@@ -85,6 +126,19 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
             trigger(contentMsg, network);
         }
     };
+
+
+    /**
+     * Timeout class indicating the transfer of heartbeats from the application to
+     * the main caracal client.
+     */
+    public class HeartbeatTimeout extends Timeout {
+
+        public HeartbeatTimeout(SchedulePeriodicTimeout request) {
+            super(request);
+        }
+    }
+
 
 
 }

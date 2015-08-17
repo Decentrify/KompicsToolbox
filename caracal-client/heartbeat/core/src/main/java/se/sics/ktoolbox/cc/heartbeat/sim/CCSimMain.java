@@ -4,15 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.heartbeat.sim.msg.OverlaySample;
+import se.sics.ktoolbox.cc.heartbeat.sim.msg.PutRequest;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Main class used to replace the actual caracal client.
@@ -27,7 +28,7 @@ public class CCSimMain extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private Map<byte[], Set<DecoratedAddress>> serviceAddressMap;
+    private Map<byte[], List<DecoratedAddress>> serviceAddressMap;
     private int slotLength;
 
     public CCSimMain(CCSimMainInit init){
@@ -35,13 +36,15 @@ public class CCSimMain extends ComponentDefinition {
         doInit(init);
         subscribe(startHandler, control);
         subscribe(overlayRequestHandler, control);
+        subscribe(putRequestHandler, network);
+        subscribe(overlayRequestHandler, network);
     }
 
     private void doInit(CCSimMainInit init) {
 
         logger.debug("Perform the initialization tasks.");
         this.slotLength = init.slotLength;
-        this.serviceAddressMap = new HashMap<byte[], Set<DecoratedAddress>>();
+        this.serviceAddressMap = new HashMap<byte[], List<DecoratedAddress>>();
 
     }
 
@@ -62,6 +65,39 @@ public class CCSimMain extends ComponentDefinition {
         @Override
         public void handle(OverlaySample.Request content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Request> context) {
             logger.debug("Received overlay sample request.");
+        }
+    };
+
+
+    /**
+     * Handler for the put request from the heartbeat components providing the information about the
+     * services to be registered by the
+     */
+    ClassMatchedHandler<PutRequest, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PutRequest>> putRequestHandler  = new ClassMatchedHandler<PutRequest, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PutRequest>>() {
+        @Override
+        public void handle(PutRequest content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PutRequest> context) {
+
+            logger.debug("Received put request from the heartbeat component.");
+
+            Set<byte[]> serviceIdentifiers = content.serviceIdentifiers;
+            DecoratedAddress clientAddress = content.selfAddress;
+
+            for(byte[] serviceIdentifier : serviceIdentifiers){
+
+                List<DecoratedAddress> value = serviceAddressMap.get(serviceIdentifier);
+                if(value == null){
+                    value = new ArrayList<DecoratedAddress>();
+                }
+
+//              At this point we are assuming that the decorated address will not change. ( As used in simulation. )
+
+                if(!value.contains(clientAddress))
+                    value.add(clientAddress);
+
+                if(value.size() > slotLength){
+                    value.remove(0);
+                }
+            }
         }
     };
 
