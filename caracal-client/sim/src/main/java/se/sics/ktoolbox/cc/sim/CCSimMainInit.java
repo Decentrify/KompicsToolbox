@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.cc.heartbeat.sim;
+package se.sics.ktoolbox.cc.sim;
 
 import se.sics.kompics.Init;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;

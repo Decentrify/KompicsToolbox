@@ -1,15 +1,13 @@
-package se.sics.ktoolbox.cc.heartbeat.sim;
+package se.sics.ktoolbox.cc.sim;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.timer.SchedulePeriodicTimeout;
-import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.cc.heartbeat.sim.msg.OverlaySample;
-import se.sics.ktoolbox.cc.heartbeat.sim.msg.PutRequest;
+import se.sics.ktoolbox.cc.sim.msg.OverlaySample;
+import se.sics.ktoolbox.cc.sim.msg.PutRequest;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;

@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.cc.heartbeat.sim.msg;
+package se.sics.ktoolbox.cc.sim.msg;
 
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
