@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.sim.msg.OverlaySample;
 import se.sics.ktoolbox.cc.sim.msg.PutRequest;
@@ -27,7 +29,7 @@ public class CCSimMain extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private Map<byte[], List<DecoratedAddress>> serviceAddressMap;
+    private Map<ByteBufferWrapper, List<DecoratedAddress>> serviceAddressMap;
     private int slotLength;
     private DecoratedAddress selfAddress;
 
@@ -44,7 +46,7 @@ public class CCSimMain extends ComponentDefinition {
         logger.debug("Perform the initialization tasks.");
         this.slotLength = init.slotLength;
         this.selfAddress = init.address;
-        this.serviceAddressMap = new HashMap<byte[], List<DecoratedAddress>>();
+        this.serviceAddressMap = new HashMap<ByteBufferWrapper, List<DecoratedAddress>>();
 
     }
 
@@ -67,7 +69,7 @@ public class CCSimMain extends ComponentDefinition {
             logger.debug("Received overlay sample request.");
 
             Set<DecoratedAddress> address = new HashSet<DecoratedAddress>();
-            List<DecoratedAddress> serviceAddressList =  serviceAddressMap.get(content.overlayIdentifier);
+            List<DecoratedAddress> serviceAddressList =  serviceAddressMap.get(new ByteBufferWrapper(content.overlayIdentifier));
 
             if(serviceAddressList != null){
                 address.addAll(serviceAddressList);
@@ -97,9 +99,10 @@ public class CCSimMain extends ComponentDefinition {
 
             for(byte[] serviceIdentifier : serviceIdentifiers){
 
-                List<DecoratedAddress> value = serviceAddressMap.get(serviceIdentifier);
+                List<DecoratedAddress> value = serviceAddressMap.get(new ByteBufferWrapper(serviceIdentifier));
                 if(value == null){
                     value = new ArrayList<DecoratedAddress>();
+                    serviceAddressMap.put(new ByteBufferWrapper(serviceIdentifier), value);
                 }
 
 //              At this point we are assuming that the decorated address will not change. ( As used in simulation. )
