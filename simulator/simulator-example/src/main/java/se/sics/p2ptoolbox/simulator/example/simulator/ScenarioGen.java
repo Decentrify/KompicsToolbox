@@ -41,6 +41,7 @@ import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
 import se.sics.p2ptoolbox.simulator.dsl.distribution.ConstantDistribution;
 import se.sics.p2ptoolbox.simulator.example.core.MyNetMsg;
+import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -172,7 +173,7 @@ public class ScenarioGen {
         }
     };
     
-    public static SimulationScenario simpleBoot(final long seed) {
+    public static SimulationScenario simpleBoot() {
         SimulationScenario scen = new SimulationScenario() {
             {
                 StochasticProcess startPeers = new StochasticProcess() {
@@ -200,13 +201,10 @@ public class ScenarioGen {
 
                 startPeers.start();
                 networkPing.startAfterTerminationOf(1000, startPeers);
-                fetchSimulationResult.startAfterTerminationOf(10000, networkPing);
-                terminateAfterTerminationOf(1000, fetchSimulationResult);
+                terminateAfterTerminationOf(10000, networkPing);
 
             }
         };
-
-        scen.setSeed(seed);
 
         return scen;
     }

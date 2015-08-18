@@ -49,10 +49,8 @@ public class LauncherComp extends ComponentDefinition {
 
     private static final Logger log = LoggerFactory.getLogger(LauncherComp.class);
 
-    private static SimulatorScheduler simulatorScheduler = new SimulatorScheduler();
-    private static SimulationScenario scenario = SimulationScenario.load(System.getProperty("scenario"));
-
-    public static Address simulatorClientAddress;
+    public static SimulatorScheduler simulatorScheduler = new SimulatorScheduler();
+    private static Address simulatorClientAddress;
     public static final Set<SystemStatusHandler> systemStatusHandlers = new HashSet<SystemStatusHandler>();
 
     static {
@@ -68,6 +66,8 @@ public class LauncherComp extends ComponentDefinition {
         Kompics.createAndStart(LauncherComp.class, 1);
     }
 
+    private SimulationScenario scenario = SimulationScenario.load(System.getProperty("scenario"));
+    
     public LauncherComp(){
         P2pSimulator.setSimulationPortType(ExperimentPort.class);
         Component simulator = create(P2pSimulator.class, new P2pSimulatorInit(simulatorScheduler, scenario, null));
