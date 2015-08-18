@@ -44,6 +44,7 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
         subscribe(startHeartbeatHandler, heartbeatPort);
         subscribe(stopHeartbeatHandler, heartbeatPort);
         subscribe(overlaySampleRequest, heartbeatPort);
+        subscribe(overlaySampleResponse, network);
         subscribe(heartbeatTimeout, timer);
     }
 
@@ -99,7 +100,7 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
     Handler<HeartbeatTimeout> heartbeatTimeout = new Handler<HeartbeatTimeout>() {
         @Override
         public void handle(HeartbeatTimeout event) {
-            logger.debug("Triggering registered heartbeats to simulated caracal client.");
+            logger.trace("Triggering registered heartbeats to simulated caracal client.");
 
             PutRequest request = new PutRequest(selfAddress, new HashSet<byte[]>(heartbeats));
             DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, caracalClientAddress, Transport.UDP);
@@ -123,6 +124,7 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
             OverlaySample.Request content = new OverlaySample.Request(event.overlayId);
             BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Request> contentMsg = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Request>(header, content);
 
+            logger.debug("Triggering the request to the simulated version of caracal client with address: {} over the network.", caracalClientAddress);
             trigger(contentMsg, network);
         }
     };

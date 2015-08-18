@@ -35,7 +35,6 @@ public class CCSimMain extends ComponentDefinition {
 
         doInit(init);
         subscribe(startHandler, control);
-        subscribe(overlayRequestHandler, control);
         subscribe(putRequestHandler, network);
         subscribe(overlayRequestHandler, network);
     }
@@ -44,6 +43,7 @@ public class CCSimMain extends ComponentDefinition {
 
         logger.debug("Perform the initialization tasks.");
         this.slotLength = init.slotLength;
+        this.selfAddress = init.address;
         this.serviceAddressMap = new HashMap<byte[], List<DecoratedAddress>>();
 
     }
@@ -51,7 +51,7 @@ public class CCSimMain extends ComponentDefinition {
     Handler<Start> startHandler = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            logger.debug("Component booted up.");
+            logger.debug("Component booted up, self Address: {}", selfAddress);
         }
     };
 
@@ -90,7 +90,7 @@ public class CCSimMain extends ComponentDefinition {
         @Override
         public void handle(PutRequest content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PutRequest> context) {
 
-            logger.debug("Received put request from the heartbeat component.");
+            logger.trace("Received put request from the heartbeat component.");
 
             Set<byte[]> serviceIdentifiers = content.serviceIdentifiers;
             DecoratedAddress clientAddress = content.selfAddress;
