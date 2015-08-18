@@ -56,6 +56,18 @@ public class ElectionConfig {
         
     }
 
+    @Override
+    public String toString() {
+        return "ElectionConfig{" +
+                "leaderLeaseTime=" + leaderLeaseTime +
+                ", followerLeaseTime=" + followerLeaseTime +
+                ", viewSize=" + viewSize +
+                ", convergenceRounds=" + convergenceRounds +
+                ", convergenceTest=" + convergenceTest +
+                ", maxLeaderGroupSize=" + maxLeaderGroupSize +
+                '}';
+    }
+
     public long getLeaderLeaseTime() {
         return leaderLeaseTime;
     }

@@ -127,6 +127,9 @@ public class ElectionLeader extends ComponentDefinition {
         this.selfAddress = init.selfAddress;
         this.publicKey = init.publicKey;
 
+        logger.warn("{}: Election Leader component initialized", selfAddress.getId());
+        logger.warn("{}: Election Config: {}", selfAddress.getId(), this.config);
+
         // voting protocol.
         isConverged = false;
         electionRoundTracker = new PromiseResponseTracker();
@@ -324,7 +327,7 @@ public class ElectionLeader extends ComponentDefinition {
 
         if (isConverged && higherUtilityNodes.size() == 0 && !inElection && !selfLCView.isLeaderGroupMember()) {
             if (addressContainerMap.size() < config.getViewSize()) {
-                logger.warn(" {}: I think I am leader but the view less than the minimum requirement, so returning.", selfAddress.getId());
+                logger.warn(" {}: I think I am leader but the view :{} less than the minimum requirement, so returning.", selfAddress.getId(), addressContainerMap.size());
                 return;
             }
 
@@ -346,7 +349,7 @@ public class ElectionLeader extends ComponentDefinition {
         Collection<DecoratedAddress> leaderGroupAddress = lcRuleSet.initiateLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
         if (leaderGroupAddress.isEmpty() || leaderGroupAddress.size() < leaderGroupSize) {
-            logger.error(" {} : Not asserting self as leader as the leader group size is less than required.", selfAddress.getId());
+            logger.error(" {} : Not asserting self as leader as the leader group size :{},  is less than required.", selfAddress.getId(), leaderGroupAddress.size());
             return;
         }
 
@@ -454,7 +457,7 @@ public class ElectionLeader extends ComponentDefinition {
                     leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
                     trigger(st, timerPositive);
 
-                    logger.warn("Setting self as leader complete.");
+                    logger.error("Setting self as leader complete.");
                 }
 
                 if (applicationAck) {
