@@ -17,6 +17,7 @@
         <module>ip-solver</module>
         <module>caracal-client</module>
         <module>nat-echo</module>
+        <module>simulator</module>
     </modules>
 
     <distributionManagement>
