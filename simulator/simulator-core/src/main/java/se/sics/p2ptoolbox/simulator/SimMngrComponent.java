@@ -235,7 +235,7 @@ public class SimMngrComponent extends ComponentDefinition {
         @Override
         public void handle(TerminateExperiment event) {
             log.info("terminating simulation...");
-            Kompics.shutdown();
+            Kompics.forceShutdown();
 
         }
     };
