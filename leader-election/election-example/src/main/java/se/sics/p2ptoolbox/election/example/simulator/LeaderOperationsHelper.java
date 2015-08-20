@@ -58,7 +58,7 @@ public class LeaderOperationsHelper {
         addressCollection.put(id, selfAddress);
         copy.add(selfAddress);
         systemConfig = new SystemConfig(seed, selfAddress, aggregatorAddress);
-        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator(), new TestFilter());
+        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator());
 
         return init;
     }
