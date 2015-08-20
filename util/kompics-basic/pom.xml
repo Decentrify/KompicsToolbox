@@ -5,7 +5,7 @@
     <parent>
         <groupId>se.sics.ktoolbox</groupId>
         <artifactId>util</artifactId>
-        <version>1.6-SNAPSHOT</version>
+        <version>1.7-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox.util</groupId>
     <artifactId>kompics-basic</artifactId>

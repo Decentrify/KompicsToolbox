@@ -9,7 +9,7 @@
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>videostream</artifactId>
     <name>VideoStream</name>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>core</module>
@@ -17,11 +17,12 @@
         <module>ws-example</module>
     </modules>
     <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <java.version>1.7</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <util.version>1.6-SNAPSHOT</util.version>
-        <logger.version>1.5.6</logger.version>
+        <util.version>1.7-SNAPSHOT</util.version>
+        <logger.version>1.7.5</logger.version>
         <tuples.version>1.2</tuples.version>
         <junit.version>4.11</junit.version>
     </properties>
