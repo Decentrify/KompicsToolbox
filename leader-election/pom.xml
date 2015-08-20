@@ -26,8 +26,11 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
+        
         <gradient.version>1.6-SNAPSHOT</gradient.version>
         <util.version>1.7-SNAPSHOT</util.version>
+        <simulator.version>1.5-SNAPSHOT</simulator.version>
+        
         <guava.version>18.0</guava.version>
     </properties>
     

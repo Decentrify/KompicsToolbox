@@ -58,7 +58,7 @@ public class ExampleHostComp extends ComponentDefinition {
         this.partner = init.partner;
         this.logPrefix = systemConfig.self.toString();
         log.info("{} initiating...", logPrefix);
-        log.debug("{} bootstrap sample:{} partner:{}", new Object[]{logPrefix, systemConfig.bootstrapNodes, partner});
+        log.debug("{}  partner:{}", new Object[]{logPrefix, partner});
 
         Component chunkManager = createNConnectChunkManager();
         Component exampleComp = createNConnectExampleComp(chunkManager);

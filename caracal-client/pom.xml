@@ -24,6 +24,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
+        
         <caracal.version>0.0.8-SNAPSHOT</caracal.version>
         <util.version>1.7-SNAPSHOT</util.version>
         <logger.version>1.7.5</logger.version>

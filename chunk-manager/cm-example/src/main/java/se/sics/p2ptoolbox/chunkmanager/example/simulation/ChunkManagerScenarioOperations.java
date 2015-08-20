@@ -90,7 +90,7 @@ public class ChunkManagerScenarioOperations {
                      */
                     long nodeSeed = seed + nodeId;
                     Config config = ConfigFactory.load("application.conf");
-                    SystemConfig systemConfig = new SystemConfig(nodeSeed, nodeAddress, null, new ArrayList<DecoratedAddress>());
+                    SystemConfig systemConfig = new SystemConfig(nodeSeed, nodeAddress, null);
                     ChunkManagerConfig cmConfig = new ChunkManagerConfig(config);
                     return new ExampleHostComp.HostInit(systemConfig, cmConfig, partnerNodeAddress);
                 }
