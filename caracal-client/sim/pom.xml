@@ -7,22 +7,17 @@
     <parent>
         <groupId>se.sics.ktoolbox</groupId>
         <artifactId>caracal-client</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1-SNAPSHOT</version>
     </parent>
-
     <groupId>se.sics.ktoolbox.cc</groupId>
     <artifactId>sim</artifactId>
-
+    <name>CC Simulator</name>
 
     <dependencies>
-
         <dependency>
             <groupId>se.sics.ktoolbox.cc.heartbeat</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
-
     </dependencies>
-
-
 </project>
