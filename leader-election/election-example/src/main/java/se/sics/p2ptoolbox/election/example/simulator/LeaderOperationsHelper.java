@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.election.core.ElectionConfig;
 import se.sics.p2ptoolbox.election.example.main.LCPComparator;
 import se.sics.p2ptoolbox.election.example.main.HostManagerComp;
-import se.sics.p2ptoolbox.election.example.main.TestFilter;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -59,7 +58,7 @@ public class LeaderOperationsHelper {
         addressCollection.put(id, selfAddress);
         copy.add(selfAddress);
         systemConfig = new SystemConfig(seed, selfAddress, aggregatorAddress);
-        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator(), new TestFilter());
+        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator());
 
         return init;
     }

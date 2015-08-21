@@ -16,6 +16,7 @@
         <module>bootstrap</module>
         <!--<module>schemasetup</module>-->
         <module>heartbeat</module>
+        <module>sim</module>
     </modules>
   
     <properties>

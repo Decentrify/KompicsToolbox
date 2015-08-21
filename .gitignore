@@ -104,6 +104,7 @@ lib
 /caracal-client/cc-heartbeat/cc-heartbeat-api/target/
 /caracal-client/cc-heartbeat/cc-heartbeat-example/target/
 /caracal-client/cc-common/target/
+/caracal-client/sim/target/
 
 #leftovers
 g-common/target/
@@ -123,5 +124,6 @@ netty-test/target/
 /caracal-client/heartbeat/network/target/
 /caracal-client/bootstrap/api/target/
 /caracal-client/heartbeat/api/target/
-/echo/target/
+/caracal-client/sim/target/
+
 /nat-echo/target/
