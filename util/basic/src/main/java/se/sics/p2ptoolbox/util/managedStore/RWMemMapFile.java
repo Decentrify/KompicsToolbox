@@ -41,7 +41,7 @@ public class RWMemMapFile implements Storage {
     }
     
     @Override
-    public byte[] read(long readPos, long readLength) {
+    public synchronized byte[] read(long readPos, long readLength) {
         if(readPos > Integer.MAX_VALUE || readLength > Integer.MAX_VALUE) {
             System.exit(1);
         }
@@ -54,7 +54,7 @@ public class RWMemMapFile implements Storage {
         return read((int)readPos, (int)readLength);
     }
     
-    private byte[] read(int readPos, int readLength) {
+    private synchronized byte[] read(int readPos, int readLength) {
         byte[] result = new byte[readLength];
         mbb.position(readPos);
         mbb.get(result, 0, result.length);
@@ -62,7 +62,7 @@ public class RWMemMapFile implements Storage {
     }
     
     @Override
-    public int write(long writePos, byte[] bytes) {
+    public synchronized int write(long writePos, byte[] bytes) {
         if(writePos > Integer.MAX_VALUE) {
             System.exit(1);
         }
@@ -72,7 +72,7 @@ public class RWMemMapFile implements Storage {
         return write((int)writePos, bytes);
     }
     
-    public int write(int writePos, byte[] bytes) {
+    public synchronized int write(int writePos, byte[] bytes) {
         mbb.position(writePos);
         int restFile = (int)(length - writePos);
         int writeBytes = (bytes.length < restFile ? bytes.length : restFile);
