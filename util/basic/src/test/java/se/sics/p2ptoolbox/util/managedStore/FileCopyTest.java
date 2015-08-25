@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.util.managedStore;
 
+import com.google.common.io.BaseEncoding;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
+import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -34,19 +36,20 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class BasicTest {
+public class FileCopyTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BasicTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FileCopyTest.class);
 
     String hashFilePath = "./src/test/resources/storageTest1/uploadFile.hash";
-    String uploadFilePath = "./src/test/resources/storageTest1/uploadFile.txt";
+    String uploadFilePath = "./src/test/resources/storageTest1/uploadFile.mp4";
     String download1FilePath = "./src/test/resources/storageTest1/downloadFile1.txt";
     String download2FilePath = "./src/test/resources/storageTest1/downloadFile2.txt";
     String hashAlg = HashUtil.getAlgName(HashUtil.SHA);
     int generateSize = 5;
     int pieceSize = 1024;
     int blockSize = 1024 * 1024;
-    int randomRuns = 100;
+    int randomRuns = 1;
+    int nrBlocks;
 
     public void setup(Random rand) throws IOException, HashUtil.HashBuilderException {
         cleanup(rand);
@@ -54,6 +57,7 @@ public class BasicTest {
         uploadFile.getParentFile().mkdirs();
         uploadFile.createNewFile();
         generateFile(uploadFile, rand);
+        nrBlocks = StorageMngrFactory.nrPieces(uploadFile.length(), blockSize);
         HashUtil.makeHashes(uploadFilePath, hashFilePath, hashAlg, blockSize);
     }
 
@@ -63,10 +67,12 @@ public class BasicTest {
             byte[] data = new byte[blockSize];
             rand.nextBytes(data);
             out.write(data);
+//            LOG.info("{} block:{}", i, BaseEncoding.base16().encode(data));
         }
-        byte[] data = new byte[1500];
+        byte[] data = new byte[blockSize - 1];
         rand.nextBytes(data);
         out.write(data);
+//        LOG.info("{} block:{}", generateSize, BaseEncoding.base16().encode(data));
         out.flush();
         out.close();
     }
@@ -111,6 +117,7 @@ public class BasicTest {
         long fileSize = uploadFile.length();
         File hashFile = new File(hashFilePath);
         long hashFileSize = hashFile.length();
+        int nrBlocks = StorageMngrFactory.nrPieces(fileSize, blockSize);
 
         HashMngr hashMngr = StorageMngrFactory.getCompleteHashMngr(hashFilePath, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
         FileMngr uploadFileMngr = StorageMngrFactory.getCompleteFileMngr(uploadFilePath, fileSize, blockSize, pieceSize);
@@ -119,40 +126,40 @@ public class BasicTest {
 
         BlockMngr downloadBlock;
         downloadBlock = StorageMngrFactory.getSimpleBlockMngr(download1FileMngr.blockSize(0), pieceSize);
-        Triplet<FileMngr, BlockMngr, ArrayList<Integer>> download1 = Triplet.with(download1FileMngr, downloadBlock, new ArrayList<Integer>());
-        downloader.populateBlock(download1);
+        Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> download1 = Pair.with(download1FileMngr, Triplet.with(0, downloadBlock, new ArrayList<Integer>()));
+        downloader.populateBlock(download1.getValue1());
         downloadBlock = StorageMngrFactory.getSimpleBlockMngr(download2FileMngr.blockSize(0), pieceSize);
-        Triplet<FileMngr, BlockMngr, ArrayList<Integer>> download2 = Triplet.with(download2FileMngr, downloadBlock, new ArrayList<Integer>());
-        downloader.populateBlock(download2);
+        Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> download2 = Pair.with(download2FileMngr, Triplet.with(0, downloadBlock, new ArrayList<Integer>()));
+        downloader.populateBlock(download2.getValue1());
 
 //        LOG.info("status file1:{} file2:{} pPieces1:{} pPieces2:{}",
 //                new Object[]{download1FileMngr.contiguous(0), download2FileMngr.contiguous(0), download1.getValue2().size(), download2.getValue2().size()});
         while (!(download1FileMngr.isComplete(0) && download2FileMngr.isComplete(0))) {
-//            LOG.info("status file1:{} file2:{}", download1FileMngr.contiguous(0), download2FileMngr.contiguous(0));
             if (!download1FileMngr.isComplete(0)) {
-//                LOG.info("pending pieces1:{}", download1.getValue2().size());
+//                LOG.info("file1 block:{}", download1.getValue1().getValue0());
                 downloader.download(lossRate, rand.nextInt(maxInterleavingSize), uploadFileMngr, download1);
-                download1 = downloader.processIntermediate(download1, hashMngr);
+                download1 = downloader.processIntermediate(rand.nextInt(nrBlocks), download1, hashMngr);
             }
             if (!download2FileMngr.isComplete(0)) {
-//                LOG.info("pending pieces2:{}", download2.getValue2().size());
+//                LOG.info("file2 block:{}", download2.getValue1().getValue0());
                 downloader.download(lossRate, rand.nextInt(maxInterleavingSize), download1FileMngr, download2);
-                download2 = downloader.processIntermediate(download2, hashMngr);
+                download2 = downloader.processIntermediate(rand.nextInt(nrBlocks), download2, hashMngr);
             }
+//            LOG.info("status file1:{} file2:{}", download1FileMngr.contiguous(0), download2FileMngr.contiguous(0));
         }
 //        LOG.info("done1:{} done2:{}", download1FileMngr.isComplete(0), download2FileMngr.isComplete(0));
     }
 
     public static interface Downloader {
 
-        public void populateBlock(Triplet<FileMngr, BlockMngr, ArrayList<Integer>> peer);
+        public void populateBlock(Triplet<Integer, BlockMngr, ArrayList<Integer>> blockInfo);
 
-        public void download(double lossRate, int windowSize, FileMngr uploader, Triplet<FileMngr, BlockMngr, ArrayList<Integer>> downloader);
+        public void download(double lossRate, int windowSize, FileMngr uploader, Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> downloader);
 
-        public Triplet<FileMngr, BlockMngr, ArrayList<Integer>> processIntermediate(Triplet<FileMngr, BlockMngr, ArrayList<Integer>> state, HashMngr hashMngr);
+        public Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> processIntermediate(int blockPos, Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> state, HashMngr hashMngr);
     }
 
-    public static class RandomDownloader implements Downloader {
+    public class RandomDownloader implements Downloader {
 
         private String hashAlg;
         private Random rand;
@@ -166,62 +173,70 @@ public class BasicTest {
             this.bs = bs;
         }
 
-        public void populateBlock(Triplet<FileMngr, BlockMngr, ArrayList<Integer>> peer) {
+        public void populateBlock(Triplet<Integer, BlockMngr, ArrayList<Integer>> blockInfo) {
 //            LOG.info("nr of pieces:{}", peer.getValue1().nrPieces());
-            for (int i = 0; i < peer.getValue1().nrPieces(); i++) {
-                peer.getValue2().add(i);
+            for (int i = 0; i < blockInfo.getValue1().nrPieces(); i++) {
+                blockInfo.getValue2().add(i);
             }
-            bs.setPieces(rand, peer.getValue2());
+            bs.setPieces(rand, blockInfo.getValue2());
         }
 
-        public void download(double lossRate, int windowSize, FileMngr uploader, Triplet<FileMngr, BlockMngr, ArrayList<Integer>> downloader) {
-            int blockNr = downloader.getValue0().nextBlock(0, new HashSet<Integer>());
+        public void download(double lossRate, int windowSize, FileMngr uploader, Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> downloader) {
+            int blockNr = downloader.getValue1().getValue0();
+            ArrayList<Integer> nextPieces = downloader.getValue1().getValue2();
+            BlockMngr block = downloader.getValue1().getValue1();
             while (windowSize > 0) {
-                if (downloader.getValue2().isEmpty()) {
+                if (nextPieces.isEmpty()) {
                     return;
                 }
-                int nextPiece = downloader.getValue2().remove(0);
+                int nextPiece = nextPieces.remove(0);
                 int pieceNr = blockNr * pieceSize + nextPiece;
                 windowSize--;
                 if (uploader.hasPiece(pieceNr)) {
                     if (rand.nextDouble() > lossRate) {
                         byte[] piece = uploader.readPiece(pieceNr);
-                        downloader.getValue1().writePiece(nextPiece, piece);
+                        block.writePiece(nextPiece, piece);
                         continue;
                     }
                 }
-                downloader.getValue2().add(nextPiece);
+                nextPieces.add(nextPiece);
             }
         }
 
-        public Triplet<FileMngr, BlockMngr, ArrayList<Integer>> processIntermediate(Triplet<FileMngr, BlockMngr, ArrayList<Integer>> state, HashMngr hashMngr) {
-            Triplet<FileMngr, BlockMngr, ArrayList<Integer>> stateAux = state;
+        public Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> processIntermediate(int blockPos, Pair<FileMngr, Triplet<Integer, BlockMngr, ArrayList<Integer>>> state, HashMngr hashMngr) {
             FileMngr fileMngr = state.getValue0();
-            BlockMngr blockMngr = state.getValue1();
+            Triplet<Integer, BlockMngr, ArrayList<Integer>> blockInfo = state.getValue1();
 
-            if (blockMngr.isComplete()) {
-                int blockNr = fileMngr.nextBlock(0, new HashSet<Integer>());
-//                LOG.info("block:{} completed has hash:{}", blockNr, hashMngr.hasHash(blockNr));
-                if (!stateAux.getValue2().isEmpty()) {
+            if (blockInfo.getValue1().isComplete()) {
+//                LOG.info("block:{} completed of:{}", blockInfo.getValue0(), nrBlocks);
+                if (!blockInfo.getValue2().isEmpty()) {
                     throw new RuntimeException("pending pieces error");
                 }
-                byte[] block = blockMngr.getBlock();
-//            LOG.info("new block:{}", BaseEncoding.base16().encode(block));
-                if (!HashUtil.checkHash(hashAlg, block, hashMngr.readHash(blockNr))) {
+                byte[] block = blockInfo.getValue1().getBlock();
+//                LOG.info("block:{} val:{}", blockInfo.getValue0(), BaseEncoding.base16().encode(block));
+                if (!HashUtil.checkHash(hashAlg, block, hashMngr.readHash(blockInfo.getValue0()))) {
+                    LOG.error("hash:{} mismatch", blockInfo.getValue0());
                     throw new RuntimeException("hash missmatch");
                 } else {
-                    fileMngr.writeBlock(blockNr, block);
-                    blockNr++;
+                    fileMngr.writeBlock(blockInfo.getValue0(), block);
                     if (fileMngr.isComplete(0)) {
-                        return Triplet.with(fileMngr, null, null);
+                        return Pair.with(fileMngr, null);
                     }
 //                    LOG.info("block nr:{} size:{}", blockNr, fileMngr.blockSize(blockNr));
-                    blockMngr = StorageMngrFactory.getSimpleBlockMngr(fileMngr.blockSize(blockNr), pieceSize);
-                    stateAux = Triplet.with(fileMngr, blockMngr, new ArrayList<Integer>());
-                    populateBlock(stateAux);
+                    int blockNr = fileMngr.nextBlock(blockPos, new HashSet<Integer>());
+                    if (blockNr >= nrBlocks) {
+                        blockNr = fileMngr.nextBlock(0, new HashSet<Integer>());
+                        if (blockNr >= nrBlocks) {
+                            return state;
+                        }
+                    }
+//                    LOG.info("completed:{} next:{}", state.getValue1().getValue0(), blockNr);
+                    blockInfo = Triplet.with(blockNr, StorageMngrFactory.getSimpleBlockMngr(fileMngr.blockSize(blockNr), pieceSize), new ArrayList<Integer>());
+                    populateBlock(blockInfo);
+                    return Pair.with(fileMngr, blockInfo);
                 }
             }
-            return stateAux;
+            return state;
         }
     }
 

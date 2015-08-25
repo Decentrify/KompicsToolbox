@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.utility.test;
+package se.sics.p2ptoolbox.util.managedStore;
 
 import java.util.HashSet;
 import java.util.TreeSet;
@@ -70,5 +70,17 @@ public class PieceTrackerTest {
         pt.addPiece(9);
         Assert.assertEquals(10, pt.contiguous(0));
         Assert.assertTrue(pt.isComplete(0));
+    }
+    
+    @Test
+    public void nextPieceTest1() {
+        IncompletePieceTracker pt = new IncompletePieceTracker(10);
+        
+        Assert.assertEquals((Integer)0, pt.nextPieceNeeded(0, new HashSet<Integer>()));
+        
+        Assert.assertEquals((Integer)2, pt.nextPieceNeeded(2, new HashSet<Integer>()));
+        
+        pt.addPiece(3);
+        Assert.assertEquals((Integer)4, pt.nextPieceNeeded(3, new HashSet<Integer>()));
     }
 }

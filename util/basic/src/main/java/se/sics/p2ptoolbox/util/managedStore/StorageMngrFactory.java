@@ -36,7 +36,7 @@ public class StorageMngrFactory {
          return new IncompletePieceTracker(nrPieces);
     }
     
-    private static int nrPieces(long blockSize, int pieceSize) {
+    public static int nrPieces(long blockSize, int pieceSize) {
         return (blockSize % pieceSize == 0) ? (int)(blockSize / pieceSize) : (int)(blockSize / pieceSize + 1);
     }
     
