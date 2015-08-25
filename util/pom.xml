@@ -29,6 +29,7 @@
         <config.version>1.2.1</config.version>
         <logger.version>1.7.5</logger.version>
         <netty.version>5.0.0.Alpha2</netty.version>
+        <caracal.version>0.0.8-SNAPSHOT</caracal.version>
     </properties>
     
     <dependencies>
@@ -60,5 +61,13 @@
             <version>${logger.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>se.sics.caracaldb</groupId>
+            <artifactId>caracaldb-core</artifactId>
+            <version>${caracal.version}</version>
+        </dependency>
+
+
     </dependencies>
 </project>
