@@ -75,8 +75,7 @@ public class SystemConfigBuilder {
                 selfPort = config.getInt("system.self.port");
             }
             catch(ConfigException.Missing ex){
-                selfPort = BASE + random.nextInt(DIFF);
-
+                setPort();
             }
             LOG.trace("Self address port is {}", selfPort);
 
@@ -166,6 +165,10 @@ public class SystemConfigBuilder {
     }
 
 
+    public void setPort(){
+        this.selfPort = (BASE + random.nextInt(DIFF)) ;
+    }
+
     /**
      * Look at the values that were added to the builder
      * by the user and initiate the creation of the System Config.
@@ -185,4 +188,28 @@ public class SystemConfigBuilder {
         return new SysConfig(seed, bootstrapAddress, selfAddress, aggregatorAddress);
     }
 
+
+    public long getSeed() {
+        return seed;
+    }
+
+    public InetAddress getSelfIp() {
+        return selfIp;
+    }
+
+    public Integer getSelfPort() {
+        return selfPort;
+    }
+
+    public Integer getSelfId() {
+        return selfId;
+    }
+
+    public Address getBootstrapAddress() {
+        return bootstrapAddress;
+    }
+
+    public Optional<DecoratedAddress> getAggregatorAddress() {
+        return aggregatorAddress;
+    }
 }
