@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.Address;
-import se.sics.p2ptoolbox.util.config.SysConfig;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -175,7 +174,7 @@ public class SystemConfigBuilder {
      *
      * @return SystemConfig.
      */
-    public SysConfig build() {
+    public SystemConfig build() {
 
         if( (this.selfIp == null) || (this.selfPort == null) || (this.selfId == null)){
             throw new RuntimeException("Self Address not configured, cannot proceed with build");
@@ -185,7 +184,7 @@ public class SystemConfigBuilder {
             throw new RuntimeException("Caracal Client not configured, cannot proceed with build.");
         }
         DecoratedAddress selfAddress = new DecoratedAddress(selfIp, selfPort, selfId);
-        return new SysConfig(seed, bootstrapAddress, selfAddress, aggregatorAddress);
+        return new SystemConfig(seed, bootstrapAddress, selfAddress, aggregatorAddress, config);
     }
 
 

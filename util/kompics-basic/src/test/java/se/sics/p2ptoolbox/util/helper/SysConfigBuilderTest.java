@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.Address;
-import se.sics.p2ptoolbox.util.config.SysConfig;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -47,7 +47,7 @@ public class SysConfigBuilderTest {
         logger.debug("Initiating test for the builder created with config.");
 
         SystemConfigBuilder builder = new SystemConfigBuilder(config);
-        SysConfig sysConfig = builder.build();
+        SystemConfig sysConfig = builder.build();
 
         DecoratedAddress expectedAddress = getSelfAddress(config);
         DecoratedAddress actualAddress = sysConfig.getSelfAddress();
