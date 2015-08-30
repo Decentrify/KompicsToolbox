@@ -183,7 +183,7 @@ public class SystemConfigBuilder {
         if(bootstrapAddress == null){
             throw new RuntimeException("Caracal Client not configured, cannot proceed with build.");
         }
-        DecoratedAddress selfAddress = new DecoratedAddress(selfIp, selfPort, selfId);
+        DecoratedAddress selfAddress = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
         return new SystemConfig(seed, bootstrapAddress, selfAddress, aggregatorAddress, config);
     }
 

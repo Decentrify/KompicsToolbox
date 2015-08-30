@@ -16,50 +16,72 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.util.network.impl;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Objects;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
-import se.sics.p2ptoolbox.util.traits.Nated;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 import se.sics.p2ptoolbox.util.traits.Trait;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class DecoratedAddress implements Address, IntegerIdentifiable {
-    private final BasicAddress base;
-    
-    //traits
-    private final Set<DecoratedAddress> parents;
+public final class DecoratedAddress implements Address, IntegerIdentifiable {
 
-    public DecoratedAddress(BasicAddress base, Set<DecoratedAddress> parents) {
-        this.base = base;
-        this.parents = parents;
-        if(parents != null && parents.size() > 127) {
-            throw new RuntimeException("you should have less than 128 parents");
-        }
+    //This needs to be set at system boot time
+    private static AcceptedTraits acceptedTraits = new AcceptedTraits();
+
+    /**
+     * @param setTraits - should be non null - can be empty. Has to be set at
+     * the startup of the system before anyone tries to create
+     * DecoratedAddresses return old accepted traits in case of double set -
+     * which should be avoided anyway
+     */
+    public static synchronized AcceptedTraits setAcceptedTraits(AcceptedTraits setTraits) {
+        AcceptedTraits aux = acceptedTraits;
+        acceptedTraits = setTraits;
+        return aux;
     }
-    
-    public DecoratedAddress(InetAddress addr, int port, int id) {
-        this(new BasicAddress(addr, port, id), null);
+
+    public static AcceptedTraits getAcceptedTraits() {
+        return acceptedTraits;
     }
-    
+
+    private final BasicAddress base;
+    private final Trait[] traits;
+
     public DecoratedAddress(BasicAddress base) {
-        this(base, null);
+        this(base, new Trait[acceptedTraits.size()]);
     }
-    
-    public static DecoratedAddress addNatedTrait(Address adr, Set<DecoratedAddress> parents) {
-        if (adr instanceof BasicAddress) {
-            return new DecoratedAddress((BasicAddress) adr, parents);
+
+    DecoratedAddress(BasicAddress base, Trait[] traits) {
+        this.base = base;
+        this.traits = traits;
+    }
+
+    public void addTrait(Trait trait) {
+        traits[acceptedTraits.getIndex(trait.getClass())] = trait;
+    }
+
+    public <T extends Trait> boolean hasTrait(Class<T> traitClass) {
+        if (acceptedTraits.acceptedTrait(traitClass)) {
+            return traits[acceptedTraits.getIndex(traitClass)] != null;
         }
-        DecoratedAddress dAdr = (DecoratedAddress) adr;
-        return new DecoratedAddress(dAdr.base, parents);
+        return false;
     }
-    
+
+    public <T extends Trait> T getTrait(Class<T> traitClass) {
+        return (T) traits[acceptedTraits.getIndex(traitClass)];
+    }
+
+    Trait[] getTraits() {
+        return traits;
+    }
+
     @Override
     public InetAddress getIp() {
         return base.getIp();
@@ -88,14 +110,20 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
     public BasicAddress getBase() {
         return base;
     }
-    
+
+    @Override
+    public String toString() {
+        return base.toString();
+    }
+
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 47 * hash + (this.base != null ? this.base.hashCode() : 0);
-        hash = 47 * hash + (this.parents != null ? this.parents.hashCode() : 0);
+        int hash = 5;
+        hash = 17 * hash + Objects.hashCode(this.base);
+        hash = 17 * hash + Arrays.deepHashCode(this.traits);
         return hash;
     }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -105,41 +133,12 @@ public class DecoratedAddress implements Address, IntegerIdentifiable {
             return false;
         }
         final DecoratedAddress other = (DecoratedAddress) obj;
-        if (this.base != other.base && (this.base == null || !this.base.equals(other.base))) {
+        if (!Objects.equals(this.base, other.base)) {
             return false;
         }
-        if (this.parents != other.parents && (this.parents == null || !this.parents.equals(other.parents))) {
+        if (!Arrays.deepEquals(this.traits, other.traits)) {
             return false;
         }
         return true;
     }
-    
-    @Override
-    public String toString() {
-        return base.toString();
-    }
-    
-    //********************DecoratedAddress***************************************
-    public <E extends Trait> boolean hasTrait(Class<E> traitClass) {
-        if (traitClass.equals(Nated.class)) {
-            return parents != null;
-        }
-        throw new RuntimeException("unknown address trait" + traitClass);
-    }
-    public <E extends Trait> E getTrait(Class<E> traitClass) {
-        if (traitClass.equals(Nated.class)) {
-            return (E) new Nated<DecoratedAddress>() {
-                @Override
-                public Set<DecoratedAddress> getParents() {
-                    return parents;
-                }
-            };
-        }
-        throw new RuntimeException("unknown header trait" + traitClass);
-    }
-    
-    //**********************Packaged - used for Serialization*******************
-    Set<DecoratedAddress> getParents() {
-        return parents;
-    }  
 }

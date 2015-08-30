@@ -16,6 +16,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * Testing the system configuration builder.
@@ -30,7 +31,6 @@ public class SysConfigBuilderTest {
 
     @BeforeClass
     public static void beforeClass(){
-
         logger.debug("Starting with the load of the default configuration.");
         config = ConfigFactory.load("application.conf");
     }
@@ -38,6 +38,7 @@ public class SysConfigBuilderTest {
     @AfterClass
     public static void afterClass(){
         config = null;
+        
     }
 
 
@@ -88,7 +89,7 @@ public class SysConfigBuilderTest {
             Integer selfPort = config.getInt("system.self.port");
             Integer selfId = config.getInt("system.self.id");
 
-            selfAddress = new DecoratedAddress(selfIp, selfPort, selfId);
+            selfAddress = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
         }
 
         catch (UnknownHostException e) {

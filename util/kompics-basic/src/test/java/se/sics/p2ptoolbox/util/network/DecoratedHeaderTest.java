@@ -42,11 +42,11 @@ public class DecoratedHeaderTest {
     public void test() throws UnknownHostException {
         InetAddress localHost = InetAddress.getByName("localhost");
         DecoratedHeader<DecoratedAddress> testHeader;
-        DecoratedAddress src1 = new DecoratedAddress(localHost, 1234, 1);
-        DecoratedAddress src2 = new DecoratedAddress(localHost, 1234, 2);
-        DecoratedAddress src3 = new DecoratedAddress(localHost, 1234, 3);
-        DecoratedAddress src4 = new DecoratedAddress(localHost, 1234, 4);
-        DecoratedAddress src5 = new DecoratedAddress(localHost, 1234, 5);
+        DecoratedAddress src1 = new DecoratedAddress(new BasicAddress(localHost, 1234, 1));
+        DecoratedAddress src2 = new DecoratedAddress(new BasicAddress(localHost, 1234, 2));
+        DecoratedAddress src3 = new DecoratedAddress(new BasicAddress(localHost, 1234, 3));
+        DecoratedAddress src4 = new DecoratedAddress(new BasicAddress(localHost, 1234, 4));
+        DecoratedAddress src5 = new DecoratedAddress(new BasicAddress(localHost, 1234, 5));
         BasicHeader<DecoratedAddress> baseHeader = new BasicHeader(src1, src2, Transport.UDP);
         ArrayList<DecoratedAddress> route;
                 
