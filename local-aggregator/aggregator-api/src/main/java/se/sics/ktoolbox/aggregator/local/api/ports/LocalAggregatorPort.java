@@ -3,6 +3,7 @@ package se.sics.ktoolbox.aggregator.local.api.ports;
 
 import se.sics.kompics.PortType;
 import se.sics.ktoolbox.aggregator.local.api.events.ComponentInfoEvent;
+import se.sics.ktoolbox.aggregator.local.api.events.UpdateEvent;
 
 /**
  * Main Port for interaction with the local aggregator.
@@ -12,4 +13,5 @@ import se.sics.ktoolbox.aggregator.local.api.events.ComponentInfoEvent;
 public class LocalAggregatorPort extends PortType {{
 
     request(ComponentInfoEvent.class);
+    request(UpdateEvent.class);
 }}

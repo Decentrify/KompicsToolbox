@@ -18,6 +18,7 @@
     <properties>
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
         <logger.version>1.7.5</logger.version>
+        <util.version>1.8-SNAPSHOT</util.version>
     </properties>
 
     <modules>
@@ -51,6 +52,12 @@
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
             <version>${logger.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>se.sics.ktoolbox.util</groupId>
+            <artifactId>kompics-basic</artifactId>
+            <version>${util.version}</version>
         </dependency>
 
     </dependencies>
