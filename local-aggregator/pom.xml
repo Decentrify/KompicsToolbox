@@ -24,6 +24,8 @@
     <modules>
         <module>aggregator-api</module>
         <module>aggregator-core</module>
+        <module>aggregator-network</module>
+        <module>aggregator-example</module>
     </modules>
 
 

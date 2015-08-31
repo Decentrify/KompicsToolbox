@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.local.aggregator.core;
+package se.sics.ktoolbox.aggregator.local.core;
 
 import se.sics.kompics.Init;
 import se.sics.ktoolbox.aggregator.local.api.ComponentInfoProcessor;

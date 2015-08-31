@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.local.aggregator.core;
+package se.sics.ktoolbox.aggregator.local.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
