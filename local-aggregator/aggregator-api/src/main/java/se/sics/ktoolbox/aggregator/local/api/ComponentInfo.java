@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.local;
+package se.sics.ktoolbox.aggregator.local.api;
 
 /**
  * Marker Interface indicating packet information from the component

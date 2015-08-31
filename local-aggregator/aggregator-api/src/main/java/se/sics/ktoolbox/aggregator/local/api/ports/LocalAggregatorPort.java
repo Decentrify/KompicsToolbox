@@ -1,8 +1,8 @@
-package se.sics.ktoolbox.aggregator.local.ports;
+package se.sics.ktoolbox.aggregator.local.api.ports;
 
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.local.events.ComponentInfoEvent;
+import se.sics.ktoolbox.aggregator.local.api.events.ComponentInfoEvent;
 
 /**
  * Main Port for interaction with the local aggregator.

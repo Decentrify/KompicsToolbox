@@ -1,7 +1,7 @@
-package se.sics.ktoolbox.aggregator.local.events;
+package se.sics.ktoolbox.aggregator.local.api.events;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.aggregator.local.ComponentInfo;
+import se.sics.ktoolbox.aggregator.local.api.ComponentInfo;
 
 /**
  * Event carrying the component information which will be
