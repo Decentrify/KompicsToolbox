@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.local.example;
+package se.sics.ktoolbox.aggregator.local.example.system;
 
 import se.sics.kompics.ComponentDefinition;
 
@@ -9,6 +9,11 @@ import se.sics.kompics.ComponentDefinition;
  * Created by babbar on 2015-08-31.
  */
 public class HostComp extends ComponentDefinition {
+
+
+
+
+
 
     public HostComp(HostCompInit init){
 

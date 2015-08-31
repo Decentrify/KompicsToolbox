@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.local.example;
+package se.sics.ktoolbox.aggregator.local.example.system;
 
 import se.sics.kompics.Init;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
