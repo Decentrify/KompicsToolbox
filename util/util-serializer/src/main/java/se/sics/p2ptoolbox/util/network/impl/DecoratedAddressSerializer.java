@@ -20,15 +20,11 @@ package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import org.javatuples.Pair;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.BitBuffer;
 import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
-import se.sics.p2ptoolbox.util.traits.Nated;
 import se.sics.p2ptoolbox.util.traits.Trait;
 
 /**
