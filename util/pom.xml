@@ -8,7 +8,7 @@
     </parent>
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>util</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Util</name>
     <modules>
@@ -22,14 +22,6 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
-        <junit.version>4.11</junit.version>
-        <guava.version>18.0</guava.version>
-        <tuples.version>1.2</tuples.version>
-        <config.version>1.2.1</config.version>
-        <logger.version>1.7.5</logger.version>
-        <netty.version>5.0.0.Alpha2</netty.version>
-        <caracal.version>0.0.8-SNAPSHOT</caracal.version>
     </properties>
     
     <dependencies>
@@ -67,7 +59,5 @@
             <artifactId>caracaldb-core</artifactId>
             <version>${caracal.version}</version>
         </dependency>
-
-
     </dependencies>
 </project>

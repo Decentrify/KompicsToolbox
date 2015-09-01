@@ -35,6 +35,7 @@ import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.chunkmanager.ChunkManagerComp;
 import se.sics.p2ptoolbox.chunkmanager.ChunkManagerConfig;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -102,7 +103,7 @@ public class ExampleHostComp extends ComponentDefinition {
 
         public HostInit(String configFile, Address partner) {
             Config config = ConfigFactory.load(configFile);
-            this.systemConfig = new SystemConfig(config);
+            this.systemConfig = new SystemConfigBuilder(config).build();
             this.cmConfig = new ChunkManagerConfig(config);
             this.partner = partner;
         }

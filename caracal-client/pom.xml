@@ -26,12 +26,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
         
-        <caracal.version>0.0.8-SNAPSHOT</caracal.version>
-        <util.version>1.7-SNAPSHOT</util.version>
-        <logger.version>1.7.5</logger.version>
-        <tuples.version>1.2</tuples.version>
-        <guava.version>18.0</guava.version>
-        <config.version>1.2.1</config.version>
+        <util.version>${original.util.version}</util.version>
     </properties>
     
     <dependencies>

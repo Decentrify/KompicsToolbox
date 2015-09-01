@@ -44,6 +44,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.nat.network.NatedTrait;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
@@ -57,7 +58,6 @@ import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
-import se.sics.p2ptoolbox.util.traits.Nated;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
@@ -233,7 +233,7 @@ public class CroupierComp extends ComponentDefinition {
                 throw new RuntimeException("Error selecting peer");
             }
 
-            if (peer.hasTrait(Nated.class)) {
+            if (peer.hasTrait(NatedTrait.class)) {
                 log.debug("{} did not pick a public node for shuffling - public view size:{}", new Object[]{logPrefix, publicView.getAllCopy().size()});
             }
 
@@ -244,7 +244,7 @@ public class CroupierComp extends ComponentDefinition {
             Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(croupierConfig.shuffleSize, peer);
             Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(croupierConfig.shuffleSize, peer);
 
-            if (systemConfig.self.hasTrait(Nated.class)) {
+            if (systemConfig.self.hasTrait(NatedTrait.class)) {
                 privateDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
             } else {
                 publicDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
@@ -289,7 +289,7 @@ public class CroupierComp extends ComponentDefinition {
 
                     Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(croupierConfig.shuffleSize, reqSrc);
                     Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(croupierConfig.shuffleSize, reqSrc);
-                    if (systemConfig.self.hasTrait(Nated.class)) {
+                    if (systemConfig.self.hasTrait(NatedTrait.class)) {
                         privateDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
                     } else {
                         publicDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
@@ -344,7 +344,7 @@ public class CroupierComp extends ComponentDefinition {
             log.info("{} node:{} timed out", logPrefix, timeout.dest);
 
             shuffleTimeoutId = null;
-            if (!timeout.dest.hasTrait(Nated.class)) {
+            if (!timeout.dest.hasTrait(NatedTrait.class)) {
                 publicView.timedOut(timeout.dest);
             } else {
                 privateView.timedOut(timeout.dest);

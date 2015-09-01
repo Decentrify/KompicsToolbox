@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +33,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.nat.network.Nat;
+import se.sics.nat.network.NatedTrait;
 import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
@@ -70,21 +73,25 @@ public class SerializersTest {
 
     @Before
     public void setup() {
-        simpleAdr1 = new DecoratedAddress(localHost, 10000, 1);
-        simpleAdr2 = new DecoratedAddress(localHost, 10000, 2);
-        simpleAdr3 = new DecoratedAddress(localHost, 10000, 3);
-        simpleAdr4 = new DecoratedAddress(localHost, 10000, 4);
-        simpleAdr5 = new DecoratedAddress(localHost, 10000, 5);
+        simpleAdr1 = new DecoratedAddress(new BasicAddress(localHost, 10000, 1));
+        simpleAdr2 = new DecoratedAddress(new BasicAddress(localHost, 10000, 2));
+        simpleAdr3 = new DecoratedAddress(new BasicAddress(localHost, 10000, 3));
+        simpleAdr4 = new DecoratedAddress(new BasicAddress(localHost, 10000, 4));
+        simpleAdr5 = new DecoratedAddress(new BasicAddress(localHost, 10000, 5));
 
-        Set<DecoratedAddress> parents1 = new HashSet<DecoratedAddress>();
+        ArrayList<DecoratedAddress> parents1 = new ArrayList<DecoratedAddress>();
         parents1.add(simpleAdr1);
         parents1.add(simpleAdr2);
-        natedAdr1 = new DecoratedAddress(new BasicAddress(localHost, 20000, 1), parents1);
-        Set<DecoratedAddress> parents2 = new HashSet<DecoratedAddress>();
+        natedAdr1 = new DecoratedAddress(new BasicAddress(localHost, 20000, 1));
+        natedAdr1.addTrait(NatedTrait.nated(Nat.MappingPolicy.ENDPOINT_INDEPENDENT, 
+                Nat.AllocationPolicy.PORT_CONTIGUITY, 1, Nat.FilteringPolicy.ENDPOINT_INDEPENDENT, 10000, parents1));
+        ArrayList<DecoratedAddress> parents2 = new ArrayList<DecoratedAddress>();
         parents2.add(simpleAdr3);
         parents2.add(simpleAdr4);
         parents2.add(simpleAdr5);
-        natedAdr2 = new DecoratedAddress(new BasicAddress(localHost, 20000, 2), parents2);
+        natedAdr2 = new DecoratedAddress(new BasicAddress(localHost, 20000, 2));
+        natedAdr2.addTrait(NatedTrait.nated(Nat.MappingPolicy.ENDPOINT_INDEPENDENT, 
+                Nat.AllocationPolicy.PORT_CONTIGUITY, 1, Nat.FilteringPolicy.ENDPOINT_INDEPENDENT, 10000, parents2));
 
         container1 = new CroupierContainer(simpleAdr1, new TestContent(1));
         container2 = new CroupierContainer(simpleAdr2, new TestContent(2));

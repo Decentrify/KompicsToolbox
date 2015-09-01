@@ -38,8 +38,7 @@ import se.sics.p2ptoolbox.chunkmanager.ChunkManagerConfig;
 import se.sics.p2ptoolbox.chunkmanager.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.chunkmanager.example.network.ExampleSerializerSetup;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -68,7 +67,7 @@ public class Launcher extends ComponentDefinition {
 
         timer = create(JavaTimer.class, Init.NONE);
         Config config = ConfigFactory.load("application.conf");
-        SystemConfig systemConfig = new SystemConfig(config);
+        SystemConfig systemConfig = new SystemConfigBuilder(config).build();
         network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
 
         ChunkManagerConfig cmConfig = new ChunkManagerConfig(config);
