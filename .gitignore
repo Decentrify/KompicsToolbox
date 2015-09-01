@@ -132,5 +132,10 @@ netty-test/target/
 #local-aggregator
 /local-aggregator/aggregator-api/target/
 /local-aggregator/aggregator-core/target/
+/local-aggregator/aggregator-example/target/
 
+#global-aggregator
+/global-aggregator/aggregator-api/target/
+/global-aggregator/aggregator-core/target/
+/global-aggregator/aggregator-example/target/
 

@@ -1,6 +1,7 @@
 package se.sics.ktoolbox.aggregator.local.example.util;
 
-import se.sics.ktoolbox.aggregator.local.api.PacketInfo;
+
+import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
 
 /**
  * PacketInformation containing the integer pair from
@@ -8,7 +9,7 @@ import se.sics.ktoolbox.aggregator.local.api.PacketInfo;
  *
  * Created by babbarshaer on 2015-08-31.
  */
-public class IntegerPacketInfo implements PacketInfo{
+public class IntegerPacketInfo implements PacketInfo {
 
     public final Integer var1;
     public final Integer var2;

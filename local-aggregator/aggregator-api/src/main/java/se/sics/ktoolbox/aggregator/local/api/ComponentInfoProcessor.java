@@ -1,5 +1,7 @@
 package se.sics.ktoolbox.aggregator.local.api;
 
+import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
+
 /**
  * Interface for the processing the component information and
  * generating the packet information which will be forwarded to the global aggregator.

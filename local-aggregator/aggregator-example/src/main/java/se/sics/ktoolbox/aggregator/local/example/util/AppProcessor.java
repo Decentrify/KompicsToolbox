@@ -2,9 +2,9 @@ package se.sics.ktoolbox.aggregator.local.example.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
 import se.sics.ktoolbox.aggregator.local.api.ComponentInfo;
 import se.sics.ktoolbox.aggregator.local.api.ComponentInfoProcessor;
-import se.sics.ktoolbox.aggregator.local.api.PacketInfo;
 
 
 /**
