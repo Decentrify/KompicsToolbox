@@ -1,6 +1,7 @@
 package se.sics.ktoolbox.aggregator.local.example.system;
 
 import se.sics.kompics.Init;
+import se.sics.p2ptoolbox.util.config.SystemConfig;
 
 /**
  * Initializer for the Host Component.
@@ -9,8 +10,10 @@ import se.sics.kompics.Init;
  */
 public class HostCompInit extends Init<HostComp> {
 
-    public HostCompInit(){
+    public final SystemConfig systemConfig;
 
+    public HostCompInit(SystemConfig systemConfig){
+        this.systemConfig = systemConfig;
     }
 
 }

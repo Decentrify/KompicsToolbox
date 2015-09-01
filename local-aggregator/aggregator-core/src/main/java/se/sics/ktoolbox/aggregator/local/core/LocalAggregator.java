@@ -171,6 +171,11 @@ public class LocalAggregator extends ComponentDefinition {
 
         logger.debug("Going to ship packet :{}, to the global aggregator.", packetInfo);
 
+        if(globalAggregatorAddress == null){
+            logger.warn("No global aggregator address specified, so returning.");
+            return;
+        }
+
         DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, globalAggregatorAddress, Transport.UDP);
         BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketInfo> contentMsg = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketInfo>(header, packetInfo);
 

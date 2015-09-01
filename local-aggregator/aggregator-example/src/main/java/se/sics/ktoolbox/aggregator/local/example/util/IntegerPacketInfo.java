@@ -18,4 +18,12 @@ public class IntegerPacketInfo implements PacketInfo{
         this.var2  = it2;
     }
 
+
+    @Override
+    public String toString() {
+        return "IntegerPacketInfo{" +
+                "var1=" + var1 +
+                ", var2=" + var2 +
+                '}';
+    }
 }

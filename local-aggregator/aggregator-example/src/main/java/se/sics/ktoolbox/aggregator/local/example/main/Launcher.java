@@ -61,11 +61,11 @@ public class Launcher extends ComponentDefinition {
         public void handle(Start event) {
 
             log.info("starting...");
-            doInit();
+            doStart();
         }
     };
 
-    private void doInit() {
+    private void doStart() {
 
         log.debug("Loading the configuration and initiating the loading of the components.");
 
@@ -76,7 +76,7 @@ public class Launcher extends ComponentDefinition {
 
         timer = create(JavaTimer.class, Init.NONE);
         network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
-        host = create(HostComp.class, new HostCompInit());
+        host = create(HostComp.class, new HostCompInit(systemConfig));
 
         trigger(Start.event, timer.control());
         trigger(Start.event, network.control());
@@ -86,8 +86,6 @@ public class Launcher extends ComponentDefinition {
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 
         log.debug("Triggered all the components ..");
-        System.exit(-1);
-
     }
 
 

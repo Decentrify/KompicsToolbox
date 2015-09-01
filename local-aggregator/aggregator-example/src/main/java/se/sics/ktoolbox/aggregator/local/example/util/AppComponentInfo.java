@@ -18,4 +18,12 @@ public class AppComponentInfo implements ComponentInfo {
         this.str = str;
     }
 
+    @Override
+    public String toString() {
+        return "AppComponentInfo{" +
+                "var1=" + var1 +
+                ", var2=" + var2 +
+                ", str='" + str + '\'' +
+                '}';
+    }
 }
