@@ -7,10 +7,16 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.aggregator.global.api.PacketContainer;
+import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
+import se.sics.ktoolbox.aggregator.global.core.event.AggregatedInfo;
+import se.sics.ktoolbox.aggregator.global.core.ports.GlobalAggregatorPort;
 import se.sics.ktoolbox.aggregator.global.core.util.AggregationTimeout;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
+
+import java.util.*;
 
 /**
  * Main global aggregator component.
@@ -21,9 +27,11 @@ public class GlobalAggregator extends ComponentDefinition {
 
     Logger logger = LoggerFactory.getLogger(GlobalAggregator.class);
     private long timeout;
+    private Map<BasicAddress, List<PacketInfo>> nodePacketMap;
 
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
+    Negative<GlobalAggregatorPort> aggregatorPort = provides(GlobalAggregatorPort.class);
 
 
     public GlobalAggregator(GlobalAggregatorInit init){
@@ -42,6 +50,7 @@ public class GlobalAggregator extends ComponentDefinition {
 
         logger.debug("Initializing the global aggregator.");
         this.timeout = init.timeout;
+        this.nodePacketMap = new HashMap<BasicAddress, List<PacketInfo>>();
     }
 
 
@@ -81,7 +90,11 @@ public class GlobalAggregator extends ComponentDefinition {
         @Override
         public void handle(AggregationTimeout aggregationTimeout) {
 
-            logger.debug("Aggregation timeout handler invoked.");
+            logger.debug("Aggregation timeout handler invoked, forwarding the aggregated information.");
+            trigger(new AggregatedInfo(nodePacketMap), aggregatorPort);
+
+//          Clear the map for the next round.
+            nodePacketMap = new HashMap<BasicAddress, List<PacketInfo>>();
         }
     };
 
@@ -93,9 +106,20 @@ public class GlobalAggregator extends ComponentDefinition {
      */
     ClassMatchedHandler<PacketContainer, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketContainer>> packetMsgHandler = new ClassMatchedHandler<PacketContainer, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketContainer>>() {
         @Override
-        public void handle(PacketContainer packetContainer, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketContainer> decoratedAddressDecoratedHeaderPacketContainerBasicContentMsg) {
+        public void handle(PacketContainer packetContainer, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketContainer> event) {
 
             logger.debug("Handler for the packet container from the node in the system.");
+            PacketContainer container = event.getContent();
+
+            BasicAddress sourceAddress = container.sourceAddress.getBase();
+            List<PacketInfo> packets = nodePacketMap.get(sourceAddress);
+
+            if(packets == null){
+                packets = new ArrayList<PacketInfo>();
+                nodePacketMap.put(sourceAddress, packets);
+            }
+
+            packets.add(container.packetInfo);
         }
     };
 
