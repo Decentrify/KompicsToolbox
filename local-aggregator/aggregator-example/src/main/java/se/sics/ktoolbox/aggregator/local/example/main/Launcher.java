@@ -85,6 +85,9 @@ public class Launcher extends ComponentDefinition {
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 
+        log.debug("Triggered all the components ..");
+        System.exit(-1);
+
     }
 
 
