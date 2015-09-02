@@ -1,6 +1,6 @@
 package se.sics.ktoolbox.aggregator.local.example.util;
 
-import se.sics.ktoolbox.aggregator.local.api.ComponentInfo;
+import se.sics.ktoolbox.aggregator.global.api.ComponentInfo;
 
 /**
  * Application component information object.

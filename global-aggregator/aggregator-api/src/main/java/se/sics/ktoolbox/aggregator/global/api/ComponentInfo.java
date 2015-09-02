@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.local.api;
+package se.sics.ktoolbox.aggregator.global.api;
 
 /**
  * Marker Interface indicating packet information from the component
@@ -6,6 +6,6 @@ package se.sics.ktoolbox.aggregator.local.api;
  *
  * Created by babbar on 2015-08-31.
  */
-public interface ComponentInfo {
+public interface ComponentInfo extends PacketInfo{
 
 }

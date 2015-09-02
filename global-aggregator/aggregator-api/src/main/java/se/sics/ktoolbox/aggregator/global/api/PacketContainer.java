@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public class PacketContainer {
 
-    public final UUID uuid;
+    public final  UUID uuid;
     public final  DecoratedAddress sourceAddress;
     public final  PacketInfo packetInfo;
 

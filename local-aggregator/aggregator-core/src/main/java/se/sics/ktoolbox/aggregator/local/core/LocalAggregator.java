@@ -9,7 +9,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
 import se.sics.ktoolbox.aggregator.local.api.AggregationTimeout;
-import se.sics.ktoolbox.aggregator.local.api.ComponentInfo;
+import se.sics.ktoolbox.aggregator.global.api.ComponentInfo;
 import se.sics.ktoolbox.aggregator.local.api.ComponentInfoProcessor;
 import se.sics.ktoolbox.aggregator.local.api.events.ComponentInfoEvent;
 import se.sics.ktoolbox.aggregator.local.api.events.UpdateEvent;
@@ -26,7 +26,7 @@ import java.util.*;
  *
  * Created by babbar on 2015-08-31.
  */
-public class LocalAggregator extends ComponentDefinition {
+public class LocalAggregator<CI extends ComponentInfo> extends ComponentDefinition {
 
     private Logger logger = LoggerFactory.getLogger(LocalAggregator.class);
     private Map<Class, Map<Integer, ComponentInfo>> componentInfoMap;

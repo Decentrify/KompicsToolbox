@@ -8,7 +8,7 @@ import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
  *
  * Created by babbar on 2015-08-31.
  */
-public interface ComponentInfoProcessor {
+public interface ComponentInfoProcessor<PI_I extends PacketInfo, PI_O extends PacketInfo> {
 
 
     /**
@@ -20,5 +20,5 @@ public interface ComponentInfoProcessor {
      *
      * @return Packet Information
      */
-    public PacketInfo processComponentInfo(ComponentInfo componentInfo);
+    public PI_O processComponentInfo(PI_I componentInfo);
 }
