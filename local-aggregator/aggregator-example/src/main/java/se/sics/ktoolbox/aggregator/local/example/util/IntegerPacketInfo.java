@@ -1,7 +1,7 @@
 package se.sics.ktoolbox.aggregator.local.example.util;
 
 
-import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 
 /**
  * PacketInformation containing the integer pair from

@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.global.api;
+package se.sics.ktoolbox.aggregator.global.api.system;
 
 /**
  * Marker Interface for the packet information which needs to be processed by the

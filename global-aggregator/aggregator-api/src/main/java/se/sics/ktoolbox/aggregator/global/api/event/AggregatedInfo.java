@@ -1,7 +1,7 @@
-package se.sics.ktoolbox.aggregator.global.core.event;
+package se.sics.ktoolbox.aggregator.global.api.event;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.util.List;

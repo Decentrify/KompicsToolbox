@@ -1,0 +1,13 @@
+package se.sics.ktoolbox.aggregator.global.api.ports;
+
+import se.sics.kompics.PortType;
+
+/**
+ * Port for interaction with the visualizer component
+ * in the system.
+ *
+ * Created by babbar on 2015-09-02.
+ */
+public class VisualizerPort extends PortType{{
+
+}}

@@ -1,12 +1,13 @@
 package se.sics.ktoolbox.aggregator.local.api;
 
-import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 
 /**
  * Interface for the processing the component information and
  * generating the packet information which will be forwarded to the global aggregator.
  *
- * Created by babbar on 2015-08-31.
+ * @param <PI_I> InputType PacketInfo
+ * @param <PI_O> OutputType PacketInfo
  */
 public interface ComponentInfoProcessor<PI_I extends PacketInfo, PI_O extends PacketInfo> {
 

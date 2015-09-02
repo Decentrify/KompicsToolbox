@@ -1,7 +1,7 @@
-package se.sics.ktoolbox.aggregator.global.core.ports;
+package se.sics.ktoolbox.aggregator.global.api.ports;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.global.core.event.AggregatedInfo;
+import se.sics.ktoolbox.aggregator.global.api.event.AggregatedInfo;
 
 /**
  * Port with which the aggregator communicates with the

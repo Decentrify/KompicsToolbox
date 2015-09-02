@@ -1,6 +1,6 @@
 package se.sics.ktoolbox.aggregator.global.core.gates;
 
-import se.sics.ktoolbox.aggregator.global.api.PacketInfo;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 
 import java.util.Collection;
 

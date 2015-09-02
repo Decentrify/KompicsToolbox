@@ -1,7 +1,7 @@
 package se.sics.ktoolbox.aggregator.local.core;
 
 import se.sics.kompics.Init;
-import se.sics.ktoolbox.aggregator.global.api.ComponentInfo;
+import se.sics.ktoolbox.aggregator.global.api.system.ComponentInfo;
 import se.sics.ktoolbox.aggregator.local.api.ComponentInfoProcessor;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
