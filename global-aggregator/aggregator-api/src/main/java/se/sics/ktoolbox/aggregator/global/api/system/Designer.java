@@ -3,30 +3,26 @@ package se.sics.ktoolbox.aggregator.global.api.system;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Interface indicating the designer used for
- * a particular type of stats collection and visualtion.
+ * a particular type of stats collection and visualization.
  *
  * Created by babbar on 2015-09-02.
  */
 public interface Designer {
 
-    /**
-     * Run the collection of the packets through the designer.
-     * Each designer will invoke a specific process method on the collection.
-     *
-     * @param packetInfoCollection collection
-     */
-    public void process (BasicAddress nodeAddress , Collection<PacketInfo> packetInfoCollection);
-
 
     /**
-     * Once the designer has processed the collection, the entity
-     * that needs to be returned to the user needs to be constructed by it.
+     * Process the windows being buffered by the visualization window.
+     * After processing return instance of the  processed windows.
      *
-     * @return entity object.
+     * @param windows : windows are the snapshots of the systems at different intervals.
+     *
+     * @return collection of processed windows.
      */
-    public Object getEntity();
+    public Collection<ProcessedWindow> process(Collection<Map<BasicAddress, Collection<PacketInfo>>> windows);
+
 
 }

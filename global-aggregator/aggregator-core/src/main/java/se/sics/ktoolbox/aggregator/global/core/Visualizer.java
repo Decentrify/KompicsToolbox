@@ -6,6 +6,13 @@ import se.sics.kompics.*;
 import se.sics.ktoolbox.aggregator.global.api.event.AggregatedInfo;
 import se.sics.ktoolbox.aggregator.global.api.ports.GlobalAggregatorPort;
 import se.sics.ktoolbox.aggregator.global.api.ports.VisualizerPort;
+import se.sics.ktoolbox.aggregator.global.api.system.Designer;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Visualizer component used for providing the visualizations
@@ -17,9 +24,11 @@ public class Visualizer extends ComponentDefinition {
 
     private Logger logger = LoggerFactory.getLogger(Visualizer.class);
     private int maxSnapshots;
+    private Map<String, Designer> designerNameMap;
 
     Negative<VisualizerPort> visualizerPort = provides(VisualizerPort.class);
     Positive<GlobalAggregatorPort> aggregatorPort = requires(GlobalAggregatorPort.class);
+    LinkedList<Map<BasicAddress, List<PacketInfo>>> snapshotList;
 
     public Visualizer(VisualizerInit init){
 
@@ -33,8 +42,12 @@ public class Visualizer extends ComponentDefinition {
      * @param init init
      */
     private void doInit(VisualizerInit init) {
+
         logger.debug("Performing the initialization tasks.");
         this.maxSnapshots = init.maxSnapshots;
+        this.designerNameMap = init.designerNameMap;
+        this.snapshotList = new LinkedList<Map<BasicAddress, List<PacketInfo>>>();
+
     }
 
     /**
@@ -57,7 +70,14 @@ public class Visualizer extends ComponentDefinition {
     Handler<AggregatedInfo> aggregatedInfoHandler = new Handler<AggregatedInfo>() {
         @Override
         public void handle(AggregatedInfo event) {
+
             logger.debug("Received aggregated information from the global aggregator");
+
+            while(snapshotList.size() >= maxSnapshots){
+                snapshotList.removeLast();
+            }
+
+            snapshotList.addFirst(event.getNodePacketMap());
         }
     };
 
