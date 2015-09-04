@@ -39,7 +39,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class CroupierView<C extends Object> {
 
     private final int viewSize;
-    private final DecoratedAddress selfAddress;
+    private final BasicAddress selfAddress;
     private final HashMap<BasicAddress, CroupierViewEntry<C>> d2e;
     private final Random rand;
 
@@ -56,7 +56,7 @@ public class CroupierView<C extends Object> {
         }
     };
 
-    public CroupierView(DecoratedAddress selfAddress, int viewSize, Random rand) {
+    public CroupierView(BasicAddress selfAddress, int viewSize, Random rand) {
         super();
         this.selfAddress = selfAddress;
         this.viewSize = viewSize;
@@ -140,8 +140,7 @@ public class CroupierView<C extends Object> {
 
     public void selectToKeep(DecoratedAddress from, Set<CroupierContainer<C>> descriptors) {
         BasicAddress baseFrom = from.getBase();
-        BasicAddress baseSelf = selfAddress.getBase();
-        if (baseFrom.equals(baseSelf)) {
+        if (selfAddress.equals(baseFrom)) {
             return;
         }
 
@@ -158,7 +157,7 @@ public class CroupierView<C extends Object> {
 
         for (CroupierContainer<C> descriptor : descriptors) {
             BasicAddress baseSrc = descriptor.getSource().getBase();
-            if (baseSelf.equals(baseSrc)) {
+            if (selfAddress.equals(baseSrc)) {
                 continue; // do not keep descriptor of self
             }
             if (d2e.containsKey(baseSrc)) {
