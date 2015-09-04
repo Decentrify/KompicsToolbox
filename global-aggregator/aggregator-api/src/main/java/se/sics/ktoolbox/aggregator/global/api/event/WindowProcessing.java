@@ -58,4 +58,21 @@ public class WindowProcessing {
         }
     }
 
+
+    public static class Response extends ProcessingResponseMatcher {
+
+        private UUID requestId;
+
+        public Response(UUID requestId, DesignInfoContainer container) {
+            super(container);
+            this.requestId = requestId;
+        }
+
+
+        public Response(UUID requestId){
+            super(null);
+            this.requestId = requestId;
+        }
+    }
+
 }

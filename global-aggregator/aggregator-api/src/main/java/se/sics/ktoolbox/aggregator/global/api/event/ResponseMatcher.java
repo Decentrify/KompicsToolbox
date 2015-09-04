@@ -7,7 +7,7 @@ import se.sics.kompics.PatternExtractor;
  *
  * Created by babbar on 2015-09-04.
  */
-public interface ProcessingResponse<Content extends Object> extends PatternExtractor<Class<Content>, Content>{
+public interface ResponseMatcher<Content extends Object> extends PatternExtractor<Class<Content>, Content>{
     public Content getContent();
 }
 
