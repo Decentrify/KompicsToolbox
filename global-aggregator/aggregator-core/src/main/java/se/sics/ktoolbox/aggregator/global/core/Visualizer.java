@@ -4,15 +4,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.ktoolbox.aggregator.global.api.event.AggregatedInfo;
+import se.sics.ktoolbox.aggregator.global.api.event.WindowProcessing;
 import se.sics.ktoolbox.aggregator.global.api.ports.GlobalAggregatorPort;
 import se.sics.ktoolbox.aggregator.global.api.ports.VisualizerPort;
-import se.sics.ktoolbox.aggregator.global.api.system.Designer;
+import se.sics.ktoolbox.aggregator.global.api.system.DesignProcessor;
 import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
+import javax.naming.OperationNotSupportedException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Visualizer component used for providing the visualizations
@@ -24,7 +27,7 @@ public class Visualizer extends ComponentDefinition {
 
     private Logger logger = LoggerFactory.getLogger(Visualizer.class);
     private int maxSnapshots;
-    private Map<String, Designer> designerNameMap;
+    private Map<String, DesignProcessor> designerNameMap;
 
     Negative<VisualizerPort> visualizerPort = provides(VisualizerPort.class);
     Positive<GlobalAggregatorPort> aggregatorPort = requires(GlobalAggregatorPort.class);
@@ -35,6 +38,7 @@ public class Visualizer extends ComponentDefinition {
         doInit(init);
         subscribe(startHandler, control);
         subscribe(aggregatedInfoHandler, aggregatorPort);
+        subscribe(windowProcessRequestHandler, visualizerPort);
     }
 
     /**
@@ -78,6 +82,25 @@ public class Visualizer extends ComponentDefinition {
             }
 
             snapshotList.addFirst(event.getNodePacketMap());
+        }
+    };
+
+
+    /**
+     * Handler for processing window request from the application.
+     */
+    Handler<WindowProcessing.Request> windowProcessRequestHandler = new Handler<WindowProcessing.Request>() {
+        @Override
+        public void handle(WindowProcessing.Request event) {
+
+            logger.debug("Received a request to handle the window processing.");
+            DesignProcessor processor = designerNameMap.get(event.getDesigner());
+
+            if(processor == null) {
+                logger.error("Unable to locate the designer for the requested one.");
+            }
+
+
         }
     };
 

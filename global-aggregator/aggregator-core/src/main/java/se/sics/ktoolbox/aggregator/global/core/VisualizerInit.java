@@ -1,7 +1,7 @@
 package se.sics.ktoolbox.aggregator.global.core;
 
 import se.sics.kompics.Init;
-import se.sics.ktoolbox.aggregator.global.api.system.Designer;
+import se.sics.ktoolbox.aggregator.global.api.system.DesignProcessor;
 
 import java.util.Map;
 
@@ -13,9 +13,9 @@ import java.util.Map;
 public class VisualizerInit extends Init<Visualizer>{
 
     public final int maxSnapshots;
-    public final Map<String, Designer> designerNameMap;
+    public final Map<String, DesignProcessor> designerNameMap;
 
-    public VisualizerInit(int maxSnapshots, Map<String, Designer> designerNameMap){
+    public VisualizerInit(int maxSnapshots, Map<String, DesignProcessor> designerNameMap){
         this.maxSnapshots = maxSnapshots;
         this.designerNameMap = designerNameMap;
     }
