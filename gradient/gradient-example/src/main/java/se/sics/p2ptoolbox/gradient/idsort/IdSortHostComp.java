@@ -43,6 +43,7 @@ import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -111,12 +112,14 @@ public class IdSortHostComp extends ComponentDefinition {
         connect(gradient.getNegative(Network.class), network, new IntegerOverlayFilter(gradientInit.overlayId));
         connect(gradient.getNegative(Timer.class), timer);
         connect(gradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
+        connect(gradient.getPositive(SelfViewUpdatePort.class), croupier.getNegative(SelfViewUpdatePort.class));
         return gradient;
     }
 
     private Component createNConnectIdSort(IdSortComp.IdSortInit exampleInit, Component gradient) {
         Component example = create(IdSortComp.class, exampleInit);
         connect(example.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
+        connect(example.getPositive(SelfViewUpdatePort.class), gradient.getNegative(SelfViewUpdatePort.class));
         return example;
     }
 

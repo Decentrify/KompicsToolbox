@@ -16,17 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.msg;
 
-import se.sics.kompics.KompicsEvent;
+package se.sics.p2ptoolbox.util.update;
+
+import se.sics.kompics.PortType;
 
 /**
- * Gradient Message wrapper class.
- *
- * Created by babbarshaer on 2015-02-26.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class GradientMsg {
-
-    public static abstract class OneWay implements KompicsEvent {
+public class SelfViewUpdatePort extends PortType {
+    {
+        indication(SelfViewUpdate.class);
     }
 }

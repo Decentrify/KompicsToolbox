@@ -17,17 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.gradient.temp;
+package se.sics.p2ptoolbox.util.update;
 
 import se.sics.kompics.KompicsEvent;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class RankUpdate implements KompicsEvent {
-    public final int rank;
-    
-    public RankUpdate(int rank) {
-        this.rank = rank;
-    }
+public interface SelfViewUpdate extends KompicsEvent {
 }

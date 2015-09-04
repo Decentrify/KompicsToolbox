@@ -40,12 +40,13 @@ import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.GradientComp;
 import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.simulation.util.NoFilter;
-import se.sics.p2ptoolbox.gradient.temp.UpdatePort;
+import se.sics.p2ptoolbox.gradient.temp.RankUpdatePort;
 import se.sics.p2ptoolbox.tgradient.TreeGradientComp;
 import se.sics.p2ptoolbox.tgradient.TreeGradientConfig;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -119,6 +120,7 @@ public class IdSortHostComp extends ComponentDefinition {
         connect(gradient.getNegative(Network.class), network, new IntegerOverlayFilter(gradientInit.overlayId));
         connect(gradient.getNegative(Timer.class), timer);
         connect(gradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
+        connect(gradient.getPositive(SelfViewUpdatePort.class), croupier.getNegative(SelfViewUpdatePort.class));
         return gradient;
     }
     
@@ -127,14 +129,16 @@ public class IdSortHostComp extends ComponentDefinition {
         connect(tGradient.getNegative(Network.class), network, new IntegerOverlayFilter(tGradientInit.overlayId));
         connect(tGradient.getNegative(Timer.class), timer);
         connect(tGradient.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
-        connect(tGradient.getNegative(UpdatePort.class), gradient.getPositive(UpdatePort.class));
+        connect(tGradient.getNegative(RankUpdatePort.class), gradient.getPositive(RankUpdatePort.class));
         connect(tGradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
+        connect(tGradient.getPositive(SelfViewUpdatePort.class), gradient.getNegative(SelfViewUpdatePort.class));
         return tGradient;
     }
 
     private Component createNConnectIdSort(IdSortComp.IdSortInit exampleInit, Component tGradient) {
         Component example = create(IdSortComp.class, exampleInit);
         connect(example.getNegative(GradientPort.class), tGradient.getPositive(GradientPort.class));
+        connect(example.getPositive(SelfViewUpdatePort.class), tGradient.getNegative(SelfViewUpdatePort.class));
         return example;
     }
 

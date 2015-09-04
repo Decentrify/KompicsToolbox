@@ -14,7 +14,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Random;
-import se.sics.nat.network.NatedTrait;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
 
 /**
  * A builder pattern for loading the System Configuration.

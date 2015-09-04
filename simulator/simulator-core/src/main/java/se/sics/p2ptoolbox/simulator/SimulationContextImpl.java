@@ -28,8 +28,8 @@ import java.util.Set;
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
 import se.sics.kompics.network.Address;
-import se.sics.nat.network.NatedTrait;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
@@ -70,7 +70,7 @@ public class SimulationContextImpl implements SimulationContext {
         }
         if (nodeAddress instanceof DecoratedAddress) {
             DecoratedAddress dAdr = (DecoratedAddress) nodeAddress;
-            if (!dAdr.hasTrait(NatedTrait.class)) {
+            if (NatedTrait.isOpen(dAdr)) {
                 systemOpenNodes.put(nodeId, nodeAddress);
             }
         } else {

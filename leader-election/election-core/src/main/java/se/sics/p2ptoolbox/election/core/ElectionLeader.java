@@ -36,6 +36,8 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 import java.security.PublicKey;
 import java.util.*;
 import java.util.UUID;
+import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
+import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
 
 /**
  * Leader Election Component.
@@ -58,13 +60,14 @@ import java.util.UUID;
  */
 public class ElectionLeader extends ComponentDefinition {
 
-    Logger logger = LoggerFactory.getLogger(ElectionLeader.class);
+    Logger LOG = LoggerFactory.getLogger(ElectionLeader.class);
+    String logPrefix = "";
 
     private LCPeerView selfLCView;
     private LEContainer selfLEContainer;
     private ElectionConfig config;
     private LCRuleSet lcRuleSet;
-    private DecoratedAddress selfAddress;
+    private DecoratedAddress self;
     private Map<BasicAddress, LEContainer> addressContainerMap;
     private int leaderGroupSize;
 
@@ -91,44 +94,23 @@ public class ElectionLeader extends ComponentDefinition {
     private Comparator<LEContainer> leContainerComparator;
 
     // Ports.
-    Positive<Timer> timerPositive = requires(Timer.class);
-    Positive<Network> networkPositive = requires(Network.class);
+    Positive timer = requires(Timer.class);
+    Positive network = requires(Network.class);
+    Positive gradientPort = requires(GradientPort.class);
+    Positive addressUpdate = requires(SelfAddressUpdatePort.class);
     Negative<LeaderElectionPort> electionPort = provides(LeaderElectionPort.class);
-    Positive<GradientPort> gradientPort = requires(GradientPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);
 
     public ElectionLeader(ElectionInit<ElectionLeader> init) {
 
-        doInit(init);
-        subscribe(startHandler, control);
-        subscribe(gradientSampleHandler, gradientPort);
-        subscribe(viewUpdateHandler, electionPort);
-        subscribe(periodicVotingHandler, timerPositive);
-
-        // Test Sample
-        subscribe(mockedUpdateHandler, testPortNegative);
-
-        // Promise Subscriptions.
-        subscribe(promiseResponse, networkPositive);
-        subscribe(promiseRoundTimeoutHandler, timerPositive);
-
-        // Lease Subscriptions.
-        subscribe(leaseTimeoutHandler, timerPositive);
-        subscribe(leaseCommitResponseHandler, networkPositive);
-        subscribe(leaseResponseTimeoutHandler, timerPositive);
-    }
-
-
-    // Init method.
-    private void doInit(ElectionInit<ElectionLeader> init) {
-
         this.config = init.electionConfig;
         this.lcRuleSet = init.lcRuleSet;
-        this.selfAddress = init.selfAddress;
+        this.self = init.selfAddress;
         this.publicKey = init.publicKey;
+        this.logPrefix = self.getBase() + " ";
 
-        logger.warn("{}: Election Leader component initialized", selfAddress.getId());
-        logger.warn("{}: Election Config: {}", selfAddress.getId(), this.config);
+        LOG.warn("{}: Election Leader component initialized", self.getId());
+        LOG.warn("{}: Election Config: {}", self.getId(), this.config);
 
         // voting protocol.
         isConverged = false;
@@ -136,7 +118,7 @@ public class ElectionLeader extends ComponentDefinition {
 
         this.leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
         this.selfLCView = init.initialView;
-        this.selfLEContainer = new LEContainer(selfAddress, selfLCView);
+        this.selfLEContainer = new LEContainer(self, selfLCView);
         this.addressContainerMap = new HashMap<BasicAddress, LEContainer>();
 
 
@@ -158,21 +140,56 @@ public class ElectionLeader extends ComponentDefinition {
 
         lowerUtilityNodes = new TreeSet<LEContainer>(leContainerComparator);
         higherUtilityNodes = new TreeSet<LEContainer>(leContainerComparator);
+        
+        subscribe(handleStart, control);
+        subscribe(handleStop, control);
+        subscribe(handleSelfAddressUpdate, addressUpdate);
+        
+        subscribe(gradientSampleHandler, gradientPort);
+        subscribe(viewUpdateHandler, electionPort);
+        subscribe(periodicVotingHandler, timer);
 
+        // Test Sample
+        subscribe(mockedUpdateHandler, testPortNegative);
+
+        // Promise Subscriptions.
+        subscribe(promiseResponse, network);
+        subscribe(promiseRoundTimeoutHandler, timer);
+
+        // Lease Subscriptions.
+        subscribe(leaseTimeoutHandler, timer);
+        subscribe(leaseCommitResponseHandler, network);
+        subscribe(leaseResponseTimeoutHandler, timer);
     }
 
-    Handler<Start> startHandler = new Handler<Start>() {
+    //**************************CONTROL*****************************************
+    Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-
-            logger.trace("{}: Leader Election Component is up", selfAddress.getId());
+            LOG.info("{}starting...", logPrefix);
 
             SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(0, 8000);
             spt.setTimeoutEvent(new TimeoutCollection.PeriodicVoting(spt));
-            trigger(spt, timerPositive);
+            trigger(spt, timer);
+        }
+    };
+    
+    Handler handleStop = new Handler<Stop>() {
+        @Override
+        public void handle(Stop event) {
+            LOG.info("{}stopping...", logPrefix);
+        }
+    };
+    
+    Handler handleSelfAddressUpdate = new Handler<SelfAddressUpdate>() {
+        @Override
+        public void handle(SelfAddressUpdate update) {
+            LOG.info("{}update self address:{}", logPrefix, update.self);
+            self = update.self;
         }
     };
 
+    //**************************************************************************
 
     /**
      * Check if the periodic voting needs to be started based on the data in terms of the convergence
@@ -183,7 +200,7 @@ public class ElectionLeader extends ComponentDefinition {
         @Override
         public void handle(TimeoutCollection.PeriodicVoting periodicVoting) {
 
-            logger.debug("Triggering periodic voting timeout ");
+            LOG.debug("Triggering periodic voting timeout ");
             checkIfLeader();
         }
     };
@@ -231,9 +248,9 @@ public class ElectionLeader extends ComponentDefinition {
 
             LCPeerView oldView = selfLCView;
             selfLCView = viewUpdate.selfPv;
-            selfLEContainer = new LEContainer(selfAddress, selfLCView);
+            selfLEContainer = new LEContainer(self, selfLCView);
 
-            logger.trace(" {}: Received view update from the application: {} ", selfAddress.getId(), selfLCView.toString());
+            LOG.trace(" {}: Received view update from the application: {} ", self.getId(), selfLCView.toString());
 
             isConverged= false;
             convergenceCounter =0;
@@ -266,7 +283,7 @@ public class ElectionLeader extends ComponentDefinition {
             if (lcRuleSet.terminateLeadership(oldView, selfLCView)) {
 
                 CancelTimeout ct = new CancelTimeout(leaseTimeoutId);
-                trigger(ct, timerPositive);
+                trigger(ct, timer);
                 leaseTimeoutId = null;
 
                 terminateBeingLeader();
@@ -284,7 +301,7 @@ public class ElectionLeader extends ComponentDefinition {
         @Override
         public void handle(GradientSample event) {
 
-            logger.trace("{}: Received sample from gradient", selfAddress.getId());
+            LOG.trace("{}: Received sample from gradient", self.getId());
 
             // Incorporate the new sample.
             Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
@@ -327,7 +344,7 @@ public class ElectionLeader extends ComponentDefinition {
 
         if (isConverged && higherUtilityNodes.size() == 0 && !inElection && !selfLCView.isLeaderGroupMember()) {
             if (addressContainerMap.size() < config.getViewSize()) {
-                logger.warn(" {}: I think I am leader but the view :{} less than the minimum requirement, so returning.", selfAddress.getId(), addressContainerMap.size());
+                LOG.warn(" {}: I think I am leader but the view :{} less than the minimum requirement, so returning.", self.getId(), addressContainerMap.size());
                 return;
             }
 
@@ -342,28 +359,28 @@ public class ElectionLeader extends ComponentDefinition {
      */
     private void startVoting() {
 
-        logger.warn("{}: Starting with the voting .. ", selfAddress.getId());
+        LOG.warn("{}: Starting with the voting .. ", self.getId());
         electionRoundId = UUID.randomUUID();
         applicationAck = false;
 
-        Collection<DecoratedAddress> leaderGroupAddress = lcRuleSet.initiateLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
+        Collection<DecoratedAddress> leaderGroupAddress = lcRuleSet.initiateLeadership(new LEContainer(self, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
         if (leaderGroupAddress.isEmpty() || leaderGroupAddress.size() < leaderGroupSize) {
-            logger.error(" {} : Not asserting self as leader as the leader group size :{},  is less than required.", selfAddress.getId(), leaderGroupAddress.size());
+            LOG.error(" {} : Not asserting self as leader as the leader group size :{},  is less than required.", self.getId(), leaderGroupAddress.size());
             return;
         }
 
-        Promise.Request request = new Promise.Request(selfAddress, selfLCView, electionRoundId);
+        Promise.Request request = new Promise.Request(self, selfLCView, electionRoundId);
         // Add SELF to the leader group nodes.
-        leaderGroupAddress.add(selfAddress);
+        leaderGroupAddress.add(self);
 
         inElection = true;
         for(DecoratedAddress address : leaderGroupAddress){
 
-            logger.debug("Sending promise request to : {}", address.getId());
-            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, address, Transport.UDP);
+            LOG.debug("Sending promise request to : {}", address.getId());
+            DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(self, address, Transport.UDP);
             BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request> promiseRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Request>(header, request);
-            trigger(promiseRequest, networkPositive);
+            trigger(promiseRequest, network);
         }
 
         electionRoundTracker.startTracking(electionRoundId, leaderGroupAddress);
@@ -372,7 +389,7 @@ public class ElectionLeader extends ComponentDefinition {
         st.setTimeoutEvent(new TimeoutCollection.PromiseRoundTimeout(st));
         promisePhaseTimeout = st.getTimeoutEvent().getTimeoutId();
 
-        trigger(st, timerPositive);
+        trigger(st, timer);
     }
 
 
@@ -382,36 +399,36 @@ public class ElectionLeader extends ComponentDefinition {
                 @Override
                 public void handle(Promise.Response response, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Promise.Response> event) {
 
-                    logger.warn("{}: Received Promise Response from : {} ", selfAddress.getId(), event.getSource().getId());
+                    LOG.warn("{}: Received Promise Response from : {} ", self.getId(), event.getSource().getId());
                     int numPromises = electionRoundTracker.addPromiseResponseAndGetSize(response);
 
                     if (numPromises >= electionRoundTracker.getLeaderGroupInformationSize()) {
 
                         CancelTimeout cancelTimeout = new CancelTimeout(promisePhaseTimeout);
-                        trigger(cancelTimeout, timerPositive);
+                        trigger(cancelTimeout, timer);
                         promisePhaseTimeout = null;
 
                         if (electionRoundTracker.isAccepted()) {
 
-                            logger.warn("{}: All the leader group nodes have promised.", selfAddress.getId());
-                            LeaseCommitUpdated.Request request = new LeaseCommitUpdated.Request(selfAddress,
+                            LOG.warn("{}: All the leader group nodes have promised.", self.getId());
+                            LeaseCommitUpdated.Request request = new LeaseCommitUpdated.Request(self,
                                     publicKey, selfLCView, electionRoundTracker.getRoundId());
 
                             for (DecoratedAddress address : electionRoundTracker.getLeaderGroupInformation()) {
-                                logger.warn("Sending Commit Request to : " + address.getId());
+                                LOG.warn("Sending Commit Request to : " + address.getId());
 
-                                DecoratedHeader<DecoratedAddress> decoratedHeader = new DecoratedHeader<DecoratedAddress>(selfAddress, address, Transport.UDP);
+                                DecoratedHeader<DecoratedAddress> decoratedHeader = new DecoratedHeader<DecoratedAddress>(self, address, Transport.UDP);
                                 BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, LeaseCommitUpdated.Request> commitRequest =
                                         new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, LeaseCommitUpdated.Request>(decoratedHeader, request);
 
-                                trigger(commitRequest, networkPositive);
+                                trigger(commitRequest, network);
                             }
 
                             ScheduleTimeout st = new ScheduleTimeout(5000);
                             st.setTimeoutEvent(new TimeoutCollection.LeaseCommitResponseTimeout(st));
                             leaseCommitPhaseTimeout = st.getTimeoutEvent().getTimeoutId();
 
-                            trigger(st, timerPositive);
+                            trigger(st, timer);
 
                         } 
                         else {
@@ -437,27 +454,27 @@ public class ElectionLeader extends ComponentDefinition {
         @Override
         public void handle(LeaseCommitUpdated.Response response, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, LeaseCommitUpdated.Response> event) {
 
-            logger.warn("Received lease commit response from the node: {} , response: {}", event.getSource().getId(), response.isCommit);
+            LOG.warn("Received lease commit response from the node: {} , response: {}", event.getSource().getId(), response.isCommit);
 
             int commitResponses = electionRoundTracker.addLeaseCommitResponseAndgetSize(event.getContent());
             if (commitResponses >= electionRoundTracker.getLeaderGroupInformationSize()) {
 
                 CancelTimeout cancelTimeout = new CancelTimeout(leaseCommitPhaseTimeout);
-                trigger(cancelTimeout, timerPositive);
+                trigger(cancelTimeout, timer);
                 leaseCommitPhaseTimeout = null;
 
                 if (electionRoundTracker.isLeaseCommitAccepted()) {
 
-                    logger.warn("{}: All the leader group nodes have committed the lease.", selfAddress.getId());
+                    LOG.warn("{}: All the leader group nodes have committed the lease.", self.getId());
                     trigger(new LeaderState.ElectedAsLeader(electionRoundTracker.getLeaderGroupInformation()), electionPort);
 
                     ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
                     st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
 
                     leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
-                    trigger(st, timerPositive);
+                    trigger(st, timer);
 
-                    logger.error("Setting self as leader complete.");
+                    LOG.error("Setting self as leader complete.");
                 }
 
                 if (applicationAck) {
@@ -482,11 +499,11 @@ public class ElectionLeader extends ComponentDefinition {
         public void handle(TimeoutCollection.PromiseRoundTimeout event) {
 
             if (promisePhaseTimeout != null && promisePhaseTimeout.equals(event.getTimeoutId())) {
-                logger.warn("{}: Election Round Timed Out in the promise phase.", selfAddress.getId());
+                LOG.warn("{}: Election Round Timed Out in the promise phase.", self.getId());
                 resetElectionMetaData();
                 electionRoundTracker.resetTracker();
             } else {
-                logger.warn("Promise already supposed to be fulfilled but timeout triggered");
+                LOG.warn("Promise already supposed to be fulfilled but timeout triggered");
             }
 
         }
@@ -506,7 +523,7 @@ public class ElectionLeader extends ComponentDefinition {
         @Override
         public void handle(TimeoutCollection.LeaseCommitResponseTimeout event) {
 
-            logger.warn("{}: Election Round timed out in the lease commit phase.", selfAddress.getId());
+            LOG.warn("{}: Election Round timed out in the lease commit phase.", self.getId());
             if (leaseCommitPhaseTimeout != null && leaseCommitPhaseTimeout.equals(event.getTimeoutId())) {
 
                 electionRoundTracker.resetTracker();
@@ -517,7 +534,7 @@ public class ElectionLeader extends ComponentDefinition {
                     resetElectionMetaData(); // Reset election phase if already received ack for the commit that I sent to local follower component.
                 }
             } else {
-                logger.warn("{}: Received the timeout after being cancelled.", selfAddress.getId());
+                LOG.warn("{}: Received the timeout after being cancelled.", self.getId());
             }
 
         }
@@ -532,29 +549,29 @@ public class ElectionLeader extends ComponentDefinition {
         @Override
         public void handle(TimeoutCollection.LeaseTimeout event) {
 
-            logger.debug(" Special : Lease Timed out at Leader End: {} , trying to extend the lease", selfAddress.getId());
+            LOG.debug(" Special : Lease Timed out at Leader End: {} , trying to extend the lease", self.getId());
             
             if(leaseTimeoutId != null && leaseTimeoutId.equals(event.getTimeoutId())){
 
-                Collection<DecoratedAddress> lgNodes = lcRuleSet.continueLeadership(new LEContainer(selfAddress, selfLCView), addressContainerMap.values(), leaderGroupSize);
+                Collection<DecoratedAddress> lgNodes = lcRuleSet.continueLeadership(new LEContainer(self, selfLCView), addressContainerMap.values(), leaderGroupSize);
 
                 if(lgNodes.isEmpty() || lgNodes.size()< leaderGroupSize){
-                    logger.warn("{}: Will Not extend the lease anymore.", selfAddress.getId());
+                    LOG.warn("{}: Will Not extend the lease anymore.", self.getId());
                     terminateBeingLeader();
                 }
                 else {
 
-                    logger.warn("{}: Trying to extend the leadership.", selfAddress.getId());
+                    LOG.warn("{}: Trying to extend the leadership.", self.getId());
 
-                    lgNodes.add(selfAddress);
+                    lgNodes.add(self);
                     UUID roundId = UUID.randomUUID();
-                    ExtensionRequest request = new ExtensionRequest(selfAddress, publicKey, selfLCView, roundId);
+                    ExtensionRequest request = new ExtensionRequest(self, publicKey, selfLCView, roundId);
 
                     for (DecoratedAddress memberAddress : lgNodes) {
 
-                        DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, memberAddress, Transport.UDP);
+                        DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(self, memberAddress, Transport.UDP);
                         BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest> extensionRequest = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, ExtensionRequest>(header, request);
-                        trigger(extensionRequest, networkPositive);
+                        trigger(extensionRequest, network);
                     }
 
                     // Inform the application about the updated group membership.
@@ -565,7 +582,7 @@ public class ElectionLeader extends ComponentDefinition {
                     ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
                     st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
                     leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
-                    trigger(st, timerPositive);
+                    trigger(st, timer);
                 }
             }
         }

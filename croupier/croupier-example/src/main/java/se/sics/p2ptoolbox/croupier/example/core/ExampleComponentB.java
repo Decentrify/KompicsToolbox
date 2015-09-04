@@ -18,22 +18,21 @@
  */
 package se.sics.p2ptoolbox.croupier.example.core;
 
-import com.typesafe.config.ConfigFactory;
 import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
-import se.sics.p2ptoolbox.util.config.BootstrapConfig;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -43,6 +42,7 @@ public class ExampleComponentB extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(ExampleComponentB.class);
 
     private Positive croupier = requires(CroupierPort.class);
+     private Negative viewUpdate = provides(SelfViewUpdatePort.class);
 
     private final Address selfAddress;
     private final Random rand;
@@ -62,7 +62,7 @@ public class ExampleComponentB extends ComponentDefinition {
         public void handle(Start event) {
             log.info("{} starting", selfAddress);
             log.debug("sending first update");
-            trigger(new CroupierUpdate(new PeerViewB(counter)), croupier);
+            trigger(new CroupierUpdate(new PeerViewB(counter)), viewUpdate);
         }
     };
     Handler<Stop> handleStop = new Handler<Stop>() {
@@ -81,7 +81,7 @@ public class ExampleComponentB extends ComponentDefinition {
             counter++;
             if (rand.nextDouble() > 0.7) {
                 counter++;
-                trigger(new CroupierUpdate(new PeerViewB(counter)), croupier);
+                trigger(new CroupierUpdate(new PeerViewB(counter)), viewUpdate);
             }
         }
     };

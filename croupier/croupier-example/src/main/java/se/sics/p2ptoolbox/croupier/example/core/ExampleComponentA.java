@@ -24,15 +24,15 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
-import se.sics.p2ptoolbox.util.config.BootstrapConfig;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -42,6 +42,7 @@ public class ExampleComponentA extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(ExampleComponentA.class);
 
     private Positive croupier = requires(CroupierPort.class);
+    private Negative viewUpdate = provides(SelfViewUpdatePort.class);
 
     private final Address selfAddress;
     private final Random rand;
@@ -63,7 +64,7 @@ public class ExampleComponentA extends ComponentDefinition {
         public void handle(Start event) {
             log.info("{} starting...", selfAddress);
             log.debug("sending first self update");
-            trigger(new CroupierUpdate(new PeerViewA(flag)), croupier);
+            trigger(new CroupierUpdate(new PeerViewA(flag)), viewUpdate);
         }
     };
     Handler<Stop> handleStop = new Handler<Stop>() {
@@ -82,7 +83,7 @@ public class ExampleComponentA extends ComponentDefinition {
                     new Object[]{selfAddress, sample.publicSample, selfAddress, sample.privateSample});
             if (rand.nextDouble() > 0.7) {
                 flag = !flag;
-                trigger(new CroupierUpdate(new PeerViewA(flag)), croupier);
+                trigger(new CroupierUpdate(new PeerViewA(flag)), viewUpdate);
             }
         }
     };

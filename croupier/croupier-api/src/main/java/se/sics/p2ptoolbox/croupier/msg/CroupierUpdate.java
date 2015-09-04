@@ -19,12 +19,12 @@
 
 package se.sics.p2ptoolbox.croupier.msg;
 
-import se.sics.kompics.KompicsEvent;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdate;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierUpdate<C extends Object> implements KompicsEvent {
+public class CroupierUpdate<C extends Object> implements SelfViewUpdate {
     public final C selfView;
     
     public CroupierUpdate(C selfView) {

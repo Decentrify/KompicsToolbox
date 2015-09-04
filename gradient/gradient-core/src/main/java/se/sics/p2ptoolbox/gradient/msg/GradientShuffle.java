@@ -13,7 +13,7 @@ import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
  */
 public class GradientShuffle {
 
-    public static abstract class Basic implements UUIDIdentifiable {
+    public static abstract class Basic implements UUIDIdentifiable, GradientMsg {
 
         protected final UUID id;
         public final GradientContainer selfGC;

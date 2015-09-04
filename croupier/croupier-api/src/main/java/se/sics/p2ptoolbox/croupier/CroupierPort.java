@@ -28,7 +28,6 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
  */
 public class CroupierPort extends PortType {
     {
-        request(CroupierUpdate.class);
         indication(CroupierSample.class);
     }
 }

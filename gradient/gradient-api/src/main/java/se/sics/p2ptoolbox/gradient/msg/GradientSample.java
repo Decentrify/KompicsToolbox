@@ -19,6 +19,7 @@
 package se.sics.p2ptoolbox.gradient.msg;
 
 import java.util.Collection;
+import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.Container;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -27,7 +28,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  *
  * Created by babbarshaer on 2015-02-26.
  */
-public class GradientSample<C extends Object> extends GradientMsg.OneWay {
+public class GradientSample<C extends Object> implements KompicsEvent {
     public final C selfView;
     public final Collection<Container<DecoratedAddress, C>> gradientSample;
     

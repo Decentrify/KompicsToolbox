@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
@@ -31,6 +32,7 @@ import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -40,6 +42,7 @@ public class IdSortComp extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(IdSortComp.class);
 
     private Positive gradient = requires(GradientPort.class);
+    private Negative viewUpdate = provides(SelfViewUpdatePort.class);
 
     private final Address selfAddress;
     private final String logPrefix;
@@ -58,7 +61,7 @@ public class IdSortComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             log.info("{} starting...", logPrefix);
-            trigger(new GradientUpdate(new IdView(((IntegerIdentifiable)selfAddress).getId())), gradient);
+            trigger(new GradientUpdate(new IdView(((IntegerIdentifiable)selfAddress).getId())), viewUpdate);
         }
     };
 

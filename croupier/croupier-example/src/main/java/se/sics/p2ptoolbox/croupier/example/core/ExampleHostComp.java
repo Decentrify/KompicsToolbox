@@ -39,6 +39,7 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -83,6 +84,7 @@ public class ExampleHostComp extends ComponentDefinition {
     private void createNConnectCompA() {
         compA = create(ExampleComponentA.class, new ExampleComponentA.ExampleInitA(systemConfig.self, systemConfig.seed));
         connect(croupier.getPositive(CroupierPort.class), compA.getNegative(CroupierPort.class));
+        connect(croupier.getNegative(SelfViewUpdatePort.class), compA.getPositive(SelfViewUpdatePort.class));
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {

@@ -44,7 +44,6 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.nat.network.NatedTrait;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
@@ -53,6 +52,7 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
 import se.sics.p2ptoolbox.croupier.util.CroupierView;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.network.ContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
@@ -61,6 +61,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
 import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -73,7 +74,8 @@ public class CroupierComp extends ComponentDefinition {
     Negative<CroupierPort> croupierPort = negative(CroupierPort.class);
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
-    Positive<SelfAddressUpdatePort> selfUpdate = requires(SelfAddressUpdatePort.class);
+    Positive<SelfAddressUpdatePort> selfAddressUpdate = requires(SelfAddressUpdatePort.class);
+    Positive<SelfViewUpdatePort> selfViewUpdate = requires(SelfViewUpdatePort.class);
 
     private final SystemConfig systemConfig;
     private final CroupierConfig croupierConfig;
@@ -111,8 +113,8 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleJoin, croupierControlPort);
-        subscribe(handleViewUpdate, croupierPort);
-        subscribe(handleSelfUpdate, selfUpdate);
+        subscribe(handleSelfViewUpdate, selfViewUpdate);
+        subscribe(handleSelfAddressUpdate, selfAddressUpdate);
         subscribe(handleShuffleRequest, network);
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
@@ -150,7 +152,7 @@ public class CroupierComp extends ComponentDefinition {
         }
     };
 
-    Handler handleSelfUpdate = new Handler<SelfAddressUpdate>() {
+    Handler handleSelfAddressUpdate = new Handler<SelfAddressUpdate>() {
         @Override
         public void handle(SelfAddressUpdate update) {
             log.info("{} updating selfAddress:{}", new Object[]{logPrefix, update.self});
@@ -158,7 +160,7 @@ public class CroupierComp extends ComponentDefinition {
         }
     };
 
-    Handler handleViewUpdate = new Handler<CroupierUpdate>() {
+    Handler handleSelfViewUpdate = new Handler<CroupierUpdate>() {
         @Override
         public void handle(CroupierUpdate update) {
             log.info("{} updating selfView:{}", new Object[]{logPrefix, update.selfView});

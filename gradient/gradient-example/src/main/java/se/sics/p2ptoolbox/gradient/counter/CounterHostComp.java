@@ -44,6 +44,7 @@ import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -112,6 +113,7 @@ public class CounterHostComp extends ComponentDefinition {
         connect(gradient.getNegative(Network.class), network, new IntegerOverlayFilter(gradientInit.overlayId));
         connect(gradient.getNegative(Timer.class), timer);
         connect(gradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
+        connect(gradient.getPositive(SelfViewUpdatePort.class), croupier.getNegative(SelfViewUpdatePort.class));
         return gradient;
     }
 
@@ -119,6 +121,7 @@ public class CounterHostComp extends ComponentDefinition {
         Component example = create(CounterComp.class, init);
         connect(example.getNegative(Timer.class), timer);
         connect(example.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
+        connect(example.getNegative(SelfViewUpdatePort.class), gradient.getPositive(SelfViewUpdatePort.class));
         return example;
     }
 
