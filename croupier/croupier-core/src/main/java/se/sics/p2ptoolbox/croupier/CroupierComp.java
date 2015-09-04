@@ -102,6 +102,7 @@ public class CroupierComp extends ComponentDefinition {
         this.publicView = new CroupierView(systemConfig.self, croupierConfig.viewSize, rand);
         this.privateView = new CroupierView(systemConfig.self, croupierConfig.viewSize, rand);
 
+        log.debug("{} subscribing", logPrefix);
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleJoin, croupierControlPort);
@@ -110,6 +111,7 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
+        log.debug("{} subscribed", logPrefix);
     }
 
     Handler<Start> handleStart = new Handler<Start>() {
@@ -181,7 +183,7 @@ public class CroupierComp extends ComponentDefinition {
             }
         }
     }
-    
+
     Handler<CroupierUpdate> handleUpdate = new Handler<CroupierUpdate>() {
         @Override
         public void handle(CroupierUpdate update) {
@@ -233,7 +235,7 @@ public class CroupierComp extends ComponentDefinition {
                 throw new RuntimeException("Error selecting peer");
             }
 
-            if (peer.hasTrait(NatedTrait.class)) {
+            if (NatedTrait.isOpen(peer)) {
                 log.debug("{} did not pick a public node for shuffling - public view size:{}", new Object[]{logPrefix, publicView.getAllCopy().size()});
             }
 
@@ -244,10 +246,10 @@ public class CroupierComp extends ComponentDefinition {
             Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(croupierConfig.shuffleSize, peer);
             Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(croupierConfig.shuffleSize, peer);
 
-            if (systemConfig.self.hasTrait(NatedTrait.class)) {
-                privateDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
-            } else {
+            if (NatedTrait.isOpen(systemConfig.self)) {
                 publicDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
+            } else {
+                privateDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
             }
 
             DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(systemConfig.self, peer, Transport.UDP), null, overlayId);
@@ -289,10 +291,10 @@ public class CroupierComp extends ComponentDefinition {
 
                     Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(croupierConfig.shuffleSize, reqSrc);
                     Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(croupierConfig.shuffleSize, reqSrc);
-                    if (systemConfig.self.hasTrait(NatedTrait.class)) {
-                        privateDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
-                    } else {
+                    if (NatedTrait.isOpen(systemConfig.self)) {
                         publicDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
+                    } else {
+                        privateDescCopy.add(new CroupierContainer(systemConfig.self, selfView));
                     }
 
                     DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(systemConfig.self, reqSrc, Transport.UDP), null, overlayId);
@@ -344,7 +346,7 @@ public class CroupierComp extends ComponentDefinition {
             log.info("{} node:{} timed out", logPrefix, timeout.dest);
 
             shuffleTimeoutId = null;
-            if (!timeout.dest.hasTrait(NatedTrait.class)) {
+            if (!NatedTrait.isOpen(timeout.dest)) {
                 publicView.timedOut(timeout.dest);
             } else {
                 privateView.timedOut(timeout.dest);

@@ -16,30 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+
 package se.sics.p2ptoolbox.croupier.msg;
 
-import java.util.Set;
-import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierSample<C extends Object> implements KompicsEvent {
-
-    public final int overlayId;
-    public final Set<Container<DecoratedAddress, C>> publicSample;
-    public final Set<Container<DecoratedAddress, C>> privateSample;
-    
-    public CroupierSample(int overlayId, Set<Container<DecoratedAddress, C>> publicSample, Set<Container<DecoratedAddress, C>> privateSample) {
-        this.overlayId = overlayId;
-        this.publicSample = publicSample;
-        this.privateSample = privateSample;
-    }
-
-    @Override
-    public String toString() {
-        return "SAMPLE";
-    }
+public interface CroupierMsg {
 }

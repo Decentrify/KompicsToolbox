@@ -44,6 +44,7 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.SetupCmd;
 import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -73,6 +74,7 @@ public class SimMngrComponent extends ComponentDefinition {
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
+        subscribe(handleSetup, experimentPort);
         subscribe(handleStartAggregator, experimentPort);
         subscribe(handleStartNode, experimentPort);
         subscribe(handleStopNode, experimentPort);
@@ -119,6 +121,14 @@ public class SimMngrComponent extends ComponentDefinition {
     };
 
     //**************************************************************************
+    private Handler handleSetup = new Handler<SetupCmd>() {
+        @Override
+        public void handle(SetupCmd cmd) {
+            log.info("received setup cm:{}", cmd);
+            cmd.runSetup();
+        }
+    };
+    
     private Handler<StartAggregatorCmd> handleStartAggregator = new Handler<StartAggregatorCmd>() {
 
         @Override

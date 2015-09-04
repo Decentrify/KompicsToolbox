@@ -28,7 +28,7 @@ import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
  */
 public class CroupierShuffle {
 
-    public static abstract class Basic implements UUIDIdentifiable {
+    public static abstract class Basic implements UUIDIdentifiable, CroupierMsg {
 
         protected final UUID id;
         public final Set<CroupierContainer> publicNodes;

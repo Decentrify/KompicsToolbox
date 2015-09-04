@@ -64,7 +64,7 @@ public class LeaderOperationsHelper {
         addressCollection.put(id, selfAddress);
         copy.add(selfAddress);
         //TODO Alex - caracal bootstrap missing
-        systemConfig = new SystemConfigBuilder(seed, selfAddress.getIp(), selfAddress.getPort(), selfAddress.getId(), null, Optional.of(aggregatorAddress)).build();
+        systemConfig = new SystemConfigBuilder(seed, selfAddress.getIp(), selfAddress.getPort(), selfAddress.getId()).setAggregatorAddress(aggregatorAddress).build();
         HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator());
 
         return init;

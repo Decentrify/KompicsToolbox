@@ -14,6 +14,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Random;
+import se.sics.nat.network.NatedTrait;
 
 /**
  * A builder pattern for loading the System Configuration.
@@ -22,66 +23,53 @@ import java.util.Random;
  */
 public class SystemConfigBuilder {
 
-
     private Config config;
     private long seed;
     private InetAddress selfIp;
     private Integer selfPort;
     private Integer selfId;
-    private Address bootstrapAddress;
+    private Optional<Address> bootstrapAddress;
     private Optional<DecoratedAddress> aggregatorAddress;
+    private Optional<NatedTrait> selfNat;
 
-    private static Logger LOG  = LoggerFactory.getLogger(SystemConfig.class);
+    private static Logger LOG = LoggerFactory.getLogger(SystemConfig.class);
 
     private Random random;
     private static int BASE = 10000;
-    private static int DIFF  = (int)Math.pow((double)2, (double)16) - BASE;
+    private static int DIFF = (int) Math.pow((double) 2, (double) 16) - BASE;
 
     public SystemConfigBuilder(Config config) {
-
         this.config = config;
-
-
         try {
-
 //          LOAD THE SEED FROM CONFIG.
             try {
                 seed = config.getLong("system.seed");
-            }
-            catch (ConfigException.Missing ex) {
-
+            } catch (ConfigException.Missing ex) {
                 Random r = new SecureRandom();
                 seed = r.nextLong();
             }
-
             random = new Random(seed);
 
-
 //      LOAD THE SELF ADDRESS ATTRIBUTES.
-
             try {
                 selfIp = InetAddress.getByName(config.getString("system.self.ip"));
-            }
-            catch (ConfigException.Missing ex) {
+            } catch (ConfigException.Missing ex) {
 
                 LOG.trace("Self Ip address is null.");
                 selfIp = null;
             }
             LOG.trace("Self ip address is {}", selfIp);
-
             try {
 //              Port needs to be between  (10000 & 65535)
                 selfPort = config.getInt("system.self.port");
-            }
-            catch(ConfigException.Missing ex){
+            } catch (ConfigException.Missing ex) {
                 setPort();
             }
             LOG.trace("Self address port is {}", selfPort);
 
             try {
                 selfId = config.getInt("system.self.id");
-            }
-            catch (ConfigException.Missing ex) {
+            } catch (ConfigException.Missing ex) {
                 selfId = random.nextInt();
             }
             LOG.trace("Self Identifier is : {}", selfId);
@@ -91,47 +79,61 @@ public class SystemConfigBuilder {
 
                 InetAddress ip = InetAddress.getByName(config.getString("caracal.address.ip"));
                 int port = config.getInt("caracal.address.port");
-                this.bootstrapAddress = new Address(ip, port, null);
-            }
-
-            catch(ConfigException.Missing ex){
-                throw new RuntimeException("Caracal Location Missing", ex);
+                this.bootstrapAddress = Optional.of(new Address(ip, port, null));
+            } catch (ConfigException.Missing ex) {
+//                throw new RuntimeException("Caracal Location Missing", ex);
+                this.bootstrapAddress = Optional.absent();
             }
             LOG.info("Caracal Client address is: {}", this.bootstrapAddress);
 
-
 //          LOAD THE OPTIONAL AGGREGATOR ATTRIBUTES.
-
             try {
-
                 InetAddress aggregatorIp = InetAddress.getByName(config.getString("system.aggregator.ip"));
                 int aggregatorPort = config.getInt("system.aggregator.port");
                 int aggregatorId = config.getInt("system.aggregator.id");
                 this.aggregatorAddress = Optional.of(new DecoratedAddress(new BasicAddress(aggregatorIp, aggregatorPort, aggregatorId)));
-            }
-
-            catch(Exception ex) {
-                this.aggregatorAddress  = Optional.absent();
+            } catch (Exception ex) {
+                this.aggregatorAddress = Optional.absent();
             }
             LOG.info("Aggregator address is: {}", this.aggregatorAddress);
-        }
-
-        catch (UnknownHostException e) {
+        } catch (UnknownHostException e) {
             e.printStackTrace();
         }
     }
 
-
-    public SystemConfigBuilder(long seed, InetAddress selfIp, int selfPort, int selfId, Address bootstrapAddress, Optional<DecoratedAddress> aggregatorAddress){
-
+    public SystemConfigBuilder(long seed, InetAddress selfIp, int selfPort, int selfId) {
         this.seed = seed;
         this.selfIp = selfIp;
         this.selfPort = selfPort;
         this.selfId = selfId;
-        this.bootstrapAddress = bootstrapAddress;
-        this.aggregatorAddress = aggregatorAddress;
+        this.bootstrapAddress = Optional.absent();
+        this.aggregatorAddress = Optional.absent();
+        this.selfNat = Optional.absent();
+    }
+    
+    public long getSeed() {
+        return seed;
     }
 
+    public InetAddress getSelfIp() {
+        return selfIp;
+    }
+
+    public Integer getSelfPort() {
+        return selfPort;
+    }
+
+    public Integer getSelfId() {
+        return selfId;
+    }
+
+    public Optional<Address> getBootstrapAddress() {
+        return bootstrapAddress;
+    }
+
+    public Optional<DecoratedAddress> getAggregatorAddress() {
+        return aggregatorAddress;
+    }
 
     public SystemConfigBuilder setSelfIp(InetAddress selfIp) {
 
@@ -152,63 +154,40 @@ public class SystemConfigBuilder {
     }
 
     public SystemConfigBuilder setBootstrapAddress(Address bootstrapAddress) {
-
-        this.bootstrapAddress = bootstrapAddress;
+        this.bootstrapAddress = Optional.of(bootstrapAddress);
         return this;
     }
 
-    public SystemConfigBuilder setAggregatorAddress(Optional<DecoratedAddress> aggregatorAddress) {
-
-        this.aggregatorAddress = aggregatorAddress;
+    public SystemConfigBuilder setAggregatorAddress(DecoratedAddress aggregatorAddress) {
+        this.aggregatorAddress = Optional.of(aggregatorAddress);
         return this;
     }
-
-
-    public void setPort(){
-        this.selfPort = (BASE + random.nextInt(DIFF)) ;
+    
+    public SystemConfigBuilder setSelfNat(NatedTrait selfNat) {
+        this.selfNat = Optional.of(selfNat);
+        return this;
+    }
+    
+    public void setPort() {
+        this.selfPort = (BASE + random.nextInt(DIFF));
     }
 
     /**
-     * Look at the values that were added to the builder
-     * by the user and initiate the creation of the System Config.
+     * Look at the values that were added to the builder by the user and
+     * initiate the creation of the System Config.
      *
      * @return SystemConfig.
      */
     public SystemConfig build() {
 
-        if( (this.selfIp == null) || (this.selfPort == null) || (this.selfId == null)){
+        if ((this.selfIp == null) || (this.selfPort == null) || (this.selfId == null)) {
             throw new RuntimeException("Self Address not configured, cannot proceed with build");
         }
 
-        if(bootstrapAddress == null){
-            throw new RuntimeException("Caracal Client not configured, cannot proceed with build.");
-        }
         DecoratedAddress selfAddress = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
-        return new SystemConfig(seed, bootstrapAddress, selfAddress, aggregatorAddress, config);
-    }
-
-
-    public long getSeed() {
-        return seed;
-    }
-
-    public InetAddress getSelfIp() {
-        return selfIp;
-    }
-
-    public Integer getSelfPort() {
-        return selfPort;
-    }
-
-    public Integer getSelfId() {
-        return selfId;
-    }
-
-    public Address getBootstrapAddress() {
-        return bootstrapAddress;
-    }
-
-    public Optional<DecoratedAddress> getAggregatorAddress() {
-        return aggregatorAddress;
+        if(selfNat.isPresent()) {
+            selfAddress.addTrait(selfNat.get());
+        }
+        return new SystemConfig(config, seed, selfAddress, bootstrapAddress, aggregatorAddress);
     }
 }

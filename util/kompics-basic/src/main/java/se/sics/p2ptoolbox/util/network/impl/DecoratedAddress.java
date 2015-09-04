@@ -46,76 +46,83 @@ public final class DecoratedAddress implements Address, IntegerIdentifiable {
         acceptedTraits = setTraits;
         return aux;
     }
-
+    
     public static AcceptedTraits getAcceptedTraits() {
         return acceptedTraits;
     }
-
+    
     private final BasicAddress base;
     private final Trait[] traits;
-
+    
     public DecoratedAddress(BasicAddress base) {
         this(base, new Trait[acceptedTraits.size()]);
     }
-
+    
     DecoratedAddress(BasicAddress base, Trait[] traits) {
         this.base = base;
         this.traits = traits;
     }
-
+    
     public void addTrait(Trait trait) {
         traits[acceptedTraits.getIndex(trait.getClass())] = trait;
     }
-
+    
     public <T extends Trait> boolean hasTrait(Class<T> traitClass) {
         if (acceptedTraits.acceptedTrait(traitClass)) {
             return traits[acceptedTraits.getIndex(traitClass)] != null;
         }
         return false;
     }
-
+    
     public <T extends Trait> T getTrait(Class<T> traitClass) {
         return (T) traits[acceptedTraits.getIndex(traitClass)];
     }
-
+    
     Trait[] getTraits() {
         return traits;
     }
-
+    
     @Override
     public InetAddress getIp() {
         return base.getIp();
     }
-
+    
     @Override
     public int getPort() {
         return base.getPort();
     }
-
+    
     @Override
     public InetSocketAddress asSocket() {
         return base.asSocket();
     }
-
+    
     @Override
     public boolean sameHostAs(Address other) {
         return base.sameHostAs(other);
     }
-
+    
     @Override
     public Integer getId() {
         return base.getId();
     }
-
+    
     public BasicAddress getBase() {
         return base;
     }
-
+    
     @Override
     public String toString() {
-        return base.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toString());
+        for (Trait trait : traits) {
+            if (trait != null) {
+                sb.append(trait.toString());
+            }
+        }
+        return sb.toString();
     }
-
+    
     @Override
     public int hashCode() {
         int hash = 5;
@@ -123,7 +130,7 @@ public final class DecoratedAddress implements Address, IntegerIdentifiable {
         hash = 17 * hash + Arrays.deepHashCode(this.traits);
         return hash;
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -140,5 +147,35 @@ public final class DecoratedAddress implements Address, IntegerIdentifiable {
             return false;
         }
         return true;
+    }
+    
+    public DecoratedAddress copy() {
+        DecoratedAddress copy = new DecoratedAddress(base);
+        for (Trait trait : traits) {
+            if (trait != null) {
+                copy.addTrait(trait);
+            }
+        }
+        return copy;
+    }
+    
+    public DecoratedAddress changePort(int newPort) {
+        DecoratedAddress copy = new DecoratedAddress(new BasicAddress(base.getIp(), newPort, base.getId()));
+        for (Trait trait : traits) {
+            if (trait != null) {
+                copy.addTrait(trait);
+            }
+        }
+        return copy;
+    }
+    
+    public DecoratedAddress changeBase(BasicAddress base) {
+        DecoratedAddress copy = new DecoratedAddress(base);
+        for (Trait trait : traits) {
+            if (trait != null) {
+                copy.addTrait(trait);
+            }
+        }
+        return copy;
     }
 }
