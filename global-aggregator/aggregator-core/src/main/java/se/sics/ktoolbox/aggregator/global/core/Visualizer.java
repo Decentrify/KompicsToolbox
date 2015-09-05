@@ -7,15 +7,13 @@ import se.sics.ktoolbox.aggregator.global.api.event.AggregatedInfo;
 import se.sics.ktoolbox.aggregator.global.api.event.WindowProcessing;
 import se.sics.ktoolbox.aggregator.global.api.ports.GlobalAggregatorPort;
 import se.sics.ktoolbox.aggregator.global.api.ports.VisualizerPort;
+import se.sics.ktoolbox.aggregator.global.api.system.DesignInfoContainer;
 import se.sics.ktoolbox.aggregator.global.api.system.DesignProcessor;
 import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import javax.naming.OperationNotSupportedException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Visualizer component used for providing the visualizations
@@ -98,10 +96,42 @@ public class Visualizer extends ComponentDefinition {
 
             if(processor == null) {
                 logger.error("Unable to locate the designer for the requested one.");
+                return;
             }
 
+            logger.debug("Located the design processor, going ahead with processing.");
+            Collection<Map<BasicAddress, List<PacketInfo>>> windows = getWindows(event.getStartLoc(), event.getEndLoc());
+            DesignInfoContainer container = processor.process(windows);
 
+//          We now should have the processed information.
+            WindowProcessing.Response response = new WindowProcessing.Response(event.getRequestId(), container);
+            trigger(response, visualizerPort);
         }
     };
+
+
+    /**
+     * Based on the parameters for the method, arrange the windows in a list.
+     *
+     * @param start start point.
+     * @param end end point
+     * @return Window Collection.
+     */
+    private Collection<Map<BasicAddress, List<PacketInfo>>> getWindows(int start, int end){
+
+        List<Map<BasicAddress, List<PacketInfo>>> result = new ArrayList<Map<BasicAddress, List<PacketInfo>>>();
+
+        if(start > snapshotList.size()){
+            return result;
+        }
+
+        if(end > snapshotList.size()){
+            end = snapshotList.size();
+        }
+
+        result.addAll(snapshotList.subList(start-1, end));
+        return result;
+    }
+
 
 }

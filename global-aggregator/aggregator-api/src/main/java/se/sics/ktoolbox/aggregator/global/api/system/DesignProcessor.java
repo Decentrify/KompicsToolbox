@@ -3,6 +3,7 @@ package se.sics.ktoolbox.aggregator.global.api.system;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,7 +24,7 @@ public interface DesignProcessor < PI_I extends PacketInfo, DI_O extends DesignI
      *
      * @return collection of processed windows.
      */
-    public DesignInfoContainer<DI_O> process(Collection<Map<BasicAddress, Collection<PacketInfo>>> windows);
+    public DesignInfoContainer<DI_O> process(Collection<Map<BasicAddress, List<PacketInfo>>> windows);
 
 
     /**
