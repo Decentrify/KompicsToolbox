@@ -13,7 +13,7 @@ public abstract class DesignInfoContainer <DI_I extends DesignInfo> {
 
     Collection<DI_I> processedWindows;
 
-    DesignInfoContainer(Collection<DI_I> processedWindows){
+    public DesignInfoContainer(Collection<DI_I> processedWindows){
         this.processedWindows = processedWindows;
     }
 
