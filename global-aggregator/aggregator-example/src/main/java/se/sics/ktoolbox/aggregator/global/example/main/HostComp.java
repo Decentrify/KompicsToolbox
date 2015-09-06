@@ -13,6 +13,7 @@ import se.sics.ktoolbox.aggregator.global.api.system.DesignProcessor;
 import se.sics.ktoolbox.aggregator.global.core.Visualizer;
 import se.sics.ktoolbox.aggregator.global.core.VisualizerInit;
 import se.sics.ktoolbox.aggregator.global.example.PseudoGlobalAggregator;
+import se.sics.ktoolbox.aggregator.global.example.system.AnotherDesignInfoContainer;
 import se.sics.ktoolbox.aggregator.global.example.system.PseudoDesignInfo;
 import se.sics.ktoolbox.aggregator.global.example.system.PseudoDesignInfoContainer;
 import se.sics.ktoolbox.aggregator.global.example.system.PseudoDesignProcessor;
@@ -81,6 +82,7 @@ public class HostComp extends ComponentDefinition{
         trigger(Start.event, visualizer.getControl());
 
         subscribe(designHandler, visualizer.getPositive(VisualizerPort.class));
+        subscribe(anotherDesignHandler, visualizer.getPositive(VisualizerPort.class));
     }
     
     
@@ -94,7 +96,14 @@ public class HostComp extends ComponentDefinition{
             logger.debug("{}", container);
         }
     };
-    
+
+
+    ClassMatchedHandler<AnotherDesignInfoContainer, WindowProcessing.Response<AnotherDesignInfoContainer>> anotherDesignHandler = new ClassMatchedHandler<AnotherDesignInfoContainer, WindowProcessing.Response<AnotherDesignInfoContainer>>() {
+        @Override
+        public void handle(AnotherDesignInfoContainer content, WindowProcessing.Response<AnotherDesignInfoContainer> context) {
+            logger.debug("Handler for the another design info container");
+        }
+    };
     
     
     Handler<OneTimeTimeout> timeoutHandler = new Handler<OneTimeTimeout>() {

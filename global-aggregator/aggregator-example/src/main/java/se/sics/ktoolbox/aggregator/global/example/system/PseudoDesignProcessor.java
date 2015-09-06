@@ -47,7 +47,7 @@ public class PseudoDesignProcessor implements DesignProcessor<PseudoPacketInfo, 
             
             if(count > 0){
                 float average = sum / count;
-                PseudoDesignInfo psdi = new PseudoDesignInfo(average);
+                PseudoDesignInfo psdi = new PseudoDesignInfo(average, count);
                 collectionResult.add(psdi);
             }
         }
