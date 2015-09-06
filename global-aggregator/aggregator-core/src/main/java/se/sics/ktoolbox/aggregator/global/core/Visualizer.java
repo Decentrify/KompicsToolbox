@@ -78,7 +78,8 @@ public class Visualizer extends ComponentDefinition {
             while(snapshotList.size() >= maxSnapshots){
                 snapshotList.removeLast();
             }
-
+            
+            logger.debug("{}", event.getNodePacketMap());
             snapshotList.addFirst(event.getNodePacketMap());
         }
     };
@@ -92,17 +93,20 @@ public class Visualizer extends ComponentDefinition {
         public void handle(WindowProcessing.Request event) {
 
             logger.debug("Received a request to handle the window processing.");
+            logger.debug("Processing Request {}:", event);
+            
             DesignProcessor processor = designerNameMap.get(event.getDesigner());
 
             if(processor == null) {
                 logger.error("Unable to locate the designer for the requested one.");
-                return;
+                throw new RuntimeException("Unable to locate the design processor map.");
             }
 
             logger.debug("Located the design processor, going ahead with processing.");
             Collection<Map<BasicAddress, List<PacketInfo>>> windows = getWindows(event.getStartLoc(), event.getEndLoc());
             DesignInfoContainer container = processor.process(windows);
-
+            
+            logger.debug("Processed Container {}: ", container);
 //          We now should have the processed information.
             WindowProcessing.Response response = new WindowProcessing.Response(event.getRequestId(), container);
             trigger(response, visualizerPort);
@@ -129,7 +133,7 @@ public class Visualizer extends ComponentDefinition {
             end = snapshotList.size();
         }
 
-        result.addAll(snapshotList.subList(start-1, end));
+        result.addAll(snapshotList.subList(start, end));
         return result;
     }
 

@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.global.example.helper;
+package se.sics.ktoolbox.aggregator.global.example.system;
 
 import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 
@@ -26,4 +26,11 @@ public class PseudoPacketInfo implements PacketInfo{
         return this.price;
     }
     
+    @Override
+    public String toString() {
+        return "PseudoPacketInfo{" +
+                "response=" + response +
+                ", price=" + price +
+                '}';
+    }
 }

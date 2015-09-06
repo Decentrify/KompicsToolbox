@@ -59,19 +59,33 @@ public class WindowProcessing {
     }
 
 
-    public static class Response extends ProcessingResponseMatcher {
+    public static class Response<DI_O> implements ResponseMatcher<DI_O>, KompicsEvent{
 
-        private UUID requestId;
-
-        public Response(UUID requestId, DesignInfoContainer container) {
-            super(container);
+        DI_O container;
+        UUID requestId;
+        
+        public Response(UUID requestId, DI_O container){
+            this.container = container;
             this.requestId = requestId;
         }
 
+        public UUID getRequestId() {
+            return requestId;
+        }
 
-        public Response(UUID requestId){
-            super(null);
-            this.requestId = requestId;
+        @Override
+        public DI_O getContent() {
+            return this.container;
+        }
+
+        @Override
+        public Class<DI_O> extractPattern() {
+            return (Class<DI_O>) this.container.getClass();
+        }
+
+        @Override
+        public DI_O extractValue() {
+            return this.container;
         }
     }
 

@@ -20,4 +20,11 @@ public abstract class DesignInfoContainer <DI_I extends DesignInfo> {
     public Collection<DI_I> getProcessedWindows() {
         return processedWindows;
     }
+
+    @Override
+    public String toString() {
+        return "DesignInfoContainer{" +
+                "processedWindows=" + processedWindows +
+                '}';
+    }
 }

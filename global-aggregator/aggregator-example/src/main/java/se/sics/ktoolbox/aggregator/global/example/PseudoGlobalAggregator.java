@@ -9,7 +9,7 @@ import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.aggregator.global.api.event.AggregatedInfo;
 import se.sics.ktoolbox.aggregator.global.api.ports.GlobalAggregatorPort;
 import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
-import se.sics.ktoolbox.aggregator.global.example.helper.PseudoPacketInfo;
+import se.sics.ktoolbox.aggregator.global.example.system.PseudoPacketInfo;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.net.InetAddress;
@@ -68,7 +68,6 @@ public class PseudoGlobalAggregator extends ComponentDefinition{
         public void handle(LocalTimeout localTimeout) {
             
             logger.debug("Time to push test data to the visualizer.");
-            
             Map<BasicAddress, List<PacketInfo>> packetMap = createTestData(NODES);
             trigger(new AggregatedInfo(packetMap), aggregatorPort);
         }

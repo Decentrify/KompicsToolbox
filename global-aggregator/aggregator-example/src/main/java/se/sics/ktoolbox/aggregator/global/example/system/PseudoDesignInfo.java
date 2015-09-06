@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.global.example.helper;
+package se.sics.ktoolbox.aggregator.global.example.system;
 
 import se.sics.ktoolbox.aggregator.global.api.system.DesignInfo;
 
@@ -18,5 +18,11 @@ public class PseudoDesignInfo implements DesignInfo {
     public float getAverageSearchResponse(){
         return this.averageSearchResponse;
     }
-    
+
+    @Override
+    public String toString() {
+        return "PseudoDesignInfo{" +
+                "averageSearchResponse=" + averageSearchResponse +
+                '}';
+    }
 }

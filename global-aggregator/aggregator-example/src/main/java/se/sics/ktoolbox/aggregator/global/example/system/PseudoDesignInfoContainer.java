@@ -1,4 +1,4 @@
-package se.sics.ktoolbox.aggregator.global.example.helper;
+package se.sics.ktoolbox.aggregator.global.example.system;
 
 import se.sics.ktoolbox.aggregator.global.api.system.DesignInfoContainer;
 
@@ -12,5 +12,10 @@ public class PseudoDesignInfoContainer extends DesignInfoContainer<PseudoDesignI
     
     PseudoDesignInfoContainer(Collection<PseudoDesignInfo> processedWindows) {
         super(processedWindows);
+    }
+    
+    @Override
+    public String toString(){
+        return super.toString();
     }
 }
