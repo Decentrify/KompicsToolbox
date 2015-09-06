@@ -2,6 +2,7 @@ package se.sics.ktoolbox.aggregator.local.core;
 
 import se.sics.kompics.Init;
 import se.sics.ktoolbox.aggregator.global.api.system.ComponentInfo;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 import se.sics.ktoolbox.aggregator.local.api.ComponentInfoProcessor;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -57,6 +58,6 @@ public class LocalAggregatorInit  extends Init<LocalAggregator>{
      * @param <CI_I> Input Component Info
      * @param <CI_O> Output Component Info
      */
-    private <CI_I extends ComponentInfo, CI_O extends ComponentInfo> void  cheatCheck(Class<CI_I> ciClass, ComponentInfoProcessor<CI_I, CI_O> ciProcessor) {
+    private <CI_I extends ComponentInfo, CI_O extends PacketInfo> void  cheatCheck(Class<CI_I> ciClass, ComponentInfoProcessor<CI_I, CI_O> ciProcessor) {
     }
 }
