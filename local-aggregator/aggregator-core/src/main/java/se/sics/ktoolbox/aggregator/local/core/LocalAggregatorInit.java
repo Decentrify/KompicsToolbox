@@ -7,6 +7,7 @@ import se.sics.ktoolbox.aggregator.local.api.ComponentInfoProcessor;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,11 +17,11 @@ import java.util.Map;
 public class LocalAggregatorInit  extends Init<LocalAggregator>{
 
     public final long aggregationTimeout;
-    public final Map<Class, ComponentInfoProcessor> componentInfoProcessorMap;
+    public final Map<Class, List<ComponentInfoProcessor>> componentInfoProcessorMap;
     public final DecoratedAddress globalAggregatorAddress;
     public final DecoratedAddress selfAddress;
 
-    public LocalAggregatorInit(long aggregationTimeout, Map<Class, ComponentInfoProcessor> componentInfoProcessorMap, DecoratedAddress globalAggregatorAddress, DecoratedAddress selfAddress){
+    public LocalAggregatorInit(long aggregationTimeout, Map<Class, List<ComponentInfoProcessor>> componentInfoProcessorMap, DecoratedAddress globalAggregatorAddress, DecoratedAddress selfAddress){
         assert validateProcessorMap(componentInfoProcessorMap);
 
         this.aggregationTimeout = aggregationTimeout;
@@ -34,14 +35,16 @@ public class LocalAggregatorInit  extends Init<LocalAggregator>{
      * the processor being set correctly for the correct input class of the component.
      *
      * @param componentInfoProcessorMap map
-     * @return valida
+     * @return validated processor map.
      */
-    private boolean validateProcessorMap(Map<Class, ComponentInfoProcessor> componentInfoProcessorMap) {
+    private boolean validateProcessorMap(Map<Class, List<ComponentInfoProcessor>> componentInfoProcessorMap) {
         try {
-            Iterator<Map.Entry<Class, ComponentInfoProcessor>> it = componentInfoProcessorMap.entrySet().iterator();
-            while(it.hasNext()) {
-                Map.Entry<Class, ComponentInfoProcessor> element = it.next();
-                cheatCheck(element.getKey(), element.getValue());
+
+            for (Map.Entry<Class, List<ComponentInfoProcessor>> element : componentInfoProcessorMap.entrySet()) {
+                List<ComponentInfoProcessor> processorList = element.getValue();
+                for (ComponentInfoProcessor processor : processorList) {
+                    cheatCheck(element.getKey(), processor);
+                }
             }
             return true;
         } catch(ClassCastException ex) {

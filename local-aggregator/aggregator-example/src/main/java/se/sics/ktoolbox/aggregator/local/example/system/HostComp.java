@@ -14,7 +14,9 @@ import se.sics.ktoolbox.aggregator.local.example.util.AppProcessor;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,8 +75,10 @@ public class HostComp extends ComponentDefinition {
      */
     private void bootLocalAggregator() {
 
-        Map<Class, ComponentInfoProcessor>  processorMap = new HashMap<Class, ComponentInfoProcessor>();
-        processorMap.put(AppComponentInfo.class, new AppProcessor());
+        Map<Class, List<ComponentInfoProcessor>> processorMap = new HashMap<Class, List<ComponentInfoProcessor>>();
+        List<ComponentInfoProcessor> processorList = new ArrayList<ComponentInfoProcessor>();
+        processorList.add(new AppProcessor());
+        processorMap.put(AppComponentInfo.class, processorList);
 
         long aggregationTimeout = 5000;
 

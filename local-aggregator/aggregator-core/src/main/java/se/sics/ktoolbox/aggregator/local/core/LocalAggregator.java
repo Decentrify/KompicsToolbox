@@ -31,7 +31,7 @@ public class LocalAggregator<CI extends ComponentInfo> extends ComponentDefiniti
     private Logger logger = LoggerFactory.getLogger(LocalAggregator.class);
     private Map<Class, Map<Integer, ComponentInfo>> componentInfoMap;
     private long aggregationTimeout;
-    private Map<Class, ComponentInfoProcessor> componentInfoProcessorMap;
+    private Map<Class, List<ComponentInfoProcessor>> componentInfoProcessorMap;
 
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
@@ -143,16 +143,20 @@ public class LocalAggregator<CI extends ComponentInfo> extends ComponentDefiniti
         logger.debug("Initiated with the processing of the aggregated component information.");
         List<PacketInfo> packetInfoList = new ArrayList<PacketInfo>();
 
-        for (Map.Entry<Class, ComponentInfoProcessor> entry : componentInfoProcessorMap.entrySet()) {
+        for (Map.Entry<Class, List<ComponentInfoProcessor>> entry : componentInfoProcessorMap.entrySet()) {
 
             Map<Integer, ComponentInfo> infoOverlayMap = componentInfoMap.get(entry.getKey());
 
             if (infoOverlayMap != null) {
-                ComponentInfoProcessor processor = entry.getValue();
-                for (ComponentInfo info : infoOverlayMap.values()) {
-                    PacketInfo packet = processor.processComponentInfo(info);
-                    packetInfoList.add(packet);
+
+                List<ComponentInfoProcessor> processorList = entry.getValue();
+                for(ComponentInfoProcessor processor : processorList){
+                    for (ComponentInfo info : infoOverlayMap.values()) {
+                        PacketInfo packet = processor.processComponentInfo(info);
+                        packetInfoList.add(packet);
+                    }
                 }
+
             }
         }
 
