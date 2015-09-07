@@ -7,6 +7,7 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.aggregator.global.api.system.PacketContainer;
 import se.sics.ktoolbox.aggregator.global.api.system.PacketInfo;
 import se.sics.ktoolbox.aggregator.local.api.AggregationTimeout;
 import se.sics.ktoolbox.aggregator.global.api.system.ComponentInfo;
@@ -180,8 +181,9 @@ public class LocalAggregator<CI extends ComponentInfo> extends ComponentDefiniti
             return;
         }
 
+        PacketContainer container = new PacketContainer(UUID.randomUUID(), selfAddress, packetInfo);
         DecoratedHeader<DecoratedAddress> header = new DecoratedHeader<DecoratedAddress>(selfAddress, globalAggregatorAddress, Transport.UDP);
-        BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketInfo> contentMsg = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketInfo>(header, packetInfo);
+        BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketContainer> contentMsg = new BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, PacketContainer>(header, container);
 
         trigger(contentMsg, network);
     }

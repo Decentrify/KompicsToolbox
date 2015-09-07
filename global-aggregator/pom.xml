@@ -20,6 +20,7 @@
         <module>aggregator-api</module>
         <module>aggregator-core</module>
         <module>aggregator-example</module>
+        <module>aggregator-network</module>
     </modules>
 
     <properties>
