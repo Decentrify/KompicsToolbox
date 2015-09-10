@@ -21,6 +21,8 @@ package se.sics.p2ptoolbox.util.serializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeaderSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddressSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
+import se.sics.p2ptoolbox.util.nat.NatedTraitSerializer;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsgSerializer;
@@ -37,7 +39,7 @@ import se.sics.p2ptoolbox.util.network.impl.RouteSerializer;
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 6;
+    public static final int serializerIds = 7;
 
     public static enum BasicSerializers {
         BasicAddress(BasicAddress.class),
@@ -45,7 +47,8 @@ public class BasicSerializerSetup {
         Route(Route.class),
         BasicHeader(BasicHeader.class),
         DecoratedHeader(DecoratedHeader.class),
-        BasicContentMsg(BasicContentMsg.class);
+        BasicContentMsg(BasicContentMsg.class),
+        NatedTrait(NatedTrait.class);
 
         public final Class serializedClass;
 
@@ -91,6 +94,10 @@ public class BasicSerializerSetup {
         BasicContentMsgSerializer basicContentMsgSerializer = new BasicContentMsgSerializer(currentId++);
         Serializers.register(basicContentMsgSerializer, "basicContentMsgSerializer");
         Serializers.register(BasicContentMsg.class, "basicContentMsgSerializer");
+        
+        NatedTraitSerializer natedTraitSerializer = new NatedTraitSerializer(currentId++);
+        Serializers.register(natedTraitSerializer, "natedTraitSerializer");
+        Serializers.register(NatedTrait.class, "natedTraitSerializer");
 
         assert startingId + serializerIds == currentId;
         

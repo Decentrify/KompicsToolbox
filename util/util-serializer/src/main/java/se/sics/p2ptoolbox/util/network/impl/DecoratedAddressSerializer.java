@@ -62,7 +62,7 @@ public class DecoratedAddressSerializer implements Serializer {
             if (trait != null) {
                 byte traitId = at.getTraitInfo(trait.getClass()).id;
                 buf.writeByte(traitId);
-                Serializers.lookupSerializer(trait.getClass()).toBinary(o, buf);
+                Serializers.lookupSerializer(trait.getClass()).toBinary(trait, buf);
                 nrTraits++;
             }
         }

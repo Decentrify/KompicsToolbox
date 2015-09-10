@@ -18,7 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.counter;
 
-import java.util.Set;
+import java.util.List;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class CounterHostComp extends ComponentDefinition {
     private final CroupierConfig croupierConfig;
     private final GradientConfig gradientConfig;
     private final String logPrefix;
-    private final Set<DecoratedAddress> bootstrapNodes;
+    private final List<DecoratedAddress> bootstrapNodes;
     
     Component croupier;
     
@@ -141,9 +141,11 @@ public class CounterHostComp extends ComponentDefinition {
         public final GradientConfig gradientConfig;
         public final Pair<Integer, Integer> counterAction;
         public final Pair<Double, Integer> counterRate;
-        public final Set<DecoratedAddress> bootstrapNodes;
+        public final List<DecoratedAddress> bootstrapNodes;
         
-        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig, Pair<Integer, Integer> counterAction, Pair<Double, Integer> counterRate, Set<DecoratedAddress> bootstrapNodes) {
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, 
+                GradientConfig gradientConfig, Pair<Integer, Integer> counterAction, 
+                Pair<Double, Integer> counterRate, List<DecoratedAddress> bootstrapNodes) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
             this.gradientConfig = gradientConfig;

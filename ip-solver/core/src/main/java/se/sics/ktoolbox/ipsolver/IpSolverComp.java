@@ -48,7 +48,7 @@ import se.sics.ktoolbox.ipsolver.util.IpHelper;
 public class IpSolverComp extends ComponentDefinition {
 
     private static final Logger LOG = LoggerFactory.getLogger(IpSolverComp.class);
-    private Negative<IpSolverPort> ipSolver = negative(IpSolverPort.class);
+    private Negative<IpSolverPort> ipSolver = provides(IpSolverPort.class);
 
     private final String logPrefix = "";
 

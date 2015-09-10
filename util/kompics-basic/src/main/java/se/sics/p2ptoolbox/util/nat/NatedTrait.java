@@ -21,6 +21,7 @@ package se.sics.p2ptoolbox.util.nat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import se.sics.p2ptoolbox.util.nat.Nat.AllocationPolicy;
 import se.sics.p2ptoolbox.util.nat.Nat.FilteringPolicy;
 import se.sics.p2ptoolbox.util.nat.Nat.MappingPolicy;
@@ -57,6 +58,10 @@ public class NatedTrait implements Trait {
         return new NatedTrait(Type.UDP_BLOCKED, null, null, 0, null, 0, new ArrayList<DecoratedAddress>());
     }
 
+    public static NatedTrait upnp() {
+        return new NatedTrait(Type.UPNP, null, null, 0, null, 0, new ArrayList<DecoratedAddress>());
+    }
+    
     public static NatedTrait nated(MappingPolicy mappingPolicy, AllocationPolicy allocationPolicy, int delta,
             FilteringPolicy filteringPolicy, long bindingTimeout, ArrayList<DecoratedAddress> parents) {
         assert mappingPolicy != null;
@@ -113,4 +118,52 @@ public class NatedTrait implements Trait {
         }
         return sb.toString();
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 97 * hash + Objects.hashCode(this.type);
+        hash = 97 * hash + Objects.hashCode(this.mappingPolicy);
+        hash = 97 * hash + Objects.hashCode(this.allocationPolicy);
+        hash = 97 * hash + this.delta;
+        hash = 97 * hash + Objects.hashCode(this.filteringPolicy);
+        hash = 97 * hash + (int) (this.bindingTimeout ^ (this.bindingTimeout >>> 32));
+        hash = 97 * hash + Objects.hashCode(this.parents);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final NatedTrait other = (NatedTrait) obj;
+        if (this.type != other.type) {
+            return false;
+        }
+        if (this.mappingPolicy != other.mappingPolicy) {
+            return false;
+        }
+        if (this.allocationPolicy != other.allocationPolicy) {
+            return false;
+        }
+        if (this.delta != other.delta) {
+            return false;
+        }
+        if (this.filteringPolicy != other.filteringPolicy) {
+            return false;
+        }
+        if (this.bindingTimeout != other.bindingTimeout) {
+            return false;
+        }
+        if (!Objects.equals(this.parents, other.parents)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 }

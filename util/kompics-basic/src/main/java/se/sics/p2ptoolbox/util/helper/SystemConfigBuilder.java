@@ -23,6 +23,9 @@ import se.sics.p2ptoolbox.util.nat.NatedTrait;
  */
 public class SystemConfigBuilder {
 
+    private static Logger LOG = LoggerFactory.getLogger("Config");
+    private String logPrefix = "System: ";
+
     private Config config;
     private long seed;
     private InetAddress selfIp;
@@ -31,8 +34,6 @@ public class SystemConfigBuilder {
     private Optional<Address> bootstrapAddress;
     private Optional<DecoratedAddress> aggregatorAddress;
     private Optional<NatedTrait> selfNat;
-
-    private static Logger LOG = LoggerFactory.getLogger(SystemConfig.class);
 
     private Random random;
     private static int BASE = 10000;
@@ -48,43 +49,38 @@ public class SystemConfigBuilder {
                 Random r = new SecureRandom();
                 seed = r.nextLong();
             }
+            LOG.info("{}seed:{}", logPrefix, seed);
             random = new Random(seed);
 
 //      LOAD THE SELF ADDRESS ATTRIBUTES.
             try {
                 selfIp = InetAddress.getByName(config.getString("system.self.ip"));
             } catch (ConfigException.Missing ex) {
-
-                LOG.trace("Self Ip address is null.");
                 selfIp = null;
             }
-            LOG.trace("Self ip address is {}", selfIp);
             try {
 //              Port needs to be between  (10000 & 65535)
                 selfPort = config.getInt("system.self.port");
             } catch (ConfigException.Missing ex) {
                 setPort();
             }
-            LOG.trace("Self address port is {}", selfPort);
-
             try {
                 selfId = config.getInt("system.self.id");
             } catch (ConfigException.Missing ex) {
                 selfId = random.nextInt();
             }
-            LOG.trace("Self Identifier is : {}", selfId);
+            LOG.info("{}self ip:{} port:{} id:{}", 
+                    new Object[]{logPrefix, selfIp, selfPort, selfId});
 
 //          LOAD THE BOOTSTRAP CONFIGURATION ATTRIBUTES.
             try {
-
                 InetAddress ip = InetAddress.getByName(config.getString("caracal.address.ip"));
                 int port = config.getInt("caracal.address.port");
                 this.bootstrapAddress = Optional.of(new Address(ip, port, null));
             } catch (ConfigException.Missing ex) {
-//                throw new RuntimeException("Caracal Location Missing", ex);
                 this.bootstrapAddress = Optional.absent();
             }
-            LOG.info("Caracal Client address is: {}", this.bootstrapAddress);
+            LOG.info("{}caracal:{}", new Object[]{logPrefix, bootstrapAddress.isPresent() ? bootstrapAddress.get() : "missing"});
 
 //          LOAD THE OPTIONAL AGGREGATOR ATTRIBUTES.
             try {
@@ -95,9 +91,10 @@ public class SystemConfigBuilder {
             } catch (Exception ex) {
                 this.aggregatorAddress = Optional.absent();
             }
-            LOG.info("Aggregator address is: {}", this.aggregatorAddress);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
+            LOG.info("{}aggregator:{}", new Object[]{logPrefix, aggregatorAddress.isPresent() ? aggregatorAddress.get() : "missing"});
+        } catch (UnknownHostException ex) {
+            LOG.error("{}ip exception", logPrefix);
+            throw new RuntimeException(ex);
         }
     }
 
@@ -110,7 +107,7 @@ public class SystemConfigBuilder {
         this.aggregatorAddress = Optional.absent();
         this.selfNat = Optional.absent();
     }
-    
+
     public long getSeed() {
         return seed;
     }
@@ -162,12 +159,12 @@ public class SystemConfigBuilder {
         this.aggregatorAddress = Optional.of(aggregatorAddress);
         return this;
     }
-    
+
     public SystemConfigBuilder setSelfNat(NatedTrait selfNat) {
         this.selfNat = Optional.of(selfNat);
         return this;
     }
-    
+
     public void setPort() {
         this.selfPort = (BASE + random.nextInt(DIFF));
     }
@@ -185,7 +182,7 @@ public class SystemConfigBuilder {
         }
 
         DecoratedAddress selfAddress = new DecoratedAddress(new BasicAddress(selfIp, selfPort, selfId));
-        if(selfNat.isPresent()) {
+        if (selfNat.isPresent()) {
             selfAddress.addTrait(selfNat.get());
         }
         return new SystemConfig(config, seed, selfAddress, bootstrapAddress, aggregatorAddress);

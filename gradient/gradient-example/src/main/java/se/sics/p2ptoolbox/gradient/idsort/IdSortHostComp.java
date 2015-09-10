@@ -18,7 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.idsort;
 
-import java.util.Set;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -59,7 +59,7 @@ public class IdSortHostComp extends ComponentDefinition {
     private final CroupierConfig croupierConfig;
     private final GradientConfig gradientConfig;
     private final String logPrefix;
-    private final Set<DecoratedAddress> bootstrapNodes;
+    private final List<DecoratedAddress> bootstrapNodes;
     
     private Component croupier;
 
@@ -136,9 +136,10 @@ public class IdSortHostComp extends ComponentDefinition {
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
         public final GradientConfig gradientConfig;
-        public final Set<DecoratedAddress> bootstrapNodes;
+        public final List<DecoratedAddress> bootstrapNodes;
         
-        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig, Set<DecoratedAddress> bootstrapNodes) {
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, 
+                GradientConfig gradientConfig, List<DecoratedAddress> bootstrapNodes) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
             this.gradientConfig = gradientConfig;

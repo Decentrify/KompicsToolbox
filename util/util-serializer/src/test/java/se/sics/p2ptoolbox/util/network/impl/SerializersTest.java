@@ -101,37 +101,6 @@ public class SerializersTest {
     }
 
     @Test
-    public void testDecoratedAddressSerializer1() throws UnknownHostException {
-        Serializer serializer = Serializers.lookupSerializer(DecoratedAddress.class);
-        DecoratedAddress copy;
-        ByteBuf serializedOriginal, serializedCopy;
-
-        serializedOriginal = Unpooled.buffer();
-        serializer.toBinary(simpleAdr1, serializedOriginal);
-        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
-        copy = (DecoratedAddress) serializer.fromBinary(serializedCopy, Optional.absent());
-
-        Assert.assertEquals(simpleAdr1, copy);
-    }
-    
-     @Test
-    public void testDecoratedAddressSerializer2() throws UnknownHostException {
-        Serializer serializer = Serializers.lookupSerializer(DecoratedAddress.class);
-        DecoratedAddress copy1, copy2;
-        ByteBuf serializedOriginal, serializedCopy;
-
-        serializedOriginal = Unpooled.buffer();
-        serializer.toBinary(simpleAdr1, serializedOriginal);
-        serializer.toBinary(simpleAdr2, serializedOriginal);
-        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
-        copy1 = (DecoratedAddress) serializer.fromBinary(serializedCopy, Optional.absent());
-        copy2 = (DecoratedAddress) serializer.fromBinary(serializedCopy, Optional.absent());
-        
-        Assert.assertEquals(simpleAdr1, copy1);
-        Assert.assertEquals(simpleAdr2, copy2);
-    }
-
-    @Test
     public void testBasicHeaderSerialize1() throws UnknownHostException {
         Serializer serializer = Serializers.lookupSerializer(BasicHeader.class);
         BasicHeader<DecoratedAddress> original, copy;

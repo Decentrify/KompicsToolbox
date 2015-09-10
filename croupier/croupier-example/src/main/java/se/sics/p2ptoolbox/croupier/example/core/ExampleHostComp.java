@@ -18,7 +18,7 @@
  */
 package se.sics.p2ptoolbox.croupier.example.core;
 
-import java.util.Set;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -53,7 +53,7 @@ public class ExampleHostComp extends ComponentDefinition {
 
     private final SystemConfig systemConfig;
     private final CroupierConfig croupierConfig;
-    private final Set<DecoratedAddress> bootstrapNodes;
+    private final List<DecoratedAddress> bootstrapNodes;
     
     private Component croupier;
     private Component compA;
@@ -113,9 +113,9 @@ public class ExampleHostComp extends ComponentDefinition {
 
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
-        public final Set<DecoratedAddress> bootstrapNodes;
+        public final List<DecoratedAddress> bootstrapNodes;
 
-        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, Set<DecoratedAddress> bootstrapNodes) {
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, List<DecoratedAddress> bootstrapNodes) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
             this.bootstrapNodes = bootstrapNodes;

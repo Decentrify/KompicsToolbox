@@ -22,9 +22,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
@@ -36,10 +35,10 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class BootstrapConfig {
     private final static Logger LOG = LoggerFactory.getLogger("KompicsConfig");
 
-    public final Set<DecoratedAddress>bootstrapNodes;
+    public final List<DecoratedAddress>bootstrapNodes;
     
     public BootstrapConfig(Config config) {
-        this.bootstrapNodes = new HashSet<DecoratedAddress>();
+        this.bootstrapNodes = new ArrayList<DecoratedAddress>();
         List<String> boostrapNodeNames;
 
         try {
