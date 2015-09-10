@@ -27,7 +27,7 @@ import java.util.*;
  *
  * Created by babbar on 2015-08-31.
  */
-public class LocalAggregator<CI extends ComponentInfo> extends ComponentDefinition {
+public class LocalAggregator extends ComponentDefinition {
 
     private Logger logger = LoggerFactory.getLogger(LocalAggregator.class);
     private Map<Class, Map<Integer, ComponentInfo>> componentInfoMap;
