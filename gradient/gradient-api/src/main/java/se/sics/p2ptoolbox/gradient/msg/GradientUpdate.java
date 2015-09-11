@@ -18,15 +18,22 @@
  */
 package se.sics.p2ptoolbox.gradient.msg;
 
+import se.sics.p2ptoolbox.util.update.SelfViewUpdate;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientUpdate<C extends Object> extends GradientMsg.OneWay{
+public class GradientUpdate<C extends Object> implements SelfViewUpdate {
     
     public final C view;
     
     public GradientUpdate(C peerView) {
         super();
         this.view = peerView;
+    }
+    
+    @Override
+    public String toString() {
+        return "GRADIENT_VIEW_UPDATE";
     }
 }

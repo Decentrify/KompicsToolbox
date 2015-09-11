@@ -9,14 +9,14 @@
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>croupier</artifactId>
     <name>Croupier</name>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <modules>
         <module>croupier-api</module>
         <module>croupier-core</module>
-        <module>croupier-example</module>
         <module>croupier-network</module>
+        <module>croupier-example</module>
     </modules>
     
     <properties>
@@ -24,12 +24,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
-        <util.version>1.7-SNAPSHOT</util.version>
-        <logger.version>1.7.5</logger.version>
-        <tuples.version>1.2</tuples.version>
-        <guava.version>18.0</guava.version>
-        <config.version>1.2.1</config.version>
+        <util.version>${original.util.version}</util.version>
     </properties>
     
     <dependencies>

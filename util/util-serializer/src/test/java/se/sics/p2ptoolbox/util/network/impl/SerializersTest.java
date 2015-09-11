@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.util.serializer;
+package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
@@ -24,9 +24,7 @@ import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,12 +33,8 @@ import org.junit.Test;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
-import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
-import se.sics.p2ptoolbox.util.network.impl.Route;
+import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -48,21 +42,16 @@ import se.sics.p2ptoolbox.util.network.impl.Route;
 public class SerializersTest {
 
     private static InetAddress localHost;
+    private DecoratedAddress simpleAdr1, simpleAdr2, simpleAdr3, simpleAdr4;
 
-    {
-        
+    @BeforeClass
+    public static void oneTimeSetup() {
         try {
             localHost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-    }
-
-    private DecoratedAddress simpleAdr1, simpleAdr2, simpleAdr3, simpleAdr4, simpleAdr5;
-    private DecoratedAddress natedAdr1, natedAdr2;
-
-    @BeforeClass
-    public static void oneTimeSetup() {
+        
         int currentId = 128;
         
         currentId = BasicSerializerSetup.registerBasicSerializers(currentId);
@@ -73,20 +62,10 @@ public class SerializersTest {
 
     @Before
     public void setup() {
-        simpleAdr1 = new DecoratedAddress(localHost, 10000, 1);
-        simpleAdr2 = new DecoratedAddress(localHost, 10000, 2);
-        simpleAdr3 = new DecoratedAddress(localHost, 10000, 3);
-        simpleAdr4 = new DecoratedAddress(localHost, 10000, 4);
-        simpleAdr5 = new DecoratedAddress(localHost, 10000, 5);
-        Set<DecoratedAddress> parents1 = new HashSet<DecoratedAddress>();
-        parents1.add(simpleAdr1);
-        parents1.add(simpleAdr2);
-        natedAdr1 = new DecoratedAddress(new BasicAddress(localHost, 20000, 1), parents1);
-        Set<DecoratedAddress> parents2 = new HashSet<DecoratedAddress>();
-        parents2.add(simpleAdr3);
-        parents2.add(simpleAdr4);
-        parents2.add(simpleAdr5);
-        natedAdr2 = new DecoratedAddress(new BasicAddress(localHost, 20000, 2), parents2);
+        simpleAdr1 = new DecoratedAddress(new BasicAddress(localHost, 10000, 1));
+        simpleAdr2 = new DecoratedAddress(new BasicAddress(localHost, 10000, 2));
+        simpleAdr3 = new DecoratedAddress(new BasicAddress(localHost, 10000, 3));
+        simpleAdr4 = new DecoratedAddress(new BasicAddress(localHost, 10000, 4));
     }
 
     @Test
@@ -122,40 +101,12 @@ public class SerializersTest {
     }
 
     @Test
-    public void testDecoratedAddressSerializer1() throws UnknownHostException {
-        Serializer serializer = Serializers.lookupSerializer(DecoratedAddress.class);
-        DecoratedAddress copy;
-        ByteBuf serializedOriginal, serializedCopy;
-
-        serializedOriginal = Unpooled.buffer();
-        serializer.toBinary(simpleAdr1, serializedOriginal);
-        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
-        copy = (DecoratedAddress) serializer.fromBinary(serializedCopy, Optional.absent());
-
-        Assert.assertEquals(simpleAdr1, copy);
-    }
-
-    @Test
-    public void testDecoratedAddressSerializer() throws UnknownHostException {
-        Serializer serializer = Serializers.lookupSerializer(DecoratedAddress.class);
-        DecoratedAddress copy;
-        ByteBuf serializedOriginal, serializedCopy;
-
-        serializedOriginal = Unpooled.buffer();
-        serializer.toBinary(natedAdr1, serializedOriginal);
-        serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
-        copy = (DecoratedAddress) serializer.fromBinary(serializedCopy, Optional.absent());
-
-        Assert.assertEquals(natedAdr1, copy);
-    }
-
-    @Test
     public void testBasicHeaderSerialize1() throws UnknownHostException {
         Serializer serializer = Serializers.lookupSerializer(BasicHeader.class);
         BasicHeader<DecoratedAddress> original, copy;
         ByteBuf serializedOriginal, serializedCopy;
 
-        original = new BasicHeader(simpleAdr1, natedAdr1, Transport.UDP);
+        original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
         serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
@@ -172,15 +123,12 @@ public class SerializersTest {
 
         List<DecoratedAddress> route = new ArrayList<DecoratedAddress>();
         route.add(simpleAdr1);
-        route.add(natedAdr1);
         route.add(simpleAdr2);
         original = new Route(route);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
         serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
         copy = (Route<DecoratedAddress>) serializer.fromBinary(serializedCopy, Optional.absent());
-//        System.out.println(original);
-//        System.out.println(copy);
         Assert.assertEquals(original, copy);
     }
 
@@ -191,10 +139,9 @@ public class SerializersTest {
         ByteBuf serializedOriginal, serializedCopy;
 
         List<DecoratedAddress> route = new ArrayList<DecoratedAddress>();
-        route.add(simpleAdr1);
         route.add(simpleAdr2);
-        route.add(natedAdr1);
-        original = new DecoratedHeader(new BasicHeader(simpleAdr3, natedAdr2, Transport.UDP), new Route(route), 10);
+        route.add(simpleAdr3);
+        original = new DecoratedHeader(new BasicHeader(simpleAdr1, simpleAdr4, Transport.UDP), new Route(route), 10);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
         serializedCopy = Unpooled.wrappedBuffer(serializedOriginal.array());
@@ -211,10 +158,9 @@ public class SerializersTest {
         ByteBuf serializedOriginal, serializedCopy;
 
         List<DecoratedAddress> route = new ArrayList<DecoratedAddress>();
-        route.add(simpleAdr1);
         route.add(simpleAdr2);
-        route.add(natedAdr1);
-        DecoratedHeader header = new DecoratedHeader(new BasicHeader(simpleAdr3, natedAdr2, Transport.UDP), new Route(route), 10);
+        route.add(simpleAdr3);
+        DecoratedHeader header = new DecoratedHeader(new BasicHeader(simpleAdr1, simpleAdr4, Transport.UDP), new Route(route), 10);
         TestContent content = new TestContent(5);
         original = new BasicContentMsg(header, content);
         serializedOriginal = Unpooled.buffer();

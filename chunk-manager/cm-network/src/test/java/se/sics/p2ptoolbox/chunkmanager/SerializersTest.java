@@ -19,6 +19,7 @@
 package se.sics.p2ptoolbox.chunkmanager;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.UUID;
@@ -30,7 +31,10 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
 import se.sics.p2ptoolbox.chunkmanager.util.ChunkPrefixHelper;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -42,8 +46,10 @@ public class SerializersTest {
         int currentId = 128;
         BasicSerializerSetup.registerBasicSerializers(currentId);
         currentId = currentId + BasicSerializerSetup.serializerIds;
-        
         currentId = ChunkManagerSerializerSetup.registerSerializers(currentId);
+        
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
+        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
     }
 
     @Before

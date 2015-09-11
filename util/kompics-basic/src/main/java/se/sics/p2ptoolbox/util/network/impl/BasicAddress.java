@@ -38,6 +38,10 @@ public class BasicAddress implements Address, IntegerIdentifiable {
         this.printForm = addr.getHostAddress() + ":" + port + "<" + id + ">";
     }
 
+    public BasicAddress() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     @Override
     public InetAddress getIp() {
         return this.isa.getAddress();

@@ -22,8 +22,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Set;
+import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation1;
 import se.sics.p2ptoolbox.chunkmanager.ChunkManagerConfig;
 import se.sics.p2ptoolbox.chunkmanager.example.core.ExampleHostComp;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
@@ -31,9 +31,9 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
-import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
 import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation2;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -90,7 +90,7 @@ public class ChunkManagerScenarioOperations {
                      */
                     long nodeSeed = seed + nodeId;
                     Config config = ConfigFactory.load("application.conf");
-                    SystemConfig systemConfig = new SystemConfig(nodeSeed, nodeAddress, null);
+                    SystemConfig systemConfig = new SystemConfigBuilder(config).build();
                     ChunkManagerConfig cmConfig = new ChunkManagerConfig(config);
                     return new ExampleHostComp.HostInit(systemConfig, cmConfig, partnerNodeAddress);
                 }

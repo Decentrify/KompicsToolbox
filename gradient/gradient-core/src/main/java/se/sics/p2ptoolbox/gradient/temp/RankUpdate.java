@@ -19,10 +19,12 @@
 
 package se.sics.p2ptoolbox.gradient.temp;
 
+import se.sics.kompics.KompicsEvent;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class RankUpdate implements Update {
+public class RankUpdate implements KompicsEvent {
     public final int rank;
     
     public RankUpdate(int rank) {

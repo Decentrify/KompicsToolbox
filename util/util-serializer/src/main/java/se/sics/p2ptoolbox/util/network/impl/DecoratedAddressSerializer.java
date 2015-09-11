@@ -20,13 +20,12 @@ package se.sics.p2ptoolbox.util.network.impl;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 import org.javatuples.Pair;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.BitBuffer;
-import se.sics.p2ptoolbox.util.traits.Nated;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
+import se.sics.p2ptoolbox.util.traits.Trait;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -48,36 +47,54 @@ public class DecoratedAddressSerializer implements Serializer {
     public void toBinary(Object o, ByteBuf buf) {
         DecoratedAddress obj = (DecoratedAddress) o;
         Serializers.lookupSerializer(BasicAddress.class).toBinary(obj.getBase(), buf);
+        toBinary(o, buf, obj.getTraits());
+    }
 
-        //traits - uses flag 0 for the Nated Trait
-        BitBuffer flags = BitBuffer.create(1);
-        flags.write(Pair.with(0, obj.hasTrait(Nated.class)));
-        buf.writeBytes(flags.finalise());
-
-        if (obj.hasTrait(Nated.class)) {
-            buf.writeByte(obj.getParents().size());
-            for (DecoratedAddress adr : obj.getParents()) {
-                this.toBinary(adr, buf);
+    //TODO Alex - try to see if it can be optimized
+    private void toBinary(Object o, ByteBuf buf, Trait[] traits) {
+        //we do not know how many traits we currently have, 
+        //so we save space and write the size at the end
+        int writerIndex = buf.writerIndex();
+        buf.writeByte(0);
+        int nrTraits = 0;
+        AcceptedTraits at = DecoratedAddress.getAcceptedTraits();
+        for (Trait trait : traits) {
+            if (trait != null) {
+                Serializers.toBinary(trait, buf);
+                nrTraits++;
             }
         }
+        if (nrTraits > 10) {
+            /**
+             * TODO Alex - total random - 10... but more than 10 traits would
+             * probably make the address too big for any practical use
+             */
+            throw new RuntimeException("Decorated address traits logic - too many");
+        }
+        int lastWriterIndex = buf.writerIndex();
+        buf.writerIndex(writerIndex);
+        buf.writeByte((byte) nrTraits);
+        buf.writerIndex(lastWriterIndex);
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         Serializer basicAdrSerializer = Serializers.lookupSerializer(BasicAddress.class);
         BasicAddress base = (BasicAddress) basicAdrSerializer.fromBinary(buf, hint);
+        Trait[] traits = traitsFromBinary(buf, hint);
+        
+        return new DecoratedAddress(base, traits);
+    }
 
-        byte[] bFlags = new byte[1];
-        buf.readBytes(bFlags);
-        boolean[] flags = BitBuffer.extract(1, bFlags);
-        if (flags[0]) {
-            int parentsSize = buf.readByte();
-            Set<DecoratedAddress> parents = new HashSet<DecoratedAddress>();
-            for (int i = 0; i < parentsSize; i++) {
-                parents.add((DecoratedAddress) this.fromBinary(buf, hint));
-            }
-            return new DecoratedAddress(base, parents);
+    //TODO Alex - try to see if it can be optimized
+    private Trait[] traitsFromBinary(ByteBuf buf, Optional<Object> hint) {
+        AcceptedTraits at = DecoratedAddress.getAcceptedTraits();
+        Trait[] traits = new Trait[at.size()];
+        int nrTraits = buf.readByte();
+        for (int i = 0; i < nrTraits; i++) {
+            Trait trait = (Trait)Serializers.fromBinary(buf, hint);
+            traits[DecoratedAddress.getAcceptedTraits().getIndex(trait.getClass())] = trait;
         }
-        return new DecoratedAddress(base);
+        return traits;
     }
 }

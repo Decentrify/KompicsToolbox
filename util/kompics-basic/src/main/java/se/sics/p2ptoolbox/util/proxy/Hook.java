@@ -16,15 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.p2ptoolbox.util.proxy;
 
-package se.sics.p2ptoolbox.util.traits;
-
-import java.util.Set;
-import se.sics.kompics.network.Address;
+import se.sics.kompics.Component;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface Nated<Adr extends Address> extends Trait {
-    public Set<Adr> getParents();
+public class Hook {
+
+    public static interface Definition<I extends Init, IR extends InitResult, T extends Tear> {
+
+        public IR setUp(ComponentProxy proxy, I hookInit);
+
+        public void tearDown(ComponentProxy proxy, T hookTear);
+    }
+    
+    public static interface Init {
+    }
+    
+    public static interface InitResult {
+    }
+    
+    public static interface Tear {
+    }
 }

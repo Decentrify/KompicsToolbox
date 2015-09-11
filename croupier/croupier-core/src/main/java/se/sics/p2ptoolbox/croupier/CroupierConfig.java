@@ -22,7 +22,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

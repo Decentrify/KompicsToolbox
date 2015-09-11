@@ -16,14 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.temp;
-
-import se.sics.kompics.PortType;
+package se.sics.p2ptoolbox.util.network.impl;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UpdatePort extends PortType {{
-    request(Update.class);
-    indication(Update.class);
-}}
+public class DecoratedAddressValidator {
+    
+    public static <T extends Enum<T> & Test> void set() {
+
+    }
+
+    public static interface Test {
+
+    }
+}

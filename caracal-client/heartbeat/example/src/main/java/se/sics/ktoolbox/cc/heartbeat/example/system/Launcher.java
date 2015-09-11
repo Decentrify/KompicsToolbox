@@ -43,6 +43,7 @@ import se.sics.ktoolbox.cc.heartbeat.example.config.BootstrapNodes;
 import se.sics.ktoolbox.cc.heartbeat.example.config.CaracalClientSerializerSetup;
 import se.sics.ktoolbox.cc.heartbeat.example.core.ExampleComp;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -67,7 +68,7 @@ public class Launcher extends ComponentDefinition {
 
         timer = create(JavaTimer.class, Init.NONE);
         Config config = ConfigFactory.load();
-        SystemConfig systemConfig = new SystemConfig(config);
+        SystemConfig systemConfig = new SystemConfigBuilder(config).build();
         Address ccSelf = new Address(systemConfig.self.getIp(), systemConfig.self.getPort(), null);
         
         network = create(NettyNetwork.class, new NettyInit(ccSelf));
@@ -81,7 +82,7 @@ public class Launcher extends ComponentDefinition {
         connect(ccHearbeat.getNegative(Timer.class), timer.getPositive(Timer.class));
         connect(ccHearbeat.getNegative(CCBootstrapPort.class), ccBootstrap.getPositive(CCBootstrapPort.class));
 
-        example = create(ExampleComp.class, new ExampleComp.ExampleInit(new SystemConfig(config), new byte[]{1, 2, 3}, new byte[]{1, 2, 4}));
+        example = create(ExampleComp.class, new ExampleComp.ExampleInit(systemConfig, new byte[]{1, 2, 3}, new byte[]{1, 2, 4}));
         connect(example.getNegative(Timer.class), timer.getPositive(Timer.class));
         connect(example.getNegative(CCHeartbeatPort.class), ccHearbeat.getPositive(CCHeartbeatPort.class));
     }

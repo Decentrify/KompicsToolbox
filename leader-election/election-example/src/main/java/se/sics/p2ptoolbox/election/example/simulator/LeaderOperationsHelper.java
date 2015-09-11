@@ -1,5 +1,6 @@
 package se.sics.p2ptoolbox.election.example.simulator;
 
+import com.google.common.base.Optional;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -13,7 +14,12 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 
 /**
  * Helper Class for the Leader Election Protocol Operations Simulation.
@@ -57,7 +63,8 @@ public class LeaderOperationsHelper {
         
         addressCollection.put(id, selfAddress);
         copy.add(selfAddress);
-        systemConfig = new SystemConfig(seed, selfAddress, aggregatorAddress);
+        //TODO Alex - caracal bootstrap missing
+        systemConfig = new SystemConfigBuilder(seed, selfAddress.getIp(), selfAddress.getPort(), selfAddress.getId()).setAggregatorAddress(aggregatorAddress).build();
         HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator());
 
         return init;

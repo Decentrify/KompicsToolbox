@@ -9,14 +9,14 @@
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>gradient</artifactId>
     <name>Gradient</name>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.7-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>gradient-api</module>
         <module>gradient-core</module>
-        <module>gradient-example</module>
         <module>gradient-network</module>
+        <module>gradient-example</module>
         <module>tree-gradient-core</module>
         <module>tree-gradient-example</module>
     </modules>
@@ -26,12 +26,8 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
-        <croupier.version>1.8-SNAPSHOT</croupier.version>
-        <util.version>1.7-SNAPSHOT</util.version>
-        <guava.version>18.0</guava.version>
-        <tuples.version>1.2</tuples.version>
-        <logger.version>1.7.5</logger.version>
-        <config.version>1.2.1</config.version>
+        <croupier.version>${original.croupier.version}</croupier.version>
+        <util.version>${original.util.version}</util.version>
     </properties>
     
     <dependencies>

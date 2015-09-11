@@ -37,6 +37,10 @@ public class DecoratedHeader<Adr extends Address> implements Header<Adr> {
     private Route<Adr> route = null; //Forwardable
     private Integer overlayId = null; //OverlayMember
 
+    //TODO Alex - fix traits
+    public DecoratedHeader changeBasicHeader(BasicHeader<Adr> base) {
+        return new DecoratedHeader(base, route, overlayId);
+    }
     public DecoratedHeader(BasicHeader<Adr> base, Route<Adr> route, Integer overlayId) {
         this.base = base;
         this.route = route;

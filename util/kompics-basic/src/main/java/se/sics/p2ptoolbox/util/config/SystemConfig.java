@@ -14,11 +14,12 @@ public class SystemConfig {
 
     public final long seed;
     public final Config config;
-    private final Address caracalAddress;
     public final DecoratedAddress self;
+    public final Optional<Address> caracalAddress;
     public final Optional<DecoratedAddress> aggregator;
 
-    public SystemConfig(long seed, Address caracalAddress, DecoratedAddress selfAddress, Optional<DecoratedAddress> aggregatorAddress, Config config){
+    public SystemConfig(Config config, long seed, DecoratedAddress selfAddress, Optional<Address> caracalAddress, 
+            Optional<DecoratedAddress> aggregatorAddress){
 
         this.seed = seed;
         this.config = config;
@@ -31,25 +32,9 @@ public class SystemConfig {
     public String toString() {
         return "SysConfig{" +
                 "seed=" + seed +
-                ", caracalAddress=" + caracalAddress +
                 ", selfAddress=" + self +
-                ", aggregatorAddress=" + aggregator +
-                '}';
-    }
-
-    public long getSeed() {
-        return seed;
-    }
-
-    public Address getCaracalAddress() {
-        return caracalAddress;
-    }
-
-    public DecoratedAddress getSelfAddress() {
-        return self;
-    }
-
-    public Optional<DecoratedAddress> getAggregatorAddress() {
-        return aggregator;
+                ", caracalAddress=" + (caracalAddress.isPresent() ? caracalAddress.get() : "x") +
+                ", aggregatorAddress=" + (aggregator.isPresent() ? aggregator.get() : "x") +
+                "}";
     }
 }

@@ -8,17 +8,42 @@
     <packaging>pom</packaging>
     <modules>
         <module>util</module>
+        <module>simulator</module>
         <module>croupier</module>
         <module>gradient</module>
-        <module>chunk-manager</module>
-        <module>aggregator</module> 
+       <module>chunk-manager</module>
+         <module>ip-solver</module>
         <module>videostream</module>
-        <module>leader-election</module> 
-        <module>ip-solver</module>
+       <module>nat-echo</module>
+         <module>aggregator</module> 
         <module>caracal-client</module>
-        <module>nat-echo</module>
-        <module>simulator</module>
+        <module>leader-election</module>
     </modules>
+    
+    <!-- last merge increasing util, simulator, croupier, gradient, leader-->
+    <properties>
+        <original.util.version>1.9-SNAPSHOT</original.util.version>
+        <original.simulator.version>1.6-SNAPSHOT</original.simulator.version>
+        <original.croupier.version>1.9-SNAPSHOT</original.croupier.version>
+        <original.gradient.version>1.7-SNAPSHOT</original.gradient.version>
+        <original.chunkmanager.version>1.3-SNAPSHOT</original.chunkmanager.version>
+        <original.aggregator.version>1.3-SNAPSHOT</original.aggregator.version>
+        <original.videostream.version>1.2-SNAPSHOT</original.videostream.version>
+        <original.leader.version>1.4-SNAPSHOT</original.leader.version>
+        <original.ipsolver.version>1.1-SNAPSHOT</original.ipsolver.version>
+        <original.caracal.version>1.1-SNAPSHOT</original.caracal.version>
+        <original.natecho.version>0.0.2-SNAPSHOT</original.natecho.version>
+        
+        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
+        <nat.version>0.0.1-SNAPSHOT</nat.version>
+        <junit.version>4.11</junit.version>
+        <guava.version>18.0</guava.version>
+        <tuples.version>1.2</tuples.version>
+        <config.version>1.2.1</config.version>
+        <logger.version>1.7.5</logger.version>
+        <netty.version>5.0.0.Alpha2</netty.version>
+        <caracal.version>0.0.8-SNAPSHOT</caracal.version>
+    </properties>
 
     <distributionManagement>
         <repository>

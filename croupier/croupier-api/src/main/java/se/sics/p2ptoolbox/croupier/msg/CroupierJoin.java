@@ -18,17 +18,18 @@
  */
 package se.sics.p2ptoolbox.croupier.msg;
 
-import java.util.Set;
+import java.util.List;
+import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierJoin implements CroupierMsg.OneWay {
+public class CroupierJoin implements KompicsEvent {
 
-    public final Set<DecoratedAddress> peers;
+    public final List<DecoratedAddress> peers;
 
-    public CroupierJoin(Set<DecoratedAddress> peers) {
+    public CroupierJoin(List<DecoratedAddress> peers) {
         this.peers = peers;
     }
 

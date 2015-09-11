@@ -22,10 +22,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
-        <util.version>1.7-SNAPSHOT</util.version>
-        <logger.version>1.7.5</logger.version>
-        <tuples.version>1.2</tuples.version>
-        <junit.version>4.11</junit.version>
+        <util.version>${original.util.version}</util.version>
     </properties>
     
     <dependencies>

@@ -16,17 +16,43 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.gradient.msg;
+package se.sics.p2ptoolbox.util;
 
-import se.sics.kompics.KompicsEvent;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Gradient Message wrapper class.
- *
- * Created by babbarshaer on 2015-02-26.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class GradientMsg {
+public class UtilTests {
 
-    public static abstract class OneWay implements KompicsEvent {
+    @Test
+    public void testInnerEnums() {
+        A a1 = new A();
+        A a2 = new A();
+        Assert.assertEquals(0, a1.enumA.E.phase);
+        Assert.assertEquals(0, a2.enumA.E.phase);
+        a1.enumA.setPhase(1);
+        Assert.assertEquals(1, a1.enumA.E.phase);
+        Assert.assertEquals(1, a2.enumA.E.phase);
+    }
+
+    public static class A {
+        public EnumA enumA = EnumA.E;
+
+        public enum EnumA {
+
+            E(0);
+
+            int phase;
+
+            EnumA(int phase) {
+                this.phase = phase;
+            }
+
+            public void setPhase(int phase) {
+                this.phase = phase;
+            }
+        }
     }
 }

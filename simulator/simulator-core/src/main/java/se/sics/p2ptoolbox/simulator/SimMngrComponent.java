@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -40,16 +39,15 @@ import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.simulator.basic.NatEmulatorComp;
 import se.sics.p2ptoolbox.simulator.cmd.impl.ReStartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
+import se.sics.p2ptoolbox.simulator.cmd.impl.SetupCmd;
 import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.traits.Nated;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -64,18 +62,19 @@ public class SimMngrComponent extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private Map<Integer, Pair<Component, Component>> systemNodes;
+    private Map<Integer, Component> systemNodes;
     private Component aggregator;
     private Component simulationClient;
 
     public SimMngrComponent(SimMngrInit init) {
         log.info("initiating...");
         this.simulationContext = new SimulationContextImpl(init.rand, init.simAddress);
-        this.systemNodes = new HashMap<Integer, Pair<Component, Component>>();
+        this.systemNodes = new HashMap<Integer, Component>();
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
+        subscribe(handleSetup, experimentPort);
         subscribe(handleStartAggregator, experimentPort);
         subscribe(handleStartNode, experimentPort);
         subscribe(handleStopNode, experimentPort);
@@ -122,6 +121,14 @@ public class SimMngrComponent extends ComponentDefinition {
     };
 
     //**************************************************************************
+    private Handler handleSetup = new Handler<SetupCmd>() {
+        @Override
+        public void handle(SetupCmd cmd) {
+            log.info("received setup cm:{}", cmd);
+            cmd.runSetup();
+        }
+    };
+    
     private Handler<StartAggregatorCmd> handleStartAggregator = new Handler<StartAggregatorCmd>() {
 
         @Override
@@ -156,13 +163,7 @@ public class SimMngrComponent extends ComponentDefinition {
             Negative<Network> nodeNetwork = null;
             if (cmd.getAddress() instanceof DecoratedAddress) {
                 DecoratedAddress dAdr = (DecoratedAddress) cmd.getAddress();
-                if (dAdr.hasTrait(Nated.class)) {
-                    natEmulator = create(NatEmulatorComp.class, new NatEmulatorComp.NatEmulatorInit((DecoratedAddress) cmd.getAddress()));
-                    connect(natEmulator.getPositive(Network.class), node.getNegative(Network.class));
-                    nodeNetwork = natEmulator.getNegative(Network.class);
-                } else {
-                    nodeNetwork = node.getNegative(Network.class);
-                }
+                nodeNetwork = node.getNegative(Network.class);
             } else {
                 nodeNetwork = node.getNegative(Network.class);
             }
@@ -171,14 +172,11 @@ public class SimMngrComponent extends ComponentDefinition {
             //TODO maybe this should be one method
             simulationContext.registerNode(cmd.getNodeId());
             simulationContext.bootNode(cmd.getNodeId(), cmd.getAddress());
-            systemNodes.put(cmd.getNodeId(), Pair.with(node, natEmulator));
+            systemNodes.put(cmd.getNodeId(), node);
             //********************************
 
             if (cmd.getAddress() instanceof DecoratedAddress) {
                 DecoratedAddress dAdr = (DecoratedAddress) cmd.getAddress();
-                if (dAdr.hasTrait(Nated.class)) {
-                    trigger(Start.event, natEmulator.control());
-                }
             }
             trigger(Start.event, node.control());
         }
@@ -190,20 +188,16 @@ public class SimMngrComponent extends ComponentDefinition {
         public void handle(KillNodeCmd cmd) {
             log.info("received kill cmd:{} for node:{}", cmd, cmd.getNodeId());
 
-            Pair<Component, Component> node = systemNodes.remove(cmd.getNodeId());
+            Component node = systemNodes.remove(cmd.getNodeId());
             if (node == null) {
                 throw new RuntimeException("node does not exist");
             }
             simulationContext.killNode(cmd.getNodeId());
-            if (node.getValue1() != null) {
-                disconnect(node.getValue1().getNegative(Network.class), network);
-            } else {
-                disconnect(node.getValue0().getNegative(Network.class), network);
-            }
-            disconnect(node.getValue0().getNegative(Timer.class), timer);
-            trigger(Kill.event, node.getValue0().control());
-            if (node.getValue1() != null) {
-                trigger(Kill.event, node.getValue1().control());
+            disconnect(node.getNegative(Network.class), network);
+            disconnect(node.getNegative(Timer.class), timer);
+            trigger(Kill.event, node.control());
+            if (node != null) {
+                trigger(Kill.event, node.control());
             }
         }
     };
@@ -216,17 +210,10 @@ public class SimMngrComponent extends ComponentDefinition {
             if (!systemNodes.containsKey(cmd.getNodeId())) {
                 throw new RuntimeException("node does not exist");
             }
-            Pair<Component, Component> node = systemNodes.get(cmd.getNodeId());
-            if (node.getValue1() != null) {
-                connect(node.getValue1().getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
-            } else {
-                connect(node.getValue0().getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
-            }
-            connect(node.getValue0().getNegative(Timer.class), timer);
-            trigger(Start.event, node.getValue0().control());
-            if (node.getValue1() != null) {
-                trigger(Start.event, node.getValue1().control());
-            }
+            Component node = systemNodes.get(cmd.getNodeId());
+            connect(node.getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
+            connect(node.getNegative(Timer.class), timer);
+            trigger(Start.event, node.control());
         }
     };
 
@@ -252,5 +239,4 @@ public class SimMngrComponent extends ComponentDefinition {
             this.systemStatusHandlers = systemStatusHandlers;
         }
     }
-
 }
