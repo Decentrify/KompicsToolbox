@@ -19,6 +19,7 @@
 package se.sics.p2ptoolbox.gradient;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
@@ -42,6 +43,7 @@ import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -72,15 +74,18 @@ public class SerializersTest {
         TestSerializer testSerializer = new TestSerializer(currentId++);
         Serializers.register(testSerializer, "testSerializer");
         Serializers.register(TestContent.class, "testSerializer");
+        
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
+        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
     }
 
     @Before
     public void setup() {
-        simpleAdr1 = new DecoratedAddress(new BasicAddress(localHost, 10000, 1));
-        simpleAdr2 = new DecoratedAddress(new BasicAddress(localHost, 10000, 2));
-        simpleAdr3 = new DecoratedAddress(new BasicAddress(localHost, 10000, 3));
-        simpleAdr4 = new DecoratedAddress(new BasicAddress(localHost, 10000, 4));
-        simpleAdr5 = new DecoratedAddress(new BasicAddress(localHost, 10000, 5));
+        simpleAdr1 = DecoratedAddress.open(localHost, 10000, 1);
+        simpleAdr2 = DecoratedAddress.open(localHost, 10000, 2);
+        simpleAdr3 = DecoratedAddress.open(localHost, 10000, 3);
+        simpleAdr4 = DecoratedAddress.open(localHost, 10000, 4);
+        simpleAdr5 = DecoratedAddress.open(localHost, 10000, 5);
 
         ArrayList<DecoratedAddress> parents1 = new ArrayList<DecoratedAddress>();
         parents1.add(simpleAdr1);

@@ -17,28 +17,25 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.proxy.example;
+package se.sics.p2ptoolbox.util.filters;
 
-import org.junit.Test;
-import se.sics.kompics.Kompics;
-import se.sics.p2ptoolbox.util.proxy.example.core.HookParentComp;
-import se.sics.p2ptoolbox.util.proxy.example.system.SystemSetup;
+import se.sics.kompics.ChannelFilter;
+import se.sics.kompics.network.Msg;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestProxy {
-    public void test() {
-        if (Kompics.isOn()) {
-            Kompics.shutdown();
-        }
-        Kompics.createAndStart(HookParentComp.class, new HookParentComp.HookParentInit(SystemSetup.hookSetup()),
-                Runtime.getRuntime().availableProcessors());
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            System.exit(1);
-        }
+public class NotFilter<F extends ChannelFilter<Msg, Boolean>> extends ChannelFilter<Msg, Boolean> {
+    private final F filter;
+    
+    public NotFilter(F filter) {
+        super(Msg.class, true, true);
+        this.filter = filter;
+    }
+    
+    @Override
+    public Boolean getValue(Msg msg) {
+        return !filter.getValue(msg);
     }
 }

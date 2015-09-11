@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Channel;
+import se.sics.kompics.ChannelFilter;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.ControlPort;
@@ -171,6 +172,16 @@ public class HookParentComp extends ComponentDefinition {
         @Override
         public <P extends PortType> Negative<P> provides(Class<P> portType) {
             return HookParentComp.this.provides(portType);
+        }
+
+        @Override
+        public <P extends PortType> Channel<P> connect(Positive<P> positive, Negative<P> negative, ChannelFilter filter) {
+            return HookParentComp.this.connect(negative, positive, filter);
+        }
+
+        @Override
+        public <P extends PortType> Channel<P> connect(Negative<P> negative, Positive<P> positive, ChannelFilter filter) {
+            return HookParentComp.this.connect(positive, negative, filter);
         }
     }
 

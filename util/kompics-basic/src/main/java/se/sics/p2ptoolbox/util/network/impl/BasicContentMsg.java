@@ -96,4 +96,9 @@ public class BasicContentMsg<A extends Address, H extends Header<A>, C extends O
         }
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return content.toString() + "from:" + header.getSource() + "to:" + header.getDestination();
+    }
 }

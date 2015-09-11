@@ -45,7 +45,7 @@ public class NatedTraitSerializerTest {
     public static void setup() {
         int serializerId = 128;
         BasicSerializerSetup.registerBasicSerializers(serializerId);
-        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, Pair.with(0, (byte)1));
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
         DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
     }
 

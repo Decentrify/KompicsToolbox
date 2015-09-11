@@ -60,9 +60,7 @@ public class DecoratedAddressSerializer implements Serializer {
         AcceptedTraits at = DecoratedAddress.getAcceptedTraits();
         for (Trait trait : traits) {
             if (trait != null) {
-                byte traitId = at.getTraitInfo(trait.getClass()).id;
-                buf.writeByte(traitId);
-                Serializers.lookupSerializer(trait.getClass()).toBinary(trait, buf);
+                Serializers.toBinary(trait, buf);
                 nrTraits++;
             }
         }
@@ -94,10 +92,8 @@ public class DecoratedAddressSerializer implements Serializer {
         Trait[] traits = new Trait[at.size()];
         int nrTraits = buf.readByte();
         for (int i = 0; i < nrTraits; i++) {
-            byte traitId = buf.readByte();
-            Map.Entry<Class<? extends Trait>, Pair<Integer, Byte>> tInfo = at.getTraitInfo(traitId);
-            Serializer traitSerializer = Serializers.lookupSerializer(tInfo.getKey());
-            traits[tInfo.getValue().getValue0()] = (Trait) traitSerializer.fromBinary(buf, hint);
+            Trait trait = (Trait)Serializers.fromBinary(buf, hint);
+            traits[DecoratedAddress.getAcceptedTraits().getIndex(trait.getClass())] = trait;
         }
         return traits;
     }

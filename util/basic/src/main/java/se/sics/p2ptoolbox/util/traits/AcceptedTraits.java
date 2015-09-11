@@ -28,12 +28,12 @@ import org.javatuples.Pair;
  */
 public class AcceptedTraits {
 
-    private final ImmutableMap<Class<? extends Trait>, Pair<Integer, Byte>> acceptedTraits;
+    private final ImmutableMap<Class<? extends Trait>, Integer> acceptedTraits;
 
     public AcceptedTraits() {
-        this(ImmutableMap.<Class<? extends Trait>, Pair<Integer, Byte>>of());
+        this(ImmutableMap.<Class<? extends Trait>, Integer>of());
     }
-    public AcceptedTraits(ImmutableMap<Class<? extends Trait>, Pair<Integer, Byte>> acceptedTraits) {
+    public AcceptedTraits(ImmutableMap<Class<? extends Trait>, Integer> acceptedTraits) {
         this.acceptedTraits = acceptedTraits;
     }
 
@@ -42,21 +42,12 @@ public class AcceptedTraits {
     }
 
     public <T extends Trait> TraitInfo<T> getTraitInfo(Class<T> trait) {
-        Pair<Integer, Byte> traitInfo = acceptedTraits.get(trait);
-        return new TraitInfo(traitInfo, trait);
-    }
-    
-    public Map.Entry<Class<? extends Trait>, Pair<Integer, Byte>> getTraitInfo(byte traitId) {
-        for(Map.Entry<Class<? extends Trait>, Pair<Integer, Byte>> e : acceptedTraits.entrySet()) {
-            if(e.getValue().getValue1().equals(traitId)) {
-                return e;
-            }
-        }
-        return null;
+        Integer traitIndex = acceptedTraits.get(trait);
+        return new TraitInfo(traitIndex, trait);
     }
     
     public int getIndex(Class trait) {
-        return acceptedTraits.get(trait).getValue0();
+        return acceptedTraits.get(trait);
     }
 
     public int size() {
@@ -70,12 +61,10 @@ public class AcceptedTraits {
     public static class TraitInfo<T extends Trait> {
 
         public final int index;
-        public final byte id;
         public final Class<T> traitClass;
 
-        public TraitInfo(Pair<Integer, Byte> traitInfo, Class<T> traitClass) {
-            this.index = traitInfo.getValue0();
-            this.id = traitInfo.getValue1();
+        public TraitInfo(Integer index, Class<T> traitClass) {
+            this.index = index;
             this.traitClass = traitClass;
         }
 
@@ -84,5 +73,4 @@ public class AcceptedTraits {
             return traitClass.toString();
         }
     }
-
 }

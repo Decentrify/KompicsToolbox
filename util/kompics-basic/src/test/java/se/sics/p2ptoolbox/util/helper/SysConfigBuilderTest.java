@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.util.helper;
 
-import com.google.common.base.Optional;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.AfterClass;
@@ -16,7 +15,6 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * Testing the system configuration builder.

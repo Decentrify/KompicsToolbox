@@ -16,29 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.p2ptoolbox.util.filters;
 
-package se.sics.p2ptoolbox.util.proxy.example;
-
-import org.junit.Test;
-import se.sics.kompics.Kompics;
-import se.sics.p2ptoolbox.util.proxy.example.core.HookParentComp;
-import se.sics.p2ptoolbox.util.proxy.example.system.SystemSetup;
+import se.sics.kompics.ChannelFilter;
+import se.sics.kompics.network.Msg;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestProxy {
-    public void test() {
-        if (Kompics.isOn()) {
-            Kompics.shutdown();
-        }
-        Kompics.createAndStart(HookParentComp.class, new HookParentComp.HookParentInit(SystemSetup.hookSetup()),
-                Runtime.getRuntime().availableProcessors());
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            System.exit(1);
-        }
+public class AndFilter<F1 extends ChannelFilter<Msg, Boolean>, F2 extends ChannelFilter<Msg, Boolean>>
+        extends ChannelFilter<Msg, Boolean> {
+
+    private final F1 filter1;
+    private final F2 filter2;
+
+    public AndFilter(F1 filter1, F2 filter2) {
+        super(Msg.class, true, true);
+        this.filter1 = filter1;
+        this.filter2 = filter2;
+    }
+
+    @Override
+    public Boolean getValue(Msg msg) {
+        return filter1.getValue(msg) && filter2.getValue(msg);
     }
 }

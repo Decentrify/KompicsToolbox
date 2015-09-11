@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 import se.sics.p2ptoolbox.util.traits.Trait;
 
@@ -177,5 +178,11 @@ public final class DecoratedAddress implements Address, IntegerIdentifiable {
             }
         }
         return copy;
+    }
+    
+    public static DecoratedAddress open(InetAddress ip, int port, int id) {
+        DecoratedAddress adr = new DecoratedAddress(new BasicAddress(ip, port, id));
+        adr.addTrait(NatedTrait.open());
+        return adr;
     }
 }

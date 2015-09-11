@@ -92,6 +92,7 @@ public class SystemConfigBuilder {
                 this.aggregatorAddress = Optional.absent();
             }
             LOG.info("{}aggregator:{}", new Object[]{logPrefix, aggregatorAddress.isPresent() ? aggregatorAddress.get() : "missing"});
+            selfNat = Optional.absent();
         } catch (UnknownHostException ex) {
             LOG.error("{}ip exception", logPrefix);
             throw new RuntimeException(ex);

@@ -20,8 +20,7 @@
         <module>leader-election</module>
     </modules>
     
-    <!-- branch increasing util, simulator, croupier, gradient, leader-->
-    <!-- other modules update to use new: uti, simulator, croupier, gradient, leader-->
+    <!-- last merge increasing util, simulator, croupier, gradient, leader-->
     <properties>
         <original.util.version>1.9-SNAPSHOT</original.util.version>
         <original.simulator.version>1.6-SNAPSHOT</original.simulator.version>

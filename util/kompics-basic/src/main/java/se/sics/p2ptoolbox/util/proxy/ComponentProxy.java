@@ -20,6 +20,7 @@
 package se.sics.p2ptoolbox.util.proxy;
 
 import se.sics.kompics.Channel;
+import se.sics.kompics.ChannelFilter;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.ControlPort;
@@ -45,8 +46,12 @@ public interface ComponentProxy {
     public <T extends ComponentDefinition> Component create(Class<T> definition, Init.None initEvent);
 
     public <P extends PortType> Channel<P> connect(Positive<P> positive, Negative<P> negative);
+    
+    public <P extends PortType> Channel<P> connect(Positive<P> positive, Negative<P> negative, ChannelFilter filter);
 
     public <P extends PortType> Channel<P> connect(Negative<P> negative, Positive<P> positive);
+    
+    public <P extends PortType> Channel<P> connect(Negative<P> negative, Positive<P> positive, ChannelFilter filter);
     
     public <P extends PortType> void disconnect(Negative<P> negative,Positive<P> positive);
     
