@@ -79,7 +79,15 @@ public class Visualizer extends ComponentDefinition {
                 snapshotList.removeLast();
             }
             
-            logger.debug("{}", event.getNodePacketMap());
+            Map<BasicAddress, List<PacketInfo>> nodePacketMap = event.getNodePacketMap();
+            
+            if(nodePacketMap.isEmpty()){
+                
+                logger.warn("Empty map containing no information from the system. Returning.");
+                return;
+            }
+            
+            logger.debug("{}", nodePacketMap);
             snapshotList.addFirst(event.getNodePacketMap());
         }
     };
