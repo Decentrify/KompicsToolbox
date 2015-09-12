@@ -5,7 +5,7 @@
     <parent>
         <groupId>se.sics.ktoolbox.cc</groupId>
         <artifactId>bootstrap</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox.cc.bootstrap</groupId>
     <artifactId>core</artifactId>
