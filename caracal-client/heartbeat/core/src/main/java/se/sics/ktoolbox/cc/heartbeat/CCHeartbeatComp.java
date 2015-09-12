@@ -62,6 +62,9 @@ import se.sics.ktoolbox.cc.heartbeat.op.CCOverlaySampleOp;
 import se.sics.ktoolbox.cc.heartbeat.util.CCKeyFactory;
 import se.sics.ktoolbox.cc.heartbeat.util.CCValueFactory;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
+import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -73,12 +76,14 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     //There is no need to set timers on caracal requests - it should always answer and it should have a timer of its own
     Positive<CCBootstrapPort> caracal = requires(CCBootstrapPort.class);
     Positive<Timer> timer = requires(Timer.class);
+    Positive<SelfAddressUpdatePort> addressUpdate = requires(SelfAddressUpdatePort.class);
     Negative<CCHeartbeatPort> provided = provides(CCHeartbeatPort.class);
 
     private final SystemConfig systemConfig;
     private final CCHeartbeatConfig heartbeatConfig;
     private final String logPrefix;
     private final Random rand;
+    private DecoratedAddress self;
 
     private byte[] schemaPrefix;
     private Set<ByteBuffer> heartbeats;
@@ -89,8 +94,9 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
 
     public CCHeartbeatComp(CCHeartbeatInit init) {
         this.systemConfig = init.systemConfig;
+        this.self = systemConfig.self;
         this.heartbeatConfig = init.heartbeatConfig;
-        this.logPrefix = systemConfig.self.getBase().toString();
+        this.logPrefix = self.getBase().toString();
         this.rand = new Random(systemConfig.seed);
         this.heartbeats = new HashSet<ByteBuffer>();
         this.activeOps = new HashMap<UUID, CCOperation>();
@@ -108,6 +114,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         subscribe(handleOverlaySampleRequest, provided);
         subscribe(handleCCOpResponse, caracal);
         subscribe(handleCCOpTimeout, caracal);
+        subscribe(handleSelfAddressUpdate, addressUpdate);
     }
     //**************************************************************************
     Handler handleStart = new Handler<Start>() {
@@ -160,6 +167,14 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
             activeOps.remove(opId);
         }
     }
+    
+    Handler handleSelfAddressUpdate = new Handler<SelfAddressUpdate>() {
+        @Override
+        public void handle(SelfAddressUpdate update) {
+            LOG.info("{}updating self address:{}", logPrefix, update.self);
+            self = update.self;
+        }
+    };
     //**************************************************************************
     Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
         @Override
@@ -189,7 +204,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         @Override
         public void handle(HeartbeatTimeout event) {
             LOG.debug("{} heartbeat", logPrefix);
-            byte[] value = CCValueFactory.getHeartbeatValue(systemConfig.self);
+            byte[] value = CCValueFactory.getHeartbeatValue(self);
             for (ByteBuffer overlay : heartbeats) {
                 Key heartbeatKey = CCKeyFactory.getHeartbeatKey(schemaPrefix, overlay.array(), rand.nextInt(heartbeatConfig.heartbeatSize()));
                 PutRequest put = new PutRequest(UUID.randomUUID(), heartbeatKey, value);
@@ -209,7 +224,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
                     new Object[]{logPrefix, BaseEncoding.base16().encode(event.overlayId)});
             KeyRange overlaySampleRange = CCKeyFactory.getHeartbeatRange(schemaPrefix, event.overlayId);
             RangeQuery.Request range = new RangeQuery.Request(UUID.randomUUID(), overlaySampleRange, Limit.toItems(heartbeatConfig.heartbeatSize()), TFFactory.noTF(), ActionFactory.noop(), RangeQuery.Type.SEQUENTIAL);
-            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), systemConfig.self, CCHeartbeatComp.this, event, range);
+            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), self, CCHeartbeatComp.this, event, range);
             activeOps.put(op.getId(), op);
             op.start();
         }

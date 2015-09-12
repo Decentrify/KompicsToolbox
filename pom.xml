@@ -11,16 +11,16 @@
         <module>simulator</module>
         <module>croupier</module>
         <module>gradient</module>
-       <module>chunk-manager</module>
-         <module>ip-solver</module>
+        <module>chunk-manager</module>
+        <module>ip-solver</module>
         <module>videostream</module>
-       <module>nat-echo</module>
-         <module>aggregator</module> 
+        <module>nat-echo</module>
+        <module>aggregator</module> 
         <module>caracal-client</module>
         <module>leader-election</module>
     </modules>
     
-    <!-- last merge increasing util, simulator, croupier, gradient, leader-->
+    <!-- last merge increasing util, simulator, croupier, gradient, leader, caracal-client-->
     <properties>
         <original.util.version>1.9-SNAPSHOT</original.util.version>
         <original.simulator.version>1.6-SNAPSHOT</original.simulator.version>
@@ -31,7 +31,7 @@
         <original.videostream.version>1.2-SNAPSHOT</original.videostream.version>
         <original.leader.version>1.4-SNAPSHOT</original.leader.version>
         <original.ipsolver.version>1.1-SNAPSHOT</original.ipsolver.version>
-        <original.caracal.version>1.1-SNAPSHOT</original.caracal.version>
+        <original.caracal.version>1.2-SNAPSHOT</original.caracal.version>
         <original.natecho.version>0.0.2-SNAPSHOT</original.natecho.version>
         
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
