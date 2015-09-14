@@ -91,6 +91,8 @@ public class GlobalAggregator extends ComponentDefinition {
         public void handle(AggregationTimeout aggregationTimeout) {
 
             logger.debug("Aggregation timeout handler invoked, forwarding the aggregated information.");
+            logger.debug("Node Packet Map :{}", nodePacketMap);
+
             trigger(new AggregatedInfo(nodePacketMap), aggregatorPort);
 
 //          Clear the map for the next round.

@@ -26,4 +26,14 @@ public class AppComponentInfo implements ComponentInfo {
                 ", str='" + str + '\'' +
                 '}';
     }
+
+    @Override
+    public ComponentInfo append(ComponentInfo cInfo) {
+
+        if(cInfo instanceof AppComponentInfo){
+            return cInfo;
+        }
+
+        return this;
+    }
 }

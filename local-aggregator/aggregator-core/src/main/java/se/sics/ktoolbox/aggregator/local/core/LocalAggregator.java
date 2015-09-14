@@ -104,6 +104,8 @@ public class LocalAggregator extends ComponentDefinition {
             logger.debug("Handler for the Information event from the component");
 
             Class componentInfoClass  = event.componentInfo.getClass();
+            ComponentInfo componentInfo = event.componentInfo;
+
             Map<Integer, ComponentInfo> result = componentInfoMap.get(componentInfoClass);
 
             if(result == null){
@@ -111,7 +113,18 @@ public class LocalAggregator extends ComponentDefinition {
                 componentInfoMap.put(componentInfoClass, result);
             }
 
-            result.put(event.overlayId, event.componentInfo);
+//          Append feature added to allow the application to send information to be aggregated in case
+//          the application is sending the data which needs to be aggregated before it could be sent.
+
+            else {
+
+                ComponentInfo cInfo = result.get(event.overlayId);
+                if(cInfo != null){
+                    componentInfo = cInfo.append(componentInfo);
+                }
+            }
+
+            result.put(event.overlayId, componentInfo);
         }
     };
 
