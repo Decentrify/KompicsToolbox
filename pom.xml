@@ -11,7 +11,6 @@
         <module>croupier</module>
         <module>gradient</module>
         <module>chunk-manager</module>
-        <module>aggregator</module>
 		<module>local-aggregator</module>
         <module>global-aggregator</module> 
         <module>videostream</module>
