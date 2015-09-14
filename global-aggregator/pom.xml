@@ -24,9 +24,7 @@
     </modules>
 
     <properties>
-        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
-        <logger.version>1.7.5</logger.version>
-        <util.version>1.8-SNAPSHOT</util.version>
+        <util.version>${original.util.version}</util.version>
     </properties>
 
     <dependencies>

@@ -35,6 +35,8 @@
         <original.ipsolver.version>1.1-SNAPSHOT</original.ipsolver.version>
         <original.caracal.version>1.2-SNAPSHOT</original.caracal.version>
         <original.natecho.version>0.0.2-SNAPSHOT</original.natecho.version>
+        <original.local-aggregator.version>1.0-SNAPSHOT</original.local-aggregator.version>
+        <original.global-aggregator.version>1.0-SNAPSHOT</original.global-aggregator.version>
         
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
         <nat.version>0.0.1-SNAPSHOT</nat.version>
