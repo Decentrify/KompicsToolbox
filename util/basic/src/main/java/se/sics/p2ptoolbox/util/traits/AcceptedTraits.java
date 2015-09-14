@@ -19,8 +19,6 @@
 package se.sics.p2ptoolbox.util.traits;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import org.javatuples.Pair;
 
 /**
  *

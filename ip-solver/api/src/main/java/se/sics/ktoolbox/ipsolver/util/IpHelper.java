@@ -55,6 +55,10 @@ public class IpHelper {
         return getTwoDotPrefix(adr).equals("192.168");
     }
     
+    public static boolean isPublic(InetAddress add) {
+        return !(isPrivate(add) || isLoopback(add));
+    }
+    
     private static String getOneDotPrefix(InetAddress addr) {
         String textualPrefixAddr = addr.getHostAddress();
         int firstDot = textualPrefixAddr.indexOf(".");

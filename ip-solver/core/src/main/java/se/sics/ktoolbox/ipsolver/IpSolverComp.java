@@ -88,7 +88,7 @@ public class IpSolverComp extends ComponentDefinition {
                 ArrayList<IpAddressStatus> addressList = new ArrayList<IpAddressStatus>(niSet);
                 InetAddress boundIp = InetAddress.getLocalHost();
                 LOG.debug("{}GetIp responding", logPrefix);
-                answer(req, new GetIp.Resp(addressList, boundIp));
+                answer(req, req.answer(addressList, boundIp));
             } catch (SocketException ex) {
                 LOG.error("socket error while scanning network interfaces");
                 throw new RuntimeException("socket error while scanning network interfaces", ex);

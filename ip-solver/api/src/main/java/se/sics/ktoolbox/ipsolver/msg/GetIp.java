@@ -41,16 +41,22 @@ public class GetIp {
             super();
             this.netInterfaces = netInterfaces;
         }
+        
+        public Resp answer(List<IpAddressStatus> addrs, InetAddress boundIp) {
+            return new Resp(netInterfaces, addrs, boundIp);
+        }
     }
 
     public static class Resp implements Response {
 
+        public final EnumSet<NetworkInterfacesMask> netInterfaces;
         public final List<IpAddressStatus> addrs;
         public final InetAddress boundIp;
 
-        public Resp(List<IpAddressStatus> addrs, InetAddress boundIp) {
+        Resp(EnumSet<NetworkInterfacesMask> netInterfaces, List<IpAddressStatus> addrs, InetAddress boundIp) {
             assert addrs != null;
 
+            this.netInterfaces = netInterfaces;
             this.addrs = addrs;
             this.boundIp = boundIp;
         }
@@ -97,5 +103,5 @@ public class GetIp {
         PUBLIC,
         ALL
     };
-    
+
 }
