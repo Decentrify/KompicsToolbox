@@ -8,16 +8,18 @@
     <packaging>pom</packaging>
     <modules>
         <module>util</module>
-        <module>simulator</module>
         <module>croupier</module>
         <module>gradient</module>
         <module>chunk-manager</module>
-        <module>ip-solver</module>
+        <module>aggregator</module>
+		<module>local-aggregator</module>
+        <module>global-aggregator</module> 
         <module>videostream</module>
-        <module>nat-echo</module>
-        <module>aggregator</module> 
+        <module>leader-election</module> 
+        <module>ip-solver</module>
         <module>caracal-client</module>
-        <module>leader-election</module>
+        <module>nat-echo</module>
+        <module>simulator</module>
     </modules>
     
     <!-- last merge increasing util, simulator, croupier, gradient, leader, caracal-client-->
