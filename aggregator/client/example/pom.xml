@@ -7,20 +7,23 @@
     <parent>
         <groupId>se.sics.ktoolbox.aggregator</groupId>
         <artifactId>client</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>2.0-SNAPSHOT</version>
     </parent>
 
     <groupId>se.sics.ktoolbox.aggregator.client</groupId>
     <artifactId>example</artifactId>
+    <name>AG Client Example</name>
 
     <dependencies>
-
         <dependency>
             <groupId>se.sics.ktoolbox.aggregator.client</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${logger.version}</version>
+        </dependency>
     </dependencies>
-
 </project>
