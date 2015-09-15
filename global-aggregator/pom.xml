@@ -24,6 +24,9 @@
     </modules>
 
     <properties>
+        <java.version>1.7</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <kompics.version>0.8.2-SNAPSHOT</kompics.version>
         <logger.version>1.7.5</logger.version>
         <util.version>1.8-SNAPSHOT</util.version>
