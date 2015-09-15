@@ -68,7 +68,7 @@ public class ElectionLeader extends ComponentDefinition {
     private ElectionConfig config;
     private LCRuleSet lcRuleSet;
     private DecoratedAddress self;
-    private Map<BasicAddress, LEContainer> addressContainerMap;
+    private Map<Integer, LEContainer> addressContainerMap;
     private int leaderGroupSize;
 
     // Promise Sub Protocol.
@@ -119,7 +119,7 @@ public class ElectionLeader extends ComponentDefinition {
         this.leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
         this.selfLCView = init.initialView;
         this.selfLEContainer = new LEContainer(self, selfLCView);
-        this.addressContainerMap = new HashMap<BasicAddress, LEContainer>();
+        this.addressContainerMap = new HashMap<Integer, LEContainer>();
 
 
         lcPeerViewComparator = init.comparator;
@@ -213,7 +213,7 @@ public class ElectionLeader extends ComponentDefinition {
         public void handle(MockedGradientUpdate event) {
 
             // Incorporate the new sample.
-            Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
+            Map<Integer, LEContainer> oldContainerMap = addressContainerMap;
             addressContainerMap = ElectionHelper.addGradientSample(event.collection);
 
             // Check how much the sample changed.
@@ -304,7 +304,7 @@ public class ElectionLeader extends ComponentDefinition {
             LOG.trace("{}: Received sample from gradient", self.getId());
 
             // Incorporate the new sample.
-            Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
+            Map<Integer, LEContainer> oldContainerMap = addressContainerMap;
             addressContainerMap = ElectionHelper.addGradientSample(event.gradientSample);
 
             // Check how much the sample changed.

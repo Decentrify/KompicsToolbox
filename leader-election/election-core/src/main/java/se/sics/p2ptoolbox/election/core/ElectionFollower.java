@@ -56,7 +56,7 @@ public class ElectionFollower extends ComponentDefinition {
     // Gradient Sample.
     int convergenceCounter = 0;
     private boolean isConverged;
-    private Map<BasicAddress, LEContainer> addressContainerMap;
+    private Map<Integer, LEContainer> addressContainerMap;
 
     // Leader Election.
     private UUID electionRoundId;
@@ -81,7 +81,7 @@ public class ElectionFollower extends ComponentDefinition {
         LOG.info("{}initiating..", logPrefix);
         cohortsRuleSet = init.cohortsRuleSet;
         
-        addressContainerMap = new HashMap<BasicAddress, LEContainer>();
+        addressContainerMap = new HashMap<Integer, LEContainer>();
 
         selfLCView = init.initialView;
         selfContainer = new LEContainer(self, selfLCView);
@@ -153,7 +153,7 @@ public class ElectionFollower extends ComponentDefinition {
             LOG.trace("Received mocked update from the gradient");
 
             // Incorporate the new sample.
-            Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
+            Map<Integer, LEContainer> oldContainerMap = addressContainerMap;
             addressContainerMap = ElectionHelper.addGradientSample(event.collection);
 
             // Check how much the sample changed.
@@ -187,7 +187,7 @@ public class ElectionFollower extends ComponentDefinition {
             LOG.trace("{}: Received gradient sample", self.getId());
 
             // Incorporate the new sample.
-            Map<BasicAddress, LEContainer> oldContainerMap = addressContainerMap;
+            Map<Integer, LEContainer> oldContainerMap = addressContainerMap;
             addressContainerMap = ElectionHelper.addGradientSample(event.gradientSample);
 
             // Check how much the sample changed.

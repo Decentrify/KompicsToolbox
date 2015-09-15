@@ -22,11 +22,11 @@ public class ElectionHelper {
      * @param sample sample from the gradient.
      * @return updated view.
      */
-    public static Map<BasicAddress, LEContainer> addGradientSample(Collection<Container> sample){
+    public static Map<Integer, LEContainer> addGradientSample(Collection<Container> sample){
 
-        Map<BasicAddress, LEContainer> containerMap = new HashMap<BasicAddress, LEContainer>();
+        Map<Integer, LEContainer> containerMap = new HashMap<Integer, LEContainer>();
         for(Container container : sample){
-            containerMap.put(((DecoratedAddress)container.getSource()).getBase(), new LEContainer( (DecoratedAddress)container.getSource(), (LCPeerView)container.getContent()) );
+            containerMap.put(((DecoratedAddress)container.getSource()).getBase().getId(), new LEContainer( (DecoratedAddress)container.getSource(), (LCPeerView)container.getContent()) );
         }
 
         return containerMap;
@@ -42,7 +42,7 @@ public class ElectionHelper {
      * @param convergenceFactor value determining how much change is acceptable.
      * @return if round is converged or not.
      */
-    public static boolean isRoundConverged(Set<BasicAddress> oldAddressSet, Set<BasicAddress> currentAddressSet, double convergenceFactor){
+    public static boolean isRoundConverged(Set<Integer> oldAddressSet, Set<Integer> currentAddressSet, double convergenceFactor){
 
         int oldSize = oldAddressSet.size();
         int newSize = currentAddressSet.size();
