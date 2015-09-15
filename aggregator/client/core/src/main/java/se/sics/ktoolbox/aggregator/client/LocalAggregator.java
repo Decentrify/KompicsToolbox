@@ -41,6 +41,8 @@ import se.sics.ktoolbox.aggregator.client.util.ComponentInfo;
 import se.sics.ktoolbox.aggregator.client.util.ComponentInfoProcessor;
 import se.sics.ktoolbox.aggregator.msg.PacketContainer;
 import se.sics.ktoolbox.aggregator.util.PacketInfo;
+import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
+import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
 
 /**
  * Main aggregator component used to collect the information
@@ -60,6 +62,7 @@ public class LocalAggregator extends ComponentDefinition {
     private Negative<LocalAggregatorPort> aggregatorPort = provides(LocalAggregatorPort.class);
     private DecoratedAddress globalAggregatorAddress;
     private DecoratedAddress selfAddress;
+    private Positive<SelfAddressUpdatePort> selfAddressUpdatePort = requires(SelfAddressUpdatePort.class);
 
     public LocalAggregator(LocalAggregatorInit init) {
 
@@ -68,6 +71,7 @@ public class LocalAggregator extends ComponentDefinition {
         subscribe(infoEventHandler, aggregatorPort);
         subscribe(updateEventHandler, aggregatorPort);
         subscribe(aggregationTimeoutHandler, timer);
+        subscribe(selfAddressUpdateHandler, selfAddressUpdatePort);
     }
 
     public void doInit(LocalAggregatorInit init){
@@ -96,6 +100,15 @@ public class LocalAggregator extends ComponentDefinition {
             trigger(spt, timer);
         }
     };
+
+    Handler<SelfAddressUpdate> selfAddressUpdateHandler = new Handler<SelfAddressUpdate>() {
+        @Override
+        public void handle(SelfAddressUpdate selfAddressUpdate) {
+            logger.debug("Event to update the self address.");
+            selfAddress = selfAddressUpdate.self;
+        }
+    };
+
 
     /**
      * Handler for the update event from the application
