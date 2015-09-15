@@ -133,9 +133,30 @@ netty-test/target/
 /local-aggregator/aggregator-api/target/
 /local-aggregator/aggregator-core/target/
 /local-aggregator/aggregator-example/target/
+/local-aggregator/aggregator-network/target/
 
 #global-aggregator
 /global-aggregator/aggregator-api/target/
 /global-aggregator/aggregator-core/target/
 /global-aggregator/aggregator-example/target/
+/global-aggregator/aggregator-network/target/
+
+
+
+# Aggregator Module.
+/aggregator/common/target/
+/aggregator/network/target/
+/aggregator/client/api/target/
+/aggregator/client/core/target/
+/aggregator/client/example/target/
+
+/aggregator/server/api/target/
+/aggregator/server/core/target/
+/aggregator/server/example/target/
+
+/aggregator/server/target/
+/aggregator/client/target/
+
+
+
 
