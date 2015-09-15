@@ -143,3 +143,20 @@ netty-test/target/
 
 
 
+# Aggregator Module.
+/aggregator/common/target/
+/aggregator/network/target/
+/aggregator/client/api/target/
+/aggregator/client/core/target/
+/aggregator/client/example/target/
+
+/aggregator/server/api/target/
+/aggregator/server/core/target/
+/aggregator/server/example/target/
+
+/aggregator/server/target/
+/aggregator/client/target/
+
+
+
+
