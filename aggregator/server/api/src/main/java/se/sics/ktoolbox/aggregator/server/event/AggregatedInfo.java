@@ -34,13 +34,13 @@ import se.sics.ktoolbox.aggregator.util.PacketInfo;
  */
 public class AggregatedInfo implements KompicsEvent {
 
-    private final Map<BasicAddress, List<PacketInfo>> nodePacketMap;
+    private final Map<Integer, List<PacketInfo>> nodePacketMap;
 
-    public AggregatedInfo(Map<BasicAddress, List<PacketInfo>> nodePacketMap){
+    public AggregatedInfo(Map<Integer, List<PacketInfo>> nodePacketMap){
         this.nodePacketMap = nodePacketMap;
     }
 
-    public Map<BasicAddress, List<PacketInfo>> getNodePacketMap() {
+    public Map<Integer, List<PacketInfo>> getNodePacketMap() {
         return nodePacketMap;
     }
 }

@@ -41,17 +41,17 @@ public class PseudoDesignProcessor implements DesignProcessor<PseudoPacketInfo, 
     private Logger logger = LoggerFactory.getLogger(PseudoDesignProcessor.class);
     
     @Override
-    public DesignInfoContainer<PseudoDesignInfo> process(Collection<Map<BasicAddress, List<PacketInfo>>> windows) {
+    public DesignInfoContainer<PseudoDesignInfo> process(Collection<Map<Integer, List<PacketInfo>>> windows) {
         
         logger.debug("Initiating the processing of the system information map.");
         
         Collection<PseudoDesignInfo> collectionResult = new ArrayList<PseudoDesignInfo>();
-        for(Map<BasicAddress, List<PacketInfo>> window : windows){
+        for(Map<Integer, List<PacketInfo>> window : windows){
             
             int count = 0;
             float sum = 0;
             
-            for(Map.Entry<BasicAddress, List<PacketInfo>> entry: window.entrySet()){
+            for(Map.Entry<Integer, List<PacketInfo>> entry: window.entrySet()){
                 
                 for(PacketInfo info : entry.getValue()){
                     if( info instanceof  PseudoPacketInfo){

@@ -44,7 +44,7 @@ public interface DesignProcessor < PI_I extends PacketInfo, DI_O extends DesignI
      *
      * @return collection of processed windows.
      */
-    public DesignInfoContainer<DI_O> process(Collection<Map<BasicAddress, List<PacketInfo>>> windows);
+    public DesignInfoContainer<DI_O> process(Collection<Map<Integer, List<PacketInfo>>> windows);
 
 
     /**

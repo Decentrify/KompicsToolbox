@@ -47,7 +47,7 @@ public class GlobalAggregator extends ComponentDefinition {
 
     Logger logger = LoggerFactory.getLogger(GlobalAggregator.class);
     private long timeout;
-    private Map<BasicAddress, List<PacketInfo>> nodePacketMap;
+    private Map<Integer, List<PacketInfo>> nodePacketMap;
 
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
@@ -70,7 +70,7 @@ public class GlobalAggregator extends ComponentDefinition {
 
         logger.debug("Initializing the global aggregator.");
         this.timeout = init.timeout;
-        this.nodePacketMap = new HashMap<BasicAddress, List<PacketInfo>>();
+        this.nodePacketMap = new HashMap<Integer, List<PacketInfo>>();
     }
 
 
@@ -116,7 +116,7 @@ public class GlobalAggregator extends ComponentDefinition {
             trigger(new AggregatedInfo(nodePacketMap), aggregatorPort);
 
 //          Clear the map for the next round.
-            nodePacketMap = new HashMap<BasicAddress, List<PacketInfo>>();
+            nodePacketMap = new HashMap<Integer, List<PacketInfo>>();
         }
     };
 
@@ -134,11 +134,11 @@ public class GlobalAggregator extends ComponentDefinition {
             PacketContainer container = event.getContent();
 
             BasicAddress sourceAddress = container.sourceAddress.getBase();
-            List<PacketInfo> packets = nodePacketMap.get(sourceAddress);
+            List<PacketInfo> packets = nodePacketMap.get(sourceAddress.getId());
 
             if(packets == null){
                 packets = new ArrayList<PacketInfo>();
-                nodePacketMap.put(sourceAddress, packets);
+                nodePacketMap.put(sourceAddress.getId(), packets);
             }
 
             packets.add(container.packetInfo);

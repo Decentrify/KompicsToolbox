@@ -46,7 +46,7 @@ public class Visualizer extends ComponentDefinition {
 
     Negative<VisualizerPort> visualizerPort = provides(VisualizerPort.class);
     Positive<GlobalAggregatorPort> aggregatorPort = requires(GlobalAggregatorPort.class);
-    LinkedList<Map<BasicAddress, List<PacketInfo>>> snapshotList;
+    LinkedList<Map<Integer, List<PacketInfo>>> snapshotList;
 
     public Visualizer(VisualizerInit init){
 
@@ -65,7 +65,7 @@ public class Visualizer extends ComponentDefinition {
         logger.debug("Performing the initialization tasks.");
         this.maxSnapshots = init.maxSnapshots;
         this.designerNameMap = init.designerNameMap;
-        this.snapshotList = new LinkedList<Map<BasicAddress, List<PacketInfo>>>();
+        this.snapshotList = new LinkedList<Map<Integer, List<PacketInfo>>>();
 
     }
 
@@ -96,7 +96,7 @@ public class Visualizer extends ComponentDefinition {
                 snapshotList.removeLast();
             }
             
-            Map<BasicAddress, List<PacketInfo>> nodePacketMap = event.getNodePacketMap();
+            Map<Integer, List<PacketInfo>> nodePacketMap = event.getNodePacketMap();
             
             if(nodePacketMap.isEmpty()){
                 
@@ -128,7 +128,7 @@ public class Visualizer extends ComponentDefinition {
             }
 
             logger.debug("Located the design processor, going ahead with processing.");
-            Collection<Map<BasicAddress, List<PacketInfo>>> windows = getWindows(event.getStartLoc(), event.getEndLoc());
+            Collection<Map<Integer, List<PacketInfo>>> windows = getWindows(event.getStartLoc(), event.getEndLoc());
             DesignInfoContainer container = processor.process(windows);
             
             logger.debug("Processed Container {}: ", container);
@@ -146,9 +146,9 @@ public class Visualizer extends ComponentDefinition {
      * @param end end point
      * @return Window Collection.
      */
-    private Collection<Map<BasicAddress, List<PacketInfo>>> getWindows(int start, int end){
+    private Collection<Map<Integer, List<PacketInfo>>> getWindows(int start, int end){
 
-        List<Map<BasicAddress, List<PacketInfo>>> result = new ArrayList<Map<BasicAddress, List<PacketInfo>>>();
+        List<Map<Integer, List<PacketInfo>>> result = new ArrayList<Map<Integer, List<PacketInfo>>>();
 
         if(start > snapshotList.size()){
             return result;

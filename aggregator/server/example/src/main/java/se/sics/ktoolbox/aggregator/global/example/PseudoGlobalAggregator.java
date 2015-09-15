@@ -86,7 +86,7 @@ public class PseudoGlobalAggregator extends ComponentDefinition{
         public void handle(LocalTimeout localTimeout) {
             
             logger.debug("Time to push test data to the visualizer.");
-            Map<BasicAddress, List<PacketInfo>> packetMap = createTestData(NODES);
+            Map<Integer, List<PacketInfo>> packetMap = createTestData(NODES);
             trigger(new AggregatedInfo(packetMap), aggregatorPort);
         }
     };
@@ -98,11 +98,11 @@ public class PseudoGlobalAggregator extends ComponentDefinition{
      *
      * @return Map.
      */
-    private Map<BasicAddress, List<PacketInfo>> createTestData (int nodes){
+    private Map<Integer, List<PacketInfo>> createTestData (int nodes){
         
         int port = basePort;
         int identifier = baseId;
-        Map<BasicAddress, List<PacketInfo>> nodePacketMap = new HashMap<BasicAddress, List<PacketInfo>>();
+        Map<Integer, List<PacketInfo>> nodePacketMap = new HashMap<Integer, List<PacketInfo>>();
         
         while(nodes > 0){
             
@@ -112,7 +112,7 @@ public class PseudoGlobalAggregator extends ComponentDefinition{
             List<PacketInfo> list = new ArrayList<PacketInfo>();
             list.add(packetInfo);
             
-            nodePacketMap.put(address, list);
+            nodePacketMap.put(address.getId(), list);
             
             port ++;
             identifier ++;
