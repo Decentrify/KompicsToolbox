@@ -43,7 +43,8 @@ public class NatedTrait implements Trait {
     public final List<DecoratedAddress> parents;
 
     public static boolean isOpen(DecoratedAddress adr) {
-        return adr.hasTrait(NatedTrait.class) && adr.getTrait(NatedTrait.class).type.equals(Type.OPEN);
+        return adr.hasTrait(NatedTrait.class) && 
+                (adr.getTrait(NatedTrait.class).type.equals(Type.OPEN) || adr.getTrait(NatedTrait.class).type.equals(Type.UPNP));
     }
 
     public static NatedTrait open() {
