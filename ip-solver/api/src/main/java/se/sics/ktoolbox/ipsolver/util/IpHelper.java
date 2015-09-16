@@ -56,7 +56,7 @@ public class IpHelper {
     }
     
     public static boolean isPublic(InetAddress add) {
-        return !(isPrivate(add) || isLoopback(add));
+        return !(isPrivate(add) || isLoopback(add) || !isTenDot(add));
     }
     
     private static String getOneDotPrefix(InetAddress addr) {
