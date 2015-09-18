@@ -46,6 +46,10 @@ public class NatedTrait implements Trait {
         return adr.hasTrait(NatedTrait.class) && 
                 (adr.getTrait(NatedTrait.class).type.equals(Type.OPEN) || adr.getTrait(NatedTrait.class).type.equals(Type.UPNP));
     }
+    
+    public static boolean isUpnp(DecoratedAddress adr) {
+        return adr.hasTrait(NatedTrait.class) && adr.getTrait(NatedTrait.class).type.equals(Nat.Type.UPNP);
+    }
 
     public static NatedTrait open() {
         return new NatedTrait(Type.OPEN, null, null, 0, null, 0, new ArrayList<DecoratedAddress>());
