@@ -47,6 +47,7 @@ public class Visualizer extends ComponentDefinition {
     Negative<VisualizerPort> visualizerPort = provides(VisualizerPort.class);
     Positive<GlobalAggregatorPort> aggregatorPort = requires(GlobalAggregatorPort.class);
     LinkedList<Map<Integer, List<PacketInfo>>> snapshotList;
+    LinkedList<AggregatedInfo> windowList;
 
     public Visualizer(VisualizerInit init){
 
@@ -66,6 +67,7 @@ public class Visualizer extends ComponentDefinition {
         this.maxSnapshots = init.maxSnapshots;
         this.designerNameMap = init.designerNameMap;
         this.snapshotList = new LinkedList<Map<Integer, List<PacketInfo>>>();
+        this.windowList = new LinkedList<>();
 
     }
 
@@ -92,20 +94,11 @@ public class Visualizer extends ComponentDefinition {
 
             logger.debug("Received aggregated information from the global aggregator");
 
-            while(snapshotList.size() >= maxSnapshots){
-                snapshotList.removeLast();
+            while(windowList.size() >= maxSnapshots){
+                windowList.removeLast();
             }
-            
-            Map<Integer, List<PacketInfo>> nodePacketMap = event.getNodePacketMap();
-            
-            if(nodePacketMap.isEmpty()){
-                
-                logger.warn("Empty map containing no information from the system. Returning.");
-                return;
-            }
-            
-            logger.debug("{}", nodePacketMap);
-            snapshotList.addFirst(event.getNodePacketMap());
+
+            windowList.addFirst(event);
         }
     };
 
@@ -128,7 +121,7 @@ public class Visualizer extends ComponentDefinition {
             }
 
             logger.debug("Located the design processor, going ahead with processing.");
-            Collection<Map<Integer, List<PacketInfo>>> windows = getWindows(event.getStartLoc(), event.getEndLoc());
+            List<AggregatedInfo> windows = getWindowList(event.getStartLoc(), event.getQty());
             DesignInfoContainer container = processor.process(windows);
             
             logger.debug("Processed Container {}: ", container);
@@ -140,25 +133,26 @@ public class Visualizer extends ComponentDefinition {
 
 
     /**
-     * Based on the parameters for the method, arrange the windows in a list.
+     * Based on the parameters, fetch the windows.
      *
-     * @param start start point.
-     * @param end end point
-     * @return Window Collection.
+     * @param start starting point
+     * @param qty quantity
+     *
+     * @return aggregated info list
      */
-    private Collection<Map<Integer, List<PacketInfo>>> getWindows(int start, int end){
+    private List<AggregatedInfo> getWindowList(int start , int qty){
 
-        List<Map<Integer, List<PacketInfo>>> result = new ArrayList<Map<Integer, List<PacketInfo>>>();
-
-        if(start > snapshotList.size()){
+        List<AggregatedInfo> result = new ArrayList<>();
+        if(start > windowList.size()){
             return result;
         }
 
-        if(end > snapshotList.size()){
-            end = snapshotList.size();
+        int end = start + qty;
+        if(end > windowList.size()){
+            end = windowList.size();
         }
 
-        result.addAll(snapshotList.subList(start, end));
+        result.addAll(windowList.subList(start,end));
         return result;
     }
 

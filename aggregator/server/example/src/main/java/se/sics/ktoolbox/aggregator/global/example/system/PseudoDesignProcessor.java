@@ -20,6 +20,7 @@ package se.sics.ktoolbox.aggregator.global.example.system;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.aggregator.server.event.AggregatedInfo;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.util.ArrayList;
@@ -41,17 +42,19 @@ public class PseudoDesignProcessor implements DesignProcessor<PseudoPacketInfo, 
     private Logger logger = LoggerFactory.getLogger(PseudoDesignProcessor.class);
     
     @Override
-    public DesignInfoContainer<PseudoDesignInfo> process(Collection<Map<Integer, List<PacketInfo>>> windows) {
+    public DesignInfoContainer<PseudoDesignInfo> process(List<AggregatedInfo> windows) {
         
         logger.debug("Initiating the processing of the system information map.");
         
         Collection<PseudoDesignInfo> collectionResult = new ArrayList<PseudoDesignInfo>();
-        for(Map<Integer, List<PacketInfo>> window : windows){
-            
+        for(AggregatedInfo window : windows){
+
+            Map<Integer, List<PacketInfo>> map = window.getNodePacketMap();
+
             int count = 0;
             float sum = 0;
             
-            for(Map.Entry<Integer, List<PacketInfo>> entry: window.entrySet()){
+            for(Map.Entry<Integer, List<PacketInfo>> entry: map.entrySet()){
                 
                 for(PacketInfo info : entry.getValue()){
                     if( info instanceof  PseudoPacketInfo){

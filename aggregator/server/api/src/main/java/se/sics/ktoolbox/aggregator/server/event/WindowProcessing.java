@@ -34,15 +34,15 @@ public class WindowProcessing {
 
         private String designer;
         private int startLoc;
-        private int endLoc;
+        private int qty;
         private UUID requestId;
 
-        public Request(UUID requestId, String designer, int startLoc, int endLoc){
+        public Request(UUID requestId, String designer, int startLoc, int qty){
 
             this.requestId = requestId;
             this.designer = designer;
             this.startLoc = startLoc;
-            this.endLoc = endLoc;
+            this.qty = qty;
         }
 
         @Override
@@ -50,7 +50,7 @@ public class WindowProcessing {
             return "Request{" +
                     "designer='" + designer + '\'' +
                     ", startLoc=" + startLoc +
-                    ", endLoc=" + endLoc +
+                    ", qty=" + qty +
                     ", requestId=" + requestId +
                     '}';
         }
@@ -63,8 +63,8 @@ public class WindowProcessing {
             return startLoc;
         }
 
-        public int getEndLoc() {
-            return endLoc;
+        public int getQty() {
+            return qty;
         }
 
         public UUID getRequestId() {

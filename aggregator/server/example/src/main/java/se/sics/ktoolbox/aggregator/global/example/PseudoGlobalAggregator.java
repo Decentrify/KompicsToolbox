@@ -87,7 +87,7 @@ public class PseudoGlobalAggregator extends ComponentDefinition{
             
             logger.debug("Time to push test data to the visualizer.");
             Map<Integer, List<PacketInfo>> packetMap = createTestData(NODES);
-            trigger(new AggregatedInfo(packetMap), aggregatorPort);
+            trigger(new AggregatedInfo(System.currentTimeMillis(), packetMap), aggregatorPort);
         }
     };
 

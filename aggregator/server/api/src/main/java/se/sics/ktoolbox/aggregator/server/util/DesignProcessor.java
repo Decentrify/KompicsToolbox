@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.aggregator.server.util;
 
+import se.sics.ktoolbox.aggregator.server.event.AggregatedInfo;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 
 import java.util.Collection;
@@ -44,7 +45,7 @@ public interface DesignProcessor < PI_I extends PacketInfo, DI_O extends DesignI
      *
      * @return collection of processed windows.
      */
-    public DesignInfoContainer<DI_O> process(Collection<Map<Integer, List<PacketInfo>>> windows);
+    public DesignInfoContainer<DI_O> process(List<AggregatedInfo> windows);
 
 
     /**

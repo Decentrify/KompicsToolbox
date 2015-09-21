@@ -35,9 +35,16 @@ import se.sics.ktoolbox.aggregator.util.PacketInfo;
 public class AggregatedInfo implements KompicsEvent {
 
     private final Map<Integer, List<PacketInfo>> nodePacketMap;
+    private final long time;
 
-    public AggregatedInfo(Map<Integer, List<PacketInfo>> nodePacketMap){
+
+    public AggregatedInfo(long time, Map<Integer, List<PacketInfo>> nodePacketMap){
+        this.time = time;
         this.nodePacketMap = nodePacketMap;
+    }
+
+    public long getTime() {
+        return time;
     }
 
     public Map<Integer, List<PacketInfo>> getNodePacketMap() {

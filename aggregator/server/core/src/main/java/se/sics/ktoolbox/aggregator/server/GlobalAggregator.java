@@ -113,7 +113,7 @@ public class GlobalAggregator extends ComponentDefinition {
             logger.debug("Aggregation timeout handler invoked, forwarding the aggregated information.");
             logger.debug("Node Packet Map :{}", nodePacketMap);
 
-            trigger(new AggregatedInfo(nodePacketMap), aggregatorPort);
+            trigger(new AggregatedInfo(System.currentTimeMillis(), nodePacketMap), aggregatorPort);
 
 //          Clear the map for the next round.
             nodePacketMap = new HashMap<Integer, List<PacketInfo>>();
