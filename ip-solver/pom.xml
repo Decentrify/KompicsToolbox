@@ -17,14 +17,6 @@
         <module>example</module>
     </modules>
   
-    <properties>
-        <java.version>1.7</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
-    </properties>
-    
     <dependencies>
         <dependency>
             <groupId>se.sics.kompics</groupId>
