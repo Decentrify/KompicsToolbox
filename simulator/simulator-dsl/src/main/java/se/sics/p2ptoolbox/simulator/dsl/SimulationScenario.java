@@ -50,6 +50,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.Loader;
 import javassist.NotFoundException;
+import javassist.Translator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -759,6 +760,9 @@ public abstract class SimulationScenario implements Serializable {
 	protected final Snapshot snapshot(TakeSnapshot takeSnapshotEvent) {
 		return new Snapshot(takeSnapshotEvent);
 	}
+        public final void simulate(Class<? extends ComponentDefinition> main) {
+            simulate(main, new TimeInterceptor(null));
+        }
 
 	/**
 	 * Executes simulation.
@@ -766,7 +770,7 @@ public abstract class SimulationScenario implements Serializable {
 	 * @param main
 	 *            the main
 	 */
-	public final void simulate(Class<? extends ComponentDefinition> main) {
+	public final void simulate(Class<? extends ComponentDefinition> main, Translator t) {
 		store();
 
 		try {
@@ -777,7 +781,7 @@ public abstract class SimulationScenario implements Serializable {
 							return new Loader();
 						}
 					});
-			cl.addTranslator(ClassPool.getDefault(), new TimeInterceptor(null));
+			cl.addTranslator(ClassPool.getDefault(), t);
 			Thread.currentThread().setContextClassLoader(cl);
 			TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
 			cl.run(main.getCanonicalName(), null);
