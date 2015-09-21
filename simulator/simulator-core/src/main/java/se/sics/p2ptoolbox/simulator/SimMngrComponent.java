@@ -45,6 +45,7 @@ import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SetupCmd;
+import se.sics.p2ptoolbox.simulator.cmd.util.ConnectSimulatorPort;
 import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -144,6 +145,9 @@ public class SimMngrComponent extends ComponentDefinition {
             } else {
                 log.error("aggregator address is wrong - not identifiable");
                 throw new RuntimeException("aggregator address is wrong - not identifiable");
+            }
+            if(cmd instanceof ConnectSimulatorPort) {
+                connect(aggregator.getNegative(ExperimentPort.class), experimentPort);
             }
             simulationContext.registerAggregator(aggregatorAdr);
             trigger(Start.event, aggregator.control());
