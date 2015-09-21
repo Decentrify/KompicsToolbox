@@ -38,7 +38,7 @@
         <original.caracal.version>1.2-SNAPSHOT</original.caracal.version>
         <original.natecho.version>0.0.2-SNAPSHOT</original.natecho.version>
 
-        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
+        <kompics.version>0.8.3-SNAPSHOT</kompics.version>
         <junit.version>4.11</junit.version>
         <guava.version>18.0</guava.version>
         <tuples.version>1.2</tuples.version>
