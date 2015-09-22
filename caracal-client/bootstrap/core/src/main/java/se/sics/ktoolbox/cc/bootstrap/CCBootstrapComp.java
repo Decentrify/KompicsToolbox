@@ -155,7 +155,7 @@ public class CCBootstrapComp extends ComponentDefinition {
 
             if (activeNodes.isEmpty()) {
                 LOG.warn("{} disconnected from caracal - possible network partition", logPrefix);
-                SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(deadNodes), ccBootstrapConfig.bootstrapSize(), false, false, 0);
+                SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(deadNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
                 LOG.trace("{} sending:{}", logPrefix, req);
                 trigger(req, network);
                 return;
@@ -176,7 +176,7 @@ public class CCBootstrapComp extends ComponentDefinition {
             if (msg.schemaData != null) {
                 triggerReady = true;
                 schemas = SchemaData.deserialise(msg.schemaData);
-                LOG.debug("{} received schemas:{}", logPrefix, schemas);
+                LOG.debug("{} received schemas:{}", logPrefix, schemas.schemas());
             }
             for (Address node : msg.nodes) {
                 if (activeNodes.isEmpty()) {
