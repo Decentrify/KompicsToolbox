@@ -29,6 +29,7 @@ import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.ChannelFilter;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
@@ -37,6 +38,7 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.kompics.network.Header;
+import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializers;
@@ -48,7 +50,10 @@ import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
 import se.sics.p2ptoolbox.chunkmanager.util.ChunkPrefixHelper;
 import se.sics.p2ptoolbox.chunkmanager.util.IncompleteChunkTracker;
 import se.sics.p2ptoolbox.chunkmanager.util.CompleteChunkTracker;
+import se.sics.p2ptoolbox.chunkmanager.util.FragmentableTrafficFilter;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.filters.AndFilter;
+import se.sics.p2ptoolbox.util.filters.NotFilter;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 
 /**
@@ -65,6 +70,7 @@ public class ChunkManagerComp extends ComponentDefinition {
     private final SystemConfig systemConfig;
     private final ChunkManagerConfig config;
     private final String logPrefix;
+    private final ChannelFilter<Msg, Boolean> handleTraffic = new FragmentableTrafficFilter();
 
     private final Map<UUID, Pair<IncompleteChunkTracker, UUID>> incomingChunks;
 
@@ -102,8 +108,8 @@ public class ChunkManagerComp extends ComponentDefinition {
         @Override
         public void handle(BasicContentMsg msg) {
             log.trace("{} received:{}", logPrefix, msg);
-            if (!msg.getHeader().getProtocol().equals(Transport.UDP)) {
-                log.debug("{} forwarding non UDP message:{}", logPrefix, msg);
+            if (!handleTraffic.getValue(msg)) {
+                log.debug("{} forwarding outgoing non fragmentable message:{}", logPrefix, msg);
                 trigger(msg, requiredNetwork);
                 return;
             }
@@ -140,20 +146,14 @@ public class ChunkManagerComp extends ComponentDefinition {
         @Override
         public void handle(BasicContentMsg msg) {
             log.trace("{} received:{}", logPrefix, msg);
-
-            if (!msg.getHeader().getProtocol().equals(Transport.UDP)) {
-                log.debug("{} forwarding non UDP message:{}", logPrefix, msg);
-                trigger(msg, providedNetwork);
-                return;
-            }
             if (!(msg.getContent() instanceof Chunk)) {
-                log.debug("{} forwarding UDP message:{}", logPrefix, msg);
+                log.debug("{} forwarding incoming non fragmentable message:{}", logPrefix, msg);
                 trigger(msg, providedNetwork);
                 return;
             }
 
             Chunk chunk = (Chunk) msg.getContent();
-            
+
             if (!incomingChunks.containsKey(chunk.messageId)) {
                 IncompleteChunkTracker chunkTracker = new IncompleteChunkTracker(chunk.lastChunk);
                 UUID cleanupTimeout = scheduleCleanupTimeout(chunk.messageId);
