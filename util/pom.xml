@@ -17,13 +17,6 @@
         <module>util-serializer</module>
     </modules>
     
-    <properties>
-        <java.version>1.7</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-    
     <dependencies>
         <dependency>
             <groupId>com.google.guava</groupId>

@@ -22,11 +22,6 @@
     </modules>
     
     <properties>
-        <java.version>1.7</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <kompics.version>0.8.2-SNAPSHOT</kompics.version>
-        
         <gradient.version>${original.gradient.version}</gradient.version>
         <util.version>${original.util.version}</util.version>
         <simulator.version>${original.simulator.version}</simulator.version>

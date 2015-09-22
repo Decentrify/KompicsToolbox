@@ -50,6 +50,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.Loader;
 import javassist.NotFoundException;
+import javassist.Translator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -759,6 +760,9 @@ public abstract class SimulationScenario implements Serializable {
 	protected final Snapshot snapshot(TakeSnapshot takeSnapshotEvent) {
 		return new Snapshot(takeSnapshotEvent);
 	}
+        public final void simulate(Class<? extends ComponentDefinition> main) {
+            simulate(main, new TimeInterceptor(null));
+        }
 
 	/**
 	 * Executes simulation.
@@ -766,7 +770,7 @@ public abstract class SimulationScenario implements Serializable {
 	 * @param main
 	 *            the main
 	 */
-	public final void simulate(Class<? extends ComponentDefinition> main) {
+	public final void simulate(Class<? extends ComponentDefinition> main, Translator t) {
 		store();
 
 		try {
@@ -777,7 +781,7 @@ public abstract class SimulationScenario implements Serializable {
 							return new Loader();
 						}
 					});
-			cl.addTranslator(ClassPool.getDefault(), new TimeInterceptor(null));
+			cl.addTranslator(ClassPool.getDefault(), t);
 			Thread.currentThread().setContextClassLoader(cl);
 			TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
 			cl.run(main.getCanonicalName(), null);
@@ -936,7 +940,7 @@ public abstract class SimulationScenario implements Serializable {
 	 * @param args
 	 *            the args
 	 */
-	public final void sim(Class<? extends ComponentDefinition> main,
+	public final void sim(Class<? extends ComponentDefinition> main, boolean allowThreads,
 			String... args) {
 		store();
 
@@ -952,19 +956,19 @@ public abstract class SimulationScenario implements Serializable {
 		if (!alreadyInstrumentedBoot(bootString)) {
 			// 4. transform and generate boot classes in boot-string directory
 			prepareInstrumentationExceptions();
-			instrumentBoot(bootString);
+			instrumentBoot(bootString, allowThreads);
 		} else {
 			prepareInstrumentationExceptions();
 		}
 
 		// 5. transform and generate application classes
-		instrumentApplication();
+		instrumentApplication(allowThreads);
 
 		// 6. launch simulation process
 		launchSimulation(main, args);
 	}
 
-	public static void instrument() {
+	public static void instrument(boolean allowThreads) {
 		// 1. validate environment: quit if not Sun
 		if (!goodEnv()) {
 			throw new RuntimeException("Only Sun JRE usable for simulation");
@@ -977,13 +981,13 @@ public abstract class SimulationScenario implements Serializable {
 		if (!alreadyInstrumentedBoot(bootString)) {
 			// 4. transform and generate boot classes in boot-string directory
 			prepareInstrumentationExceptions();
-			instrumentBoot(bootString);
+			instrumentBoot(bootString, allowThreads);
 		} else {
 			prepareInstrumentationExceptions();
 		}
 
 		// 5. transform and generate application classes
-		instrumentApplication();
+		instrumentApplication(allowThreads);
 	}
 	
 	/**
@@ -1197,10 +1201,10 @@ public abstract class SimulationScenario implements Serializable {
 	 * @param bootString
 	 *            the boot string
 	 */
-	private static void instrumentBoot(String bootString) {
+	private static void instrumentBoot(String bootString, boolean allowThreads) {
 		String bootCp = System.getProperty("sun.boot.class.path");
 		try {
-			transformClasses(bootCp, bootString);
+			transformClasses(bootCp, bootString, allowThreads);
 			copyResources(bootCp, bootString);
 		} catch (Throwable t) {
 			throw new RuntimeException(
@@ -1211,10 +1215,10 @@ public abstract class SimulationScenario implements Serializable {
 	/**
 	 * Instrument application.
 	 */
-	private static void instrumentApplication() {
+	private static void instrumentApplication(boolean allowThreads) {
 		String cp = System.getProperty("java.class.path");
 		try {
-			transformClasses(cp, null);
+			transformClasses(cp, null, allowThreads);
 			copyResources(cp, null);
 		} catch (Throwable t) {
 			throw new RuntimeException(
@@ -1237,7 +1241,7 @@ public abstract class SimulationScenario implements Serializable {
 	 * @throws CannotCompileException
 	 *             the cannot compile exception
 	 */
-	private static void transformClasses(String classPath, String boot)
+	private static void transformClasses(String classPath, String boot, boolean allowThreads)
 			throws IOException, NotFoundException, CannotCompileException {
 		LinkedList<String> classes = getAllClasses(classPath);
 
@@ -1253,7 +1257,7 @@ public abstract class SimulationScenario implements Serializable {
 			target += boot;
 			logger.info("Instrumenting bootstrap classes to:" + target);
 		}
-		CodeInstrumenter ci = new CodeInstrumenter();
+		CodeInstrumenter ci = new CodeInstrumenter(allowThreads);
 
 		int count = classes.size();
 		long start = System.currentTimeMillis();
