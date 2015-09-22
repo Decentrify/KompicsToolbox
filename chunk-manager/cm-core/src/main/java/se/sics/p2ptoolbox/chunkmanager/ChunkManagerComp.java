@@ -104,20 +104,21 @@ public class ChunkManagerComp extends ComponentDefinition {
     };
     //**************************************************************************
 
-    Handler handleOutgoing = new Handler<BasicContentMsg>() {
+    Handler handleOutgoing = new Handler<Msg>() {
         @Override
-        public void handle(BasicContentMsg msg) {
+        public void handle(Msg msg) {
             log.trace("{} received:{}", logPrefix, msg);
             if (!handleTraffic.getValue(msg)) {
                 log.debug("{} forwarding outgoing non fragmentable message:{}", logPrefix, msg);
                 trigger(msg, requiredNetwork);
                 return;
             }
+            BasicContentMsg contentMsg = (BasicContentMsg)msg;
 
             ByteBuf content = Unpooled.buffer();
             ByteBuf header = Unpooled.buffer();
-            Serializers.toBinary(msg.getContent(), content);
-            Serializers.toBinary(msg.getHeader(), header);
+            Serializers.toBinary(contentMsg.getContent(), content);
+            Serializers.toBinary(contentMsg.getHeader(), header);
 
             //we have to accommodate the headers info of the chunked message as well.
             int headerSize = header.readableBytes();
