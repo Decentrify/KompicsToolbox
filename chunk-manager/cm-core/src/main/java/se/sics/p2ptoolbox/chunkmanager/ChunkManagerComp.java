@@ -46,6 +46,7 @@ import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.chunkmanager.util.CMInternalFilter;
 import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
 import se.sics.p2ptoolbox.chunkmanager.util.ChunkPrefixHelper;
 import se.sics.p2ptoolbox.chunkmanager.util.IncompleteChunkTracker;
@@ -70,7 +71,8 @@ public class ChunkManagerComp extends ComponentDefinition {
     private final SystemConfig systemConfig;
     private final ChunkManagerConfig config;
     private final String logPrefix;
-    private final ChannelFilter<Msg, Boolean> handleTraffic = new FragmentableTrafficFilter();
+    private final ChannelFilter<Msg, Boolean> fragmentableTraffic = new FragmentableTrafficFilter();
+    private final ChannelFilter<Msg, Boolean> internalTraffic = new CMInternalFilter();
 
     private final Map<UUID, Pair<IncompleteChunkTracker, UUID>> incomingChunks;
 
@@ -108,7 +110,7 @@ public class ChunkManagerComp extends ComponentDefinition {
         @Override
         public void handle(Msg msg) {
             log.trace("{} received:{}", logPrefix, msg);
-            if (!handleTraffic.getValue(msg)) {
+            if (!fragmentableTraffic.getValue(msg)) {
                 log.debug("{} forwarding outgoing non fragmentable message:{}", logPrefix, msg);
                 trigger(msg, requiredNetwork);
                 return;
@@ -143,17 +145,17 @@ public class ChunkManagerComp extends ComponentDefinition {
         }
     };
 
-    Handler handleIncoming = new Handler<BasicContentMsg>() {
+    Handler handleIncoming = new Handler<Msg>() {
         @Override
-        public void handle(BasicContentMsg msg) {
+        public void handle(Msg msg) {
             log.trace("{} received:{}", logPrefix, msg);
-            if (!(msg.getContent() instanceof Chunk)) {
+            if (!internalTraffic.getValue(msg)) {
                 log.debug("{} forwarding incoming non fragmentable message:{}", logPrefix, msg);
                 trigger(msg, providedNetwork);
                 return;
             }
 
-            Chunk chunk = (Chunk) msg.getContent();
+            Chunk chunk = (Chunk)((BasicContentMsg)msg).getContent();
 
             if (!incomingChunks.containsKey(chunk.messageId)) {
                 IncompleteChunkTracker chunkTracker = new IncompleteChunkTracker(chunk.lastChunk);
