@@ -51,11 +51,10 @@ public class HookXY {
         }
     }
     
-    public static class StartInit implements Hook.StartInit {
-    }
-    
-    public static StartInit startInitNone() {
-        return new StartInit();
+    public static class StartInit extends Hook.StartInit {
+        public StartInit(boolean started) {
+            super(started);
+        }
     }
     
     public static class Tear implements Hook.Tear {

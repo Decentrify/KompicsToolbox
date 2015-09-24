@@ -16,14 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.p2ptoolbox.util.proxy.example.hooks;
 
 import se.sics.kompics.Component;
 import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
-import se.sics.p2ptoolbox.util.proxy.Hook;
 import se.sics.p2ptoolbox.util.proxy.example.core.HookXY;
 import se.sics.p2ptoolbox.util.proxy.example.core.PortX;
 import se.sics.p2ptoolbox.util.proxy.example.core.PortY;
@@ -32,6 +29,7 @@ import se.sics.p2ptoolbox.util.proxy.example.core.PortY;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HookXYDefinition implements HookXY.Definition {
+
     @Override
     public HookXY.SetupResult setup(ComponentProxy proxy, HookXY.SetupInit setupInit) {
         Component[] comp = new Component[2];
@@ -40,11 +38,13 @@ public class HookXYDefinition implements HookXY.Definition {
         proxy.connect(comp[1].getNegative(PortZ.class), comp[0].getPositive(PortZ.class));
         return new HookXY.SetupResult(comp[1].getPositive(PortX.class), comp[0].getNegative(PortY.class), comp);
     }
-    
+
     @Override
     public void start(ComponentProxy proxy, HookXY.SetupResult setupResult, HookXY.StartInit startInit) {
-        proxy.trigger(Start.event, setupResult.components[0].control());
-        proxy.trigger(Start.event, setupResult.components[1].control());
+        if (!startInit.started) {
+            proxy.trigger(Start.event, setupResult.components[0].control());
+            proxy.trigger(Start.event, setupResult.components[1].control());
+        }
     }
 
     @Override

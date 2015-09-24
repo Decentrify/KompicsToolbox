@@ -38,7 +38,12 @@ public class Hook {
     public static interface SetupResult {
     }
 
-    public static interface StartInit {
+    public static abstract class StartInit {
+        public final boolean started;
+        
+        public StartInit(boolean started) {
+            this.started = started;
+        }
     }
 
     public static interface Tear {

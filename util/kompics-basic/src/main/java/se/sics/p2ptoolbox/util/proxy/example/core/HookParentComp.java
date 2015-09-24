@@ -67,6 +67,7 @@ public class HookParentComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
+            hookTracker.startHook(true);
             trigger(new HPMsg.Y(), portY);
         }
     };
@@ -119,8 +120,8 @@ public class HookParentComp extends ComponentDefinition {
             portY = hookSetup.portY;
         }
         
-        private void startHook() {
-            hookDefinition.start(this, hookSetup, HookXY.startInitNone());
+        private void startHook(boolean started) {
+            hookDefinition.start(this, hookSetup, new HookXY.StartInit(started));
         }
 
         private void preStop() {
@@ -132,7 +133,7 @@ public class HookParentComp extends ComponentDefinition {
         private void restart(boolean setup) {
             preStop();
             setupHook(setup);
-            startHook();
+            startHook(false);
         }
 
         //*******************************PROXY**********************************
