@@ -27,28 +27,35 @@ import se.sics.p2ptoolbox.util.proxy.Hook;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HookXY {
-    public static interface Definition extends Hook.Definition<Init, InitResult, Tear> {
+    public static interface Definition extends Hook.Definition<SetupInit, SetupResult, StartInit, Tear> {
     }
  
-    public static class Init implements Hook.Init {
+    public static class SetupInit implements Hook.SetupInit {
 
         public final boolean field1;
 
-        public Init(boolean field1) {
+        public SetupInit(boolean field1) {
             this.field1 = field1;
         }
     }
     
-    public static class InitResult implements Hook.InitResult {
+    public static class SetupResult implements Hook.SetupResult {
         public final Positive<PortX> portX;
         public final Negative<PortY> portY;
         public final Component[] components;
         
-        public InitResult(Positive<PortX> portX, Negative<PortY> portY, Component[] components) {
+        public SetupResult(Positive<PortX> portX, Negative<PortY> portY, Component[] components) {
             this.portX = portX;
             this.portY = portY;
             this.components = components;
         }
+    }
+    
+    public static class StartInit implements Hook.StartInit {
+    }
+    
+    public static StartInit startInitNone() {
+        return new StartInit();
     }
     
     public static class Tear implements Hook.Tear {

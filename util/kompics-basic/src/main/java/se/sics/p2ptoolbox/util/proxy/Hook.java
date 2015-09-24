@@ -18,27 +18,29 @@
  */
 package se.sics.p2ptoolbox.util.proxy;
 
-import se.sics.kompics.Component;
-
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Hook {
 
-    public static interface Definition<I extends Init, IR extends InitResult, T extends Tear> {
+    public static interface Definition<SI extends SetupInit, SR extends SetupResult, I extends StartInit, T extends Tear> {
 
-        public IR setUp(ComponentProxy proxy, I hookInit);
+        public SR setup(ComponentProxy proxy, SI hookInit);
 
-        public void tearDown(ComponentProxy proxy, T hookTear);
+        public void start(ComponentProxy proxy, SR setupResult, I startInit);
+        
+        public void preStop(ComponentProxy proxy, T hookTear);
     }
-    
-    public static interface Init {
+
+    public static interface SetupInit {
     }
-    
-    public static interface InitResult {
+
+    public static interface SetupResult {
     }
-    
+
+    public static interface StartInit {
+    }
+
     public static interface Tear {
     }
 }

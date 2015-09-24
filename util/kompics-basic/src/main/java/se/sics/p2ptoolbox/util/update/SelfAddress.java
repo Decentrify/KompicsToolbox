@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -19,15 +19,35 @@
 
 package se.sics.p2ptoolbox.util.update;
 
-import se.sics.kompics.PortType;
+import java.util.UUID;
+import se.sics.kompics.Direct;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SelfAddressUpdatePort extends PortType {
-    {
-        indication(SelfAddressUpdate.class);
-        request(SelfAddress.Request.class);
-        indication(SelfAddress.Response.class);
+public class SelfAddress {
+    public static class Request extends Direct.Request {
+        public final UUID id;
+        
+        public Request(UUID id) {
+            super();
+            this.id = id;
+        }
+        
+        public Response answer(DecoratedAddress selfAddress) {
+            return new Response(id, selfAddress);
+        }
+    }
+    
+    public static class Response implements Direct.Response {
+        public final UUID id;
+        public final DecoratedAddress selfAddress;
+        
+        private Response(UUID id, DecoratedAddress selfAddress) {
+            this.id = id;
+            this.selfAddress = selfAddress;
+        }
     }
 }

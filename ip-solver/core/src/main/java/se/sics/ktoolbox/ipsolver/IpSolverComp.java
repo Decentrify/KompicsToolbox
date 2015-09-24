@@ -54,7 +54,8 @@ public class IpSolverComp extends ComponentDefinition {
 
     public IpSolverComp(IpSolverInit init) {
         LOG.info("{}initiating...", logPrefix);
-        if (!System.getProperty("java.net.preferIPv4Stack").equals("true")) {
+        if (System.getProperty("java.net.preferIPv4Stack") == null 
+                || !System.getProperty("java.net.preferIPv4Stack").equals("true")) {
             LOG.error("{}java.net.preferIPv4Stack not set", logPrefix);
             throw new RuntimeException("java.net.preferIPv4Stack not set");
         }

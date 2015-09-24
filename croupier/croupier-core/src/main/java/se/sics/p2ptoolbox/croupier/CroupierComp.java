@@ -175,11 +175,11 @@ public class CroupierComp extends ComponentDefinition {
 
     private void startShuffle() {
         if (selfView == null) {
-            log.info("{} no self view - not shuffling", new Object[]{logPrefix});
+            log.warn("{} no self view - not shuffling", new Object[]{logPrefix});
             return;
         }
         if (!haveShufflePartners()) {
-            log.info("{} no partners - not shuffling", new Object[]{logPrefix});
+            log.warn("{} no partners - not shuffling", new Object[]{logPrefix});
             return;
         }
         log.info("{} started shuffle", new Object[]{logPrefix});
@@ -188,7 +188,7 @@ public class CroupierComp extends ComponentDefinition {
 
     private void stopShuffle() {
         cancelPeriodicShuffle();
-        log.info("{} stopped shuffle", new Object[]{logPrefix});
+        log.warn("{} stopped shuffle", new Object[]{logPrefix});
         trigger(new CroupierDisconnected(overlayId), croupierControlPort);
     }
 

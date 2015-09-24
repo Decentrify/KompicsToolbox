@@ -25,6 +25,7 @@ import se.sics.kompics.Channel;
 import se.sics.kompics.ChannelFilter;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.ConfigurationException;
 import se.sics.kompics.ControlPort;
 import se.sics.kompics.Fault;
 import se.sics.kompics.Handler;
@@ -53,9 +54,12 @@ public class HookParentComp extends ComponentDefinition {
     private final HookTracker hookTracker;
 
     public HookParentComp(HookParentInit init) {
+        LOG.info("{}initiating...");
+        this.hookTracker = new HookTracker(init.hookDefinition);
+        hookTracker.setupHook(true);
         subscribe(handleStart, control);
         subscribe(handleStop, control);
-        this.hookTracker = new HookTracker(init.hookDefinition);
+        subscribe(handleHPMsg, portX);
     }
 
     //***************************CONTROL****************************************
@@ -63,8 +67,6 @@ public class HookParentComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
-            hookTracker.setupHook(true);
-            subscribe(handleHPMsg, portX);
             trigger(new HPMsg.Y(), portY);
         }
     };
@@ -73,6 +75,7 @@ public class HookParentComp extends ComponentDefinition {
         @Override
         public void handle(Stop event) {
             LOG.info("{}stopping...", logPrefix);
+            hookTracker.preStop();
         }
     };
 
@@ -82,8 +85,7 @@ public class HookParentComp extends ComponentDefinition {
         LOG.error("{}fault on comp:{}", new Object[]{logPrefix, compId});
         LOG.error("{}fault:{}", new Object[]{logPrefix, fault.getCause()});
 
-        hookTracker.tearDown(compId);
-        hookTracker.setupHook(false);
+        hookTracker.restart(false);
         trigger(new HPMsg.Y(), portY);
 
         return Fault.ResolveAction.RESOLVED;
@@ -93,7 +95,7 @@ public class HookParentComp extends ComponentDefinition {
     Handler handleHPMsg = new Handler<HPMsg.X>() {
         @Override
         public void handle(HPMsg.X msg) {
-            LOG.info("hp msg");
+            LOG.info("{}hp msg", logPrefix);
         }
     };
 
@@ -101,6 +103,7 @@ public class HookParentComp extends ComponentDefinition {
     public class HookTracker implements ComponentProxy {
 
         private HookXY.Definition hookDefinition;
+        private HookXY.SetupResult hookSetup;
         private Component[] hook;
 
         public HookTracker(HookXY.Definition hookDefinition) {
@@ -110,17 +113,26 @@ public class HookParentComp extends ComponentDefinition {
         private void setupHook(boolean setup) {
             UUID hookId = UUID.randomUUID();
             LOG.info("{}setting up hook", new Object[]{logPrefix});
-            HookXY.InitResult result = hookDefinition.setUp(this, new HookXY.Init(setup));
-            hook = result.components;
-            portX = result.portX;
-            portY = result.portY;
+            hookSetup = hookDefinition.setup(this, new HookXY.SetupInit(setup));
+            hook = hookSetup.components;
+            portX = hookSetup.portX;
+            portY = hookSetup.portY;
+        }
+        
+        private void startHook() {
+            hookDefinition.start(this, hookSetup, HookXY.startInitNone());
         }
 
-        private void tearDown(UUID compId) {
+        private void preStop() {
             LOG.info("{}tearing down hook", new Object[]{logPrefix});
-
-            hookDefinition.tearDown(this, new HookXY.Tear(hook));
+            hookDefinition.preStop(this, new HookXY.Tear(hook));
             hook = null;
+        }
+        
+        private void restart(boolean setup) {
+            preStop();
+            setupHook(setup);
+            startHook();
         }
 
         //*******************************PROXY**********************************
@@ -182,6 +194,11 @@ public class HookParentComp extends ComponentDefinition {
         @Override
         public <P extends PortType> Channel<P> connect(Negative<P> negative, Positive<P> positive, ChannelFilter filter) {
             return HookParentComp.this.connect(positive, negative, filter);
+        }
+
+        @Override
+        public <E extends KompicsEvent, P extends PortType> void subscribe(Handler<E> handler, Port<P> port) throws ConfigurationException {
+            HookParentComp.this.subscribe(handler, port);
         }
     }
 

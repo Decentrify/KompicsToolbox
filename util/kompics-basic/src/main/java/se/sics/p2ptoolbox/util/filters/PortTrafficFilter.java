@@ -18,40 +18,27 @@
  */
 package se.sics.p2ptoolbox.util.filters;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.kompics.ChannelFilter;
 import se.sics.kompics.network.Msg;
-import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class PortTrafficFilter extends ChannelFilter<Msg, Integer> {
-    private static final Logger LOG = LoggerFactory.getLogger("Test");
-    private String logPrefix = "";
+public class PortTrafficFilter extends ChannelFilter<Msg, Boolean> {
 
-    private final int srcId;
+    private final Integer port;
 
-    public PortTrafficFilter(Integer port, Integer srcId) {
-        super(Msg.class, port, true);
-        this.srcId = srcId;
+    public PortTrafficFilter(Integer port) {
+        super(Msg.class, true, true);
+        this.port = port;
     }
 
+    /**
+     * @param msg
+     * @return
+     */
     @Override
-    public Integer getValue(Msg msg) {
-        BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Object> contentMsg = (BasicContentMsg) msg;
-        if (contentMsg.getSource().getId().equals(srcId)) {
-            LOG.error("src" + contentMsg.getSource().getPort());
-            return contentMsg.getSource().getPort();
-        }
-        if (contentMsg.getDestination().getId().equals(srcId)) {
-            LOG.error("dst" + contentMsg.getDestination().getPort());
-            return contentMsg.getDestination().getPort();
-        }
-        LOG.error("none" + srcId + " " +  contentMsg.getSource() + " " + contentMsg.getDestination());
-        return null;
+    public Boolean getValue(Msg msg) {
+        return port.equals(msg.getHeader().getDestination().getPort());
     }
 }

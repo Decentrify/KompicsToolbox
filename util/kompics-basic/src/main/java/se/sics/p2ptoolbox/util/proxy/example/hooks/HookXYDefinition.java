@@ -23,6 +23,7 @@ import se.sics.kompics.Component;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
+import se.sics.p2ptoolbox.util.proxy.Hook;
 import se.sics.p2ptoolbox.util.proxy.example.core.HookXY;
 import se.sics.p2ptoolbox.util.proxy.example.core.PortX;
 import se.sics.p2ptoolbox.util.proxy.example.core.PortY;
@@ -32,23 +33,21 @@ import se.sics.p2ptoolbox.util.proxy.example.core.PortY;
  */
 public class HookXYDefinition implements HookXY.Definition {
     @Override
-    public HookXY.InitResult setUp(ComponentProxy proxy, HookXY.Init init) {
+    public HookXY.SetupResult setup(ComponentProxy proxy, HookXY.SetupInit setupInit) {
         Component[] comp = new Component[2];
         comp[0] = proxy.create(ComponentB.class, new ComponentB.InitB());
-        proxy.trigger(Start.event, comp[0].control());
-        
-        comp[1] = proxy.create(ComponentA.class, new ComponentA.InitA(init.field1));
+        comp[1] = proxy.create(ComponentA.class, new ComponentA.InitA(setupInit.field1));
         proxy.connect(comp[1].getNegative(PortZ.class), comp[0].getPositive(PortZ.class));
-        proxy.trigger(Start.event, comp[1].control());
-        
-        return new HookXY.InitResult(comp[1].getPositive(PortX.class), comp[0].getNegative(PortY.class), comp);
+        return new HookXY.SetupResult(comp[1].getPositive(PortX.class), comp[0].getNegative(PortY.class), comp);
+    }
+    
+    @Override
+    public void start(ComponentProxy proxy, HookXY.SetupResult setupResult, HookXY.StartInit startInit) {
+        proxy.trigger(Start.event, setupResult.components[0].control());
+        proxy.trigger(Start.event, setupResult.components[1].control());
     }
 
     @Override
-    public void tearDown(ComponentProxy proxy, HookXY.Tear tear) {
-        proxy.trigger(Stop.event, tear.components[0].control());
-        proxy.trigger(Stop.event, tear.components[1].control());
-        
-        proxy.disconnect(tear.components[1].getNegative(PortZ.class), tear.components[0].getPositive(PortZ.class));
+    public void preStop(ComponentProxy proxy, HookXY.Tear tear) {
     }
 }

@@ -169,6 +169,10 @@ public class SystemConfigBuilder {
     public void setPort() {
         this.selfPort = (BASE + random.nextInt(DIFF));
     }
+    
+    public Config getConfig() {
+        return config;
+    }
 
     /**
      * Look at the values that were added to the builder by the user and
