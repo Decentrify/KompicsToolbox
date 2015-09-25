@@ -27,5 +27,7 @@ import se.sics.kompics.PortType;
 public class SelfAddressUpdatePort extends PortType {
     {
         indication(SelfAddressUpdate.class);
+        request(SelfAddress.Request.class);
+        indication(SelfAddress.Response.class);
     }
 }

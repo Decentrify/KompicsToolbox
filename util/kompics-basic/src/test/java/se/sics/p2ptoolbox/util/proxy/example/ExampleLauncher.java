@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -19,7 +19,6 @@
 
 package se.sics.p2ptoolbox.util.proxy.example;
 
-import org.junit.Test;
 import se.sics.kompics.Kompics;
 import se.sics.p2ptoolbox.util.proxy.example.core.HookParentComp;
 import se.sics.p2ptoolbox.util.proxy.example.system.SystemSetup;
@@ -28,8 +27,8 @@ import se.sics.p2ptoolbox.util.proxy.example.system.SystemSetup;
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestProxy {
-    public void test() {
+public class ExampleLauncher {
+    public static void main(String[] args) {
         if (Kompics.isOn()) {
             Kompics.shutdown();
         }

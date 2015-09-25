@@ -29,6 +29,7 @@ import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
  */
 public class IntegerIdentifiableFilter extends ChannelFilter<Msg, Integer> {
 
+    @Deprecated
     public IntegerIdentifiableFilter(int id) {
         super(Msg.class, id, true);
     }

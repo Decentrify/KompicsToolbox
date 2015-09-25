@@ -87,7 +87,9 @@ public class SystemConfigBuilder {
                 InetAddress aggregatorIp = InetAddress.getByName(config.getString("system.aggregator.ip"));
                 int aggregatorPort = config.getInt("system.aggregator.port");
                 int aggregatorId = config.getInt("system.aggregator.id");
-                this.aggregatorAddress = Optional.of(new DecoratedAddress(new BasicAddress(aggregatorIp, aggregatorPort, aggregatorId)));
+                DecoratedAddress aggregatorAdr = new DecoratedAddress(new BasicAddress(aggregatorIp, aggregatorPort, aggregatorId));
+                aggregatorAdr.addTrait(NatedTrait.open());
+                this.aggregatorAddress = Optional.of(aggregatorAdr);
             } catch (Exception ex) {
                 this.aggregatorAddress = Optional.absent();
             }
@@ -168,6 +170,10 @@ public class SystemConfigBuilder {
 
     public void setPort() {
         this.selfPort = (BASE + random.nextInt(DIFF));
+    }
+    
+    public Config getConfig() {
+        return config;
     }
 
     /**

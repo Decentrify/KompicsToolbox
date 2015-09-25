@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,36 +16,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.util.proxy;
+
+package se.sics.p2ptoolbox.util.update;
+
+import java.util.UUID;
+import se.sics.kompics.Direct;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class Hook {
-
-    public static interface Definition<SI extends SetupInit, SR extends SetupResult, I extends StartInit, T extends Tear> {
-
-        public SR setup(ComponentProxy proxy, SI hookInit);
-
-        public void start(ComponentProxy proxy, SR setupResult, I startInit);
+public class SelfAddress {
+    public static class Request extends Direct.Request {
+        public final UUID id;
         
-        public void preStop(ComponentProxy proxy, T hookTear);
-    }
-
-    public static interface SetupInit {
-    }
-
-    public static interface SetupResult {
-    }
-
-    public static abstract class StartInit {
-        public final boolean started;
+        public Request(UUID id) {
+            super();
+            this.id = id;
+        }
         
-        public StartInit(boolean started) {
-            this.started = started;
+        public Response answer(DecoratedAddress selfAddress) {
+            return new Response(id, selfAddress);
         }
     }
-
-    public static interface Tear {
+    
+    public static class Response implements Direct.Response {
+        public final UUID id;
+        public final DecoratedAddress selfAddress;
+        
+        private Response(UUID id, DecoratedAddress selfAddress) {
+            this.id = id;
+            this.selfAddress = selfAddress;
+        }
     }
 }
