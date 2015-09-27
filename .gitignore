@@ -162,3 +162,5 @@ netty-test/target/
 
 /aggregator/common-api/target/
 /aggregator/common-core/target/
+/overlay-mngr/core/target/
+/overlay-mngr/api/target/

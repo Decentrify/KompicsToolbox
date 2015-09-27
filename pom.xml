@@ -18,6 +18,7 @@
         <module>caracal-client</module>
         <module>nat-echo</module>
         <module>simulator</module>
+        <module>overlay-mngr</module>
     </modules>
     
     <!-- last merge increasing util, simulator, croupier, gradient, leader, caracal-client-->
