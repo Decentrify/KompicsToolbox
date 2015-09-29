@@ -1,5 +1,6 @@
 package se.sics.p2ptoolbox.util.helper;
 
+import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.AfterClass;
@@ -15,6 +16,8 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * Testing the system configuration builder.
@@ -30,6 +33,9 @@ public class SysConfigBuilderTest {
     public static void beforeClass() {
         logger.debug("Starting with the load of the default configuration.");
         config = ConfigFactory.load("application.conf");
+        
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
+        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
     }
 
     @AfterClass
@@ -114,6 +120,6 @@ public class SysConfigBuilderTest {
         InetAddress aggregatorIp = InetAddress.getByName(config.getString("system.aggregator.ip"));
         int aggregatorPort = config.getInt("system.aggregator.port");
         int aggregatorId = config.getInt("system.aggregator.id");
-        return new DecoratedAddress(new BasicAddress(aggregatorIp, aggregatorPort, aggregatorId));
+        return DecoratedAddress.open(aggregatorIp, aggregatorPort, aggregatorId);
     }
 }
