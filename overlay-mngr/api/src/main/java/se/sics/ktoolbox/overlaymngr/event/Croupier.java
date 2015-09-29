@@ -33,9 +33,9 @@ public class Croupier {
     
     public static class Start extends Direct.Request implements OverlayMngrEvent {
         public final UUID id;
-        public final Pair<Byte, Byte> overlayId;
+        public final byte[] overlayId;
         
-        public Start(UUID id, Pair<Byte, Byte> overlayId) {
+        public Start(UUID id, byte[] overlayId) {
             super();
             this.id = id;
             this.overlayId = overlayId;

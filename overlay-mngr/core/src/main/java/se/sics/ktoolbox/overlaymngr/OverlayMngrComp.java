@@ -55,6 +55,8 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.util.Container;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
+import se.sics.p2ptoolbox.util.filters.OverlayFilter;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
 import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
@@ -150,15 +152,6 @@ public class OverlayMngrComp extends ComponentDefinition {
 
     //**************************GLOBAL_CROUPIER*********************************
     private void connectGlobalCroupier() {
-        globalCroupier = create(CroupierComp.class, new CroupierInit(systemConfig,
-                new CroupierConfig(systemConfig.config), OverlayMngrHelper.getCroupierIntOverlayId(OverlayMngrHelper.getGlobalCroupierId())));
-        connect(globalCroupier.getNegative(Timer.class), timer);
-        connect(globalCroupier.getNegative(Network.class), network);
-        connect(globalCroupier.getNegative(SelfViewUpdatePort.class), globalServiceView);
-        connect(globalCroupier.getNegative(SelfAddressUpdatePort.class), addressUpdate);
-
-        subscribe(handleGlobalSample, globalCroupier.getNegative(CroupierPort.class));
-        subscribe(handleGlobalDisconnect, globalCroupier.getNegative(CroupierControlPort.class));
     }
 
     private void startGlobalCroupier(boolean started) {
@@ -287,7 +280,15 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void bootstrap(List<DecoratedAddress> bootstrap) {
             LOG.debug("{}received bootstrap:{} - starting croupier",
                     new Object[]{logPrefix, bootstrap});
-//           Component croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(null, null, overlayId));
+            globalCroupier = create(CroupierComp.class, new CroupierInit(systemConfig,
+                    new CroupierConfig(systemConfig.config), OverlayMngrHelper.getCroupierIntOverlayId(OverlayMngrHelper.getGlobalCroupierId())));
+            connect(globalCroupier.getNegative(Timer.class), timer);
+            connect(globalCroupier.getNegative(Network.class), network, new OverlayFilter());
+            connect(globalCroupier.getNegative(SelfViewUpdatePort.class), globalServiceView);
+            connect(globalCroupier.getNegative(SelfAddressUpdatePort.class), addressUpdate);
+
+            subscribe(handleGlobalSample, globalCroupier.getPositive(CroupierPort.class));
+            subscribe(handleGlobalDisconnect, globalCroupier.getPositive(CroupierControlPort.class));
         }
     }
 }
