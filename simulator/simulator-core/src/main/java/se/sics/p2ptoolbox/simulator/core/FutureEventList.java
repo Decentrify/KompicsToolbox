@@ -73,6 +73,10 @@ public class FutureEventList {
 		}
 		return false;
 	}
+        
+        long getFirstEventTime() {
+            return futureEventList.isEmpty() ? -1 : futureEventList.peek().getTime();
+        }
 
 	SimulatorEvent getAndRemoveFirstEvent(long now) {
 		SimulatorEvent event = futureEventList.poll();

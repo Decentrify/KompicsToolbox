@@ -46,6 +46,9 @@ import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SetupCmd;
 import se.sics.p2ptoolbox.simulator.cmd.util.ConnectSimulatorPort;
+import se.sics.p2ptoolbox.simulator.timed.TimedComp;
+import se.sics.p2ptoolbox.simulator.timed.api.Timed;
+import se.sics.p2ptoolbox.simulator.timed.api.TimedControlerBuilder;
 import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -53,11 +56,12 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SimMngrComponent extends ComponentDefinition {
+public class SimMngrComponent extends ComponentDefinition implements TimedComp {
 
     private static final Logger log = LoggerFactory.getLogger(SimMngrComponent.class);
 
     private final SimulationContextImpl simulationContext;
+    private final TimedControlerBuilder tcb;
 
     private Positive<ExperimentPort> experimentPort = requires(ExperimentPort.class);
     private Positive<Network> network = requires(Network.class);
@@ -70,6 +74,7 @@ public class SimMngrComponent extends ComponentDefinition {
     public SimMngrComponent(SimMngrInit init) {
         log.info("initiating...");
         this.simulationContext = new SimulationContextImpl(init.rand, init.simAddress);
+        this.tcb = init.tcb;
         this.systemNodes = new HashMap<Integer, Component>();
 
         subscribe(handleStart, control);
@@ -79,6 +84,7 @@ public class SimMngrComponent extends ComponentDefinition {
         subscribe(handleStartAggregator, experimentPort);
         subscribe(handleStartNode, experimentPort);
         subscribe(handleStopNode, experimentPort);
+//        subscribe(handleNet, network);
         //stop-restart does not work in kompics now
 //        subscribe(handleReStartNode, experimentPort); 
         for (final SystemStatusHandler systemStatusHandler : init.systemStatusHandlers) {
@@ -122,6 +128,13 @@ public class SimMngrComponent extends ComponentDefinition {
     };
 
     //**************************************************************************
+    private Handler handleNet = new Handler<Msg>() {
+        @Override
+        public void handle(Msg msg) {
+           log.info("net msg:{}",msg);
+        }
+    };
+    
     private Handler handleSetup = new Handler<SetupCmd>() {
         @Override
         public void handle(SetupCmd cmd) {
@@ -160,18 +173,14 @@ public class SimMngrComponent extends ComponentDefinition {
         public void handle(StartNodeCmd cmd) {
             log.info("received start cmd:{} for node:{}", cmd, cmd.getNodeId());
 
-            Component node = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit(simulationContext.getAggregatorAddress(), simulationContext.systemOpenNodesSample(cmd.bootstrapSize(), cmd.getAddress())));
-            connect(node.getNegative(Timer.class), timer);
-
-            Component natEmulator = null;
-            Negative<Network> nodeNetwork = null;
-            if (cmd.getAddress() instanceof DecoratedAddress) {
-                DecoratedAddress dAdr = (DecoratedAddress) cmd.getAddress();
-                nodeNetwork = node.getNegative(Network.class);
-            } else {
-                nodeNetwork = node.getNegative(Network.class);
+            Init compInit = cmd.getNodeComponentInit(simulationContext.getAggregatorAddress(), simulationContext.systemOpenNodesSample(cmd.bootstrapSize(), cmd.getAddress()));
+            if(compInit instanceof Timed) {
+                Timed timed = (Timed)compInit;
+                timed.set(tcb);
             }
-            connect(nodeNetwork, network, new IntegerIdentifiableFilter(cmd.getNodeId()));
+            Component node = create(cmd.getNodeComponentDefinition(), compInit);
+            connect(node.getNegative(Timer.class), timer);
+            connect(node.getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
 
             //TODO maybe this should be one method
             simulationContext.registerNode(cmd.getNodeId());
@@ -233,11 +242,13 @@ public class SimMngrComponent extends ComponentDefinition {
 
     public static class SimMngrInit extends Init<SimMngrComponent> {
 
+        public final TimedControlerBuilder tcb;
         public final Random rand;
         public final Address simAddress;
         public final Set<SystemStatusHandler> systemStatusHandlers;
 
-        public SimMngrInit(Random rand, Address simAddress, Set<SystemStatusHandler> systemStatusHandlers) {
+        public SimMngrInit(TimedControlerBuilder tcb, Random rand, Address simAddress, Set<SystemStatusHandler> systemStatusHandlers) {
+            this.tcb = tcb;
             this.rand = rand;
             this.simAddress = simAddress;
             this.systemStatusHandlers = systemStatusHandlers;

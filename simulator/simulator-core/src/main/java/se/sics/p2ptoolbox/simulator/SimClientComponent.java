@@ -33,11 +33,12 @@ import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.simulator.cmd.NetworkOpCmd;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
+import se.sics.p2ptoolbox.simulator.timed.TimedComp;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SimClientComponent extends ComponentDefinition {
+public class SimClientComponent extends ComponentDefinition implements TimedComp {
 
     private static final Logger log = LoggerFactory.getLogger(SimClientComponent.class);
 

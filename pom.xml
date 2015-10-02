@@ -19,8 +19,8 @@
         <module>nat-echo</module>
         <module>simulator</module>
     </modules>
-    
-    <!-- last merge increasing util, simulator, croupier, gradient, leader, caracal-client-->
+
+    <!-- simulator bumped to 1.8 - check if it is compatible with other modules-->    
     <properties>
         <java.version>1.7</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
