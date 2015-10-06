@@ -101,7 +101,7 @@ public class SystemConfigBuilder {
         }
     }
 
-    public SystemConfigBuilder(long seed, InetAddress selfIp, int selfPort, int selfId) {
+    public SystemConfigBuilder(long seed, InetAddress selfIp, int selfPort, int selfId, Config config) {
         this.seed = seed;
         this.selfIp = selfIp;
         this.selfPort = selfPort;
@@ -109,6 +109,7 @@ public class SystemConfigBuilder {
         this.bootstrapAddress = Optional.absent();
         this.aggregatorAddress = Optional.absent();
         this.selfNat = Optional.absent();
+        this.config = config;
     }
 
     public long getSeed() {
