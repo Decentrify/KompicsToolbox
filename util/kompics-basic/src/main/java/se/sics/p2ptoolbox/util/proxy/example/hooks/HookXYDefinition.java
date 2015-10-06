@@ -21,6 +21,7 @@ package se.sics.p2ptoolbox.util.proxy.example.hooks;
 import se.sics.kompics.Component;
 import se.sics.kompics.Start;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
+import se.sics.p2ptoolbox.util.proxy.example.core.ExampleComp.ExampleHookParent;
 import se.sics.p2ptoolbox.util.proxy.example.core.HookXY;
 import se.sics.p2ptoolbox.util.proxy.example.core.PortX;
 import se.sics.p2ptoolbox.util.proxy.example.core.PortY;
@@ -31,7 +32,7 @@ import se.sics.p2ptoolbox.util.proxy.example.core.PortY;
 public class HookXYDefinition implements HookXY.Definition {
 
     @Override
-    public HookXY.SetupResult setup(ComponentProxy proxy, HookXY.SetupInit setupInit) {
+    public HookXY.SetupResult setup(ComponentProxy proxy, ExampleHookParent hookParent, HookXY.SetupInit setupInit) {
         Component[] comp = new Component[2];
         comp[0] = proxy.create(ComponentB.class, new ComponentB.InitB());
         comp[1] = proxy.create(ComponentA.class, new ComponentA.InitA(setupInit.field1));
@@ -40,7 +41,7 @@ public class HookXYDefinition implements HookXY.Definition {
     }
 
     @Override
-    public void start(ComponentProxy proxy, HookXY.SetupResult setupResult, HookXY.StartInit startInit) {
+    public void start(ComponentProxy proxy, ExampleHookParent hookParent, HookXY.SetupResult setupResult, HookXY.StartInit startInit) {
         if (!startInit.started) {
             proxy.trigger(Start.event, setupResult.components[0].control());
             proxy.trigger(Start.event, setupResult.components[1].control());
@@ -48,6 +49,6 @@ public class HookXYDefinition implements HookXY.Definition {
     }
 
     @Override
-    public void preStop(ComponentProxy proxy, HookXY.Tear tear) {
+    public void preStop(ComponentProxy proxy, ExampleHookParent hookParent, HookXY.SetupResult setupResult, HookXY.TearInit tear) {
     }
 }

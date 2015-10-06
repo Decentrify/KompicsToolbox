@@ -23,13 +23,13 @@ package se.sics.p2ptoolbox.util.proxy;
  */
 public class Hook {
 
-    public static interface Definition<SI extends SetupInit, SR extends SetupResult, I extends StartInit, T extends Tear> {
+    public static interface Definition<HP extends HookParent, SI extends SetupInit, SR extends SetupResult, I extends StartInit, T extends TearInit> {
 
-        public SR setup(ComponentProxy proxy, SI hookInit);
+        public SR setup(ComponentProxy proxy, HP parent, SI hookInit);
 
-        public void start(ComponentProxy proxy, SR setupResult, I startInit);
+        public void start(ComponentProxy proxy, HP parent, SR setupResult, I startInit);
         
-        public void preStop(ComponentProxy proxy, T hookTear);
+        public void preStop(ComponentProxy proxy, HP parent, SR setupResult, T tearInit);
     }
 
     public static interface SetupInit {
@@ -46,6 +46,6 @@ public class Hook {
         }
     }
 
-    public static interface Tear {
+    public static interface TearInit {
     }
 }

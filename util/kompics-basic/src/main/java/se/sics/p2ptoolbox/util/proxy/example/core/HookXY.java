@@ -22,12 +22,13 @@ import se.sics.kompics.Component;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.p2ptoolbox.util.proxy.Hook;
+import se.sics.p2ptoolbox.util.proxy.HookParent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HookXY {
-    public static interface Definition extends Hook.Definition<SetupInit, SetupResult, StartInit, Tear> {
+    public static interface Definition extends Hook.Definition<ExampleComp.ExampleHookParent, SetupInit, SetupResult, StartInit, TearInit> {
     }
  
     public static class SetupInit implements Hook.SetupInit {
@@ -57,10 +58,10 @@ public class HookXY {
         }
     }
     
-    public static class Tear implements Hook.Tear {
+    public static class TearInit implements Hook.TearInit {
         public final Component[] components;
         
-        public Tear(Component[] components) {
+        public TearInit(Component[] components) {
             this.components = components;
         }
     }

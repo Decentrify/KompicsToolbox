@@ -38,14 +38,15 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
+import se.sics.p2ptoolbox.util.proxy.HookParent;
 import se.sics.p2ptoolbox.util.proxy.Required;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HookParentComp extends ComponentDefinition {
+public class ExampleComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HookParentComp.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExampleComp.class);
     private String logPrefix = "";
 
     private Positive<PortX> portX;
@@ -53,7 +54,7 @@ public class HookParentComp extends ComponentDefinition {
 
     private final HookTracker hookTracker;
 
-    public HookParentComp(HookParentInit init) {
+    public ExampleComp(ExampleInit init) {
         LOG.info("{}initiating...");
         this.hookTracker = new HookTracker(init.hookDefinition);
         hookTracker.setupHook(true);
@@ -101,7 +102,7 @@ public class HookParentComp extends ComponentDefinition {
     };
 
     //**************************HOOK_PARENT*************************************
-    public class HookTracker implements ComponentProxy {
+    public class HookTracker {
 
         private HookXY.Definition hookDefinition;
         private HookXY.SetupResult hookSetup;
@@ -114,19 +115,19 @@ public class HookParentComp extends ComponentDefinition {
         private void setupHook(boolean setup) {
             UUID hookId = UUID.randomUUID();
             LOG.info("{}setting up hook", new Object[]{logPrefix});
-            hookSetup = hookDefinition.setup(this, new HookXY.SetupInit(setup));
+            hookSetup = hookDefinition.setup(new HookParentProxy(), null, new HookXY.SetupInit(setup));
             hook = hookSetup.components;
             portX = hookSetup.portX;
             portY = hookSetup.portY;
         }
         
         private void startHook(boolean started) {
-            hookDefinition.start(this, hookSetup, new HookXY.StartInit(started));
+            hookDefinition.start(new HookParentProxy(), null, hookSetup, new HookXY.StartInit(started));
         }
 
         private void preStop() {
             LOG.info("{}tearing down hook", new Object[]{logPrefix});
-            hookDefinition.preStop(this, new HookXY.Tear(hook));
+            hookDefinition.preStop(new HookParentProxy(), null, hookSetup, new HookXY.TearInit(hook));
             hook = null;
         }
         
@@ -135,71 +136,75 @@ public class HookParentComp extends ComponentDefinition {
             setupHook(setup);
             startHook(false);
         }
+    }
+    
+    public class ExampleHookParent implements HookParent {
+    }
 
-        //*******************************PROXY**********************************
-        @Override
+    public class HookParentProxy implements ComponentProxy {
+    @Override
         public <P extends PortType> void trigger(KompicsEvent e, Port<P> p) {
-            HookParentComp.this.trigger(e, p);
+            ExampleComp.this.trigger(e, p);
         }
 
         @Override
         public <T extends ComponentDefinition> Component create(Class<T> definition, Init<T> initEvent) {
-            return HookParentComp.this.create(definition, initEvent);
+            return ExampleComp.this.create(definition, initEvent);
         }
 
         @Override
         public <T extends ComponentDefinition> Component create(Class<T> definition, Init.None initEvent) {
-            return HookParentComp.this.create(definition, initEvent);
+            return ExampleComp.this.create(definition, initEvent);
         }
 
         @Override
         public <P extends PortType> Channel<P> connect(Positive<P> positive, Negative<P> negative) {
-            return HookParentComp.this.connect(negative, positive);
+            return ExampleComp.this.connect(negative, positive);
         }
 
         @Override
         public <P extends PortType> Channel<P> connect(Negative<P> negative, Positive<P> positive) {
-            return HookParentComp.this.connect(negative, positive);
+            return ExampleComp.this.connect(negative, positive);
         }
 
         @Override
         public <P extends PortType> void disconnect(Negative<P> negative, Positive<P> positive) {
-            HookParentComp.this.disconnect(negative, positive);
+            ExampleComp.this.disconnect(negative, positive);
         }
 
         @Override
         public <P extends PortType> void disconnect(Positive<P> positive, Negative<P> negative) {
-            HookParentComp.this.disconnect(negative, positive);
+            ExampleComp.this.disconnect(negative, positive);
         }
 
         @Override
         public Negative<ControlPort> getControlPort() {
-            return HookParentComp.this.control;
+            return ExampleComp.this.control;
         }
 
         @Override
         public <P extends PortType> Positive<P> requires(Class<P> portType) {
-            return HookParentComp.this.requires(portType);
+            return ExampleComp.this.requires(portType);
         }
 
         @Override
         public <P extends PortType> Negative<P> provides(Class<P> portType) {
-            return HookParentComp.this.provides(portType);
+            return ExampleComp.this.provides(portType);
         }
 
         @Override
         public <P extends PortType> Channel<P> connect(Positive<P> positive, Negative<P> negative, ChannelFilter filter) {
-            return HookParentComp.this.connect(negative, positive, filter);
+            return ExampleComp.this.connect(negative, positive, filter);
         }
 
         @Override
         public <P extends PortType> Channel<P> connect(Negative<P> negative, Positive<P> positive, ChannelFilter filter) {
-            return HookParentComp.this.connect(positive, negative, filter);
+            return ExampleComp.this.connect(positive, negative, filter);
         }
 
         @Override
         public <E extends KompicsEvent, P extends PortType> void subscribe(Handler<E> handler, Port<P> port) throws ConfigurationException {
-            HookParentComp.this.subscribe(handler, port);
+            ExampleComp.this.subscribe(handler, port);
         }
     }
 
@@ -207,12 +212,12 @@ public class HookParentComp extends ComponentDefinition {
         A_B
     }
 
-    public static class HookParentInit extends Init<HookParentComp> {
+    public static class ExampleInit extends Init<ExampleComp> {
 
         public final HookXY.Definition hookDefinition;
 
-        public HookParentInit(HookXY.Definition hookDefinition) {
+        public ExampleInit(HookXY.Definition hookDefinition) {
             this.hookDefinition = hookDefinition;
         }
     }
-}
+    }

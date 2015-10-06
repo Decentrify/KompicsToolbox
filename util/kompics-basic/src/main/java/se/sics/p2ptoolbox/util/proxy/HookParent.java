@@ -17,27 +17,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.proxy.example;
-
-import se.sics.kompics.Kompics;
-import se.sics.p2ptoolbox.util.proxy.example.core.ExampleComp;
-import se.sics.p2ptoolbox.util.proxy.example.system.SystemSetup;
+package se.sics.p2ptoolbox.util.proxy;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ExampleLauncher {
-    public static void main(String[] args) {
-        if (Kompics.isOn()) {
-            Kompics.shutdown();
-        }
-        Kompics.createAndStart(ExampleComp.class, new ExampleComp.ExampleInit(SystemSetup.hookSetup()),
-                Runtime.getRuntime().availableProcessors());
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            System.exit(1);
-        }
-    }
+public interface HookParent {
 }
