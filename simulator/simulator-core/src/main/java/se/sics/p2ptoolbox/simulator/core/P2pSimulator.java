@@ -53,6 +53,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.simulator.timed.TimedSimulator;
 
 /**
  * The <code>P2pSimulator</code> class.
@@ -60,7 +61,7 @@ import se.sics.kompics.timer.Timer;
  * @author Cosmin Arad <cosmin@sics.se>
  * @version $Id$
  */
-public final class P2pSimulator extends ComponentDefinition implements Simulator {
+public final class P2pSimulator extends ComponentDefinition implements TimedSimulator {
 
     private static final Logger logger = LoggerFactory.getLogger(P2pSimulator.class);
 
@@ -116,6 +117,20 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
 
         networkModel = init.getNetworkModel();
 
+    }
+    
+    @Override
+    public long advanceSimulation(long milis) {
+        long nextEventTime = futureEventList.getFirstEventTime();
+        if(nextEventTime == -1) {
+            return -1;
+        }
+        if(nextEventTime > milis) {
+            CLOCK = milis;
+            return nextEventTime;
+        }
+        advanceSimulation();
+        return futureEventList.getFirstEventTime();
     }
 
     public boolean advanceSimulation() {
@@ -361,7 +376,8 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
                         new KompicsSimulatorEvent(event, CLOCK + latency));
             } else {
                 // we just echo the message on the network port
-                trigger(event, network);
+                futureEventList.scheduleFutureEvent(CLOCK,
+                        new KompicsSimulatorEvent(event, CLOCK + 0));
             }
         }
     };

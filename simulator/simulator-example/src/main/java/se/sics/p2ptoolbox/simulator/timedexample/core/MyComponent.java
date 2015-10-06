@@ -16,10 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.simulator.example.core;
+package se.sics.p2ptoolbox.simulator.timedexample.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +29,13 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.p2ptoolbox.simulator.timed.api.Timed;
+import se.sics.p2ptoolbox.simulator.timed.api.TimedControler;
+import se.sics.p2ptoolbox.simulator.timed.api.TimedControlerBuilder;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
@@ -45,39 +48,32 @@ public class MyComponent extends ComponentDefinition {
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
+    private TimedControler tc;
     private DecoratedAddress self;
-    private DecoratedAddress statusServer;
+    private Random rand;
+    
     private List<DecoratedAddress> bootstrapNodes;
 
     public MyComponent(MyInit init) {
+        this.self = init.self;
         log.debug("initiating test node:{}", init.self);
 
-        this.self = init.self;
-        this.statusServer = init.statusServer;
+        tc = init.tcb.registerComponent(self.getId(), this);
+        this.rand = new Random(self.getId());
         this.bootstrapNodes = new ArrayList<DecoratedAddress>(init.bootstrapNodes);
 
         subscribe(handleStart, control);
         subscribe(handleNetPing, network);
         subscribe(handleNetPong, network);
         subscribe(handleTimeout, timer);
-        subscribe(handleNet, network);
     }
 
     private Handler<Start> handleStart = new Handler<Start>() {
-
         @Override
         public void handle(Start event) {
+            tc.advance(MyComponent.this, rand.nextInt(10));
             log.debug("starting test node:{}", self);
             schedulePeriodicShuffle();
-        }
-
-    };
-    
-    private Handler<Msg> handleNet = new Handler<Msg>() {
-
-        @Override
-        public void handle(Msg ping) {
-            log.info("msg:{}", ping);
         }
     };
 
@@ -85,6 +81,7 @@ public class MyComponent extends ComponentDefinition {
 
         @Override
         public void handle(MyNetMsg.NetPing ping) {
+            tc.advance(MyComponent.this, rand.nextInt(10));
             log.debug("{} received net ping from {}", self, ping.getHeader().getSource());
             if (bootstrapNodes.size() > 0) {
                 trigger(new MyNetMsg.NetPong(self, bootstrapNodes.get(0), ping.getContent().id), network);
@@ -97,18 +94,20 @@ public class MyComponent extends ComponentDefinition {
 
         @Override
         public void handle(MyNetMsg.NetPong event) {
+            tc.advance(MyComponent.this, rand.nextInt(10));
             log.debug("{} received net pong from {}", self, event.getHeader().getSource());
         }
     };
-    
+
     private Handler handleTimeout = new Handler<StatusTimeout>() {
 
         @Override
         public void handle(StatusTimeout timeout) {
+            tc.advance(MyComponent.this, rand.nextInt(10));
             log.debug("{} time:{}", self, System.currentTimeMillis());
         }
     };
-    
+
     private void schedulePeriodicShuffle() {
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
         StatusTimeout sc = new StatusTimeout(spt);
@@ -116,16 +115,20 @@ public class MyComponent extends ComponentDefinition {
         trigger(spt, timer);
     }
 
-    public static class MyInit extends Init<MyComponent> {
+    public static class MyInit extends Init<MyComponent> implements Timed {
 
+        public TimedControlerBuilder tcb;
         public final DecoratedAddress self;
-        public final DecoratedAddress statusServer;
         public final Set<DecoratedAddress> bootstrapNodes;
 
-        public MyInit(DecoratedAddress self, DecoratedAddress statusServer, Set<DecoratedAddress> bootstrapNodes) {
+        public MyInit(DecoratedAddress self, Set<DecoratedAddress> bootstrapNodes) {
             this.self = self;
-            this.statusServer = statusServer;
             this.bootstrapNodes = bootstrapNodes;
+        }
+
+        @Override
+        public void set(TimedControlerBuilder tcb) {
+            this.tcb = tcb;
         }
     }
 
