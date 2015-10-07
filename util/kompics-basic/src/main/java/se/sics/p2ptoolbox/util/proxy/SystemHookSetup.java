@@ -19,6 +19,7 @@
 
 package se.sics.p2ptoolbox.util.proxy;
 
+import com.google.common.base.Optional;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -37,13 +38,13 @@ public class SystemHookSetup {
         hooks.put(hookName, hook);
     }
     
-    public <HR extends Hook.Required> boolean containsHooks(HR[] requiredHooks) {
+    public <HR extends Hook.Required> Optional<String> missingHook(HR[] requiredHooks) {
         for(HR requiredHook : requiredHooks) {
             if(!hooks.containsKey(requiredHook.toString())) {
-                return false;
+                return Optional.of(requiredHook.toString());
             }
         }
-        return true;
+        return Optional.absent();
     }
     
     public <H extends Hook.Definition> H getHook(String hookName, Class<H> hookClass) {
