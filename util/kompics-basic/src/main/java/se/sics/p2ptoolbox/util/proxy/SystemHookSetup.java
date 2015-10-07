@@ -52,7 +52,7 @@ public class SystemHookSetup {
         if(hook == null) {
             throw new RuntimeException("logic error - hook:" + hookName + " not defined");
         }
-        if(hookClass.isAssignableFrom(hook.getClass())) {
+        if(!hookClass.isAssignableFrom(hook.getClass())) {
             throw new RuntimeException("logic error - hook:" + hookName + " bad class, found:" + hook.getClass() + " expected:" + hookClass);
         }
         return (H)hook;
