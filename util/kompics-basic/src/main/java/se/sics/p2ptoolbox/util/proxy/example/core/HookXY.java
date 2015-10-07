@@ -22,7 +22,6 @@ import se.sics.kompics.Component;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.p2ptoolbox.util.proxy.Hook;
-import se.sics.p2ptoolbox.util.proxy.HookParent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

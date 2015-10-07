@@ -38,8 +38,7 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
-import se.sics.p2ptoolbox.util.proxy.HookParent;
-import se.sics.p2ptoolbox.util.proxy.Required;
+import se.sics.p2ptoolbox.util.proxy.Hook;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -101,7 +100,6 @@ public class ExampleComp extends ComponentDefinition {
         }
     };
 
-    //**************************HOOK_PARENT*************************************
     public class HookTracker {
 
         private HookXY.Definition hookDefinition;
@@ -138,7 +136,7 @@ public class ExampleComp extends ComponentDefinition {
         }
     }
     
-    public class ExampleHookParent implements HookParent {
+    public class ExampleHookParent implements Hook.Parent {
     }
 
     public class HookParentProxy implements ComponentProxy {
@@ -208,7 +206,7 @@ public class ExampleComp extends ComponentDefinition {
         }
     }
 
-    public static enum RequiredHook implements Required.Hook {
+    public static enum RequiredHook implements Hook.Required {
         A_B
     }
 

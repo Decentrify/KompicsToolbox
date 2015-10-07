@@ -37,8 +37,8 @@ public class SystemHookSetup {
         hooks.put(hookName, hook);
     }
     
-    public <RH extends Required.Hook> boolean containsHooks(RH[] requiredHooks) {
-        for(RH requiredHook : requiredHooks) {
+    public <HR extends Hook.Required> boolean containsHooks(HR[] requiredHooks) {
+        for(HR requiredHook : requiredHooks) {
             if(!hooks.containsKey(requiredHook.toString())) {
                 return false;
             }
