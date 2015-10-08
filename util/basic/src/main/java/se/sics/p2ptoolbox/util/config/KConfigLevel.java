@@ -19,22 +19,11 @@
 
 package se.sics.p2ptoolbox.util.config;
 
+import java.util.Set;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public final class ConfigOption<T extends Class> {
-    public final String name;
-    public final T type;
-    public final ConfigLevel lvl;
-    
-    public ConfigOption(String name, T type, ConfigLevel lvl) {
-        this.name = name;
-        this.type = type;
-        this.lvl = lvl;
-    }
-    
-    @Override
-    public String toString() {
-        return name + " lvl:" + lvl + " type" + type; 
-    }
+public interface KConfigLevel {
+    public Set<String> canWrite();
 }

@@ -17,6 +17,9 @@
         <module>example</module>
     </modules>
   
+    <properties>
+        <util.version>${original.util.version}</util.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>se.sics.kompics</groupId>
@@ -33,6 +36,11 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>${tuples.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

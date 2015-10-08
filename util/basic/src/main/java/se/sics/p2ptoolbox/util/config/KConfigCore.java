@@ -29,22 +29,22 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ConfigCore {
+public class KConfigCore {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigCore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KConfigCore.class);
     private String logPrefix = "";
 
     private final Config config;
     private final int nodeId;
-    private final Map<String, Pair<ConfigOption, Object>> options = new HashMap<>();
+    private final Map<String, Pair<KConfigOption.Basic, Object>> options = new HashMap<>();
 
-    public ConfigCore(Config config) {
+    public KConfigCore(Config config) {
         this.config = config;
         this.nodeId = readNodeId();
         this.logPrefix = nodeId + " ";
     }
 
-    public ConfigCore(Config config, int nodeId) {
+    public KConfigCore(Config config, int nodeId) {
         this.config = config;
         this.nodeId = nodeId;
         this.logPrefix = nodeId + " ";
@@ -56,35 +56,35 @@ public class ConfigCore {
 
     private int readNodeId() {
         try {
-            return config.getInt("nodeid");
+            return config.getInt("system.address.id");
         } catch (ConfigException.Missing ex) {
             LOG.error("{}missing node id", logPrefix);
             throw new RuntimeException(ex);
         }
     }
 
-    public synchronized void defineOption(ConfigOption option) {
+    public synchronized void define(KConfigOption.Basic option) {
         if (options.containsKey(option.name)) {
             LOG.error("{}config error, double option:{}", logPrefix, option.name);
             throw new RuntimeException("config error, double option:" + option.name);
         }
         options.put(option.name, Pair.with(option, null));
     }
-
-    public synchronized <T extends Class> T getOptionValue(ConfigOption<T> option) {
-        Pair<ConfigOption, Object> existingOV = options.get(option.name);
+    
+    public synchronized <T extends Object> T read(KConfigOption.Basic<T> option) {
+        Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
         if (existingOV == null) {
             LOG.error("{}config error, undefined option:{}", logPrefix, option.name);
             throw new RuntimeException("config error, undefined option:" + option.name);
         }
         if (existingOV.getValue1() == null) {
-            existingOV = Pair.with((ConfigOption)existingOV.getValue0(), readValue(option));
+            existingOV = Pair.with((KConfigOption.Basic)existingOV.getValue0(), readConfig(option));
             options.put(option.name, existingOV);
         }
-        return (T) existingOV.getValue1();
+        return (T)existingOV.getValue1();
     }
 
-    private Object readValue(ConfigOption option) {
+    private Object readConfig(KConfigOption.Basic option) {
         try {
             return config.getAnyRef(option.name);
         } catch (ConfigException.Missing ex) {
@@ -93,16 +93,16 @@ public class ConfigCore {
         }
     }
 
-    public synchronized <T extends Class> void setOptionValue(ConfigOption<T> option, T value) {
+    public synchronized <T extends Object> void write(KConfigOption.Basic<T> option, T value) {
         if (!options.containsKey(option.name)) {
             LOG.error("{}config error, undefined option:{}", logPrefix, option.name);
             throw new RuntimeException("config error, undefined option:" + option.name);
         }
-        Pair<ConfigOption, Object> existingOV = options.get(option.name);
-        if(!option.lvl.canWrite().contains(existingOV.getValue0().lvl)) {
+        Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
+        if(!option.lvl.canWrite().contains(existingOV.getValue0().lvl.toString())) {
             LOG.error("{}config error, unsanctioned write:{}", logPrefix, option);
             throw new RuntimeException("config error, unsanctioned write:" + option);
         }
-        options.put(option.name, Pair.with((ConfigOption) existingOV.getValue0(), (Object)value));
+        options.put(option.name, Pair.with((KConfigOption.Basic) existingOV.getValue0(), (Object)value));
     }
 }

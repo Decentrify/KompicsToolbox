@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * KompicsToolbox is free software; you can redistribute it and/or
+ * NatTraverser is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -17,13 +17,25 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util.config;
+package se.sics.ktoolbox.ipsolver.hooks;
 
-import java.util.Set;
+import com.google.common.base.Optional;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.Map;
+import org.javatuples.Pair;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConfigLevel {
-    public Set<ConfigLevel> canWrite();
+public class AddressSolverResult {
+    public final InetAddress localIp;
+    public final Map<Integer, Integer> ports;
+    public final Map<Integer, Optional<Socket>> portSockets;
+    
+    public AddressSolverResult(InetAddress localIp, Map<Integer, Integer> ports, Map<Integer, Optional<Socket>> portSockets) {
+        this.localIp = localIp;
+        this.ports = ports;
+        this.portSockets = portSockets;
+    }
 }
