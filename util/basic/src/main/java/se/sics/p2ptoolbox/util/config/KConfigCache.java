@@ -63,6 +63,7 @@ public class KConfigCache {
             throw new RuntimeException("cannot write composite options");
         }
         configCore.write((KConfigOption.Basic<T>)option, value);
+        options.put(option.name, Pair.with((KConfigOption.Base)option, (Object)value));
     }
 
     public void reset() {
