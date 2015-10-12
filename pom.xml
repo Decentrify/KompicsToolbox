@@ -18,7 +18,8 @@
         <module>caracal-client</module>
         <module>nat-echo</module>
         <module>simulator</module>
-    </modules>
+    <module>network-mngr</module>
+  </modules>
 
     <!-- simulator bumped to 1.8 - check if it is compatible with other modules-->    
     <properties>
