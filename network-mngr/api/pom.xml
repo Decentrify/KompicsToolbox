@@ -9,7 +9,6 @@
   </parent>
   <groupId>se.sics.ktoolbox.networkmngr</groupId>
   <artifactId>api</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <name>NetMngr API</name>
   <url>http://maven.apache.org</url>
 </project>
