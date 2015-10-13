@@ -17,25 +17,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.ipsolver.hooks;
+package se.sics.ktoolbox.ipsolver.newhooks;
 
-import com.google.common.base.Optional;
 import java.net.InetAddress;
-import java.net.Socket;
-import java.util.Map;
-import org.javatuples.Pair;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class AddressSolverResult {
     public final InetAddress localIp;
-    public final Map<Integer, Integer> ports;
-    public final Map<Integer, Optional<Socket>> portSockets;
     
-    public AddressSolverResult(InetAddress localIp, Map<Integer, Integer> ports, Map<Integer, Optional<Socket>> portSockets) {
+    public AddressSolverResult(InetAddress localIp) {
         this.localIp = localIp;
-        this.ports = ports;
-        this.portSockets = portSockets;
     }
 }

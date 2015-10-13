@@ -16,17 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.ipsolver.hooks;
+package se.sics.ktoolbox.ipsolver.newhooks;
 
 import com.google.common.base.Optional;
-import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.util.HashMap;
+import java.net.UnknownHostException;
 import java.util.Iterator;
-import java.util.Map;
-import org.javatuples.Pair;
 import se.sics.kompics.Component;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Start;
@@ -34,13 +29,7 @@ import se.sics.ktoolbox.ipsolver.IpSolverComp;
 import se.sics.ktoolbox.ipsolver.IpSolverPort;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.ktoolbox.ipsolver.util.IpAddressStatus;
-import se.sics.ktoolbox.ipsolver.util.IpHelper;
-import se.sics.ktoolbox.ipsolver.hooks.AddressSolverHook.Definition;
-import se.sics.ktoolbox.ipsolver.hooks.AddressSolverHook.Parent;
-import se.sics.ktoolbox.ipsolver.hooks.AddressSolverHook.SetupInit;
-import se.sics.ktoolbox.ipsolver.hooks.AddressSolverHook.SetupResult;
-import se.sics.ktoolbox.ipsolver.hooks.AddressSolverHook.StartInit;
-import se.sics.ktoolbox.ipsolver.hooks.AddressSolverHook.TearInit;
+import se.sics.ktoolbox.ipsolver.newhooks.AddressSolverHook.*;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
 
 /**
@@ -48,9 +37,6 @@ import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class AddressSolverHookFactory {
-
-    private static int MIN_PORT = 10000;
-    private static int MAX_PORT = (int) Math.pow((double) 2, (double) 16);
 
     public static Definition getIpSolver() {
         return new Definition() {
@@ -64,37 +50,26 @@ public class AddressSolverHookFactory {
                 Handler handleGetIp = new Handler<GetIp.Resp>() {
                     @Override
                     public void handle(GetIp.Resp resp) {
-                        InetAddress localIp = null;
                         if (!resp.addrs.isEmpty()) {
                             Iterator<IpAddressStatus> it = resp.addrs.iterator();
-                            while (it.hasNext()) {
-                                IpAddressStatus next = it.next();
-                                if (IpHelper.isPublic(next.getAddr())) {
-                                    localIp = next.getAddr();
-                                    break;
+                            Optional<InetAddress> localIp;
+                            Optional<String> sPrefferedLocalIp = hookParent.preferedLocalIp();
+                            if (sPrefferedLocalIp.isPresent()) {
+                                InetAddress prefferedLocalIp;
+                                try {
+                                    prefferedLocalIp = InetAddress.getByName(sPrefferedLocalIp.get());
+                                } catch (UnknownHostException ex) {
+                                    throw new RuntimeException("ip problem");
                                 }
-                            }
-                            if (localIp == null) {
-                                it = resp.addrs.iterator();
                                 while (it.hasNext()) {
                                     IpAddressStatus next = it.next();
-                                    if (IpHelper.isPrivate(next.getAddr())) {
-                                        localIp = next.getAddr();
-                                        break;
+                                    if (next.getAddr().equals(prefferedLocalIp)) {
+                                        hookParent.onResult(new AddressSolverResult(prefferedLocalIp));
+                                        return;
                                     }
                                 }
                             }
-                            if (localIp == null) {
-                                localIp = resp.addrs.get(0).getAddr();
-                            }
-                            Map<Integer, Integer> ports = new HashMap<>();
-                            Map<Integer, Optional<Socket>> portSockets = new HashMap<>();
-                            for (Integer prefferedPort : hookParent.bindPorts()) {
-                                Pair<Integer, Optional<Socket>> port = bind(localIp, prefferedPort);
-                                ports.put(prefferedPort, port.getValue0());
-                                portSockets.put(prefferedPort, port.getValue1());
-                            }
-                            hookParent.onResult(new AddressSolverResult(localIp, ports, portSockets));
+                            throw new RuntimeException("incomplete... todo");
                         } else {
                             throw new RuntimeException("no local interfaces detected");
                         }
@@ -121,37 +96,7 @@ public class AddressSolverHookFactory {
         };
     }
 
-    private static Pair<Integer, Optional<Socket>> bind(InetAddress localIp, Integer prefferedPort) {
-        Integer port = (prefferedPort < MIN_PORT ? MIN_PORT : prefferedPort);
-        Socket socket;
-        while (port < MAX_PORT) {
-            try {
-                socket = new Socket();
-                socket.setReuseAddress(true);
-                socket.bind(new InetSocketAddress(localIp, port));
-                socket.close();
-                return Pair.with(port, Optional.of(socket));
-            } catch (IOException e) {
-                port++;
-            }
-        }
-
-        port = MIN_PORT;
-        while (port < prefferedPort) {
-            try {
-                socket = new Socket();
-                socket.setReuseAddress(true);
-                socket.bind(new InetSocketAddress(localIp, port));
-                socket.close();
-                return Pair.with(port, Optional.of(socket));
-            } catch (IOException e) {
-                port++;
-            }
-        }
-        throw new RuntimeException("could not bind on any port");
-    }
-
-    public static Definition getIpSolverEmulator(final InetAddress localIp) {
+    public static Definition getIpSolverEmulator() {
         return new Definition() {
 
             @Override
@@ -163,13 +108,17 @@ public class AddressSolverHookFactory {
             @Override
             public void start(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, StartInit startInit) {
-                Map<Integer, Integer> ports = new HashMap<>();
-                Map<Integer, Optional<Socket>> portSockets = new HashMap<>();
-                for (Integer prefferedPort : hookParent.bindPorts()) {
-                    ports.put(prefferedPort, prefferedPort);
-                    portSockets.put(prefferedPort, absentSocket());
+                Optional<String> preferredLocalIp = hookParent.preferedLocalIp();
+                if (!preferredLocalIp.isPresent()) {
+                    throw new RuntimeException("simulation - missing ip");
                 }
-                hookParent.onResult(new AddressSolverResult(localIp, ports, portSockets));
+                InetAddress localIp;
+                try {
+                    localIp = InetAddress.getByName(preferredLocalIp.get());
+                } catch (UnknownHostException ex) {
+                    throw new RuntimeException("simulation - ip host could not be determined");
+                }
+                hookParent.onResult(new AddressSolverResult(localIp));
             }
 
             @Override
@@ -177,9 +126,5 @@ public class AddressSolverHookFactory {
                     SetupResult setupResult, TearInit hookTear) {
             }
         };
-    }
-
-    private static Optional<Socket> absentSocket() {
-        return Optional.absent();
     }
 }

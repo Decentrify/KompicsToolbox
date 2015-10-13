@@ -16,11 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.ipsolver.hooks;
+package se.sics.ktoolbox.ipsolver.newhooks;
 
-import se.sics.ktoolbox.ipsolver.newhooks.AddressSolverResult;
+import com.google.common.base.Optional;
 import java.util.EnumSet;
-import java.util.Set;
 import se.sics.kompics.Component;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.p2ptoolbox.util.proxy.Hook;
@@ -32,9 +31,11 @@ public class AddressSolverHook {
 
     public static interface Parent extends Hook.Parent {
 
+        public EnumSet<GetIp.NetworkInterfacesMask> netInterfaces();
+        
+        public Optional<String> preferedLocalIp();
+        
         public void onResult(AddressSolverResult result);
-
-        public Set<Integer> bindPorts();
     }
 
     public static interface Definition extends Hook.Definition<Parent, SetupInit, SetupResult, StartInit, TearInit> {
