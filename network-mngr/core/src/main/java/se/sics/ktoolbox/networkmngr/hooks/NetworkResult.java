@@ -17,33 +17,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.networkmngr.events;
+package se.sics.ktoolbox.networkmngr.hooks;
 
-import java.util.UUID;
-import se.sics.kompics.Direct;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class Disconnect {
-    public static class Request extends Direct.Request<Response> implements NetworkMngrEvent {
-        public final UUID id;
-        public final UUID networkId;
-        public final Positive<Network> network;
-        
-        public Request(UUID id, UUID networkId, Positive<Network> network) {
-            this.id = id;
-            this.networkId = networkId;
-            this.network = network;
-        }
+public class NetworkResult {
+    private final Positive<Network> network;
+    
+    public NetworkResult(Positive<Network> network) {
+        this.network = network;
     }
-    public static class Response implements Direct.Response, NetworkMngrEvent {
-        public final Request req;
-        
-        public Response(Request req) {
-            this.req = req;
-        }
+    
+    public Positive<Network> getNetwork() {
+        return network;
     }
 }

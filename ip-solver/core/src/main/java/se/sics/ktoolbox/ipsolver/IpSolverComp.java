@@ -18,17 +18,10 @@
  */
 package se.sics.ktoolbox.ipsolver;
 
-import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +33,6 @@ import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.ktoolbox.ipsolver.util.IpAddressStatus;
-import se.sics.ktoolbox.ipsolver.util.IpHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -84,7 +76,7 @@ public class IpSolverComp extends ComponentDefinition {
         public void handle(GetIp.Req req) {
             LOG.debug("{}GetIp request", logPrefix);
             try {
-                Set<IpAddressStatus> niSet = getLocalNetworkInterfaces(req.netInterfaces);
+                Set<IpAddressStatus> niSet = IpSolver.getLocalNetworkInterfaces(req.netInterfaces);
                 //TODO Alex - sort the addresses based on the IpComparator?
                 ArrayList<IpAddressStatus> addressList = new ArrayList<IpAddressStatus>(niSet);
                 InetAddress boundIp = InetAddress.getLocalHost();
@@ -100,41 +92,6 @@ public class IpSolverComp extends ComponentDefinition {
         }
     };
     
-    Set<IpAddressStatus> getLocalNetworkInterfaces(EnumSet<GetIp.NetworkInterfacesMask> netInterfaces) throws SocketException {
-        Set<IpAddressStatus> addresses = new HashSet<IpAddressStatus>();
-
-        Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
-
-        while (nis.hasMoreElements()) {
-            NetworkInterface ni = nis.nextElement();
-            if (ni.isVirtual()) {
-                continue;
-            }
-
-            List<InterfaceAddress> ifaces = ni.getInterfaceAddresses();
-            for (InterfaceAddress ifaceAddr : ifaces) {
-                //TODO Alex - is this check true at any time?
-                if (ifaceAddr == null) {
-                    continue;
-                }
-                InetAddress addr = ifaceAddr.getAddress();
-                // ignore ipv6 addresses
-                if (addr instanceof Inet6Address) {
-                    continue;
-                }
-
-                if (!IpHelper.filter(addr, netInterfaces)) {
-                    int networkPrefixLength = ifaceAddr.getNetworkPrefixLength();
-                    int mtu = ni.getMTU();
-                    boolean isUp = ni.isUp();
-                    IpAddressStatus ipAddr = new IpAddressStatus(ni, addr, isUp, networkPrefixLength, mtu);
-                    addresses.add(ipAddr);
-                }
-            }
-        }
-        return addresses;
-    }
-
     //TODO Alex - eventually you might want to do periodic recheck of interfaces
 //    private UUID stateCheckTid = null;
 //    private EnumSet<GetIp.NetworkInterfacesMask> filters;

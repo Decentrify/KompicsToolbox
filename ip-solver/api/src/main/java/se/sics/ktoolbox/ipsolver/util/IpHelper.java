@@ -26,8 +26,26 @@ import se.sics.ktoolbox.ipsolver.msg.GetIp;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class IpHelper {
+
+    public static boolean isType(InetAddress addr, GetIp.NetworkInterfacesMask netInterface) {
+        switch (netInterface) {
+            case ALL:
+                return true;
+            case PUBLIC:
+                return isPublic(addr);
+            case TEN_DOT_PRIVATE:
+                return isTenDot(addr);
+            case PRIVATE:
+                return isPrivate(addr);
+            case LOOPBACK:
+                return isLoopback(addr);
+            default:
+                throw new RuntimeException("unknown:" + netInterface);
+        }
+    }
+
     public static boolean filter(InetAddress addr, EnumSet<GetIp.NetworkInterfacesMask> networkInterfaces) {
-        if(networkInterfaces.contains(GetIp.NetworkInterfacesMask.ALL)) {
+        if (networkInterfaces.contains(GetIp.NetworkInterfacesMask.ALL)) {
             return false;
         }
         if (isLoopback(addr)) {
@@ -54,11 +72,11 @@ public class IpHelper {
     public static boolean isPrivate(InetAddress adr) {
         return getTwoDotPrefix(adr).equals("192.168");
     }
-    
+
     public static boolean isPublic(InetAddress add) {
         return !(isPrivate(add) || isLoopback(add) || isTenDot(add));
     }
-    
+
     private static String getOneDotPrefix(InetAddress addr) {
         String textualPrefixAddr = addr.getHostAddress();
         int firstDot = textualPrefixAddr.indexOf(".");

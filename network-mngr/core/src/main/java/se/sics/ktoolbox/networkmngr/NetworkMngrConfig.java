@@ -16,18 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.ktoolbox.networkmngr;
 
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.networkmngr.events.Bind;
+import se.sics.ktoolbox.networkmngr.hooks.NetworkHook;
+import se.sics.ktoolbox.networkmngr.hooks.PortBindingHook;
+import se.sics.p2ptoolbox.util.proxy.Hook;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetworkMngrPort extends PortType {
-    {
-        negative(Bind.Request.class);
-        positive(Bind.Response.class);
+public class NetworkMngrConfig {
+
+    public static final Class<PortBindingHook.Definition> PORT_BINDING_HOOK = PortBindingHook.Definition.class;
+    public static final Class<NetworkHook.Definition> NETWORK_HOOK = NetworkHook.Definition.class;
+    
+    public static enum RequiredHooks {
+
+        PORT_BINDING("NET_MNGR_PORT_BINDING", PORT_BINDING_HOOK),
+        NETWORK("NET_MNGR_NETWORK", NETWORK_HOOK);
+
+        public final String hookName;
+        public final Class<? extends Hook.Definition> hookType;
+
+        RequiredHooks(String name, Class<? extends Hook.Definition> hookType) {
+            this.hookName = name;
+            this.hookType = hookType;
+        }
     }
 }

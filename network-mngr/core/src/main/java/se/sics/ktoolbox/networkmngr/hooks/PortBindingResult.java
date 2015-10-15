@@ -17,17 +17,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.networkmngr;
+package se.sics.ktoolbox.networkmngr.hooks;
 
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.networkmngr.events.Bind;
+import com.google.common.base.Optional;
+import java.net.Socket;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetworkMngrPort extends PortType {
-    {
-        negative(Bind.Request.class);
-        positive(Bind.Response.class);
+public class PortBindingResult {
+    public final int tryPort;
+    public final int boundPort;
+    public final Optional<Socket> socket;
+    
+    public PortBindingResult(int tryPort, int boundPort, Optional<Socket> socket) {
+        this.tryPort = tryPort;
+        this.boundPort = boundPort;
+        this.socket = socket;
     }
 }

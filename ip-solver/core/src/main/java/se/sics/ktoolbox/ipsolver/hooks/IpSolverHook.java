@@ -16,10 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.ipsolver.newhooks;
+package se.sics.ktoolbox.ipsolver.hooks;
 
 import com.google.common.base.Optional;
-import java.util.EnumSet;
+import java.util.List;
 import se.sics.kompics.Component;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.p2ptoolbox.util.proxy.Hook;
@@ -27,15 +27,10 @@ import se.sics.p2ptoolbox.util.proxy.Hook;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AddressSolverHook {
+public class IpSolverHook {
 
     public static interface Parent extends Hook.Parent {
-
-        public EnumSet<GetIp.NetworkInterfacesMask> netInterfaces();
-        
-        public Optional<String> preferedLocalIp();
-        
-        public void onResult(AddressSolverResult result);
+        public void onResult(IpSolverResult result);
     }
 
     public static interface Definition extends Hook.Definition<Parent, SetupInit, SetupResult, StartInit, TearInit> {
@@ -45,7 +40,6 @@ public class AddressSolverHook {
     }
 
     public static class SetupResult implements Hook.SetupResult {
-
         public final Component[] comp;
 
         public SetupResult(Component[] comp) {
@@ -54,8 +48,12 @@ public class AddressSolverHook {
     }
 
     public static class StartInit extends Hook.StartInit {
-        public StartInit(boolean started) {
+        public final Optional<String> prefferedIp;
+        public final List<GetIp.NetworkInterfacesMask> prefferedInterfaces;
+        public StartInit(boolean started, Optional<String> prefferedIp, List<GetIp.NetworkInterfacesMask> prefferedInterfaces) {
             super(started);
+            this.prefferedIp = prefferedIp;
+            this.prefferedInterfaces = prefferedInterfaces;
         }
     }
 

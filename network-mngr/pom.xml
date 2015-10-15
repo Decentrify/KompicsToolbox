@@ -14,7 +14,8 @@
     <modules>
         <module>api</module>
         <module>core</module>
-    </modules>
+    <module>example</module>
+  </modules>
     
     <properties>
         <util.version>${original.util.version}</util.version>

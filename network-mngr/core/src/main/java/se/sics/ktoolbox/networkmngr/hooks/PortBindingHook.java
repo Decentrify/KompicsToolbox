@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * NatTraverser is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,25 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.ipsolver.hooks;
+package se.sics.ktoolbox.networkmngr.hooks;
 
-import se.sics.ktoolbox.ipsolver.newhooks.AddressSolverResult;
-import java.util.EnumSet;
-import java.util.Set;
+import java.net.InetAddress;
 import se.sics.kompics.Component;
-import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.p2ptoolbox.util.proxy.Hook;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AddressSolverHook {
+public class PortBindingHook {
 
     public static interface Parent extends Hook.Parent {
 
-        public void onResult(AddressSolverResult result);
-
-        public Set<Integer> bindPorts();
+        public void onResult(PortBindingResult result);
     }
 
     public static interface Definition extends Hook.Definition<Parent, SetupInit, SetupResult, StartInit, TearInit> {
@@ -53,8 +48,16 @@ public class AddressSolverHook {
     }
 
     public static class StartInit extends Hook.StartInit {
-        public StartInit(boolean started) {
+
+        public final InetAddress localIp;
+        public final int tryPort;
+        public final boolean forceProvidedPort;
+
+        public StartInit(boolean started, InetAddress localIp, int tryPort, boolean forceProvidedPort) {
             super(started);
+            this.localIp = localIp;
+            this.tryPort = tryPort;
+            this.forceProvidedPort = forceProvidedPort;
         }
     }
 

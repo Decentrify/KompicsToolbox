@@ -17,17 +17,23 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.networkmngr;
-
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.networkmngr.events.Bind;
+package se.sics.ktoolbox.networkmngr.msg;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetworkMngrPort extends PortType {
-    {
-        negative(Bind.Request.class);
-        positive(Bind.Response.class);
+public class NodeMsg {
+    public static class Request {
+        public final int p;
+        public Request(int p) {
+            this.p = p;
+        }
+    }
+    
+    public static class Response {
+        public final int p;
+        public Response(int p) {
+            this.p = p;
+        }
     }
 }
