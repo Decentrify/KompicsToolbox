@@ -34,13 +34,11 @@ public class Bind {
 
         public final UUID id;
         public final Address self;
-        public final Optional<InetAddress> alternateInterfaceBind;
         public final boolean forceProvidedPort;
 
-         public Request(UUID id, Address self, Optional<InetAddress> alternateBind, boolean forceProvidedPort) {
+         public Request(UUID id, Address self, boolean forceProvidedPort) {
             this.id = id;
             this.self = self;
-            this.alternateInterfaceBind = alternateBind;
             this.forceProvidedPort = forceProvidedPort;
         }
 

@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.networkmngr;
 
-import com.google.common.base.Optional;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.UUID;
@@ -31,7 +30,6 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.ktoolbox.networkmngr.events.Bind;
@@ -94,14 +92,8 @@ public class NodeComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
-            InetAddress alternateBind;
-            try {
-                alternateBind = InetAddress.getByName(config.read(NodeConfig.selfAltBindIp).get());
-            } catch (UnknownHostException ex) {
-                throw new RuntimeException(ex);
-            }
-            trigger(new Bind.Request(UUID.randomUUID(), self.getValue0(), Optional.of(alternateBind), true), networkMngr);
-            trigger(new Bind.Request(UUID.randomUUID(), self.getValue1(), Optional.of(alternateBind), true), networkMngr);
+            trigger(new Bind.Request(UUID.randomUUID(), self.getValue0(), true), networkMngr);
+            trigger(new Bind.Request(UUID.randomUUID(), self.getValue1(), true), networkMngr);
         }
     };
 

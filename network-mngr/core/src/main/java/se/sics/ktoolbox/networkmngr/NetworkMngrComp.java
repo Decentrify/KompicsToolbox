@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.networkmngr;
 
 import com.google.common.base.Optional;
-import com.typesafe.config.ConfigException.Missing;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,18 +109,29 @@ public class NetworkMngrComp extends ComponentDefinition {
             IpSolverHook.Definition ipSolver = systemHooks.getHook(NetworkMngrHooks.RequiredHooks.IP_SOLVER.hookName,
                     NetworkMngrHooks.IP_SOLVER_HOOK);
             ipSolverSetup = ipSolver.setup(new NetworkMngrProxy(), this, new IpSolverHook.SetupInit());
-            Optional<InetAddress> prefferedInterface;
+            Optional<String> prefferedInterface = config.read(NetworkMngrConfig.prefferedInterface);
+            List<GetIp.NetworkInterfacesMask> prefferedInterfaces = getPrefferedInterfaces();
+            ipSolver.start(new NetworkMngrProxy(), this, ipSolverSetup, new IpSolverHook.StartInit(started, prefferedInterface, prefferedInterfaces));
+        }
+
+        private List<GetIp.NetworkInterfacesMask> getPrefferedInterfaces() {
+            Optional<List> prefferedMasks = config.read(NetworkMngrConfig.prefferedMasks);
             List<GetIp.NetworkInterfacesMask> prefferedInterfaces = new ArrayList<>();
-            Optional<InetAddress> sPrefferedInterface = config.read(NetworkMngrConfig.prefferedIp);
-            Optional<List> sPrefferedInterfaces = config.read(NetworkMngrConfig.prefferedMasks);
-            System.out.println(sPrefferedInterface.get());
-            System.out.println(sPrefferedInterfaces.get());
-//            ipSolver.start(new NetworkMngrProxy(), this, ipSolverSetup, new IpSolverHook.StartInit(started,));
+            if (!prefferedMasks.isPresent()) {
+                prefferedInterfaces.add(GetIp.NetworkInterfacesMask.ALL);
+            } else {
+                prefferedInterfaces.addAll(prefferedMasks.get());
+            }
+            return prefferedInterfaces;
         }
 
         @Override
         public void onResult(IpSolverResult result) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            if(!result.getIp().isPresent()) {
+                LOG.error("{}could not get any ip", logPrefix);
+                throw new RuntimeException("could not get any ip");
+            }
+            NetworkMngrComp.this.localIp = result.getIp().get();
         }
     }
 
@@ -129,8 +139,7 @@ public class NetworkMngrComp extends ComponentDefinition {
     Handler handleCreate = new Handler<Bind.Request>() {
         @Override
         public void handle(Bind.Request req) {
-            LOG.info("{}binding on:{} alternate:{}", new Object[]{logPrefix, req.self,
-                (req.alternateInterfaceBind.isPresent() ? req.alternateInterfaceBind.get() : "x")});
+            LOG.info("{}binding on:{} localIp:{}", new Object[]{logPrefix, req.self, localIp});
             Optional<Bind.Response> existing = getMapping(req);
             if (existing.isPresent()) {
                 trigger(existing.get(), manager);
@@ -165,7 +174,6 @@ public class NetworkMngrComp extends ComponentDefinition {
         void bindPort(boolean started) {
             PortBindingHook.Definition portBindingHook = systemHooks.getHook(
                     NetworkMngrHooks.RequiredHooks.PORT_BINDING.hookName, NetworkMngrHooks.PORT_BINDING_HOOK);
-            InetAddress localIp = req.alternateInterfaceBind.isPresent() ? req.alternateInterfaceBind.get() : req.self.getIp();
             portBindingSetup = portBindingHook.setup(new NetworkMngrProxy(), this,
                     new PortBindingHook.SetupInit());
             portBindingHook.start(new NetworkMngrProxy(), this, portBindingSetup,
@@ -182,7 +190,7 @@ public class NetworkMngrComp extends ComponentDefinition {
             NetworkHook.Definition networkHook = systemHooks.getHook(
                     NetworkMngrHooks.RequiredHooks.NETWORK.hookName, NetworkMngrHooks.NETWORK_HOOK);
             networkSetup = networkHook.setup(new NetworkMngrProxy(), this,
-                    new NetworkHook.SetupInit(req.self, req.alternateInterfaceBind));
+                    new NetworkHook.SetupInit(req.self, Optional.of(localIp)));
             networkHook.start(new NetworkMngrProxy(), this, networkSetup, new NetworkHook.StartInit(started));
         }
 

@@ -20,7 +20,6 @@ package se.sics.ktoolbox.networkmngr;
 
 import com.google.common.base.Optional;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,10 +37,9 @@ import se.sics.p2ptoolbox.util.config.options.InetAddressOption;
  */
 public class NetworkMngrConfig implements KConfigLevel {
 
-    private final static Basic<String> prefferedInterface = new Basic("network.prefferedInterface", String.class, new NetworkMngrConfig());
+    public final static Basic<String> prefferedInterface = new Basic("network.prefferedInterface", String.class, new NetworkMngrConfig());
     private final static Basic<List<String>> prefferedInterfaces = new Basic("network.prefferedInterfaces", List.class, new NetworkMngrConfig());
 
-    public final static InetAddressOption prefferedIp = new InetAddressOption("network.prefferedIp", InetAddress.class, new NetworkMngrConfig(), prefferedInterface);
     public final static InterfaceMasksOption prefferedMasks = new InterfaceMasksOption("network.prefferedMasks", List.class, new NetworkMngrConfig());
 
     public static void register(KConfigCore config) {
