@@ -18,6 +18,9 @@
  */
 package se.sics.p2ptoolbox.util.config;
 
+import com.google.common.base.Optional;
+import com.typesafe.config.ConfigException;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
@@ -53,6 +56,6 @@ public final class KConfigOption {
             super(name, type, lvl);
         }
 
-        public abstract T read(KConfigCache config);
+        public abstract Optional<T> read(KConfigCache config);
     }
 }

@@ -18,6 +18,8 @@
  */
 package se.sics.p2ptoolbox.util.config;
 
+import com.google.common.base.Optional;
+import com.typesafe.config.ConfigException;
 import java.util.HashMap;
 import java.util.Map;
 import org.javatuples.Pair;
@@ -38,39 +40,43 @@ public class KConfigCache {
         return configCore.getNodeId();
     }
 
-    public <T extends Object> T read(KConfigOption.Base<T> option) {
+    public <T extends Object> Optional<T> read(KConfigOption.Base<T> option) {
         if (option instanceof KConfigOption.Composite) {
             if (!options.containsKey(option.name)) {
                 return ((KConfigOption.Composite<T>) option).read(this);
             } else {
-                return (T)(options.get(option.name).getValue1());
+                return Optional.of((T) (options.get(option.name).getValue1()));
             }
         } else {
             KConfigOption.Basic<T> op = (KConfigOption.Basic<T>) option;
             T value;
             if (!options.containsKey(op.name)) {
-                value = configCore.read(op);
+                try {
+                    value = configCore.read(op);
+                } catch (ConfigException.Missing ex) {
+                    return Optional.absent();
+                }
                 options.put(option.name, Pair.with((KConfigOption.Base) op, (Object) value));
             } else {
                 value = (T) options.get(op.name).getValue1();
             }
-            return value;
+            return Optional.of(value);
         }
     }
 
     public <T extends Object> void write(KConfigOption.Base<T> option, T value) {
-        if(option instanceof KConfigOption.Composite) {
+        if (option instanceof KConfigOption.Composite) {
             throw new RuntimeException("cannot write composite options");
         }
-        configCore.write((KConfigOption.Basic<T>)option, value);
-        options.put(option.name, Pair.with((KConfigOption.Base)option, (Object)value));
+        configCore.write((KConfigOption.Basic<T>) option, value);
+        options.put(option.name, Pair.with((KConfigOption.Base) option, (Object) value));
     }
 
     public void reset() {
         options.clear();
     }
 
-    public <T extends Object> T reset(KConfigOption.Base<T> option) {
+    public <T extends Object> Optional<T> reset(KConfigOption.Base<T> option) {
         options.remove(option.name);
         return read(option);
     }

@@ -49,7 +49,7 @@ public class KConfigCore {
         this.nodeId = nodeId;
         this.logPrefix = nodeId + " ";
     }
-    
+
     public int getNodeId() {
         return nodeId;
     }
@@ -70,27 +70,18 @@ public class KConfigCore {
         }
         options.put(option.name, Pair.with(option, null));
     }
-    
-    public synchronized <T extends Object> T read(KConfigOption.Basic<T> option) {
+
+    public synchronized <T extends Object> T read(KConfigOption.Basic<T> option) throws ConfigException.Missing {
         Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
         if (existingOV == null) {
             LOG.error("{}config error, undefined option:{}", logPrefix, option.name);
             throw new RuntimeException("config error, undefined option:" + option.name);
         }
         if (existingOV.getValue1() == null) {
-            existingOV = Pair.with((KConfigOption.Basic)existingOV.getValue0(), readConfig(option));
+            existingOV = Pair.with((KConfigOption.Basic) existingOV.getValue0(), config.getAnyRef(option.name));
             options.put(option.name, existingOV);
         }
-        return (T)existingOV.getValue1();
-    }
-
-    private Object readConfig(KConfigOption.Basic option) {
-        try {
-            return config.getAnyRef(option.name);
-        } catch (ConfigException.Missing ex) {
-            LOG.error("{}config error - missing:{}", logPrefix, option.name);
-            throw new RuntimeException("config error - missing:" + option.name);
-        }
+        return (T) existingOV.getValue1();
     }
 
     public synchronized <T extends Object> void write(KConfigOption.Basic<T> option, T value) {
@@ -99,10 +90,10 @@ public class KConfigCore {
             throw new RuntimeException("config error, undefined option:" + option.name);
         }
         Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
-        if(!option.lvl.canWrite().contains(existingOV.getValue0().lvl.toString())) {
+        if (!option.lvl.canWrite().contains(existingOV.getValue0().lvl.toString())) {
             LOG.error("{}config error, unsanctioned write:{}", logPrefix, option);
             throw new RuntimeException("config error, unsanctioned write:" + option);
         }
-        options.put(option.name, Pair.with((KConfigOption.Basic) existingOV.getValue0(), (Object)value));
+        options.put(option.name, Pair.with((KConfigOption.Basic) existingOV.getValue0(), (Object) value));
     }
 }
