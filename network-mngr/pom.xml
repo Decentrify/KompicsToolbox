@@ -19,6 +19,7 @@
     
     <properties>
         <util.version>${original.util.version}</util.version>
+        <ipsolver.version>${original.ipsolver.version}</ipsolver.version>
     </properties>
   
     <dependencies>

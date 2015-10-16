@@ -18,29 +18,78 @@
  */
 package se.sics.ktoolbox.networkmngr;
 
-import se.sics.ktoolbox.networkmngr.hooks.NetworkHook;
-import se.sics.ktoolbox.networkmngr.hooks.PortBindingHook;
-import se.sics.p2ptoolbox.util.proxy.Hook;
+import com.google.common.base.Optional;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import se.sics.ktoolbox.ipsolver.msg.GetIp;
+import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.config.KConfigLevel;
+import se.sics.p2ptoolbox.util.config.KConfigOption;
+import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
+import se.sics.p2ptoolbox.util.config.options.InetAddressOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetworkMngrConfig {
+public class NetworkMngrConfig implements KConfigLevel {
 
-    public static final Class<PortBindingHook.Definition> PORT_BINDING_HOOK = PortBindingHook.Definition.class;
-    public static final Class<NetworkHook.Definition> NETWORK_HOOK = NetworkHook.Definition.class;
-    
-    public static enum RequiredHooks {
+    private final static Basic<String> prefferedInterface = new Basic("network.prefferedInterface", String.class, new NetworkMngrConfig());
+    private final static Basic<List<String>> prefferedInterfaces = new Basic("network.prefferedInterfaces", List.class, new NetworkMngrConfig());
 
-        PORT_BINDING("NET_MNGR_PORT_BINDING", PORT_BINDING_HOOK),
-        NETWORK("NET_MNGR_NETWORK", NETWORK_HOOK);
+    public final static InetAddressOption prefferedIp = new InetAddressOption("network.prefferedIp", InetAddress.class, new NetworkMngrConfig(), prefferedInterface);
+    public final static InterfaceMasksOption prefferedMasks = new InterfaceMasksOption("network.prefferedMasks", List.class, new NetworkMngrConfig());
 
-        public final String hookName;
-        public final Class<? extends Hook.Definition> hookType;
+    public static void register(KConfigCore config) {
+        config.define(prefferedInterface);
+        config.define(prefferedInterfaces);
+    }
 
-        RequiredHooks(String name, Class<? extends Hook.Definition> hookType) {
-            this.hookName = name;
-            this.hookType = hookType;
+    @Override
+    public Set<String> canWrite() {
+        Set<String> canWrite = new HashSet<>();
+        canWrite.add(toString());
+        return canWrite;
+    }
+
+    @Override
+    public String toString() {
+        return "NetworkMngrConfig";
+    }
+
+    public static class InterfaceMasksOption extends KConfigOption.Composite<List> {
+
+        public InterfaceMasksOption(String name, Class<List> type, KConfigLevel lvl) {
+            super(name, type, lvl);
+        }
+
+        @Override
+        public Optional<List> read(KConfigCache config) {
+            Optional<List<String>> sPrefferedInterfaces = config.read(prefferedInterfaces);
+            if (!sPrefferedInterfaces.isPresent()) {
+                return Optional.absent();
+            }
+            List<GetIp.NetworkInterfacesMask> masks = new ArrayList<>();
+            for (String prefInt : sPrefferedInterfaces.get()) {
+                switch (prefInt) {
+                    case "PUBLIC":
+                        masks.add(GetIp.NetworkInterfacesMask.PUBLIC);
+                        break;
+                    case "PRIVATE":
+                        masks.add(GetIp.NetworkInterfacesMask.PRIVATE);
+                        break;
+                    case "TENDOT":
+                        masks.add(GetIp.NetworkInterfacesMask.TEN_DOT_PRIVATE);
+                        break;
+                    default: 
+                        throw new RuntimeException("unknown:" + prefInt);
+                }
+            }
+            return Optional.of((List)masks);
         }
     }
 }

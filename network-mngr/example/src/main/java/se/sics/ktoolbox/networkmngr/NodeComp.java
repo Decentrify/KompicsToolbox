@@ -67,16 +67,19 @@ public class NodeComp extends ComponentDefinition {
         InetAddress publicIp;
         InetAddress partnerIp;
         try {
-            publicIp = InetAddress.getByName(config.read(NodeConfig.selfPublicIp));
-            partnerIp = InetAddress.getByName(config.read(NodeConfig.partnerIp));
+            publicIp = InetAddress.getByName(config.read(NodeConfig.selfPublicIp).get());
+            partnerIp = InetAddress.getByName(config.read(NodeConfig.partnerIp).get());
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
         this.self = Pair.with(
-                DecoratedAddress.open(publicIp, config.read(NodeConfig.selfPort1), config.read(NodeConfig.selfId)),
-                DecoratedAddress.open(publicIp, config.read(NodeConfig.selfPort2), config.read(NodeConfig.selfId)));
+                DecoratedAddress.open(publicIp, config.read(NodeConfig.selfPort1).get(),
+                        config.read(NodeConfig.selfId).get()),
+                DecoratedAddress.open(publicIp, config.read(NodeConfig.selfPort2).get(),
+                        config.read(NodeConfig.selfId).get()));
 
-        this.partner = DecoratedAddress.open(partnerIp, config.read(NodeConfig.partnerPort), config.read(NodeConfig.partnerId));
+        this.partner = DecoratedAddress.open(partnerIp, config.read(NodeConfig.partnerPort).get(), 
+                config.read(NodeConfig.partnerId).get());
         this.logPrefix = self.getValue0().getIp() + " ";
         LOG.info("{}initiating...", logPrefix);
 
@@ -93,7 +96,7 @@ public class NodeComp extends ComponentDefinition {
             LOG.info("{}starting...", logPrefix);
             InetAddress alternateBind;
             try {
-                alternateBind = InetAddress.getByName(config.read(NodeConfig.selfAltBindIp));
+                alternateBind = InetAddress.getByName(config.read(NodeConfig.selfAltBindIp).get());
             } catch (UnknownHostException ex) {
                 throw new RuntimeException(ex);
             }

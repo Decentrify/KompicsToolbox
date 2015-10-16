@@ -19,8 +19,11 @@
 package se.sics.ktoolbox.networkmngr;
 
 import com.google.common.base.Optional;
+import com.typesafe.config.ConfigException.Missing;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -41,6 +44,9 @@ import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.ipsolver.hooks.IpSolverHook;
+import se.sics.ktoolbox.ipsolver.hooks.IpSolverResult;
+import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.ktoolbox.networkmngr.events.Bind;
 import se.sics.ktoolbox.networkmngr.hooks.NetworkHook;
 import se.sics.ktoolbox.networkmngr.hooks.NetworkResult;
@@ -66,6 +72,7 @@ public class NetworkMngrComp extends ComponentDefinition {
     private final KConfigCache config;
     private final SystemHookSetup systemHooks;
 
+    private InetAddress localIp;
     private final Map<UUID, NetworkParent> netComponents = new HashMap<>();
 
     public NetworkMngrComp(NetworkMngrInit init) {
@@ -83,14 +90,42 @@ public class NetworkMngrComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
+            IpSolverParent ipSolverParent = new IpSolverParent();
+            ipSolverParent.solveLocalIp(true);
         }
     };
 
+    @Override
     public Fault.ResolveAction handleFault(Fault fault) {
         LOG.error("{}one of the networks faulted", logPrefix);
         return Fault.ResolveAction.ESCALATE;
     }
 
+    //*******************************IP*****************************************
+    private class IpSolverParent implements IpSolverHook.Parent {
+
+        private IpSolverHook.SetupResult ipSolverSetup;
+
+        private void solveLocalIp(boolean started) {
+            IpSolverHook.Definition ipSolver = systemHooks.getHook(NetworkMngrHooks.RequiredHooks.IP_SOLVER.hookName,
+                    NetworkMngrHooks.IP_SOLVER_HOOK);
+            ipSolverSetup = ipSolver.setup(new NetworkMngrProxy(), this, new IpSolverHook.SetupInit());
+            Optional<InetAddress> prefferedInterface;
+            List<GetIp.NetworkInterfacesMask> prefferedInterfaces = new ArrayList<>();
+            Optional<InetAddress> sPrefferedInterface = config.read(NetworkMngrConfig.prefferedIp);
+            Optional<List> sPrefferedInterfaces = config.read(NetworkMngrConfig.prefferedMasks);
+            System.out.println(sPrefferedInterface.get());
+            System.out.println(sPrefferedInterfaces.get());
+//            ipSolver.start(new NetworkMngrProxy(), this, ipSolverSetup, new IpSolverHook.StartInit(started,));
+        }
+
+        @Override
+        public void onResult(IpSolverResult result) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
+
+    //***************************NETWORK, PORT**********************************
     Handler handleCreate = new Handler<Bind.Request>() {
         @Override
         public void handle(Bind.Request req) {
@@ -114,42 +149,43 @@ public class NetworkMngrComp extends ComponentDefinition {
     }
 
     private class NetworkParent implements NetworkHook.Parent, PortBindingHook.Parent {
+
         final UUID id;
         final Bind.Request req;
         PortBindingHook.SetupResult portBindingSetup;
         PortBindingResult portBindingResult;
         NetworkHook.SetupResult networkSetup;
         NetworkResult networkResult;
-        
+
         public NetworkParent(UUID id, Bind.Request req) {
             this.id = id;
             this.req = req;
         }
-        
-         void bindPort(boolean started) {
+
+        void bindPort(boolean started) {
             PortBindingHook.Definition portBindingHook = systemHooks.getHook(
-                    NetworkMngrConfig.RequiredHooks.PORT_BINDING.hookName, NetworkMngrConfig.PORT_BINDING_HOOK);
+                    NetworkMngrHooks.RequiredHooks.PORT_BINDING.hookName, NetworkMngrHooks.PORT_BINDING_HOOK);
             InetAddress localIp = req.alternateInterfaceBind.isPresent() ? req.alternateInterfaceBind.get() : req.self.getIp();
-            portBindingSetup = portBindingHook.setup(new NetworkMngrProxy(), this, 
+            portBindingSetup = portBindingHook.setup(new NetworkMngrProxy(), this,
                     new PortBindingHook.SetupInit());
-            portBindingHook.start(new NetworkMngrProxy(), this, portBindingSetup, 
+            portBindingHook.start(new NetworkMngrProxy(), this, portBindingSetup,
                     new PortBindingHook.StartInit(started, localIp, req.self.getPort(), req.forceProvidedPort));
         }
-         
+
         @Override
         public void onResult(PortBindingResult result) {
             this.portBindingResult = result;
             setNetwork(false);
         }
-        
+
         void setNetwork(boolean started) {
             NetworkHook.Definition networkHook = systemHooks.getHook(
-                    NetworkMngrConfig.RequiredHooks.NETWORK.hookName, NetworkMngrConfig.NETWORK_HOOK);
+                    NetworkMngrHooks.RequiredHooks.NETWORK.hookName, NetworkMngrHooks.NETWORK_HOOK);
             networkSetup = networkHook.setup(new NetworkMngrProxy(), this,
                     new NetworkHook.SetupInit(req.self, req.alternateInterfaceBind));
             networkHook.start(new NetworkMngrProxy(), this, networkSetup, new NetworkHook.StartInit(started));
         }
-        
+
         @Override
         public void onResult(NetworkResult result) {
             this.networkResult = result;

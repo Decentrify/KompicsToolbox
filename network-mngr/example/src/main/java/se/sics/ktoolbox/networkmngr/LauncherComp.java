@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.ktoolbox.networkmngr;
 
 import com.google.common.collect.ImmutableMap;
@@ -25,6 +24,7 @@ import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.ipsolver.hooks.IpSolverHookFactory;
 import se.sics.ktoolbox.networkmngr.NetworkMngrComp.NetworkMngrInit;
 import se.sics.ktoolbox.networkmngr.NodeComp.NodeInit;
 import se.sics.ktoolbox.networkmngr.hooks.NetworkHookFactory;
@@ -41,20 +41,28 @@ import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class LauncherComp extends ComponentDefinition {
-    
+
     public LauncherComp() {
         KConfigCore config = new KConfigCore(ConfigFactory.load());
-        NodeConfig.register(config);
         SystemHookSetup systemHooks = new SystemHookSetup();
-        systemHooks.register(NetworkMngrConfig.RequiredHooks.PORT_BINDING.hookName, PortBindingHookFactory.getPortBinder());
-        systemHooks.register(NetworkMngrConfig.RequiredHooks.NETWORK.hookName, NetworkHookFactory.getNettyNetwork());
+        systemSetup(config, systemHooks);
+        
         Component networkMngr = create(NetworkMngrComp.class, new NetworkMngrInit(config, systemHooks));
         Component node = create(NodeComp.class, new NodeInit(config));
         connect(node.getNegative(Network.class), networkMngr.getPositive(Network.class));
         connect(node.getNegative(NetworkMngrPort.class), networkMngr.getPositive(NetworkMngrPort.class));
     }
-    
-    private static void systemSetup() {
+
+    private void systemSetup(KConfigCore config, SystemHookSetup systemHooks) {
+        //config options setup
+        NetworkMngrConfig.register(config);
+        NodeConfig.register(config);
+        
+        //address setup
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
+        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
+
+        //serializers setup
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         serializerId = NodeSerializerSetup.registerSerializers(serializerId);
@@ -63,11 +71,13 @@ public class LauncherComp extends ComponentDefinition {
             throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
         }
 
-        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
-        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
+        //hooks setup
+        systemHooks.register(NetworkMngrHooks.RequiredHooks.IP_SOLVER.hookName, IpSolverHookFactory.getIpSolver());
+        systemHooks.register(NetworkMngrHooks.RequiredHooks.PORT_BINDING.hookName, PortBindingHookFactory.getPortBinder());
+        systemHooks.register(NetworkMngrHooks.RequiredHooks.NETWORK.hookName, NetworkHookFactory.getNettyNetwork());
     }
+
     public static void main(String[] args) {
-        systemSetup();
         start();
         try {
             Kompics.waitForTermination();
@@ -86,4 +96,4 @@ public class LauncherComp extends ComponentDefinition {
     public static void stop() {
         Kompics.shutdown();
     }
-    }
+}
