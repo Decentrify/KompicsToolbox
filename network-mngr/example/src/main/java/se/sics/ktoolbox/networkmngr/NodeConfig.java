@@ -38,17 +38,6 @@ public class NodeConfig implements KConfigLevel {
     public final static Basic<Integer> partnerPort = new Basic("partner.address.port", Integer.class, new NodeConfig());
     public final static Basic<Integer> partnerId = new Basic("partner.address.id", String.class, new NodeConfig());
 
-    public static void register(KConfigCore config) {
-        config.define(selfPublicIp);
-        config.define(selfAltBindIp);
-        config.define(selfPort1);
-        config.define(selfPort2);
-        config.define(selfId);
-        config.define(partnerIp);
-        config.define(partnerPort);
-        config.define(partnerId);
-    }
-    
     @Override
     public Set<String> canWrite() {
         Set<String> canWrite = new HashSet<>();

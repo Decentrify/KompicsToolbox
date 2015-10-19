@@ -19,34 +19,23 @@
 package se.sics.p2ptoolbox.util.config.options;
 
 import com.google.common.base.Optional;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.List;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class InetAddressOption extends Composite<InetAddress> {
-    private final Basic<String> host;
+public class OpenAddressBootstrapOption extends Composite<List>{
     
-    public InetAddressOption(String optionName, KConfigLevel lvl, Basic<String> host) {
-        super(optionName, InetAddress.class, lvl);
-        this.host = host;
+    public OpenAddressBootstrapOption(String optName, KConfigLevel optLvl) {
+        super(optName, List.class, optLvl);
     }
 
     @Override
-    public Optional<InetAddress> read(KConfigCache config) {
-        Optional<String> sPrefferedInterface = config.read(host);
-        if (!sPrefferedInterface.isPresent()) {
-            return Optional.absent();
-        }
-        try {
-            return Optional.of(InetAddress.getByName(sPrefferedInterface.get()));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex);
-        }
+    public Optional<List> read(KConfigCache config) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
 }

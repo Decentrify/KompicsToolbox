@@ -63,37 +63,30 @@ public class KConfigCore {
         }
     }
 
-    public synchronized void define(KConfigOption.Basic option) {
-        if (options.containsKey(option.name)) {
-            LOG.error("{}config error, double option:{}", logPrefix, option.name);
-            throw new RuntimeException("config error, double option:" + option.name);
-        }
-        options.put(option.name, Pair.with(option, null));
-    }
-
     public synchronized <T extends Object> T read(KConfigOption.Basic<T> option) throws ConfigException.Missing {
         Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
-        if (existingOV == null) {
-            LOG.error("{}config error, undefined option:{}", logPrefix, option.name);
-            throw new RuntimeException("config error, undefined option:" + option.name);
-        }
-        if (existingOV.getValue1() == null) {
-            existingOV = Pair.with((KConfigOption.Basic) existingOV.getValue0(), config.getAnyRef(option.name));
+        if (existingOV != null) {
+            if (!existingOV.getValue0().type.equals(option.type)) {
+                LOG.error("{}missmatched types found:{} requested:{}", new Object[]{logPrefix, existingOV.getValue0().type, option.type});
+                throw new RuntimeException("missmatch types");
+            }
+        } else {
+            existingOV = Pair.with((KConfigOption.Basic) option, config.getAnyRef(option.name));
             options.put(option.name, existingOV);
         }
+
         return (T) existingOV.getValue1();
     }
 
     public synchronized <T extends Object> void write(KConfigOption.Basic<T> option, T value) {
-        if (!options.containsKey(option.name)) {
-            LOG.error("{}config error, undefined option:{}", logPrefix, option.name);
-            throw new RuntimeException("config error, undefined option:" + option.name);
-        }
         Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
-        if (!option.lvl.canWrite().contains(existingOV.getValue0().lvl.toString())) {
-            LOG.error("{}config error, unsanctioned write:{}", logPrefix, option);
-            throw new RuntimeException("config error, unsanctioned write:" + option);
+        if (existingOV != null) {
+            if (!existingOV.getValue0().type.equals(option.type)) {
+                LOG.error("{}missmatched types found:{} requested:{}", new Object[]{logPrefix, existingOV.getValue0().type, option.type});
+                throw new RuntimeException("missmatch types");
+            }
         }
-        options.put(option.name, Pair.with((KConfigOption.Basic) existingOV.getValue0(), (Object) value));
+        LOG.info("{}writting option:{} type:{} value:{}", new Object[]{logPrefix, option.name, option.type, value});
+        options.put(option.name, Pair.with((KConfigOption.Basic) option, (Object) value));
     }
 }

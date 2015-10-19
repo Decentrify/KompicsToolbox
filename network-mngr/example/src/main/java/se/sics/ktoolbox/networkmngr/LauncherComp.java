@@ -54,10 +54,6 @@ public class LauncherComp extends ComponentDefinition {
     }
 
     private void systemSetup(KConfigCore config, SystemHookSetup systemHooks) {
-        //config options setup
-        NetworkMngrConfig.register(config);
-        NodeConfig.register(config);
-        
         //address setup
         ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
         DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));

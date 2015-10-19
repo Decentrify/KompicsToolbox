@@ -20,33 +20,36 @@ package se.sics.p2ptoolbox.util.config.options;
 
 import com.google.common.base.Optional;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class InetAddressOption extends Composite<InetAddress> {
-    private final Basic<String> host;
+public class OpenAddressOption extends Composite<DecoratedAddress> {
+    private final InetAddressOption ipOpt;
+    private final Basic<Integer> portOpt;
+    private final Basic<Integer> idOpt;
     
-    public InetAddressOption(String optionName, KConfigLevel lvl, Basic<String> host) {
-        super(optionName, InetAddress.class, lvl);
-        this.host = host;
+    public OpenAddressOption(String optName, KConfigLevel optLvl, InetAddressOption ipOpt, Basic<Integer> portOpt, Basic<Integer> idOpt) {
+        super(optName, DecoratedAddress.class, optLvl);
+        this.ipOpt = ipOpt;
+        this.portOpt = portOpt;
+        this.idOpt = idOpt;
     }
 
     @Override
-    public Optional<InetAddress> read(KConfigCache config) {
-        Optional<String> sPrefferedInterface = config.read(host);
-        if (!sPrefferedInterface.isPresent()) {
+    public Optional<DecoratedAddress> read(KConfigCache config) {
+        Optional<InetAddress> ip = config.read(ipOpt);
+        Optional<Integer> port = config.read(portOpt);
+        Optional<Integer> id = config.read(idOpt);
+        if(!(ip.isPresent() && port.isPresent() && id.isPresent())) {
             return Optional.absent();
         }
-        try {
-            return Optional.of(InetAddress.getByName(sPrefferedInterface.get()));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex);
-        }
+        DecoratedAddress adr = DecoratedAddress.open(ip.get(), port.get(), id.get());
+        return Optional.of(adr);
     }
 }
