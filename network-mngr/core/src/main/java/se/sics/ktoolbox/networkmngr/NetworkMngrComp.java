@@ -132,6 +132,7 @@ public class NetworkMngrComp extends ComponentDefinition {
                 throw new RuntimeException("could not get any ip");
             }
             NetworkMngrComp.this.localIp = result.getIp().get();
+            config.write(NetworkMngrConfig.localIp, result.getIp().get().getCanonicalHostName());
         }
     }
 

@@ -39,12 +39,13 @@ public class NetworkMngrConfig implements KConfigLevel {
 
     public final static Basic<String> prefferedInterface = new Basic("network.prefferedInterface", String.class, new NetworkMngrConfig());
     private final static Basic<List<String>> prefferedInterfaces = new Basic("network.prefferedInterfaces", List.class, new NetworkMngrConfig());
-
     public final static InterfaceMasksOption prefferedMasks = new InterfaceMasksOption("network.prefferedMasks", List.class, new NetworkMngrConfig());
-
+    public final static Basic<String> localIp = new Basic("network.localIp", String.class, new NetworkMngrConfig());
+    
     public static void register(KConfigCore config) {
         config.define(prefferedInterface);
         config.define(prefferedInterfaces);
+        config.define(localIp);
     }
 
     @Override
