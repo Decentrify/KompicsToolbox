@@ -20,7 +20,9 @@ package se.sics.p2ptoolbox.util.config;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -71,10 +73,14 @@ public class KConfigCore {
                 throw new RuntimeException("missmatch types");
             }
         } else {
-            existingOV = Pair.with((KConfigOption.Basic) option, config.getAnyRef(option.name));
+            Object optionValue;
+            LOG.debug("{}reading option:{} of type:{}", new Object[]{logPrefix, option.name, option.type});
+            optionValue = config.getAnyRef(option.name);
+            LOG.info("{}reading option:{} value:{}", new Object[]{logPrefix, option.name, optionValue});
+            existingOV = Pair.with((KConfigOption.Basic) option, optionValue);
             options.put(option.name, existingOV);
         }
-
+        
         return (T) existingOV.getValue1();
     }
 

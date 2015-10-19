@@ -19,23 +19,43 @@
 package se.sics.p2ptoolbox.util.config.options;
 
 import com.google.common.base.Optional;
+import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
+import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OpenAddressBootstrapOption extends Composite<List>{
-    
+public class OpenAddressBootstrapOption extends Composite<List> {
+
+    private static final Logger LOG = LoggerFactory.getLogger("KConfig");
+
     public OpenAddressBootstrapOption(String optName, KConfigLevel optLvl) {
         super(optName, List.class, optLvl);
     }
 
     @Override
     public Optional<List> read(KConfigCache config) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Basic<List> partnersOpt = new Basic(name + ".partners", List.class, lvl);
+        Optional<List> partners = config.read(partnersOpt);
+        if (!partners.isPresent()) {
+            LOG.warn("{}missing:{}", config.getNodeId(), partnersOpt.name);
+            return Optional.absent();
+        }
+        List<DecoratedAddress> partnerAdr = new ArrayList<>();
+        for(String partner : (List<String>)partners.get()) {
+            OpenAddressOption adrOpt = new OpenAddressOption(name + "." + partner + ".address", lvl);
+            Optional<DecoratedAddress> adr = config.read(adrOpt);
+            if(adr.isPresent()) {
+                partnerAdr.add(adr.get());
+            }
+        }
+        return Optional.of((List)partnerAdr);
     }
-    
 }
