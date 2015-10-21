@@ -53,6 +53,7 @@ import se.sics.ktoolbox.networkmngr.hooks.PortBindingHook;
 import se.sics.ktoolbox.networkmngr.hooks.PortBindingResult;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
 import se.sics.p2ptoolbox.util.proxy.SystemHookSetup;
 import se.sics.p2ptoolbox.util.truefilters.SourcePortFilter;
@@ -132,7 +133,7 @@ public class NetworkMngrComp extends ComponentDefinition {
                 throw new RuntimeException("could not get any ip");
             }
             NetworkMngrComp.this.localIp = result.getIp().get();
-            config.write(NetworkMngrConfig.localIp, result.getIp().get().getCanonicalHostName());
+            config.write(NetworkMngrConfig.localIp, result.getIp().get().getHostAddress());
         }
     }
 
@@ -190,8 +191,9 @@ public class NetworkMngrComp extends ComponentDefinition {
         void setNetwork(boolean started) {
             NetworkHook.Definition networkHook = systemHooks.getHook(
                     NetworkMngrHooks.RequiredHooks.NETWORK.hookName, NetworkMngrHooks.NETWORK_HOOK);
+            DecoratedAddress adr = req.self.changePort(portBindingResult.boundPort);
             networkSetup = networkHook.setup(new NetworkMngrProxy(), this,
-                    new NetworkHook.SetupInit(req.self, Optional.of(localIp)));
+                    new NetworkHook.SetupInit(adr, Optional.of(localIp)));
             networkHook.start(new NetworkMngrProxy(), this, networkSetup, new NetworkHook.StartInit(started));
         }
 

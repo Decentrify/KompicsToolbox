@@ -19,20 +19,19 @@
 
 package se.sics.ktoolbox.networkmngr.hooks;
 
-import com.google.common.base.Optional;
-import java.net.Socket;
+import java.net.InetAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class PortBindingResult {
+    public final InetAddress ip;
     public final int tryPort;
     public final int boundPort;
-    public final Optional<Socket> socket;
     
-    public PortBindingResult(int tryPort, int boundPort, Optional<Socket> socket) {
+    public PortBindingResult(InetAddress ip, int tryPort, int boundPort) {
+        this.ip = ip;
         this.tryPort = tryPort;
         this.boundPort = boundPort;
-        this.socket = socket;
     }
 }

@@ -28,7 +28,6 @@ import se.sics.p2ptoolbox.util.proxy.Hook;
 public class PortBindingHook {
 
     public static interface Parent extends Hook.Parent {
-
         public void onResult(PortBindingResult result);
     }
 

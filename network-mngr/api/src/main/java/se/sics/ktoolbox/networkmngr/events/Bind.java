@@ -18,11 +18,9 @@
  */
 package se.sics.ktoolbox.networkmngr.events;
 
-import com.google.common.base.Optional;
-import java.net.InetAddress;
 import java.util.UUID;
 import se.sics.kompics.Direct;
-import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  *
@@ -33,10 +31,10 @@ public class Bind {
     public static class Request extends Direct.Request<Response> implements NetworkMngrEvent {
 
         public final UUID id;
-        public final Address self;
+        public final DecoratedAddress self;
         public final boolean forceProvidedPort;
 
-         public Request(UUID id, Address self, boolean forceProvidedPort) {
+         public Request(UUID id, DecoratedAddress self, boolean forceProvidedPort) {
             this.id = id;
             this.self = self;
             this.forceProvidedPort = forceProvidedPort;

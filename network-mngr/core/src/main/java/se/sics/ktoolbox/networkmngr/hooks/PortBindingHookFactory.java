@@ -20,9 +20,11 @@ package se.sics.ktoolbox.networkmngr.hooks;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import se.sics.kompics.Component;
 import se.sics.ktoolbox.networkmngr.hooks.PortBindingHook.*;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
@@ -32,9 +34,6 @@ import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class PortBindingHookFactory {
-    private static int MIN_PORT = 10000;
-    private static int MAX_PORT = (int) Math.pow((double) 2, (double) 16);
-
 
     public static Definition getPortBinder() {
         return new Definition() {
@@ -48,50 +47,39 @@ public class PortBindingHookFactory {
             @Override
             public void start(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, StartInit startInit) {
-                Socket boundPort = bind(startInit.localIp, startInit.tryPort);
-                if(startInit.forceProvidedPort && boundPort.getLocalPort() != startInit.tryPort) {
-                    throw new RuntimeException("could not bind on requested port:" +  startInit.tryPort);
+                Integer boundPort = bind(hookParent, startInit.localIp, startInit.tryPort);
+                if (startInit.forceProvidedPort && boundPort != startInit.tryPort) {
+                    throw new RuntimeException("could not bind on requested port:" + startInit.tryPort);
                 }
-                hookParent.onResult(new PortBindingResult(startInit.tryPort, boundPort.getLocalPort(), Optional.of(boundPort)));
+                hookParent.onResult(new PortBindingResult(startInit.localIp, startInit.tryPort, boundPort));
             }
 
             @Override
             public void preStop(ComponentProxy proxy, Parent hookParnt,
                     SetupResult setupResult, TearInit hookTear) {
             }
+
+            private Integer bind(Parent hookParent, InetAddress localIp, Integer tryPort) {
+                try (Socket socket = new Socket()) {
+                    socket.setReuseAddress(true);
+                    socket.bind(new InetSocketAddress(localIp, tryPort));
+                    return tryPort;
+                } catch (BindException e) {
+                    //continue and get a random port
+                } catch (Exception e) {
+                    throw new RuntimeException("bind problem", e);
+                }
+                try (Socket socket = new Socket()) {
+                    socket.setReuseAddress(true);
+                    socket.bind(new InetSocketAddress(localIp, 0));
+                    return socket.getLocalPort();
+                } catch (Exception e) {
+                    throw new RuntimeException("bind problem", e);
+                }
+            }
         };
     }
-    
-    private static Socket bind(InetAddress localIp, Integer tryPort) {
-        Integer port = (tryPort < MIN_PORT ? MIN_PORT : tryPort);
-        Socket socket;
-        while (port < MAX_PORT) {
-            try {
-                socket = new Socket();
-                socket.setReuseAddress(true);
-                socket.bind(new InetSocketAddress(localIp, port));
-                socket.close();
-                return socket;
-            } catch (IOException e) {
-                port++;
-            }
-        }
 
-        port = MIN_PORT;
-        while (port < tryPort) {
-            try {
-                socket = new Socket();
-                socket.setReuseAddress(true);
-                socket.bind(new InetSocketAddress(localIp, port));
-                socket.close();
-                return socket;
-            } catch (IOException e) {
-                port++;
-            }
-        }
-        throw new RuntimeException("could not bind on any port");
-    }
-    
     public static Definition getPortBinderEmulator() {
         return new Definition() {
 
@@ -104,8 +92,7 @@ public class PortBindingHookFactory {
             @Override
             public void start(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, StartInit startInit) {
-                Optional<Socket> socket = Optional.absent();
-                hookParent.onResult(new PortBindingResult(startInit.tryPort, startInit.tryPort, socket));
+                hookParent.onResult(new PortBindingResult(startInit.localIp, startInit.tryPort, startInit.tryPort));
             }
 
             @Override
