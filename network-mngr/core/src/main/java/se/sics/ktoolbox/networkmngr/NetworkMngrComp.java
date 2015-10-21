@@ -200,7 +200,7 @@ public class NetworkMngrComp extends ComponentDefinition {
         @Override
         public void onResult(NetworkResult result) {
             this.networkResult = result;
-            connect(networkResult.getNetwork(), network, new SourcePortFilter(req.self.getPort(), false));
+            connect(networkResult.getNetwork(), network, new SourcePortFilter(portBindingResult.boundPort, false));
             Bind.Response resp = req.answer(id, portBindingResult.boundPort);
             trigger(resp, manager);
         }
