@@ -75,12 +75,25 @@ public class KConfigCore {
         } else {
             Object optionValue;
             LOG.debug("{}reading option:{} of type:{}", new Object[]{logPrefix, option.name, option.type});
-            optionValue = config.getAnyRef(option.name);
+            if (option.type.equals(String.class)) {
+                optionValue = config.getString(option.name);
+            } else if (option.type.equals(Integer.class)) {
+                optionValue = config.getInt(option.name);
+            } else if (option.type.equals(Long.class)) {
+                optionValue = config.getLong(option.name);
+            } else if (option.type.equals(Double.class)) {
+                optionValue = config.getDouble(option.name);
+            } else if (option.type.equals(Boolean.class)) {
+                optionValue = config.getBoolean(option.name);
+            } else {
+                optionValue = config.getStringList(option.name);
+            }
+
             LOG.info("{}reading option:{} value:{}", new Object[]{logPrefix, option.name, optionValue});
             existingOV = Pair.with((KConfigOption.Basic) option, optionValue);
             options.put(option.name, existingOV);
         }
-        
+
         return (T) existingOV.getValue1();
     }
 

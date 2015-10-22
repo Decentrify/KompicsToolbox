@@ -35,7 +35,6 @@ import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
@@ -51,7 +50,7 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
 import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
 import se.sics.p2ptoolbox.croupier.util.CroupierView;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.network.ContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
@@ -68,7 +67,8 @@ import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
  */
 public class CroupierComp extends ComponentDefinition {
 
-    private final static Logger log = LoggerFactory.getLogger(CroupierComp.class);
+    private final static Logger LOG = LoggerFactory.getLogger(CroupierComp.class);
+    private String logPrefix = "";
 
     Negative<CroupierControlPort> croupierControlPort = negative(CroupierControlPort.class);
     Negative<CroupierPort> croupierPort = negative(CroupierPort.class);
@@ -77,9 +77,7 @@ public class CroupierComp extends ComponentDefinition {
     Positive<SelfAddressUpdatePort> selfAddressUpdate = requires(SelfAddressUpdatePort.class);
     Positive<SelfViewUpdatePort> selfViewUpdate = requires(SelfViewUpdatePort.class);
 
-    private final SystemConfig systemConfig;
-    private final CroupierConfig croupierConfig;
-    private final String logPrefix;
+    private final CroupierKCWrapper config;
     private final int overlayId;
     private DecoratedAddress self;
 
@@ -92,26 +90,21 @@ public class CroupierComp extends ComponentDefinition {
     private UUID shuffleTimeoutId;
 
     public CroupierComp(CroupierInit init) {
-        this.systemConfig = init.systemConfig;
-        this.croupierConfig = init.croupierConfig;
-        this.self = systemConfig.self;
+        this.config = init.config;
+        this.self = init.self;
         this.overlayId = init.overlayId;
         this.logPrefix = "<oid:" + overlayId + ",nid:" + self.getBase().toString() + ">";
+        Random rand = new Random(init.seed);
+        LOG.info("{} initiating with seed:{}", logPrefix, init.seed);
         this.bootstrapNodes = new ArrayList<DecoratedAddress>();
-
-        log.info("{} initiating with bootstrap nodes:{} ...", logPrefix, bootstrapNodes);
-
         this.selfView = null;
         this.shuffleCycleId = null;
         this.shuffleTimeoutId = null;
 
-        Random rand = new Random(systemConfig.seed + overlayId);
-        this.publicView = new CroupierView(self.getBase(), croupierConfig.viewSize, rand);
-        this.privateView = new CroupierView(self.getBase(), croupierConfig.viewSize, rand);
+        this.publicView = new CroupierView(self.getBase(), config.viewSize, rand);
+        this.privateView = new CroupierView(self.getBase(), config.viewSize, rand);
 
-        log.debug("{} subscribing", logPrefix);
         subscribe(handleStart, control);
-        subscribe(handleStop, control);
         subscribe(handleJoin, croupierControlPort);
         subscribe(handleSelfViewUpdate, selfViewUpdate);
         subscribe(handleSelfAddressUpdate, selfAddressUpdate);
@@ -119,51 +112,28 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
-        log.debug("{} subscribed", logPrefix);
     }
 
     //****************************CONTROL***************************************
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.info("{} starting...", logPrefix);
+            LOG.info("{} starting...", logPrefix);
         }
     };
-
-    Handler handleStop = new Handler<Stop>() {
-        @Override
-        public void handle(Stop event) {
-            log.info("{} stopping...", logPrefix);
-            stopShuffle();
-        }
-    };
-
-    Handler handleJoin = new Handler<CroupierJoin>() {
-        @Override
-        public void handle(CroupierJoin join) {
-            log.trace("{} {}", logPrefix, join);
-            log.debug("{} joining using nodes:{}", logPrefix, join.peers);
-
-            bootstrapNodes.addAll(join.peers);
-            cleanSelf();
-            if (!connected()) {
-                startShuffle();
-            }
-        }
-    };
-
+    
     Handler handleSelfAddressUpdate = new Handler<SelfAddressUpdate>() {
         @Override
         public void handle(SelfAddressUpdate update) {
-            log.info("{} updating selfAddress:{}", new Object[]{logPrefix, update.self});
+            LOG.info("{} updating selfAddress:{}", new Object[]{logPrefix, update.self});
             self = update.self;
         }
     };
-
+    
     Handler handleSelfViewUpdate = new Handler<CroupierUpdate>() {
         @Override
         public void handle(CroupierUpdate update) {
-            log.info("{} updating selfView:{}", new Object[]{logPrefix, update.selfView});
+            LOG.info("{} updating selfView:{}", new Object[]{logPrefix, update.selfView});
 
             selfView = (update.selfView == null ? selfView : update.selfView);
 
@@ -172,23 +142,35 @@ public class CroupierComp extends ComponentDefinition {
             }
         }
     };
+    
+    Handler handleJoin = new Handler<CroupierJoin>() {
+        @Override
+        public void handle(CroupierJoin join) {
+            LOG.debug("{} joining using nodes:{}", logPrefix, join.peers);
 
+            bootstrapNodes.addAll(join.peers);
+            cleanSelf();
+            if (!connected()) {
+                startShuffle();
+            }
+        }
+    };
     private void startShuffle() {
         if (selfView == null) {
-            log.warn("{} no self view - not shuffling", new Object[]{logPrefix});
+            LOG.warn("{} no self view - not shuffling", new Object[]{logPrefix});
             return;
         }
         if (!haveShufflePartners()) {
-            log.warn("{} no partners - not shuffling", new Object[]{logPrefix});
+            LOG.warn("{} no partners - not shuffling", new Object[]{logPrefix});
             return;
         }
-        log.info("{} started shuffle", new Object[]{logPrefix});
+        LOG.info("{} started shuffle", new Object[]{logPrefix});
         schedulePeriodicShuffle();
     }
 
     private void stopShuffle() {
         cancelPeriodicShuffle();
-        log.warn("{} stopped shuffle", new Object[]{logPrefix});
+        LOG.warn("{} stopped shuffle", new Object[]{logPrefix});
         trigger(new CroupierDisconnected(overlayId), croupierControlPort);
     }
 
@@ -217,9 +199,9 @@ public class CroupierComp extends ComponentDefinition {
         }
         DecoratedAddress node = null;
         if (!publicView.isEmpty()) {
-            node = publicView.selectPeerToShuffleWith(croupierConfig.policy, true, temperature);
+            node = publicView.selectPeerToShuffleWith(config.policy, true, temperature);
         } else if (!privateView.isEmpty()) {
-            node = privateView.selectPeerToShuffleWith(croupierConfig.policy, true, temperature);
+            node = privateView.selectPeerToShuffleWith(config.policy, true, temperature);
         }
         return node;
     }
@@ -227,37 +209,37 @@ public class CroupierComp extends ComponentDefinition {
     Handler<ShuffleCycle> handleShuffleCycle = new Handler<ShuffleCycle>() {
         @Override
         public void handle(ShuffleCycle event) {
-            log.trace("{} {}", logPrefix, event);
-            log.debug("{} public view size:{}, private view size:{}, bootstrap nodes size:{}", new Object[]{logPrefix, publicView.size(), privateView.size(), bootstrapNodes.size()});
+            LOG.trace("{} {}", logPrefix, event);
+            LOG.debug("{} public view size:{}, private view size:{}, bootstrap nodes size:{}", new Object[]{logPrefix, publicView.size(), privateView.size(), bootstrapNodes.size()});
 
             if (!haveShufflePartners()) {
-                log.warn("{} no shuffle partners - disconnected", logPrefix);
+                LOG.warn("{} no shuffle partners - disconnected", logPrefix);
                 stopShuffle();
                 return;
             }
 
             if (!publicView.isEmpty() || !privateView.isEmpty()) {
                 CroupierSample cs = new CroupierSample(overlayId, publicView.getAllCopy(), privateView.getAllCopy());
-                log.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{logPrefix, cs.publicSample, cs.privateSample});
+                LOG.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{logPrefix, cs.publicSample, cs.privateSample});
                 trigger(cs, croupierPort);
             }
 
-            DecoratedAddress peer = selectPeerToShuffleWith(croupierConfig.softMaxTemperature);
+            DecoratedAddress peer = selectPeerToShuffleWith(config.softMaxTemp);
             if (peer == null || peer.getBase().equals(self.getBase())) {
-                log.error("{} this should not happen - logic error selecting peer", logPrefix);
+                LOG.error("{} this should not happen - logic error selecting peer", logPrefix);
                 throw new RuntimeException("Error selecting peer");
             }
 
             if (NatedTrait.isOpen(peer)) {
-                log.debug("{} did not pick a public node for shuffling - public view size:{}", new Object[]{logPrefix, publicView.getAllCopy().size()});
+                LOG.debug("{} did not pick a public node for shuffling - public view size:{}", new Object[]{logPrefix, publicView.getAllCopy().size()});
             }
 
             // NOTE:
             publicView.incrementDescriptorAges();
             privateView.incrementDescriptorAges();
 
-            Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(croupierConfig.shuffleSize, peer);
-            Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(croupierConfig.shuffleSize, peer);
+            Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(config.shuffleSize, peer);
+            Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(config.shuffleSize, peer);
 
             if (NatedTrait.isOpen(self)) {
                 publicDescCopy.add(new CroupierContainer(self, selfView));
@@ -268,7 +250,7 @@ public class CroupierComp extends ComponentDefinition {
             DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, peer, Transport.UDP), null, overlayId);
             CroupierShuffle.Request requestContent = new CroupierShuffle.Request(UUID.randomUUID(), publicDescCopy, privateDescCopy);
             ContentMsg request = new BasicContentMsg(requestHeader, requestContent);
-            log.trace("{} sending:{} to:{}", new Object[]{logPrefix, requestContent, peer});
+            LOG.trace("{} sending:{} to:{}", new Object[]{logPrefix, requestContent, peer});
             trigger(request, network);
             scheduleShuffleTimeout(peer);
         }
@@ -281,29 +263,29 @@ public class CroupierComp extends ComponentDefinition {
                 public void handle(CroupierShuffle.Request content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, CroupierShuffle.Request> container) {
                     DecoratedHeader<DecoratedAddress> header = container.getHeader();
                     if (header.getTrait(OverlayMember.class).getOverlayId() != overlayId) {
-                        log.error("{} message with header:{} not belonging to croupier overlay:{}", new Object[]{logPrefix, header, overlayId});
+                        LOG.error("{} message with header:{} not belonging to croupier overlay:{}", new Object[]{logPrefix, header, overlayId});
                         throw new RuntimeException("message not belonging to croupier overlay");
                     }
                     DecoratedAddress reqSrc = container.getHeader().getSource();
                     if (self.getBase().equals(reqSrc.getBase())) {
-                        log.error("{} Tried to shuffle with myself", logPrefix);
+                        LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    log.trace("{} received:{} from:{}", new Object[]{logPrefix, content, reqSrc});
+                    LOG.trace("{} received:{} from:{}", new Object[]{logPrefix, content, reqSrc});
                     if (selfView == null) {
-                        log.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
+                        LOG.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
                                 logPrefix, reqSrc);
                         return;
                     }
 
-                    log.debug("{} received from:{} \n public nodes:{} \n private nodes:{}",
+                    LOG.debug("{} received from:{} \n public nodes:{} \n private nodes:{}",
                             new Object[]{logPrefix, container.getHeader().getSource(), content.publicNodes, content.privateNodes});
 
                     publicView.incrementDescriptorAges();
                     privateView.incrementDescriptorAges();
 
-                    Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(croupierConfig.shuffleSize, reqSrc);
-                    Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(croupierConfig.shuffleSize, reqSrc);
+                    Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(config.shuffleSize, reqSrc);
+                    Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(config.shuffleSize, reqSrc);
                     if (NatedTrait.isOpen(self)) {
                         publicDescCopy.add(new CroupierContainer(self, selfView));
                     } else {
@@ -315,7 +297,7 @@ public class CroupierComp extends ComponentDefinition {
                     CroupierShuffle.Response responseContent = new CroupierShuffle.Response(content.getId(), publicDescCopy, privateDescCopy);
                     ContentMsg response = new BasicContentMsg(responseHeader, responseContent);
 
-                    log.trace("{} sending:{} to:{}", new Object[]{logPrefix, responseContent, reqSrc});
+                    LOG.trace("{} sending:{} to:{}", new Object[]{logPrefix, responseContent, reqSrc});
                     trigger(response, network);
 
                     publicView.selectToKeep(reqSrc, content.publicNodes);
@@ -333,18 +315,18 @@ public class CroupierComp extends ComponentDefinition {
                 public void handle(CroupierShuffle.Response content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, CroupierShuffle.Response> container) {
                     DecoratedHeader<DecoratedAddress> header = container.getHeader();
                     if (header.getTrait(OverlayMember.class).getOverlayId() != overlayId) {
-                        log.error("{} message with header:{} not belonging to croupier overlay:{}", new Object[]{logPrefix, header, overlayId});
+                        LOG.error("{} message with header:{} not belonging to croupier overlay:{}", new Object[]{logPrefix, header, overlayId});
                         throw new RuntimeException("message not belonging to croupier overlay");
                     }
                     DecoratedAddress respSrc = container.getHeader().getSource();
                     if (self.getBase().equals(respSrc.getBase())) {
-                        log.error("{} Tried to shuffle with myself", logPrefix);
+                        LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    log.trace("{} received:{} from:{}", new Object[]{logPrefix, content, respSrc});
+                    LOG.trace("{} received:{} from:{}", new Object[]{logPrefix, content, respSrc});
 
                     if (shuffleTimeoutId == null) {
-                        log.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.getId(), respSrc});
+                        LOG.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.getId(), respSrc});
                         return;
                     }
 
@@ -357,7 +339,7 @@ public class CroupierComp extends ComponentDefinition {
     Handler<ShuffleTimeout> handleShuffleTimeout = new Handler<ShuffleTimeout>() {
         @Override
         public void handle(ShuffleTimeout timeout) {
-            log.info("{} node:{} timed out", logPrefix, timeout.dest);
+            LOG.info("{} node:{} timed out", logPrefix, timeout.dest);
 
             shuffleTimeoutId = null;
             if (!NatedTrait.isOpen(timeout.dest)) {
@@ -370,10 +352,10 @@ public class CroupierComp extends ComponentDefinition {
 
     private void schedulePeriodicShuffle() {
         if (shuffleCycleId != null) {
-            log.warn("{} double starting periodic shuffle", logPrefix);
+            LOG.warn("{} double starting periodic shuffle", logPrefix);
             return;
         }
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(croupierConfig.shufflePeriod, croupierConfig.shufflePeriod);
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
         ShuffleCycle sc = new ShuffleCycle(spt);
         spt.setTimeoutEvent(sc);
         shuffleCycleId = sc.getTimeoutId();
@@ -382,7 +364,7 @@ public class CroupierComp extends ComponentDefinition {
 
     private void cancelPeriodicShuffle() {
         if (shuffleCycleId == null) {
-            log.warn("{} double stopping periodic shuffle", logPrefix);
+            LOG.warn("{} double stopping periodic shuffle", logPrefix);
             return;
         }
         CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
@@ -392,10 +374,10 @@ public class CroupierComp extends ComponentDefinition {
 
     private void scheduleShuffleTimeout(DecoratedAddress dest) {
         if (shuffleTimeoutId != null) {
-            log.warn("{} double starting shuffle timeout", logPrefix);
+            LOG.warn("{} double starting shuffle timeout", logPrefix);
             return;
         }
-        ScheduleTimeout spt = new ScheduleTimeout(croupierConfig.shufflePeriod / 2);
+        ScheduleTimeout spt = new ScheduleTimeout(config.shufflePeriod / 2);
         ShuffleTimeout sc = new ShuffleTimeout(spt, dest);
         spt.setTimeoutEvent(sc);
         shuffleTimeoutId = sc.getTimeoutId();
@@ -404,7 +386,7 @@ public class CroupierComp extends ComponentDefinition {
 
     private void cancelShuffleTimeout() {
         if (shuffleTimeoutId == null) {
-            log.warn("{} double stopping shuffle timeout", logPrefix);
+            LOG.warn("{} double stopping shuffle timeout", logPrefix);
         }
         CancelTimeout cpt = new CancelTimeout(shuffleTimeoutId);
         shuffleTimeoutId = null;
@@ -413,14 +395,16 @@ public class CroupierComp extends ComponentDefinition {
 
     public static class CroupierInit extends Init<CroupierComp> {
 
-        public final SystemConfig systemConfig;
-        public final CroupierConfig croupierConfig;
+        public final CroupierKCWrapper config;
+        public final DecoratedAddress self;
         public final int overlayId;
+        public final long seed;
 
-        public CroupierInit(SystemConfig systemConfig, CroupierConfig config, int overlayId) {
-            this.systemConfig = systemConfig;
-            this.croupierConfig = config;
+        public CroupierInit(KConfigCore configCore, DecoratedAddress self, int overlayId, long seed) {
+            this.config = new CroupierKCWrapper(configCore);
+            this.self = self;
             this.overlayId = overlayId;
+            this.seed = seed;
         }
     }
 

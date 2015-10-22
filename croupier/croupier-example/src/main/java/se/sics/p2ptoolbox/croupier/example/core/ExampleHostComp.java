@@ -31,7 +31,6 @@ import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.croupier.CroupierComp;
-import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.croupier.CroupierControlPort;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
@@ -52,7 +51,6 @@ public class ExampleHostComp extends ComponentDefinition {
     private Positive<Timer> timer = requires(Timer.class);
 
     private final SystemConfig systemConfig;
-    private final CroupierConfig croupierConfig;
     private final List<DecoratedAddress> bootstrapNodes;
     
     private Component croupier;
@@ -62,7 +60,6 @@ public class ExampleHostComp extends ComponentDefinition {
 
     public ExampleHostComp(HostInit init) {
         this.systemConfig = init.systemConfig;
-        this.croupierConfig = init.croupierConfig;
         this.bootstrapNodes = init.bootstrapNodes;
         this.logPrefix = systemConfig.self.toString();
         log.info("{} initiating...", logPrefix);
@@ -76,7 +73,7 @@ public class ExampleHostComp extends ComponentDefinition {
     }
 
     private void createNConnectCroupier(int overlayId) {
-        croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(systemConfig, croupierConfig, overlayId));
+        croupier = create(CroupierComp.class, new CroupierComp.CroupierInit(null, null, overlayId, 0));
         connect(croupier.getNegative(Network.class), network, new IntegerOverlayFilter(overlayId));
         connect(croupier.getNegative(Timer.class), timer);
     }
@@ -112,12 +109,10 @@ public class ExampleHostComp extends ComponentDefinition {
     public static class HostInit extends Init<ExampleHostComp> {
 
         public final SystemConfig systemConfig;
-        public final CroupierConfig croupierConfig;
         public final List<DecoratedAddress> bootstrapNodes;
 
-        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, List<DecoratedAddress> bootstrapNodes) {
+        public HostInit(SystemConfig systemConfig, List<DecoratedAddress> bootstrapNodes) {
             this.systemConfig = systemConfig;
-            this.croupierConfig = croupierConfig;
             this.bootstrapNodes = bootstrapNodes;
         }
     }
