@@ -9,7 +9,7 @@
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>croupier</artifactId>
     <name>Croupier</name>
-    <version>1.9-SNAPSHOT</version>
+    <version>2.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <modules>
