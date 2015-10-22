@@ -19,7 +19,8 @@
         <module>nat-echo</module>
         <module>simulator</module>
     <module>network-mngr</module>
-  </modules>
+        <module>overlay-mngr</module>
+    </modules>
 
     <!-- simulator bumped to 1.8 - check if it is compatible with other modules-->    
     <properties>
@@ -27,6 +28,10 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <latest.simulator.version>1.8-SNAPSHOT</latest.simulator.version>
+        <latest.croupier.version>2.0.0-SNAPSHOT</latest.croupier.version>
+        
         <original.util.version>1.9-SNAPSHOT</original.util.version>
         <original.simulator.version>1.7-SNAPSHOT</original.simulator.version>
         <original.croupier.version>1.9-SNAPSHOT</original.croupier.version>
