@@ -19,17 +19,27 @@
 
 package se.sics.p2ptoolbox.croupier.example.core;
 
+import se.sics.p2ptoolbox.croupier.util.CroupierView;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class PeerViewB {
+public class PeerViewB implements CroupierView {
     public final int counter;
-    public PeerViewB(int counter) {
+    public final boolean observer;
+    
+    public PeerViewB(int counter, boolean observer) {
         this.counter = counter;
+        this.observer = observer;
     }
 
     @Override
     public String toString() {
         return "" + counter;
+    }
+
+    @Override
+    public boolean isObserver() {
+        return observer;
     }
 }

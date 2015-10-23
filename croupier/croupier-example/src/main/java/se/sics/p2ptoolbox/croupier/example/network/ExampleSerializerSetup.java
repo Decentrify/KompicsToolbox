@@ -45,16 +45,7 @@ public class ExampleSerializerSetup {
         }
     }
     
-    public static void oneTimeSetup() {
-        int currentId = 128;
-        BasicSerializerSetup.registerBasicSerializers(currentId);
-        currentId += BasicSerializerSetup.serializerIds;
-        
-        currentId = CroupierSerializerSetup.registerSerializers(currentId);
-        currentId = registerSerializers(currentId);
-    }
-    
-    private static int registerSerializers(int startingId) {
+    public static int registerSerializers(int startingId) {
         int currentId = startingId;
 
         PeerViewASerializer peerViewASerializer = new PeerViewASerializer(currentId++);

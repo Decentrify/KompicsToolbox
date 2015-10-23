@@ -48,6 +48,6 @@ public class PeerViewASerializer implements Serializer {
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         boolean flag = buf.readBoolean();
-        return new PeerViewA(flag);
+        return new PeerViewA(flag, false); //an observer view should not be sent around, so should never be serialized
     }
 }

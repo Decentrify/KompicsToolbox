@@ -48,6 +48,6 @@ public class PeerViewBSerializer implements Serializer {
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         int counter = buf.readInt();
-        return new PeerViewB(counter);
+        return new PeerViewB(counter, false);//an observer view should not be sent around, so should never be serialized
     }
 }

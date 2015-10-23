@@ -18,26 +18,30 @@
  */
 package se.sics.p2ptoolbox.croupier.example.system;
 
+import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
-import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
+import se.sics.p2ptoolbox.croupier.CroupierSerializerSetup;
 import se.sics.p2ptoolbox.croupier.example.core.ExampleHostComp;
+import se.sics.p2ptoolbox.croupier.example.core.ExampleHostKConfig;
 import se.sics.p2ptoolbox.croupier.example.network.ExampleSerializerSetup;
-import se.sics.p2ptoolbox.util.config.BootstrapConfig;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
-import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
+import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.proxy.SystemHookSetup;
+import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -53,36 +57,35 @@ public class Launcher extends ComponentDefinition {
     public Launcher() {
         log.info("initiating...");
 
-        subscribe(handleStart, control);
-        subscribe(handleStop, control);
-
-        ExampleSerializerSetup.oneTimeSetup();
+        Config config = ConfigFactory.load();
+        KConfigCore configCore = new KConfigCore(config);
+        KConfigCache configCache = new KConfigCache(configCore);
+        SystemHookSetup systemHooks = new SystemHookSetup();
+        systemSetup(configCore, systemHooks);
 
         timer = create(JavaTimer.class, Init.NONE);
-        Config config = ConfigFactory.load("application.conf");
-        SystemConfig systemConfig = new SystemConfigBuilder(config).build();
-        network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
-
-        BootstrapConfig bootstrapConfig = new BootstrapConfig(config);
-        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(systemConfig, bootstrapConfig.bootstrapNodes));
+        network = create(NettyNetwork.class, new NettyInit(configCache.read(ExampleHostKConfig.self).get()));
+        host = create(ExampleHostComp.class, new ExampleHostComp.HostInit(configCore));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
-
     }
+    
+    private void systemSetup(KConfigCore config, SystemHookSetup systemHooks) {
+        //address setup
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
+        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
 
-    public Handler<Start> handleStart = new Handler<Start>() {
+        //serializers setup
+        int serializerId = 128;
+        serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
+        serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
+        serializerId = ExampleSerializerSetup.registerSerializers(serializerId);
 
-        @Override
-        public void handle(Start event) {
-            log.info("starting...");
+        if (serializerId > 255) {
+            throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
         }
-    };
 
-    public Handler<Stop> handleStop = new Handler<Stop>() {
-
-        @Override
-        public void handle(Stop event) {
-            log.info("stopping...");
-        }
-    };
+        //hooks setup
+        //no hooks needed
+    }
 }

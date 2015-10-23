@@ -36,16 +36,16 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierView<C extends Object> {
+public class CroupierLocalView<C extends CroupierView> {
 
     private final int viewSize;
     private final BasicAddress selfAddress;
-    private final HashMap<BasicAddress, CroupierViewEntry<C>> d2e;
+    private final HashMap<BasicAddress, CroupierLVEntry<C>> d2e;
     private final Random rand;
 
-    private Comparator<CroupierViewEntry> comparatorByAge = new Comparator<CroupierViewEntry>() {
+    private Comparator<CroupierLVEntry> comparatorByAge = new Comparator<CroupierLVEntry>() {
         @Override
-        public int compare(CroupierViewEntry o1, CroupierViewEntry o2) {
+        public int compare(CroupierLVEntry o1, CroupierLVEntry o2) {
             if (o1.getDescriptor().getAge() > o2.getDescriptor().getAge()) {
                 return 1;
             } else if (o1.getDescriptor().getAge() < o2.getDescriptor().getAge()) {
@@ -56,16 +56,16 @@ public class CroupierView<C extends Object> {
         }
     };
 
-    public CroupierView(BasicAddress selfAddress, int viewSize, Random rand) {
+    public CroupierLocalView(BasicAddress selfAddress, int viewSize, Random rand) {
         super();
         this.selfAddress = selfAddress;
         this.viewSize = viewSize;
-        this.d2e = new HashMap<BasicAddress, CroupierViewEntry<C>>();
+        this.d2e = new HashMap<BasicAddress, CroupierLVEntry<C>>();
         this.rand = rand;
     }
 
     public void incrementDescriptorAges() {
-        for (CroupierViewEntry entry : d2e.values()) {
+        for (CroupierLVEntry entry : d2e.values()) {
             entry.getDescriptor().incrementAge();
         }
     }
@@ -77,7 +77,7 @@ public class CroupierView<C extends Object> {
             return null;
         }
 
-        CroupierViewEntry selectedEntry = null;
+        CroupierLVEntry selectedEntry = null;
 
         if (!softmax || policy == CroupierSelectionPolicy.RANDOM) {
             if (policy == CroupierSelectionPolicy.TAIL) {
@@ -91,7 +91,7 @@ public class CroupierView<C extends Object> {
             }
 
         } else {
-            ArrayList<CroupierViewEntry> entries = new ArrayList<CroupierViewEntry>(d2e.values());
+            ArrayList<CroupierLVEntry> entries = new ArrayList<CroupierLVEntry>(d2e.values());
             if (policy == CroupierSelectionPolicy.TAIL) {
                 Collections.sort(entries, comparatorByAge);
             } else if (policy == CroupierSelectionPolicy.HEALER) {
@@ -119,9 +119,9 @@ public class CroupierView<C extends Object> {
     }
 
     public Set<CroupierContainer<C>> initiatorCopySet(int count, DecoratedAddress destinationPeer) {
-        List<CroupierViewEntry> randomEntries = generateRandomSample(count);
+        List<CroupierLVEntry> randomEntries = generateRandomSample(count);
         Set<CroupierContainer<C>> descriptors = new HashSet<CroupierContainer<C>>();
-        for (CroupierViewEntry cacheEntry : randomEntries) {
+        for (CroupierLVEntry cacheEntry : randomEntries) {
             cacheEntry.sentTo(destinationPeer.getBase());
             descriptors.add(cacheEntry.getDescriptor().getCopy());
         }
@@ -129,9 +129,9 @@ public class CroupierView<C extends Object> {
     }
 
     public Set<CroupierContainer<C>> receiverCopySet(int count, DecoratedAddress destinationPeer) {
-        List<CroupierViewEntry> randomEntries = generateRandomSample(count);
+        List<CroupierLVEntry> randomEntries = generateRandomSample(count);
         Set<CroupierContainer<C>> descriptors = new HashSet<CroupierContainer<C>>();
-        for (CroupierViewEntry cacheEntry : randomEntries) {
+        for (CroupierLVEntry cacheEntry : randomEntries) {
             cacheEntry.sentTo(destinationPeer.getBase());
             descriptors.add(cacheEntry.getDescriptor().getCopy());
         }
@@ -144,8 +144,8 @@ public class CroupierView<C extends Object> {
             return;
         }
 
-        LinkedList<CroupierViewEntry> entriesSentToThisPeer = new LinkedList<CroupierViewEntry>();
-        for (CroupierViewEntry cacheEntry : d2e.values()) {
+        LinkedList<CroupierLVEntry> entriesSentToThisPeer = new LinkedList<CroupierLVEntry>();
+        for (CroupierLVEntry cacheEntry : d2e.values()) {
             if (cacheEntry.wasSentTo(baseFrom)) {
                 entriesSentToThisPeer.add(cacheEntry);
             }
@@ -163,10 +163,10 @@ public class CroupierView<C extends Object> {
             if (d2e.containsKey(baseSrc)) {
                 // we already have an entry for this peer. keep the youngest one
 
-                CroupierViewEntry entry = d2e.get(baseSrc);
+                CroupierLVEntry entry = d2e.get(baseSrc);
                 if (entry.getDescriptor().getAge() > descriptor.getAge()) {
                     // we keep the lowest age descriptor
-                    CroupierViewEntry newCVE = new CroupierViewEntry(descriptor);
+                    CroupierLVEntry newCVE = new CroupierLVEntry(descriptor);
 
                     //TODO Alex what is the policy about descriptors I sent and received from src
                     int index = entriesSentToThisPeer.indexOf(entry);
@@ -179,13 +179,13 @@ public class CroupierView<C extends Object> {
                 }
             } else if (d2e.size() < viewSize) {
                 // fill an empty slot
-                addEntry(new CroupierViewEntry(descriptor));
+                addEntry(new CroupierLVEntry(descriptor));
             } else {
                 // replace one slot out of those sent to this peer
-                CroupierViewEntry sentEntry = entriesSentToThisPeer.poll();
+                CroupierLVEntry sentEntry = entriesSentToThisPeer.poll();
                 if (sentEntry != null) {
                     removeEntry(sentEntry.getDescriptor().getSource().getBase());
-                    addEntry(new CroupierViewEntry(descriptor));
+                    addEntry(new CroupierLVEntry(descriptor));
                 }
             }
         }
@@ -194,20 +194,20 @@ public class CroupierView<C extends Object> {
 //-------------------------------------------------------------------	
     public final Set<CroupierContainer<C>> getAllCopy() {
         Set<CroupierContainer<C>> descriptors = new HashSet<CroupierContainer<C>>();
-        for (CroupierViewEntry cacheEntry : d2e.values()) {
+        for (CroupierLVEntry cacheEntry : d2e.values()) {
             descriptors.add(cacheEntry.getDescriptor().getCopy());
         }
         return descriptors;
     }
 
-    private List<CroupierViewEntry> generateRandomSample(int n) {
-        List<CroupierViewEntry> randomEntries = new ArrayList<CroupierViewEntry>();
+    private List<CroupierLVEntry> generateRandomSample(int n) {
+        List<CroupierLVEntry> randomEntries = new ArrayList<CroupierLVEntry>();
         if (n >= d2e.size()) {
             //return a copy of all entries
             randomEntries.addAll(d2e.values());
             return randomEntries;
         }
-        ArrayList<CroupierViewEntry> entries = new ArrayList<CroupierViewEntry>(d2e.values());
+        ArrayList<CroupierLVEntry> entries = new ArrayList<CroupierLVEntry>(d2e.values());
         // Don Knuth, The Art of Computer Programming, Algorithm S(3.4.2)
         int t = 0, m = 0, N = d2e.size();
         while (m < n) {
@@ -223,7 +223,7 @@ public class CroupierView<C extends Object> {
         return randomEntries;
     }
 
-    private void addEntry(CroupierViewEntry entry) {
+    private void addEntry(CroupierLVEntry entry) {
         d2e.put(entry.getDescriptor().getSource().getBase(), entry);
     }
 
@@ -244,7 +244,7 @@ public class CroupierView<C extends Object> {
     }
 
     //TODO Alex check if it matched to Abhi's soft max and replace
-    private int softMaxIndex(ArrayList<CroupierViewEntry> entries, double temperature) {
+    private int softMaxIndex(ArrayList<CroupierLVEntry> entries, double temperature) {
         double rnd = rand.nextDouble();
         double total = 0.0d;
         double[] values = new double[entries.size()];

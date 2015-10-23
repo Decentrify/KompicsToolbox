@@ -49,6 +49,7 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
 import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
+import se.sics.p2ptoolbox.croupier.util.CroupierLocalView;
 import se.sics.p2ptoolbox.croupier.util.CroupierView;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.nat.NatedTrait;
@@ -82,9 +83,9 @@ public class CroupierComp extends ComponentDefinition {
     private DecoratedAddress self;
 
     private List<DecoratedAddress> bootstrapNodes;
-    private Object selfView;
-    private CroupierView publicView;
-    private CroupierView privateView;
+    private CroupierView selfView;
+    private CroupierLocalView publicView;
+    private CroupierLocalView privateView;
 
     private UUID shuffleCycleId;
     private UUID shuffleTimeoutId;
@@ -96,13 +97,13 @@ public class CroupierComp extends ComponentDefinition {
         this.logPrefix = "<oid:" + overlayId + ",nid:" + self.getBase().toString() + ">";
         Random rand = new Random(init.seed);
         LOG.info("{} initiating with seed:{}", logPrefix, init.seed);
-        this.bootstrapNodes = new ArrayList<DecoratedAddress>();
+        this.bootstrapNodes = new ArrayList<>();
         this.selfView = null;
         this.shuffleCycleId = null;
         this.shuffleTimeoutId = null;
 
-        this.publicView = new CroupierView(self.getBase(), config.viewSize, rand);
-        this.privateView = new CroupierView(self.getBase(), config.viewSize, rand);
+        this.publicView = new CroupierLocalView(self.getBase(), config.viewSize, rand);
+        this.privateView = new CroupierLocalView(self.getBase(), config.viewSize, rand);
 
         subscribe(handleStart, control);
         subscribe(handleJoin, croupierControlPort);
@@ -121,7 +122,7 @@ public class CroupierComp extends ComponentDefinition {
             LOG.info("{} starting...", logPrefix);
         }
     };
-    
+
     Handler handleSelfAddressUpdate = new Handler<SelfAddressUpdate>() {
         @Override
         public void handle(SelfAddressUpdate update) {
@@ -129,7 +130,7 @@ public class CroupierComp extends ComponentDefinition {
             self = update.self;
         }
     };
-    
+
     Handler handleSelfViewUpdate = new Handler<CroupierUpdate>() {
         @Override
         public void handle(CroupierUpdate update) {
@@ -142,7 +143,7 @@ public class CroupierComp extends ComponentDefinition {
             }
         }
     };
-    
+
     Handler handleJoin = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
@@ -155,6 +156,7 @@ public class CroupierComp extends ComponentDefinition {
             }
         }
     };
+
     private void startShuffle() {
         if (selfView == null) {
             LOG.warn("{} no self view - not shuffling", new Object[]{logPrefix});
@@ -241,10 +243,12 @@ public class CroupierComp extends ComponentDefinition {
             Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(config.shuffleSize, peer);
             Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(config.shuffleSize, peer);
 
-            if (NatedTrait.isOpen(self)) {
-                publicDescCopy.add(new CroupierContainer(self, selfView));
-            } else {
-                privateDescCopy.add(new CroupierContainer(self, selfView));
+            if (!selfView.isObserver()) {
+                if (NatedTrait.isOpen(self)) {
+                    publicDescCopy.add(new CroupierContainer(self, selfView));
+                } else {
+                    privateDescCopy.add(new CroupierContainer(self, selfView));
+                }
             }
 
             DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, peer, Transport.UDP), null, overlayId);

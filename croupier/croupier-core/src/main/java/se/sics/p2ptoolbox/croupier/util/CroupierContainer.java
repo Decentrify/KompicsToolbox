@@ -25,19 +25,19 @@ import se.sics.p2ptoolbox.util.traits.Ageing;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierContainer<C extends Object> implements Container<DecoratedAddress, C>, Ageing {
+public class CroupierContainer<CV extends CroupierView> implements Container<DecoratedAddress, CV>, Ageing {
 
     private int age;
     private DecoratedAddress src;
-    private final C content;
+    private final CV content;
 
-    public CroupierContainer(DecoratedAddress src, C content, int age) {
+    public CroupierContainer(DecoratedAddress src, CV content, int age) {
         this.age = age;
         this.src = src;
         this.content = content;
     }
 
-    public CroupierContainer(DecoratedAddress src, C content) {
+    public CroupierContainer(DecoratedAddress src, CV content) {
         this(src, content, 0);
     }
 
@@ -52,7 +52,7 @@ public class CroupierContainer<C extends Object> implements Container<DecoratedA
     }
 
     @Override
-    public C getContent() {
+    public CV getContent() {
         return content;
     }
 
@@ -63,7 +63,7 @@ public class CroupierContainer<C extends Object> implements Container<DecoratedA
     /**
      * shallow copy - only age is not shared
      */
-    public CroupierContainer<C> getCopy() {
+    public CroupierContainer<CV> getCopy() {
         return new CroupierContainer(src, content, age);
     }
     

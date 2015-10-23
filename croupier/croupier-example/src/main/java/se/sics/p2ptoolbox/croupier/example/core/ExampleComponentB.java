@@ -47,11 +47,14 @@ public class ExampleComponentB extends ComponentDefinition {
     private final Address selfAddress;
     private final Random rand;
     private int counter = 0;
+    private final boolean observer;
 
     public ExampleComponentB(ExampleInitB init) {
         this.selfAddress = init.selfAddress;
         log.info("{} initiating...", selfAddress);
         this.rand = init.rand;
+        this.observer = init.observer;
+        
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleCroupierSample, croupier);
@@ -62,7 +65,7 @@ public class ExampleComponentB extends ComponentDefinition {
         public void handle(Start event) {
             log.info("{} starting", selfAddress);
             log.debug("sending first update");
-            trigger(new CroupierUpdate(new PeerViewB(counter)), viewUpdate);
+            trigger(new CroupierUpdate(new PeerViewB(counter, observer)), viewUpdate);
         }
     };
     Handler<Stop> handleStop = new Handler<Stop>() {
@@ -81,7 +84,7 @@ public class ExampleComponentB extends ComponentDefinition {
             counter++;
             if (rand.nextDouble() > 0.7) {
                 counter++;
-                trigger(new CroupierUpdate(new PeerViewB(counter)), viewUpdate);
+                trigger(new CroupierUpdate(new PeerViewB(counter, observer)), viewUpdate);
             }
         }
     };
@@ -90,10 +93,12 @@ public class ExampleComponentB extends ComponentDefinition {
 
         public final Address selfAddress;
         public final Random rand;
+        public final boolean observer;
 
-        public ExampleInitB(Address selfAddress, long seed) {
+        public ExampleInitB(Address selfAddress, long seed, boolean observer) {
             this.selfAddress = selfAddress;
             this.rand = new Random(seed + 2);
+            this.observer = observer;
         }
     }
 }

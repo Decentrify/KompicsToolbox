@@ -16,24 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.p2ptoolbox.croupier.msg;
-
-import se.sics.p2ptoolbox.croupier.util.CroupierView;
-import se.sics.p2ptoolbox.util.update.SelfViewUpdate;
+package se.sics.p2ptoolbox.croupier.util;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierUpdate<CV extends CroupierView> implements SelfViewUpdate {
-    public final CV selfView;
-    
-    public CroupierUpdate(CV selfView) {
-        this.selfView = selfView;
-    }
-
-    @Override
-    public String toString() {
-        return "CROUPIER_VIEW_UPDATE";
-    }
+public interface CroupierView {
+    public boolean isObserver();
 }

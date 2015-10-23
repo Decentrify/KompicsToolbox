@@ -36,12 +36,12 @@ import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
  * @author Cosmin Arad <cosmin@sics.se>, Gautier Berthou
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierViewEntry<C extends Object> {
+public class CroupierLVEntry<C extends CroupierView> {
 
-    public static enum Order implements Comparator<CroupierViewEntry> {
+    public static enum Order implements Comparator<CroupierLVEntry> {
         ByAge() {
             @Override
-            public int compare(CroupierViewEntry o1, CroupierViewEntry o2) {
+            public int compare(CroupierLVEntry o1, CroupierLVEntry o2) {
                 if (o1.getDescriptor().getAge() > o2.getDescriptor().getAge()) {
                     return 1;
                 } else if (o1.getDescriptor().getAge() < o2.getDescriptor().getAge()) {
@@ -58,7 +58,7 @@ public class CroupierViewEntry<C extends Object> {
     private long sentAt;
     private final Set<BasicAddress> sentTo = new HashSet<BasicAddress>();
 
-    public CroupierViewEntry(CroupierContainer<C> cc) {
+    public CroupierLVEntry(CroupierContainer<C> cc) {
         this.cc = cc;
         this.addedAt = System.currentTimeMillis();
         this.sentAt = 0;
