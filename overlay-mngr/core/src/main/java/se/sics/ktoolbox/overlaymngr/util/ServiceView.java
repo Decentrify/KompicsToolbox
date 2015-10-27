@@ -16,37 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.events;
+package se.sics.ktoolbox.overlaymngr.util;
 
-import java.util.UUID;
-import se.sics.kompics.Direct;
+import java.util.List;
+import se.sics.p2ptoolbox.croupier.util.CroupierView;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class StartCroupier {
-    public static class Request extends Direct.Request<Response> implements OverlayMngrEvent {
-        public final UUID id;
-        public final byte[] parentId;
-        public final byte[] selfId;
-        
-        public Request(UUID id, byte[] parentId, byte[] selfId) {
-            this.id = id;
-            this.parentId = parentId;
-            this.selfId = selfId;
-        }
-        
-        public Response answer() {
-            return new Response(this);
-        }
-    }
+public class ServiceView implements CroupierView {
+    public final boolean observer;
+    public final List<byte[]> runningServices;
     
-    public static class Response implements Direct.Response, OverlayMngrEvent {
-        public final Request req;
-        
-        public Response(Request req) {
-            this.req = req;
-        }
+    public ServiceView(boolean observer, List<byte[]> runningServices) {
+        this.observer = observer;
+        this.runningServices = runningServices;
+    }
+
+    @Override
+    public boolean isObserver() {
+        return observer;
     }
 }

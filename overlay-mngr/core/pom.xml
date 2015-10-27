@@ -23,5 +23,10 @@
             <artifactId>croupier-core</artifactId>
             <version>${croupier.version}</version>
         </dependency>
+        <dependency>
+            <groupId>se.sics.ktoolbox.gradient</groupId>
+            <artifactId>gradient-core</artifactId>
+            <version>${gradient.version}</version>
+        </dependency>
     </dependencies>
 </project>

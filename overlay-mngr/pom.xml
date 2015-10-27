@@ -15,11 +15,13 @@
         <module>api</module>
         <module>core</module>
         <module>network</module>
+        <module>example</module>
     </modules>
     
      <properties>
          <util.version>${original.util.version}</util.version>
-         <croupier.version>${original.croupier.version}</croupier.version>
+         <croupier.version>${latest.croupier.version}</croupier.version>
+         <gradient.version>${original.gradient.version}</gradient.version>
      </properties>
     
     <dependencies>

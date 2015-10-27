@@ -16,32 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr;
+package se.sics.ktoolbox.overlaymngr.core;
 
 import java.util.HashSet;
 import java.util.Set;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
-import se.sics.p2ptoolbox.util.config.options.OpenAddressBootstrapOption;
+import se.sics.p2ptoolbox.util.config.options.OpenAddressOption;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayMngrConfig implements KConfigLevel {
-
-    public static final byte[] GLOBAL_GROUPIER_ID = new byte[]{};
-
-    public final static KConfigOption.Basic<Long> seed = new KConfigOption.Basic("system.seed", Long.class, new OverlayMngrConfig());
-    public final static OpenAddressBootstrapOption bootstrap = new OpenAddressBootstrapOption("croupier.bootstrap", new OverlayMngrConfig());
+public class OMngrHostKConfig implements KConfigLevel {
+    public final static OpenAddressOption self = new OpenAddressOption("self", new OMngrHostKConfig());
     
-    public static Integer getGlobalCroupierIntegerId() {
-        return 0;
-    }
-    
-    public static boolean isGlobalCroupier(byte[] id) {
-        return (id.equals(new byte[]{}) || id.equals(new byte[]{0,0,0,0}));
-    }
-
     @Override
     public Set<String> canWrite() {
         Set<String> canWrite = new HashSet<>();
@@ -51,6 +39,6 @@ public class OverlayMngrConfig implements KConfigLevel {
 
     @Override
     public String toString() {
-        return "OverlayMngrConfig";
+        return "OMngrHostConfig";
     }
 }

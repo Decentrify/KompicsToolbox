@@ -19,7 +19,8 @@
 package se.sics.ktoolbox.overlaymngr;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.overlaymngr.events.StartCroupier;
+import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
+import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
 
 
 /**
@@ -27,7 +28,11 @@ import se.sics.ktoolbox.overlaymngr.events.StartCroupier;
  */
 public class OverlayMngrPort extends PortType {
     {
-        positive(StartCroupier.Request.class);
-        negative(StartCroupier.Response.class);
+        positive(OMngrCroupier.ConnectRequest.class);
+        negative(OMngrCroupier.ConnectResponse.class);
+        positive(OMngrCroupier.Disconnect.class);
+        positive(OMngrTGradient.ConnectRequest.class);
+        negative(OMngrTGradient.ConnectResponse.class);
+        positive(OMngrTGradient.Disconnect.class);
     }
 }

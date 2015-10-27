@@ -30,7 +30,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <latest.simulator.version>1.8-SNAPSHOT</latest.simulator.version>
-        <latest.croupier.version>2.0.0-SNAPSHOT</latest.croupier.version>
+        <latest.croupier.version>2.0.1-SNAPSHOT</latest.croupier.version>
         
         <original.util.version>1.9-SNAPSHOT</original.util.version>
         <original.simulator.version>1.7-SNAPSHOT</original.simulator.version>

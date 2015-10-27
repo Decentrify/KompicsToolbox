@@ -168,3 +168,4 @@ netty-test/target/
 /overlay-mngr/api/target/
 /overlay-mngr/network/target/
 /overlay-mngr/core/target/
+/overlay-mngr/example/target/
