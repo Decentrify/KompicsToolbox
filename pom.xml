@@ -18,7 +18,7 @@
         <module>caracal-client</module>
         <module>nat-echo</module>
         <module>simulator</module>
-    <module>network-mngr</module>
+        <module>network-mngr</module>
         <module>overlay-mngr</module>
     </modules>
 
@@ -31,6 +31,7 @@
         
         <latest.simulator.version>1.8-SNAPSHOT</latest.simulator.version>
         <latest.croupier.version>2.0.1-SNAPSHOT</latest.croupier.version>
+        <latest.gradient.version>2.0.1-SNAPSHOT</latest.gradient.version>
         
         <original.util.version>1.9-SNAPSHOT</original.util.version>
         <original.simulator.version>1.7-SNAPSHOT</original.simulator.version>

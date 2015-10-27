@@ -9,20 +9,20 @@
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>gradient</artifactId>
     <name>Gradient</name>
-    <version>1.7-SNAPSHOT</version>
+    <version>2.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>gradient-api</module>
         <module>gradient-core</module>
         <module>gradient-network</module>
-        <module>gradient-example</module>
+        <!-- <module>gradient-example</module> --> <!--not yet updated -->
         <module>tree-gradient-core</module>
-        <module>tree-gradient-example</module>
+        <!--<module>tree-gradient-example</module>--> <!--not yet updated -->
     </modules>
     
     <properties>
-        <croupier.version>${original.croupier.version}</croupier.version>
+        <croupier.version>${latest.croupier.version}</croupier.version>
         <util.version>${original.util.version}</util.version>
     </properties>
     

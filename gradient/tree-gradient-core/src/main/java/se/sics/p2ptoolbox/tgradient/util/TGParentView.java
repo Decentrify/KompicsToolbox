@@ -33,11 +33,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.gradient.GradientFilter;
+import se.sics.p2ptoolbox.gradient.GradientKCWrapper;
 import se.sics.p2ptoolbox.gradient.util.GradientContainer;
 import se.sics.p2ptoolbox.gradient.util.GradientContainerAgeComparator;
-import se.sics.p2ptoolbox.gradient.util.ViewConfig;
+import se.sics.p2ptoolbox.tgradient.TGradientKCWrapper;
 import se.sics.p2ptoolbox.tgradient.TreeGradientComp;
-import se.sics.p2ptoolbox.tgradient.TreeGradientConfig;
 import se.sics.p2ptoolbox.util.InvertedComparator;
 import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -51,21 +51,22 @@ public class TGParentView {
     private final Comparator<GradientContainer> ageComparator;
     private final GradientFilter filter;
 
-    private final ViewConfig config;
-    private final TreeGradientConfig tGradientConfig;
+    private final GradientKCWrapper gradientConfig;
+    private final TGradientKCWrapper tgradientConfig;
     private final Random rand;
     private final String logPrefix;
 
     private final Map<Address, GradientContainer> view;
 
-    public TGParentView(String logPrefix, ViewConfig config, TreeGradientConfig tGradientConfig, GradientFilter filter, Random rand) {
-        this.ageComparator = new InvertedComparator<GradientContainer>(new GradientContainerAgeComparator()); //we want old ages in the begining
-        this.filter = filter;
-        this.view = new HashMap<Address, GradientContainer>();
-        this.rand = rand;
+    public TGParentView(GradientKCWrapper gradientConfig, TGradientKCWrapper tgradienfConfig, String logPrefix, 
+            GradientFilter filter) {
+        this.gradientConfig = gradientConfig;
+        this.tgradientConfig = tgradienfConfig;
         this.logPrefix = logPrefix;
-        this.config = config;
-        this.tGradientConfig = tGradientConfig;
+        this.ageComparator = new InvertedComparator<>(new GradientContainerAgeComparator()); //we want old ages in the begining
+        this.filter = filter;
+        this.view = new HashMap<>();
+        this.rand = new Random(gradientConfig.seed);
     }
 
     public boolean isEmpty() {
@@ -120,15 +121,15 @@ public class TGParentView {
         //We should only remove descriptors older than a defined threshold so we don't disconnect
 //        if (view.size() > config.viewSize) {
         for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
-            if (toRemove.getAge() >= config.oldThreshold) {
+            if (toRemove.getAge() >= gradientConfig.oldThreshold) {
                 log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
                 view.remove(toRemove.getSource().getBase());
             }
         }
 //        }
-        if (view.size() > config.viewSize) {
-            Comparator<GradientContainer> preferenceDeleteComparator = new InvertedComparator<GradientContainer>(new ParentPreferenceComparator(selfView, tGradientConfig.branching, tGradientConfig.kCenterNodes));
-            int reduceSize = view.size() - config.viewSize;
+        if (view.size() > gradientConfig.viewSize) {
+            Comparator<GradientContainer> preferenceDeleteComparator = new InvertedComparator<>(new ParentPreferenceComparator(selfView, tgradientConfig.branching, tgradientConfig.centerNodes));
+            int reduceSize = view.size() - gradientConfig.viewSize;
             for (GradientContainer toRemove : reduceSize(preferenceDeleteComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
                 view.remove(toRemove.getSource().getBase());
@@ -151,9 +152,9 @@ public class TGParentView {
             return null;
         }
 
-        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, config.exchangeSMTemp);
+        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, gradientConfig.softMaxTemp);
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Comparator<GradientContainer> selfPrefferenceComparator = new ParentPreferenceComparator(selfCPV, tGradientConfig.branching, tGradientConfig.kCenterNodes);
+        Comparator<GradientContainer> selfPrefferenceComparator = new ParentPreferenceComparator(selfCPV, tgradientConfig.branching, tgradientConfig.centerNodes);
         Collections.sort(sortedList, selfPrefferenceComparator);
 
         return sortedList.get(shuffleNodeIndex);

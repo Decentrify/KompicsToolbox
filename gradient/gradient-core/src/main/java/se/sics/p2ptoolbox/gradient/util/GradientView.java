@@ -33,8 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.gradient.GradientComp;
-import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.GradientFilter;
+import se.sics.p2ptoolbox.gradient.GradientKCWrapper;
 import se.sics.p2ptoolbox.util.InvertedComparator;
 import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
 import se.sics.p2ptoolbox.util.compare.WrapperComparator;
@@ -46,24 +46,26 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class GradientView {
 
     private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
+    private final String logPrefix;
+    
     private final Comparator<GradientContainer> ageComparator;
     private final Comparator<GradientContainer> utilityComp;
     private final GradientFilter filter;
 
-    private final ViewConfig config;
+    private final GradientKCWrapper config;
     private final Random rand;
-    private final String logPrefix;
+    
 
     private final Map<Address, GradientContainer> view;
 
-    public GradientView(String logPrefix, Comparator utilityComparator, GradientFilter filter, Random rand, ViewConfig config) {
-        this.utilityComp = new WrapperComparator<GradientContainer>(utilityComparator);
-        this.ageComparator = new InvertedComparator<GradientContainer>(new GradientContainerAgeComparator()); //we want old ages in the begining
-        this.filter = filter;
-        this.view = new HashMap<Address, GradientContainer>();
-        this.rand = rand;
-        this.logPrefix = logPrefix;
+    public GradientView(GradientKCWrapper config, String logPrefix, Comparator utilityComparator, GradientFilter filter) {
         this.config = config;
+        this.logPrefix = logPrefix;
+        this.utilityComp = new WrapperComparator<>(utilityComparator);
+        this.ageComparator = new InvertedComparator<>(new GradientContainerAgeComparator()); //we want old ages in the begining
+        this.filter = filter;
+        this.view = new HashMap<>();
+        this.rand = new Random(config.seed);
     }
 
     public boolean isEmpty() {
@@ -141,7 +143,7 @@ public class GradientView {
             return null;
         }
 
-        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, config.exchangeSMTemp);
+        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, config.softMaxTemp);
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
         Comparator<GradientContainer> selfPrefferenceComparator = new InvertedComparator<GradientContainer>(new GradientPreferenceComparator<GradientContainer>(selfCPV, utilityComp));
         Collections.sort(sortedList, selfPrefferenceComparator);

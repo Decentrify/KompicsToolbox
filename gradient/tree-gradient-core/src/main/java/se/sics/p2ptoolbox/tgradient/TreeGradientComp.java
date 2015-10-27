@@ -21,7 +21,6 @@ package se.sics.p2ptoolbox.tgradient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +42,8 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.p2ptoolbox.croupier.CroupierPort;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
-import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.GradientFilter;
+import se.sics.p2ptoolbox.gradient.GradientKCWrapper;
 import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.msg.GradientSample;
 import se.sics.p2ptoolbox.gradient.msg.GradientUpdate;
@@ -56,7 +55,6 @@ import se.sics.p2ptoolbox.gradient.util.GradientLocalView;
 import se.sics.p2ptoolbox.gradient.util.ViewConfig;
 import se.sics.p2ptoolbox.tgradient.util.TGParentView;
 import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -79,10 +77,8 @@ public class TreeGradientComp extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(TreeGradientComp.class);
     private final String logPrefix;
 
-    private final SystemConfig systemConfig;
-    private final GradientConfig gradientConfig;
-    private final TreeGradientConfig tGradientConfig;
-    private final int overlayId;
+    private final GradientKCWrapper gradientConfig;
+    private final TGradientKCWrapper tgradientConfig;
     private DecoratedAddress self;
 
     private GradientFilter filter;
@@ -105,15 +101,13 @@ public class TreeGradientComp extends ComponentDefinition {
     Positive gradient = requires(GradientPort.class);
     Positive rankUpdate = requires(RankUpdatePort.class);
     public TreeGradientComp(TreeGradientInit init) {
-        this.systemConfig = init.systemConfig;
-        this.self = systemConfig.self;
         this.gradientConfig = init.gradientConfig;
-        this.tGradientConfig = init.tGradientConfig;
-        this.overlayId = init.overlayId;
-        this.logPrefix = "id:" + self.getBase().toString() + ":" + overlayId;
-        log.info("{} initializing...", logPrefix);
-        ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.exchangeSMTemp, gradientConfig.oldThreshold);
-        this.parents = new TGParentView(logPrefix, viewConfig, tGradientConfig, init.gradientFilter, new Random(systemConfig.seed));
+        this.tgradientConfig = init.tgradientConfig;
+        this.self = init.self;
+        this.logPrefix = "<oid:" + gradientConfig.overlayId + ":nid:" + self.getBase().toString() + "> ";
+        log.info("{} initializing with seed:{}", logPrefix, gradientConfig.seed);
+        ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.softMaxTemp, gradientConfig.oldThreshold);
+        this.parents = new TGParentView(gradientConfig, tgradientConfig, logPrefix, init.gradientFilter);
         this.filter = init.gradientFilter;
         this.neighbours = new HashSet<GradientContainer>();
 
@@ -261,7 +255,7 @@ public class TreeGradientComp extends ComponentDefinition {
                 return;
             }
 
-            log.trace("{} {}", logPrefix);
+            log.trace("{} {}", logPrefix, event);
 
             if (!haveShufflePartners()) {
                 log.warn("{} no shuffle partners - disconnected", logPrefix);
@@ -278,7 +272,7 @@ public class TreeGradientComp extends ComponentDefinition {
             GradientContainer partner = parents.getShuffleNode(selfView);
             parents.incrementAges();
 
-            DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, partner.getSource(), Transport.UDP), null, overlayId);
+            DecoratedHeader<DecoratedAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, partner.getSource(), Transport.UDP), null, gradientConfig.overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUID.randomUUID(), selfView, neighbours);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
             log.debug("{} sending:{} to:{}", new Object[]{logPrefix, requestContent.exchangeNodes, partner.getSource()});
@@ -309,8 +303,8 @@ public class TreeGradientComp extends ComponentDefinition {
                 @Override
                 public void handle(GradientShuffle.Request content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, GradientShuffle.Request> container) {
                     DecoratedHeader<DecoratedAddress> header = container.getHeader();
-                    if (header.getTrait(OverlayMember.class).getOverlayId() != overlayId) {
-                        log.error("{} message with header:{} not belonging to gradient overlay:{}", new Object[]{logPrefix, header, overlayId});
+                    if (header.getTrait(OverlayMember.class).getOverlayId() != gradientConfig.overlayId) {
+                        log.error("{} message with header:{} not belonging to gradient overlay:{}", new Object[]{logPrefix, header, gradientConfig.overlayId});
                         throw new RuntimeException("message not belonging to gradient overlay");
                     }
                     DecoratedAddress reqSrc = container.getHeader().getSource();
@@ -327,7 +321,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
                     parents.incrementAges();
 
-                    DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(self, container.getHeader().getSource(), Transport.UDP), null, overlayId);
+                    DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(new BasicHeader(self, container.getHeader().getSource(), Transport.UDP), null, gradientConfig.overlayId);
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.getId(), selfView, neighbours);
                     BasicContentMsg request = new BasicContentMsg(responseHeader, responseContent);
                     log.debug("{} sending:{} to:{}", new Object[]{logPrefix, responseContent.exchangeNodes, container.getHeader().getSource()});
@@ -344,8 +338,8 @@ public class TreeGradientComp extends ComponentDefinition {
                 @Override
                 public void handle(GradientShuffle.Response content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, GradientShuffle.Response> container) {
                     DecoratedHeader<DecoratedAddress> header = container.getHeader();
-                    if (header.getTrait(OverlayMember.class).getOverlayId() != overlayId) {
-                        log.error("{} message with header:{} not belonging to gradient overlay:{}", new Object[]{logPrefix, header, overlayId});
+                    if (header.getTrait(OverlayMember.class).getOverlayId() != gradientConfig.overlayId) {
+                        log.error("{} message with header:{} not belonging to gradient overlay:{}", new Object[]{logPrefix, header, gradientConfig.overlayId});
                         throw new RuntimeException("message not belonging to gradient overlay");
                     }
                     DecoratedAddress respSrc = container.getHeader().getSource();
@@ -438,19 +432,16 @@ public class TreeGradientComp extends ComponentDefinition {
     }
 
     public static class TreeGradientInit extends Init<TreeGradientComp> {
-
-        public final SystemConfig systemConfig;
-        public final GradientConfig gradientConfig;
-        public final TreeGradientConfig tGradientConfig;
-        public final int overlayId;
+        public final GradientKCWrapper gradientConfig;
+        public final TGradientKCWrapper tgradientConfig;
+        public final DecoratedAddress self;
         public final GradientFilter gradientFilter;
 
-        public TreeGradientInit(SystemConfig systemConfig, GradientConfig gradientConfig, TreeGradientConfig tGradientConfig, int overlayId,
+        public TreeGradientInit(GradientKCWrapper gradientConfig, TGradientKCWrapper tgradienConfig, DecoratedAddress self, 
                 GradientFilter gradientFilter) {
-            this.systemConfig = systemConfig;
             this.gradientConfig = gradientConfig;
-            this.tGradientConfig = tGradientConfig;
-            this.overlayId = overlayId;
+            this.tgradientConfig = tgradienConfig;
+            this.self = self;
             this.gradientFilter = gradientFilter;
         }
     }
