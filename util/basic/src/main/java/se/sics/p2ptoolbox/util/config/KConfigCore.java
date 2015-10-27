@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.util.config;
 
+import com.google.common.base.Optional;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import java.util.ArrayList;
@@ -27,85 +28,98 @@ import java.util.Map;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KConfigCore {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KConfigCore.class);
-    private String logPrefix = "";
-
     private final Config config;
-    private final int nodeId;
-    private final Map<String, Pair<KConfigOption.Basic, Object>> options = new HashMap<>();
+    private final Map<String, Pair<KConfigOption.Base, Object>> options = new HashMap<>();
 
     public KConfigCore(Config config) {
         this.config = config;
-        this.nodeId = readNodeId();
-        this.logPrefix = nodeId + " ";
     }
 
+    @Deprecated
     public KConfigCore(Config config, int nodeId) {
         this.config = config;
-        this.nodeId = nodeId;
-        this.logPrefix = nodeId + " ";
     }
 
+    @Deprecated
     public int getNodeId() {
-        return nodeId;
+        return 0;
     }
 
+    @Deprecated
     private int readNodeId() {
         try {
-            return config.getInt("system.address.id");
+            return config.getInt("system.id");
         } catch (ConfigException.Missing ex) {
-            LOG.error("{}missing node id", logPrefix);
+//            LOG.error("{}missing node id", logPrefix);
             throw new RuntimeException(ex);
         }
     }
 
+    @Deprecated
     public synchronized <T extends Object> T read(KConfigOption.Basic<T> option) throws ConfigException.Missing {
-        Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
+        return null;
+    }
+
+    public synchronized <T extends Object> Optional<T> readValue(KConfigOption.Base<T> option) throws IllegalArgumentException {
+        Pair<KConfigOption.Base, Object> existingOV = options.get(option.name);
         if (existingOV != null) {
             if (!existingOV.getValue0().type.equals(option.type)) {
-                LOG.error("{}missmatched types found:{} requested:{}", new Object[]{logPrefix, existingOV.getValue0().type, option.type});
-                throw new RuntimeException("missmatch types");
+                String msg = "mismatched option:" + option.name + " type - ";
+                msg += "expected:" + option.type + " found:" + existingOV.getValue0().type;
+                throw new IllegalArgumentException(msg);
             }
         } else {
             Object optionValue;
-            LOG.debug("{}reading option:{} of type:{}", new Object[]{logPrefix, option.name, option.type});
-            if (option.type.equals(String.class)) {
-                optionValue = config.getString(option.name);
-            } else if (option.type.equals(Integer.class)) {
-                optionValue = config.getInt(option.name);
-            } else if (option.type.equals(Long.class)) {
-                optionValue = config.getLong(option.name);
-            } else if (option.type.equals(Double.class)) {
-                optionValue = config.getDouble(option.name);
-            } else if (option.type.equals(Boolean.class)) {
-                optionValue = config.getBoolean(option.name);
-            } else {
-                optionValue = config.getStringList(option.name);
+            try {
+                if (option instanceof Basic) {
+                    if (option.type.equals(String.class)) {
+                        optionValue = config.getString(option.name);
+                    } else if (option.type.equals(Integer.class)) {
+                        optionValue = config.getInt(option.name);
+                    } else if (option.type.equals(Long.class)) {
+                        optionValue = config.getLong(option.name);
+                    } else if (option.type.equals(Double.class)) {
+                        optionValue = config.getDouble(option.name);
+                    } else if (option.type.equals(Boolean.class)) {
+                        optionValue = config.getBoolean(option.name);
+                    } else {
+                        optionValue = config.getStringList(option.name);
+                    }
+                } else {
+                    //composite
+                    KConfigOption.Composite<T> opt = (KConfigOption.Composite<T>)option;
+                    optionValue = opt.readValue(this);
+                }
+                existingOV = Pair.with((KConfigOption.Base) option, optionValue);
+                options.put(option.name, existingOV);
+            } catch (ConfigException.Missing ex) {
+                return Optional.absent();
             }
-
-            LOG.info("{}reading option:{} value:{}", new Object[]{logPrefix, option.name, optionValue});
-            existingOV = Pair.with((KConfigOption.Basic) option, optionValue);
-            options.put(option.name, existingOV);
         }
-
-        return (T) existingOV.getValue1();
+        return Optional.of((T) existingOV.getValue1());
     }
 
+    @Deprecated
     public synchronized <T extends Object> void write(KConfigOption.Basic<T> option, T value) {
-        Pair<KConfigOption.Basic, Object> existingOV = options.get(option.name);
+    }
+
+    public synchronized <T extends Object> void writeValue(KConfigOption.Base<T> option, T value) {
+        Pair<KConfigOption.Base, Object> existingOV = options.get(option.name);
         if (existingOV != null) {
-            if (!existingOV.getValue0().type.equals(option.type)) {
-                LOG.error("{}missmatched types found:{} requested:{}", new Object[]{logPrefix, existingOV.getValue0().type, option.type});
-                throw new RuntimeException("missmatch types");
-            }
+            throw new RuntimeException("double write of option:" + option.name);
+//            if (!existingOV.getValue0().type.equals(option.type)) {
+//                String msg = "mismatched option:" + option.name + " type - ";
+//                msg += "expected:" + option.type + " found:" + existingOV.getValue0().type;
+//                throw new IllegalArgumentException(msg);
+//            }
         }
-        LOG.info("{}writting option:{} type:{} value:{}", new Object[]{logPrefix, option.name, option.type, value});
-        options.put(option.name, Pair.with((KConfigOption.Basic) option, (Object) value));
+        options.put(option.name, Pair.with((KConfigOption.Base) option, (Object) value));
     }
 }

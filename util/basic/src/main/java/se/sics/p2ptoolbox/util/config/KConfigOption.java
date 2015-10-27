@@ -19,7 +19,7 @@
 package se.sics.p2ptoolbox.util.config;
 
 import com.google.common.base.Optional;
-import com.typesafe.config.ConfigException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -56,6 +56,12 @@ public final class KConfigOption {
             super(name, type, lvl);
         }
 
+        @Deprecated
         public abstract Optional<T> read(KConfigCache config);
+        
+        //TODO Alex fix later to abstract
+        public Optional<T> readValue(KConfigCore config) {
+            throw new UnsupportedOperationException("should have overwritten this method - not abstract for backward compatibility");
+        }
     }
 }

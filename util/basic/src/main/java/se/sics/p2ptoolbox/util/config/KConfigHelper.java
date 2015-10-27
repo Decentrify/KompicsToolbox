@@ -20,7 +20,7 @@ package se.sics.p2ptoolbox.util.config;
 
 import com.google.common.base.Optional;
 import org.slf4j.Logger;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
+import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Base;
 
 /**
@@ -28,10 +28,26 @@ import se.sics.p2ptoolbox.util.config.KConfigOption.Base;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KConfigHelper {
+
     public static <O extends Object> O read(KConfigCache config, Base<O> opt, Logger LOG, String logPrefix) {
         Optional<O> optValue = config.read(opt);
         if (!optValue.isPresent()) {
             LOG.error("{}missing{}", logPrefix, opt.name);
+            throw new RuntimeException("missing" + opt.name);
+        }
+        return optValue.get();
+    }
+
+    public static <O extends Object> O read(KConfigCore config, Base<O> opt) {
+        Logger LOG = LoggerFactory.getLogger("KConfig");
+        Optional<O> optValue;
+        try {
+            optValue = config.readValue(opt);
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(ex);
+        }
+        if (!optValue.isPresent()) {
+            LOG.error("missing{}", opt.name);
             throw new RuntimeException("missing" + opt.name);
         }
         return optValue.get();

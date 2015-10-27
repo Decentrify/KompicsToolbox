@@ -30,16 +30,20 @@ import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class InetAddressOption extends Composite<InetAddress> {
-    private final Basic<String> host;
+    private final Basic<String> sIpOption;
     
     public InetAddressOption(String optionName, KConfigLevel lvl, Basic<String> host) {
         super(optionName, InetAddress.class, lvl);
-        this.host = host;
+        this.sIpOption = host;
+    }
+    
+    public InetAddressOption(String optionName, KConfigLevel lvl) {
+        this(optionName, lvl, null);
     }
 
     @Override
     public Optional<InetAddress> read(KConfigCache config) {
-        Optional<String> sPrefferedInterface = config.read(host);
+        Optional<String> sPrefferedInterface = config.read(sIpOption);
         if (!sPrefferedInterface.isPresent()) {
             return Optional.absent();
         }
