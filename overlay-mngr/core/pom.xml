@@ -28,5 +28,10 @@
             <artifactId>gradient-core</artifactId>
             <version>${gradient.version}</version>
         </dependency>
+        <dependency>
+            <groupId>se.sics.ktoolbox.gradient</groupId>
+            <artifactId>tree-gradient-core</artifactId>
+            <version>${gradient.version}</version>
+        </dependency>
     </dependencies>
 </project>

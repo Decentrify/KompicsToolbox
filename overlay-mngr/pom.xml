@@ -21,7 +21,7 @@
      <properties>
          <util.version>${original.util.version}</util.version>
          <croupier.version>${latest.croupier.version}</croupier.version>
-         <gradient.version>${original.gradient.version}</gradient.version>
+         <gradient.version>${latest.gradient.version}</gradient.version>
      </properties>
     
     <dependencies>

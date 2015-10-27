@@ -21,6 +21,7 @@ package se.sics.ktoolbox.overlaymngr;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +53,14 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
 import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
+import se.sics.p2ptoolbox.gradient.GradientComp;
+import se.sics.p2ptoolbox.gradient.GradientComp.GradientInit;
+import se.sics.p2ptoolbox.gradient.GradientFilter;
+import se.sics.p2ptoolbox.gradient.GradientKCWrapper;
 import se.sics.p2ptoolbox.gradient.GradientPort;
+import se.sics.p2ptoolbox.tgradient.TGradientKCWrapper;
+import se.sics.p2ptoolbox.tgradient.TreeGradientComp;
+import se.sics.p2ptoolbox.tgradient.TreeGradientComp.TreeGradientInit;
 import se.sics.p2ptoolbox.util.Container;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
@@ -65,6 +73,7 @@ import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlayMngrComp extends ComponentDefinition {
+    private static boolean NO_GRADIENT_OBSERVER = false; 
 
     private static final Logger LOG = LoggerFactory.getLogger(OverlayMngrComp.class);
     private String logPrefix = "";
@@ -254,12 +263,13 @@ public class OverlayMngrComp extends ComponentDefinition {
     };
 
     //*******************************GRADIENT***********************************
-    private Component connectGradient(byte[] gradientId, Component croupier) {
+    private Component connectGradient(byte[] gradientId, Component croupier, Comparator utilityComparator, GradientFilter gradientFilter) {
         int overlayId = Ints.fromByteArray(gradientId);
         long gradientSeed = config.seed + overlayId;
 
-//        Component gradient = create(GradientComp.class, new GradientInit(config.getConfigCore(), self, overlayId, croupierSeed));
-        Component gradient = null;
+        GradientKCWrapper gradientConfig = new GradientKCWrapper(config.getConfigCore(), gradientSeed, overlayId);
+        GradientInit gradientInit = new GradientInit(gradientConfig, self, utilityComparator, gradientFilter);
+        Component gradient = create(GradientComp.class, gradientInit);
         connect(gradient.getNegative(Timer.class), timer);
         connect(gradient.getNegative(Network.class), network);
         connect(gradient.getNegative(SelfAddressUpdatePort.class), addressUpdate);
@@ -270,12 +280,14 @@ public class OverlayMngrComp extends ComponentDefinition {
         return gradient;
     }
 
-    private Component connectTGradient(byte[] tgradientId, Component gradient) {
+    private Component connectTGradient(byte[] tgradientId, Component gradient, GradientFilter gradientFilter) {
         int overlayId = Ints.fromByteArray(tgradientId);
         long tgradientSeed = config.seed + overlayId;
 
-//        Component gradient = create(GradientComp.class, new GradientInit(config.getConfigCore(), self, overlayId, croupierSeed));
-        Component tgradient = null;
+        GradientKCWrapper gradientConfig = new GradientKCWrapper(config.getConfigCore(), tgradientSeed, overlayId);
+        TGradientKCWrapper tgradientConfig = new TGradientKCWrapper(config.getConfigCore());
+        TreeGradientInit tgradientInit = new TreeGradientInit(gradientConfig, tgradientConfig, self, gradientFilter);
+        Component tgradient = create(TreeGradientComp.class, tgradientInit);
         connect(tgradient.getNegative(Timer.class), timer);
         connect(tgradient.getNegative(Network.class), network);
         connect(tgradient.getNegative(SelfAddressUpdatePort.class), addressUpdate);
@@ -306,16 +318,16 @@ public class OverlayMngrComp extends ComponentDefinition {
             }
 
             Component croupier = connectCroupier(req.croupierId);
-            Component gradient = connectGradient(req.gradientId, croupier);
-            Component tgradient = connectTGradient(req.tgradientId, gradient);
+            Component gradient = connectGradient(req.gradientId, croupier, req.utilityComparator, req.gradientFilter);
+            Component tgradient = connectTGradient(req.tgradientId, gradient, req.gradientFilter);
             connect(tgradient.getNegative(SelfViewUpdatePort.class), req.viewUpdate);
             connect(tgradient.getPositive(GradientPort.class), req.tgradient);
 
             trigger(Start.event, croupier.control());
             trigger(Start.event, gradient.control());
             trigger(Start.event, tgradient.control());
-            //tell global croupier about new overlayservice
-            trigger(new CroupierUpdate(new ServiceView(req.observer, getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
+            //tell global croupier about new overlayservice - no gradient observers yet
+            trigger(new CroupierUpdate(new ServiceView(NO_GRADIENT_OBSERVER, getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
             connectContexts.put(req.croupierId, req);
         }
     };
