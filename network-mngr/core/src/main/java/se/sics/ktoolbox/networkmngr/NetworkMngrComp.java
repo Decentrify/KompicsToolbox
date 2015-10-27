@@ -69,15 +69,15 @@ public class NetworkMngrComp extends ComponentDefinition {
     private Negative<NetworkMngrPort> manager = provides(NetworkMngrPort.class);
     private Negative<Network> network = provides(Network.class);
 
-    private final KConfigCache config;
+    private final NetworkMngrKCWrapper privateConfig;
+    private NetworkKCWrapper publicConfig;
     private final SystemHookSetup systemHooks;
 
-    private InetAddress localIp;
     private final Map<UUID, NetworkParent> netComponents = new HashMap<>();
 
     public NetworkMngrComp(NetworkMngrInit init) {
-        this.config = init.config;
-        this.logPrefix = config.getNodeId() + " ";
+        this.privateConfig = init.config;
+        this.logPrefix = "<" + privateConfig.system.id + "> ";
         LOG.info("{}initiating...", logPrefix);
 
         this.systemHooks = init.systemHooks;
@@ -110,20 +110,7 @@ public class NetworkMngrComp extends ComponentDefinition {
             IpSolverHook.Definition ipSolver = systemHooks.getHook(NetworkMngrHooks.RequiredHooks.IP_SOLVER.hookName,
                     NetworkMngrHooks.IP_SOLVER_HOOK);
             ipSolverSetup = ipSolver.setup(new NetworkMngrProxy(), this, new IpSolverHook.SetupInit());
-            Optional<String> prefferedInterface = config.read(NetworkMngrConfig.prefferedInterface);
-            List<GetIp.NetworkInterfacesMask> prefferedInterfaces = getPrefferedInterfaces();
-            ipSolver.start(new NetworkMngrProxy(), this, ipSolverSetup, new IpSolverHook.StartInit(started, prefferedInterface, prefferedInterfaces));
-        }
-
-        private List<GetIp.NetworkInterfacesMask> getPrefferedInterfaces() {
-            Optional<List> prefferedMasks = config.read(NetworkMngrConfig.prefferedMasks);
-            List<GetIp.NetworkInterfacesMask> prefferedInterfaces = new ArrayList<>();
-            if (!prefferedMasks.isPresent()) {
-                prefferedInterfaces.add(GetIp.NetworkInterfacesMask.ALL);
-            } else {
-                prefferedInterfaces.addAll(prefferedMasks.get());
-            }
-            return prefferedInterfaces;
+            ipSolver.start(new NetworkMngrProxy(), this, ipSolverSetup, new IpSolverHook.StartInit(started, privateConfig.rPrefferedInterface, privateConfig.rPrefferedInterfaces));
         }
 
         @Override
@@ -132,8 +119,8 @@ public class NetworkMngrComp extends ComponentDefinition {
                 LOG.error("{}could not get any ip", logPrefix);
                 throw new RuntimeException("could not get any ip");
             }
-            NetworkMngrComp.this.localIp = result.getIp().get();
-            config.write(NetworkMngrConfig.localIp, result.getIp().get().getHostAddress());
+            privateConfig.setLocalIp(result.getIp().get());
+            publicConfig = new NetworkKCWrapper(privateConfig.config);
         }
     }
 
@@ -141,7 +128,7 @@ public class NetworkMngrComp extends ComponentDefinition {
     Handler handleCreate = new Handler<Bind.Request>() {
         @Override
         public void handle(Bind.Request req) {
-            LOG.info("{}binding on:{} localIp:{}", new Object[]{logPrefix, req.self, localIp});
+            LOG.info("{}binding on:{} localIp:{}", new Object[]{logPrefix, req.self, publicConfig.localIp.getHostAddress()});
             Optional<Bind.Response> existing = getMapping(req);
             if (existing.isPresent()) {
                 trigger(existing.get(), manager);
@@ -179,7 +166,7 @@ public class NetworkMngrComp extends ComponentDefinition {
             portBindingSetup = portBindingHook.setup(new NetworkMngrProxy(), this,
                     new PortBindingHook.SetupInit());
             portBindingHook.start(new NetworkMngrProxy(), this, portBindingSetup,
-                    new PortBindingHook.StartInit(started, localIp, req.self.getPort(), req.forceProvidedPort));
+                    new PortBindingHook.StartInit(started, publicConfig.localIp, req.self.getPort(), req.forceProvidedPort));
         }
 
         @Override
@@ -193,7 +180,7 @@ public class NetworkMngrComp extends ComponentDefinition {
                     NetworkMngrHooks.RequiredHooks.NETWORK.hookName, NetworkMngrHooks.NETWORK_HOOK);
             DecoratedAddress adr = req.self.changePort(portBindingResult.boundPort);
             networkSetup = networkHook.setup(new NetworkMngrProxy(), this,
-                    new NetworkHook.SetupInit(adr, Optional.of(localIp)));
+                    new NetworkHook.SetupInit(adr, Optional.of(publicConfig.localIp)));
             networkHook.start(new NetworkMngrProxy(), this, networkSetup, new NetworkHook.StartInit(started));
         }
 
@@ -277,11 +264,11 @@ public class NetworkMngrComp extends ComponentDefinition {
 
     public static class NetworkMngrInit extends Init<NetworkMngrComp> {
 
-        public final KConfigCache config;
+        public final NetworkMngrKCWrapper config;
         public final SystemHookSetup systemHooks;
 
         public NetworkMngrInit(KConfigCore config, SystemHookSetup systemHooks) {
-            this.config = new KConfigCache(config);
+            this.config = new NetworkMngrKCWrapper(config);
             this.systemHooks = systemHooks;
         }
     }
