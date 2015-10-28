@@ -95,7 +95,11 @@ public class KConfigCore {
                 } else {
                     //composite
                     KConfigOption.Composite<T> opt = (KConfigOption.Composite<T>)option;
-                    optionValue = opt.readValue(this);
+                    Optional<T> aux = opt.readValue(this);
+                    if(!aux.isPresent()) {
+                        return Optional.absent();
+                    }
+                    optionValue = aux.get();
                 }
                 existingOV = Pair.with((KConfigOption.Base) option, optionValue);
                 options.put(option.name, existingOV);
