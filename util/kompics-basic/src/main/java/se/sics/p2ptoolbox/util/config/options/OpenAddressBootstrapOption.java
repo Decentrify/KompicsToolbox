@@ -24,6 +24,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
@@ -40,18 +41,25 @@ public class OpenAddressBootstrapOption extends Composite<List> {
         super(optName, List.class, optLvl);
     }
 
+    @Deprecated
     @Override
     public Optional<List> read(KConfigCache config) {
+        throw new UnsupportedOperationException("not yet removed for backward compatibility(compile)");
+
+    }
+    
+    @Override
+    public Optional<List> readValue(KConfigCore config) {
         Basic<List> partnersOpt = new Basic(name + ".partners", List.class, lvl);
-        Optional<List> partners = config.read(partnersOpt);
+        Optional<List> partners = config.readValue(partnersOpt);
         if (!partners.isPresent()) {
-            LOG.warn("{}missing:{}", config.getNodeId(), partnersOpt.name);
+            LOG.warn("missing partners");
             return Optional.absent();
         }
         List<DecoratedAddress> partnerAdr = new ArrayList<>();
         for(String partner : (List<String>)partners.get()) {
             OpenAddressOption adrOpt = new OpenAddressOption(name + "." + partner + ".address", lvl);
-            Optional<DecoratedAddress> adr = config.read(adrOpt);
+            Optional<DecoratedAddress> adr = config.readValue(adrOpt);
             if(adr.isPresent()) {
                 partnerAdr.add(adr.get());
             }

@@ -21,10 +21,11 @@ package se.sics.p2ptoolbox.util.config.options;
 import com.google.common.base.Optional;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
@@ -40,31 +41,38 @@ public class OpenAddressOption extends Composite<DecoratedAddress> {
         super(optName, DecoratedAddress.class, optLvl);
     }
 
+    @Deprecated
     @Override
     public Optional<DecoratedAddress> read(KConfigCache config) {
+        throw new UnsupportedOperationException("not yet removed for backward compatibility(compile)");
+
+    }
+    
+    @Override
+    public Optional<DecoratedAddress> readValue(KConfigCore config) {
         Basic<String> ipOpt = new Basic(name + ".ip", String.class, lvl);
-        Optional<String> ip = config.read(ipOpt);
+        Optional<String> ip = config.readValue(ipOpt);
         if (!ip.isPresent()) {
-            LOG.warn("{}missing:{}", config.getNodeId(), ipOpt.name);
+            LOG.warn("missing:{}", ipOpt.name);
             return Optional.absent();
         }
         Basic<Integer> portOpt = new Basic(name + ".port", Integer.class, lvl);
-        Optional<Integer> port = config.read(portOpt);
+        Optional<Integer> port = config.readValue(portOpt);
         if (!port.isPresent()) {
-            LOG.warn("{}missing:{}", config.getNodeId(), portOpt.name);
+            LOG.warn("missing:{}", portOpt.name);
             return Optional.absent();
         }
         Basic<Integer> idOpt = new Basic(name + ".id", Integer.class, lvl);
-        Optional<Integer> id = config.read(idOpt);
+        Optional<Integer> id = config.readValue(idOpt);
         if (!id.isPresent()) {
-            LOG.warn("{}missing:{}", config.getNodeId(), idOpt.name);
+            LOG.warn("missing:{}", idOpt.name);
             return Optional.absent();
         }
         DecoratedAddress adr;
         try {
             adr = DecoratedAddress.open(InetAddress.getByName(ip.get()), port.get(), id.get());
         } catch (UnknownHostException ex) {
-            LOG.error("{}ip error:{}", config.getNodeId(), ex.getMessage());
+            LOG.error("ip error:{}", ex.getMessage());
             throw new RuntimeException(ex);
         }
         return Optional.of(adr);
