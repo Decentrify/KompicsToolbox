@@ -31,9 +31,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKCWrapper {
-    private final static Logger LOG = LoggerFactory.getLogger("KConfig");
-    
-    private final KConfigCore config;
+    public final KConfigCore config;
     public final long seed;
     public final int id;
     public final Optional<DecoratedAddress> aggregator;
@@ -43,7 +41,5 @@ public class SystemKCWrapper {
         seed = KConfigHelper.read(config, SystemKConfig.seed);
         id = KConfigHelper.read(config, SystemKConfig.id);
         aggregator = config.readValue(SystemKConfig.aggregator);
-        LOG.info("system seed:{} id:{} aggregator:{}", 
-                new Object[]{seed, id, (aggregator.isPresent() ? aggregator.get().getBase() : "x")});
     }
 }
