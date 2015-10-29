@@ -19,10 +19,6 @@
 package se.sics.p2ptoolbox.croupier;
 
 import se.sics.p2ptoolbox.util.config.KConfigHelper;
-import com.google.common.base.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 
 /**
@@ -30,10 +26,8 @@ import se.sics.p2ptoolbox.util.config.KConfigCore;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CroupierKCWrapper {
-    private final static Logger LOG = LoggerFactory.getLogger("KConfig");
-    private String logPrefix = "";
 
-    public final KConfigCache config;
+    public final KConfigCore configCore;
     public final CroupierSelectionPolicy policy;
     public final int viewSize;
     public final int shuffleSize;
@@ -42,13 +36,12 @@ public class CroupierKCWrapper {
     public final double softMaxTemp;
 
     public CroupierKCWrapper(KConfigCore configCore) {
-        this.config = new KConfigCache(configCore);
-        this.logPrefix = "<" + config.getNodeId() + ">croupier:";
-        this.policy = KConfigHelper.read(config, CroupierKConfig.sPolicy, LOG, logPrefix);
-        this.viewSize = KConfigHelper.read(config, CroupierKConfig.viewSize, LOG, logPrefix);
-        this.shuffleSize = KConfigHelper.read(config, CroupierKConfig.shuffleSize, LOG, logPrefix);
-        this.shufflePeriod = KConfigHelper.read(config, CroupierKConfig.shufflePeriod, LOG, logPrefix);
-        this.shuffleTimeout = KConfigHelper.read(config, CroupierKConfig.shuffleTimeout, LOG, logPrefix);
-        this.softMaxTemp = KConfigHelper.read(config, CroupierKConfig.softMaxTemp, LOG, logPrefix);
+        this.configCore = configCore;
+        this.policy = KConfigHelper.read(configCore, CroupierKConfig.sPolicy);
+        this.viewSize = KConfigHelper.read(configCore, CroupierKConfig.viewSize);
+        this.shuffleSize = KConfigHelper.read(configCore, CroupierKConfig.shuffleSize);
+        this.shufflePeriod = KConfigHelper.read(configCore, CroupierKConfig.shufflePeriod);
+        this.shuffleTimeout = KConfigHelper.read(configCore, CroupierKConfig.shuffleTimeout);
+        this.softMaxTemp = KConfigHelper.read(configCore, CroupierKConfig.softMaxTemp);
     }
 }
