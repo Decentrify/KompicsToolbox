@@ -18,10 +18,10 @@
  */
 package se.sics.ktoolbox.overlaymngr;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
 import se.sics.p2ptoolbox.util.config.options.OpenAddressBootstrapOption;
 
 /**
@@ -29,7 +29,8 @@ import se.sics.p2ptoolbox.util.config.options.OpenAddressBootstrapOption;
  */
 public class OverlayMngrConfig implements KConfigLevel {
 
-    public static final byte[] GLOBAL_GROUPIER_ID = new byte[]{};
+    public static final byte[] GLOBAL_CROUPIER_ID = new byte[]{};
+    public static final byte[] GLOBAL_CROUPIER_ID_ALT = new byte[]{0,0,0,0};
 
     public final static OpenAddressBootstrapOption bootstrap = new OpenAddressBootstrapOption("globalcroupier.bootstrap", new OverlayMngrConfig());
     
@@ -38,7 +39,7 @@ public class OverlayMngrConfig implements KConfigLevel {
     }
     
     public static boolean isGlobalCroupier(byte[] id) {
-        return (id.equals(new byte[]{}) || id.equals(new byte[]{0,0,0,0}));
+        return (Arrays.equals(id, GLOBAL_CROUPIER_ID) || Arrays.equals(id, GLOBAL_CROUPIER_ID_ALT));
     }
 
     @Override
