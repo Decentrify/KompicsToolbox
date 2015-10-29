@@ -256,7 +256,6 @@ public class OverlayMngrComp extends ComponentDefinition {
             disconnect(croupier.getValue0().getNegative(SelfAddressUpdatePort.class), addressUpdate);
             disconnect(croupier.getValue0().getNegative(SelfViewUpdatePort.class), context.viewUpdate);
             disconnect(croupier.getValue0().getPositive(CroupierPort.class), context.croupier);
-            disconnect(croupier.getValue0().getPositive(CroupierControlPort.class), context.croupierControl);
             unsubscribe(croupier.getValue1(), croupier.getValue0().getPositive(CroupierControlPort.class));
             trigger(Kill.event, croupier.getValue0().control());
         }

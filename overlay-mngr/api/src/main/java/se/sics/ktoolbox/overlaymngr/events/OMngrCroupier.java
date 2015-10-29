@@ -35,18 +35,15 @@ public class OMngrCroupier {
         public final byte[] parentId;
         public final byte[] croupierId;
         public final Negative<CroupierPort> croupier;
-        public final Negative<CroupierControlPort> croupierControl;
         public final Positive<SelfViewUpdatePort> viewUpdate;
         public final boolean observer;
         
         public ConnectRequest(UUID id, byte[] parentId, byte[] croupierId, Negative<CroupierPort> croupier, 
-                Negative<CroupierControlPort> croupierControl, Positive<SelfViewUpdatePort> viewUpdate,
-                boolean observer) {
+                Positive<SelfViewUpdatePort> viewUpdate, boolean observer) {
             this.id = id;
             this.parentId = parentId;
             this.croupierId = croupierId;
             this.croupier = croupier;
-            this.croupierControl = croupierControl;
             this.viewUpdate = viewUpdate;
             this.observer = observer;
         }
@@ -54,6 +51,46 @@ public class OMngrCroupier {
         public ConnectResponse answer() {
             return new ConnectResponse(this);
         }
+    }
+    
+    public static class ConnectRequestBuilder {
+        public final UUID id;
+        private byte[] parentId;
+        private byte[] croupierId;
+        private Negative<CroupierPort> croupier;
+        private Positive<SelfViewUpdatePort> viewUpdate;
+        private Boolean observer;
+        
+        public ConnectRequestBuilder(UUID id) {
+            this.id = id;
+        }
+        
+        public void setIdentifiers(byte[] parentId, byte[] croupierId) {
+            this.parentId = parentId;
+            this.croupierId = croupierId;
+        }
+
+        public void connectTo(Negative<CroupierPort> croupier, Positive<SelfViewUpdatePort> viewUpdate) {
+            this.croupier = croupier;
+            this.viewUpdate = viewUpdate;
+        }
+        
+        public void setupCroupier(boolean observer) {
+            this.observer = observer;
+        }
+        
+        public ConnectRequest build() throws IllegalArgumentException {
+            if(parentId == null || croupierId == null) {
+                throw new IllegalArgumentException("identifiers not set");
+            }
+            if(croupier == null || viewUpdate == null) {
+                throw new IllegalArgumentException("connection not set");
+            }
+            if(observer == null) {
+                throw new IllegalArgumentException("croupier not set");
+            }
+            return new ConnectRequest(id, parentId, croupierId, croupier, viewUpdate, observer);
+        } 
     }
     
     public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
