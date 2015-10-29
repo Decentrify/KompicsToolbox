@@ -50,10 +50,14 @@ public class InetAddressOption extends Composite<InetAddress> {
     
     @Override
     public Optional<InetAddress> readValue(KConfigCore config) {
+        if(sIpOption == null) {
+            return Optional.absent();
+        }
         Optional<String> sPrefferedInterface = config.readValue(sIpOption);
         if (!sPrefferedInterface.isPresent()) {
             return Optional.absent();
         }
+        
         try {
             return Optional.of(InetAddress.getByName(sPrefferedInterface.get()));
         } catch (UnknownHostException ex) {
