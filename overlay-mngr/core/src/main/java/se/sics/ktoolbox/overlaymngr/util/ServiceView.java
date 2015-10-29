@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.overlaymngr.util;
 
+import com.google.common.io.BaseEncoding;
+import java.nio.ByteBuffer;
 import java.util.List;
 import se.sics.p2ptoolbox.croupier.util.CroupierView;
 
@@ -26,9 +28,9 @@ import se.sics.p2ptoolbox.croupier.util.CroupierView;
  */
 public class ServiceView implements CroupierView {
     public final boolean observer;
-    public final List<byte[]> runningServices;
+    public final List<ByteBuffer> runningServices;
     
-    public ServiceView(boolean observer, List<byte[]> runningServices) {
+    public ServiceView(boolean observer, List<ByteBuffer> runningServices) {
         this.observer = observer;
         this.runningServices = runningServices;
     }
@@ -36,5 +38,14 @@ public class ServiceView implements CroupierView {
     @Override
     public boolean isObserver() {
         return observer;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for(ByteBuffer serviceId : runningServices) {
+            sb.append(BaseEncoding.base16().encode(serviceId.array()));
+        }
+        return sb.toString();
     }
 }

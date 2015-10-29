@@ -20,6 +20,7 @@ package se.sics.ktoolbox.overlaymngr.util;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import se.sics.kompics.network.netty.serialization.Serializer;
@@ -47,21 +48,21 @@ public class ServiceViewSerializer implements Serializer {
         //more than 255 services means you are doing it wrong
         assert obj.runningServices.size() < 256;
         buf.writeByte(obj.runningServices.size()); 
-        for (byte[] serviceId : obj.runningServices) {
-            assert serviceId.length == 4; //only using Integer for overlayId - 4 byte
-            buf.writeBytes(serviceId);
+        for (ByteBuffer serviceId : obj.runningServices) {
+            assert serviceId.array().length == 4; //only using Integer for overlayId - 4 byte
+            buf.writeBytes(serviceId.array());
         }
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        List<byte[]> services = new ArrayList<>();
+        List<ByteBuffer> services = new ArrayList<>();
         
         int serviceSize = buf.readByte();
         for(int i = 0; i < serviceSize; i++) {
             byte[] service = new byte[4];
             buf.readBytes(service);
-            services.add(service);
+            services.add(ByteBuffer.wrap(service));
         }
         
         //an observer's view will never get sent out, thus for deserialization, observer will always be false

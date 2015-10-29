@@ -20,6 +20,7 @@ package se.sics.ktoolbox.overlaymngr;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -88,13 +89,13 @@ public class OverlayMngrComp extends ComponentDefinition {
 
     private Component globalCroupier;
     //all croupiers
-    private final Map<byte[], Pair<Component, Handler>> croupierLayers = new HashMap<>();
+    private final Map<ByteBuffer, Pair<Component, Handler>> croupierLayers = new HashMap<>();
     //other components - gradient, tgradient
-    private final Map<byte[], Component> components = new HashMap<>();
+    private final Map<ByteBuffer, Component> components = new HashMap<>();
     //connect requests - croupier, gradient, tgradient
-    private final Map<byte[], OverlayMngrEvent> connectContexts = new HashMap<>();
+    private final Map<ByteBuffer, OverlayMngrEvent> connectContexts = new HashMap<>();
     //croupiers waiting for bootstraping
-    private final Set<byte[]> pendingJoin = new HashSet<>();
+    private final Set<ByteBuffer> pendingJoin = new HashSet<>();
 
     public OverlayMngrComp(OverlayMngrInit init) {
         this.config = init.config;
@@ -113,9 +114,9 @@ public class OverlayMngrComp extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            LOG.info("{}starting...", logPrefix);
+            LOG.info("{}starting global croupier with bootstrap:{}", logPrefix, config.bootstrap);
             trigger(new CroupierJoin(config.bootstrap), globalCroupier.getPositive(CroupierControlPort.class));
-            trigger(new CroupierUpdate(new ServiceView(false, new ArrayList<byte[]>())),
+            trigger(new CroupierUpdate(new ServiceView(false, new ArrayList<ByteBuffer>())),
                     globalCroupier.getNegative(SelfViewUpdatePort.class));
         }
     };
@@ -159,14 +160,16 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(CroupierSample<ServiceView> sample) {
             LOG.info("{}sample public:{} private:{}", new Object[]{logPrefix, sample.publicSample, sample.privateSample});
             //rebootstrap disconnected layers;
-            for (byte[] serviceId : pendingJoin) {
+            for (ByteBuffer serviceId : pendingJoin) {
                 if (!croupierLayers.containsKey(serviceId)) {
+                    LOG.trace("{}leftover croupier connect", logPrefix);
                     //maybe the node left that overlay and killed its CroupierComp
                     continue;
                 }
                 Component croupier = croupierLayers.get(serviceId).getValue0();
                 List<DecoratedAddress> bootstrap = new ArrayList<>();
                 for (Container<DecoratedAddress, ServiceView> cc : sample.publicSample) {
+                    LOG.trace("{}target:{} services:{}", new Object[]{logPrefix, cc.getSource().getBase(), cc.getContent().runningServices});
                     if (cc.getContent().runningServices.contains(serviceId)) {
                         bootstrap.add(cc.getSource());
                     }
@@ -189,21 +192,21 @@ public class OverlayMngrComp extends ComponentDefinition {
         Handler disconnectHandler = new Handler<CroupierDisconnected>() {
             @Override
             public void handle(CroupierDisconnected event) {
-                byte[] overlayId = Ints.toByteArray(event.overlayId);
+                ByteBuffer overlayId = ByteBuffer.wrap(Ints.toByteArray(event.overlayId));
                 if (!croupierLayers.containsKey(overlayId)) {
                     LOG.warn("{}possible late disconnected from deleted croupier:{}",
-                            new Object[]{logPrefix, BaseEncoding.base16().encode(overlayId)});
+                            new Object[]{logPrefix, BaseEncoding.base16().encode(overlayId.array())});
                     return;
                 }
                 LOG.info("{}croupier:{} disconnected",
-                        new Object[]{logPrefix, BaseEncoding.base16().encode(overlayId)});
+                        new Object[]{logPrefix, BaseEncoding.base16().encode(overlayId.array())});
                 pendingJoin.add(overlayId);
                 //TODO Alex possibly speed up with caracal here
             }
         };
 
-        croupierLayers.put(croupierId, Pair.with(croupier, disconnectHandler));
-        pendingJoin.add(croupierId);
+        croupierLayers.put(ByteBuffer.wrap(croupierId), Pair.with(croupier, disconnectHandler));
+        pendingJoin.add(ByteBuffer.wrap(croupierId));
         subscribe(disconnectHandler, croupier.getPositive(CroupierControlPort.class));
         return croupier;
     }
@@ -230,10 +233,12 @@ public class OverlayMngrComp extends ComponentDefinition {
             connect(croupier.getNegative(SelfViewUpdatePort.class), req.viewUpdate);
             connect(croupier.getPositive(CroupierPort.class), req.croupier);
 
+            connectContexts.put(ByteBuffer.wrap(req.croupierId), req);
+            
             trigger(Start.event, croupier.control());
             //tell global croupier about new overlayservice
             trigger(new CroupierUpdate(new ServiceView(req.observer, getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
-            connectContexts.put(req.croupierId, req);
+            answer(req, req.answer());
         }
     };
 
@@ -275,7 +280,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         connect(gradient.getPositive(SelfViewUpdatePort.class), croupier.getNegative(SelfViewUpdatePort.class));
         connect(gradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
 
-        components.put(gradientId, gradient);
+        components.put(ByteBuffer.wrap(gradientId), gradient);
         return gradient;
     }
 
@@ -293,7 +298,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         connect(tgradient.getPositive(SelfViewUpdatePort.class), gradient.getNegative(SelfViewUpdatePort.class));
         connect(tgradient.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
 
-        components.put(tgradientId, tgradient);
+        components.put(ByteBuffer.wrap(tgradientId), tgradient);
         return tgradient;
     }
     Handler handleConnectGradient = new Handler<OMngrTGradient.ConnectRequest>() {
@@ -327,7 +332,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             trigger(Start.event, tgradient.control());
             //tell global croupier about new overlayservice - no gradient observers yet
             trigger(new CroupierUpdate(new ServiceView(NO_GRADIENT_OBSERVER, getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
-            connectContexts.put(req.croupierId, req);
+            connectContexts.put(ByteBuffer.wrap(req.croupierId), req);
         }
     };
 
@@ -377,9 +382,9 @@ public class OverlayMngrComp extends ComponentDefinition {
         }
     };
 
-    private List<byte[]> getServices() {
-        List<byte[]> services = new ArrayList<>();
-        for (byte[] service : croupierLayers.keySet()) {
+    private List<ByteBuffer> getServices() {
+        List<ByteBuffer> services = new ArrayList<>();
+        for (ByteBuffer service : croupierLayers.keySet()) {
             services.add(service);
         }
         return services;
