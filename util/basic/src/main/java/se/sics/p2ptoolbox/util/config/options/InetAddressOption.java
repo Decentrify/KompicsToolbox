@@ -22,6 +22,7 @@ import com.google.common.base.Optional;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Composite;
@@ -41,9 +42,15 @@ public class InetAddressOption extends Composite<InetAddress> {
         this(optionName, lvl, null);
     }
 
+    @Deprecated
     @Override
     public Optional<InetAddress> read(KConfigCache config) {
-        Optional<String> sPrefferedInterface = config.read(sIpOption);
+        throw new UnsupportedOperationException("not deleted for backward compile - replace with readValue");
+    }
+    
+    @Override
+    public Optional<InetAddress> readValue(KConfigCore config) {
+        Optional<String> sPrefferedInterface = config.readValue(sIpOption);
         if (!sPrefferedInterface.isPresent()) {
             return Optional.absent();
         }

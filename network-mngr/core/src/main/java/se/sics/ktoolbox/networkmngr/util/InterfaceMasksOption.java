@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption;
 
@@ -37,9 +38,15 @@ public class InterfaceMasksOption extends KConfigOption.Composite<List> {
         this.rawOption = rawOption;
     }
 
+    @Deprecated
     @Override
     public Optional<List> read(KConfigCache config) {
-        Optional<List> sPrefferedInterfaces = config.read(rawOption);
+        throw new UnsupportedOperationException("not deleted for backward compile - change to readValue");
+    }
+    
+    @Override
+    public Optional<List> readValue(KConfigCore config) {
+        Optional<List> sPrefferedInterfaces = config.readValue(rawOption);
         if (!sPrefferedInterfaces.isPresent()) {
             List<GetIp.NetworkInterfacesMask> masks = new ArrayList<>();
             masks.add(GetIp.NetworkInterfacesMask.ALL);
