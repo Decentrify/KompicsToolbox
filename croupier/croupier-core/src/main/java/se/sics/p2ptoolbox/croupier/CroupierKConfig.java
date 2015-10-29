@@ -22,6 +22,7 @@ import com.google.common.base.Optional;
 import java.util.HashSet;
 import java.util.Set;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
@@ -56,9 +57,15 @@ public class CroupierKConfig implements KConfigLevel {
             super(name, CroupierSelectionPolicy.class, lvl);
         }
 
+        @Deprecated
         @Override
         public Optional<CroupierSelectionPolicy> read(KConfigCache config) {
-            Optional<String> sPolicy = config.read(policy);
+             throw new UnsupportedOperationException("not deleted for backward compile - change to readValue");
+        }
+        
+        @Override
+        public Optional<CroupierSelectionPolicy> readValue(KConfigCore config) {
+            Optional<String> sPolicy = config.readValue(policy);
             if (!sPolicy.isPresent()) {
                 return Optional.absent();
             }
