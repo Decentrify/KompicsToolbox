@@ -47,8 +47,8 @@ public class KConfigHelper {
             throw new RuntimeException(ex);
         }
         if (!optValue.isPresent()) {
-            LOG.error("missing{}", opt.name);
-            throw new RuntimeException("missing" + opt.name);
+            LOG.error("missing:{}", opt.name);
+            throw new RuntimeException("missing " + opt.name);
         }
         return optValue.get();
     }
