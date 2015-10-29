@@ -100,7 +100,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         this.config = init.config;
         this.self = init.self;
         this.logPrefix = init.self.getBase().toString() + " ";
-        LOG.info("{}initiating with seed:{}", logPrefix, config.seed);
+        LOG.info("{}initiating with seed:{}", logPrefix, config.system.seed);
 
         subscribe(handleStart, control);
         subscribe(handleSelfAddressUpdate, addressUpdate);
@@ -138,7 +138,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     //**************************************************************************
     private void connectGlobalCroupier() {
         int gcId = OverlayMngrConfig.getGlobalCroupierIntegerId();
-        globalCroupier = create(CroupierComp.class, new CroupierInit(config.getConfigCore(), self, gcId, config.seed));
+        globalCroupier = create(CroupierComp.class, new CroupierInit(config.configCore, self, gcId, config.system.seed));
         connect(globalCroupier.getNegative(Network.class), network, new IntegerOverlayFilter(gcId));
         connect(globalCroupier.getNegative(Timer.class), timer);
         connect(globalCroupier.getNegative(SelfAddressUpdatePort.class), addressUpdate);
@@ -179,9 +179,9 @@ public class OverlayMngrComp extends ComponentDefinition {
     //**********************************CROUPIER********************************
     private Component connectCroupier(byte[] croupierId) {
         int overlayId = Ints.fromByteArray(croupierId);
-        long croupierSeed = config.seed + overlayId;
+        long croupierSeed = config.system.seed + overlayId;
 
-        Component croupier = create(CroupierComp.class, new CroupierInit(config.getConfigCore(), self, overlayId, croupierSeed));
+        Component croupier = create(CroupierComp.class, new CroupierInit(config.configCore, self, overlayId, croupierSeed));
         connect(croupier.getNegative(Timer.class), timer);
         connect(croupier.getNegative(Network.class), network, new IntegerOverlayFilter(overlayId));
         connect(croupier.getNegative(SelfAddressUpdatePort.class), addressUpdate);
@@ -264,9 +264,9 @@ public class OverlayMngrComp extends ComponentDefinition {
     //*******************************GRADIENT***********************************
     private Component connectGradient(byte[] gradientId, Component croupier, Comparator utilityComparator, GradientFilter gradientFilter) {
         int overlayId = Ints.fromByteArray(gradientId);
-        long gradientSeed = config.seed + overlayId;
+        long gradientSeed = config.system.seed + overlayId;
 
-        GradientKCWrapper gradientConfig = new GradientKCWrapper(config.getConfigCore(), gradientSeed, overlayId);
+        GradientKCWrapper gradientConfig = new GradientKCWrapper(config.configCore, gradientSeed, overlayId);
         GradientInit gradientInit = new GradientInit(gradientConfig, self, utilityComparator, gradientFilter);
         Component gradient = create(GradientComp.class, gradientInit);
         connect(gradient.getNegative(Timer.class), timer);
@@ -281,10 +281,10 @@ public class OverlayMngrComp extends ComponentDefinition {
 
     private Component connectTGradient(byte[] tgradientId, Component gradient, GradientFilter gradientFilter) {
         int overlayId = Ints.fromByteArray(tgradientId);
-        long tgradientSeed = config.seed + overlayId;
+        long tgradientSeed = config.system.seed + overlayId;
 
-        GradientKCWrapper gradientConfig = new GradientKCWrapper(config.getConfigCore(), tgradientSeed, overlayId);
-        TGradientKCWrapper tgradientConfig = new TGradientKCWrapper(config.getConfigCore());
+        GradientKCWrapper gradientConfig = new GradientKCWrapper(config.configCore, tgradientSeed, overlayId);
+        TGradientKCWrapper tgradientConfig = new TGradientKCWrapper(config.configCore);
         TreeGradientInit tgradientInit = new TreeGradientInit(gradientConfig, tgradientConfig, self, gradientFilter);
         Component tgradient = create(TreeGradientComp.class, tgradientInit);
         connect(tgradient.getNegative(Timer.class), timer);

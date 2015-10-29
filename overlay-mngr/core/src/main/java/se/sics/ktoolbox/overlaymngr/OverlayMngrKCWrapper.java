@@ -24,27 +24,21 @@ import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigHelper;
+import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlayMngrKCWrapper {
-    private final static Logger LOG = LoggerFactory.getLogger("KConfig");
-    private String logPrefix = "";
     
-    private final KConfigCache config;
-    public final long seed;
+    public final KConfigCore configCore;
+    public final SystemKCWrapper system;
     public final List<DecoratedAddress> bootstrap;
     
     public OverlayMngrKCWrapper(KConfigCore configCore) {
-        this.config = new KConfigCache(configCore);
-        this.logPrefix = config.getNodeId() + " ";
-        this.seed = KConfigHelper.read(config, OverlayMngrConfig.seed, LOG, logPrefix);
-        this.bootstrap = KConfigHelper.read(config, OverlayMngrConfig.bootstrap, LOG, logPrefix);
-    }
-    
-    public KConfigCore getConfigCore() {
-        return config.configCore;
+        this.configCore = configCore;
+        this.system = new SystemKCWrapper(configCore);
+        this.bootstrap = KConfigHelper.read(configCore, OverlayMngrConfig.bootstrap);
     }
 }

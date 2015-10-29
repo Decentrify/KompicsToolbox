@@ -31,8 +31,7 @@ public class OverlayMngrConfig implements KConfigLevel {
 
     public static final byte[] GLOBAL_GROUPIER_ID = new byte[]{};
 
-    public final static KConfigOption.Basic<Long> seed = new KConfigOption.Basic("system.seed", Long.class, new OverlayMngrConfig());
-    public final static OpenAddressBootstrapOption bootstrap = new OpenAddressBootstrapOption("croupier.bootstrap", new OverlayMngrConfig());
+    public final static OpenAddressBootstrapOption bootstrap = new OpenAddressBootstrapOption("globalcroupier.bootstrap", new OverlayMngrConfig());
     
     public static Integer getGlobalCroupierIntegerId() {
         return 0;
