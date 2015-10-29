@@ -19,10 +19,7 @@
 package se.sics.ktoolbox.networkmngr;
 
 import com.google.common.base.Optional;
-import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -45,13 +42,12 @@ import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.ipsolver.hooks.IpSolverHook;
 import se.sics.ktoolbox.ipsolver.hooks.IpSolverResult;
-import se.sics.ktoolbox.ipsolver.msg.GetIp;
 import se.sics.ktoolbox.networkmngr.events.Bind;
+import se.sics.ktoolbox.networkmngr.events.NetworkMngrReady;
 import se.sics.ktoolbox.networkmngr.hooks.NetworkHook;
 import se.sics.ktoolbox.networkmngr.hooks.NetworkResult;
 import se.sics.ktoolbox.networkmngr.hooks.PortBindingHook;
 import se.sics.ktoolbox.networkmngr.hooks.PortBindingResult;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
@@ -121,6 +117,7 @@ public class NetworkMngrComp extends ComponentDefinition {
             }
             privateConfig.setLocalIp(result.getIp().get());
             publicConfig = new NetworkKCWrapper(privateConfig.config);
+            trigger(new NetworkMngrReady(), manager);
         }
     }
 

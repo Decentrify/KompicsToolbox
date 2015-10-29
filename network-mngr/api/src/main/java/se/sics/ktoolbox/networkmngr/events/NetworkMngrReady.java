@@ -16,20 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.ktoolbox.networkmngr;
-
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.networkmngr.events.Bind;
-import se.sics.ktoolbox.networkmngr.events.NetworkMngrReady;
+package se.sics.ktoolbox.networkmngr.events;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetworkMngrPort extends PortType {
-    {
-        positive(NetworkMngrReady.class);
-        negative(Bind.Request.class);
-        positive(Bind.Response.class);
-    }
+public class NetworkMngrReady implements NetworkMngrEvent {
 }
