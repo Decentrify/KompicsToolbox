@@ -28,11 +28,11 @@ import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
  */
 public class OverlayMngrPort extends PortType {
     {
-        positive(OMngrCroupier.ConnectRequest.class);
-        negative(OMngrCroupier.ConnectResponse.class);
-        positive(OMngrCroupier.Disconnect.class);
-        positive(OMngrTGradient.ConnectRequest.class);
-        negative(OMngrTGradient.ConnectResponse.class);
-        positive(OMngrTGradient.Disconnect.class);
+        negative(OMngrCroupier.ConnectRequest.class);
+        positive(OMngrCroupier.ConnectResponse.class);
+        negative(OMngrCroupier.Disconnect.class);
+        negative(OMngrTGradient.ConnectRequest.class);
+        positive(OMngrTGradient.ConnectResponse.class);
+        negative(OMngrTGradient.Disconnect.class);
     }
 }
