@@ -50,7 +50,6 @@ import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
 import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
 import se.sics.p2ptoolbox.croupier.util.CroupierLocalView;
-import se.sics.p2ptoolbox.croupier.util.CroupierView;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.network.ContentMsg;
@@ -83,7 +82,8 @@ public class CroupierComp extends ComponentDefinition {
     private DecoratedAddress self;
 
     private List<DecoratedAddress> bootstrapNodes;
-    private CroupierView selfView;
+    private boolean observer;
+    private Object selfView;
     private CroupierLocalView publicView;
     private CroupierLocalView privateView;
 
@@ -136,7 +136,8 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(CroupierUpdate update) {
             LOG.info("{} updating selfView:{}", new Object[]{logPrefix, update.selfView});
 
-            selfView = (update.selfView == null ? selfView : update.selfView);
+            observer = update.observer;
+            selfView = (update.selfView.isPresent() ? update.selfView : selfView);
 
             if (!connected()) {
                 startShuffle();
@@ -243,7 +244,7 @@ public class CroupierComp extends ComponentDefinition {
             Set<CroupierContainer> publicDescCopy = publicView.initiatorCopySet(config.shuffleSize, peer);
             Set<CroupierContainer> privateDescCopy = privateView.initiatorCopySet(config.shuffleSize, peer);
 
-            if (!selfView.isObserver()) {
+            if (!observer) {
                 if (NatedTrait.isOpen(self)) {
                     publicDescCopy.add(new CroupierContainer(self, selfView));
                 } else {

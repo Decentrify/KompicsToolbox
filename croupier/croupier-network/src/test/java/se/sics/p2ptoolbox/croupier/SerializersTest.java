@@ -36,7 +36,6 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
 import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
-import se.sics.p2ptoolbox.croupier.util.CroupierView;
 import se.sics.p2ptoolbox.util.nat.Nat;
 import se.sics.p2ptoolbox.util.nat.NatedTrait;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
@@ -161,7 +160,7 @@ public class SerializersTest {
         Assert.assertEquals(original, copy);
     }
 
-    public static class TestContent implements CroupierView {
+    public static class TestContent {
 
         public final int val;
 
@@ -189,11 +188,6 @@ public class SerializersTest {
                 return false;
             }
             return true;
-        }
-
-        @Override
-        public boolean isObserver() {
-            return false;
         }
     }
 

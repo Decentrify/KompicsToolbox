@@ -74,7 +74,6 @@ import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlayMngrComp extends ComponentDefinition {
-    private static boolean NO_GRADIENT_OBSERVER = false; 
 
     private static final Logger LOG = LoggerFactory.getLogger(OverlayMngrComp.class);
     private String logPrefix = "";
@@ -116,7 +115,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(Start event) {
             LOG.info("{}starting global croupier with bootstrap:{}", logPrefix, config.bootstrap);
             trigger(new CroupierJoin(config.bootstrap), globalCroupier.getPositive(CroupierControlPort.class));
-            trigger(new CroupierUpdate(new ServiceView(false, new ArrayList<ByteBuffer>())),
+            trigger(CroupierUpdate.update(new ServiceView(new ArrayList<ByteBuffer>())),
                     globalCroupier.getNegative(SelfViewUpdatePort.class));
         }
     };
@@ -234,10 +233,12 @@ public class OverlayMngrComp extends ComponentDefinition {
             connect(croupier.getPositive(CroupierPort.class), req.croupier);
 
             connectContexts.put(ByteBuffer.wrap(req.croupierId), req);
-            
+
             trigger(Start.event, croupier.control());
-            //tell global croupier about new overlayservice
-            trigger(new CroupierUpdate(new ServiceView(req.observer, getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
+            if (!req.observer) {
+                //tell global croupier about new overlayservice
+                trigger(CroupierUpdate.update(new ServiceView(getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
+            }
             answer(req, req.answer());
         }
     };
@@ -331,7 +332,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             trigger(Start.event, gradient.control());
             trigger(Start.event, tgradient.control());
             //tell global croupier about new overlayservice - no gradient observers yet
-            trigger(new CroupierUpdate(new ServiceView(NO_GRADIENT_OBSERVER, getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
+            trigger(CroupierUpdate.update(new ServiceView(getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
             connectContexts.put(ByteBuffer.wrap(req.croupierId), req);
         }
     };
@@ -359,7 +360,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             disconnect(croupier.getValue0().getNegative(Network.class), network);
             disconnect(croupier.getValue0().getNegative(SelfAddressUpdatePort.class), addressUpdate);
             unsubscribe(croupier.getValue1(), croupier.getValue0().getPositive(CroupierControlPort.class));
-            
+
             //gradient
             disconnect(gradient.getNegative(Timer.class), timer);
             disconnect(gradient.getNegative(Network.class), network);
@@ -375,7 +376,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             disconnect(tgradient.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
             disconnect(tgradient.getNegative(SelfViewUpdatePort.class), context.viewUpdate);
             disconnect(tgradient.getPositive(GradientPort.class), context.tgradient);
-            
+
             trigger(Kill.event, croupier.getValue0().control());
             trigger(Kill.event, gradient.control());
             trigger(Kill.event, tgradient.control());

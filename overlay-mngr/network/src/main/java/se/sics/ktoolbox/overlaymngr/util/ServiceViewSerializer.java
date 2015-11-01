@@ -64,8 +64,6 @@ public class ServiceViewSerializer implements Serializer {
             buf.readBytes(service);
             services.add(ByteBuffer.wrap(service));
         }
-        
-        //an observer's view will never get sent out, thus for deserialization, observer will always be false
-        return new ServiceView(false, services); 
+        return new ServiceView(services); 
     }
 }

@@ -25,7 +25,7 @@ import se.sics.p2ptoolbox.util.traits.Ageing;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierContainer<CV extends CroupierView> implements Container<DecoratedAddress, CV>, Ageing {
+public class CroupierContainer<CV extends Object> implements Container<DecoratedAddress, CV>, Ageing {
 
     private int age;
     private DecoratedAddress src;

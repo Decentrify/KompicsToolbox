@@ -19,12 +19,11 @@
 
 package se.sics.p2ptoolbox.gradient.util;
 
-import se.sics.p2ptoolbox.croupier.util.CroupierView;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientLocalView implements CroupierView {
+public class GradientLocalView {
     public final Object appView;
     public final int rank;
     
@@ -57,11 +56,5 @@ public class GradientLocalView implements CroupierView {
             return false;
         }
         return true;
-    }
-
-    @Override
-    public boolean isObserver() {
-        //TODO Alex - should I consider gradient observers?
-        return false;
     }
 }

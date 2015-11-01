@@ -36,7 +36,7 @@ import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
  * @author Cosmin Arad <cosmin@sics.se>, Gautier Berthou
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierLVEntry<C extends CroupierView> {
+public class CroupierLVEntry<C extends Object> {
 
     public static enum Order implements Comparator<CroupierLVEntry> {
         ByAge() {

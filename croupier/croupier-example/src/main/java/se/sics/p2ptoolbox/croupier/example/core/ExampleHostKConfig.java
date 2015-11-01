@@ -45,6 +45,6 @@ public class ExampleHostKConfig implements KConfigLevel {
 
     @Override
     public String toString() {
-        return "NetworkMngrConfig";
+        return "HostKConfig";
     }
 }

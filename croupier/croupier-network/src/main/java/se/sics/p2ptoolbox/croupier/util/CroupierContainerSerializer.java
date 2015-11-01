@@ -52,7 +52,7 @@ public class CroupierContainerSerializer implements Serializer {
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         int age = buf.readInt();
         DecoratedAddress src = (DecoratedAddress)Serializers.lookupSerializer(DecoratedAddress.class).fromBinary(buf, hint);
-        CroupierView content = (CroupierView)Serializers.fromBinary(buf, hint);
+        Object content = Serializers.fromBinary(buf, hint);
         return new CroupierContainer(src, content, age);
     }
 }

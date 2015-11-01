@@ -21,23 +21,15 @@ package se.sics.ktoolbox.overlaymngr.util;
 import com.google.common.io.BaseEncoding;
 import java.nio.ByteBuffer;
 import java.util.List;
-import se.sics.p2ptoolbox.croupier.util.CroupierView;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView implements CroupierView {
-    public final boolean observer;
+public class ServiceView {
     public final List<ByteBuffer> runningServices;
     
-    public ServiceView(boolean observer, List<ByteBuffer> runningServices) {
-        this.observer = observer;
+    public ServiceView(List<ByteBuffer> runningServices) {
         this.runningServices = runningServices;
-    }
-
-    @Override
-    public boolean isObserver() {
-        return observer;
     }
     
     @Override

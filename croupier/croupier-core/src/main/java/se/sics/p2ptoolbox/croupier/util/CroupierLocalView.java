@@ -36,7 +36,7 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierLocalView<C extends CroupierView> {
+public class CroupierLocalView<C extends Object> {
 
     private final int viewSize;
     private final BasicAddress selfAddress;

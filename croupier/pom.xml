@@ -16,7 +16,7 @@
         <module>croupier-api</module>
         <module>croupier-core</module>
         <module>croupier-network</module>
-        <module>croupier-example</module>
+        <!--<module>croupier-example</module>-->
     </modules>
     
     <properties>

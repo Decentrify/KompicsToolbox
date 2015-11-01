@@ -19,21 +19,31 @@
 
 package se.sics.p2ptoolbox.croupier.msg;
 
-import se.sics.p2ptoolbox.croupier.util.CroupierView;
+import com.google.common.base.Optional;
 import se.sics.p2ptoolbox.util.update.SelfViewUpdate;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierUpdate<CV extends CroupierView> implements SelfViewUpdate {
-    public final CV selfView;
+public class CroupierUpdate<CV extends Object> implements SelfViewUpdate {
+    public final boolean observer;
+    public final Optional<CV> selfView;
     
-    public CroupierUpdate(CV selfView) {
+    public CroupierUpdate(boolean observer, Optional<CV> selfView) {
+        this.observer = observer;
         this.selfView = selfView;
     }
 
     @Override
     public String toString() {
         return "CROUPIER_VIEW_UPDATE";
+    }
+    
+    public static CroupierUpdate observer() {
+        return new CroupierUpdate(true, Optional.absent());
+    }
+    
+    public static <CV extends Object> CroupierUpdate update(CV updateView) {
+        return new CroupierUpdate(false, Optional.of(updateView));
     }
 }

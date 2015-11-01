@@ -147,7 +147,7 @@ public class GradientComp extends ComponentDefinition {
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
-            trigger(new CroupierUpdate(new GradientLocalView(update.view, selfView.rank)), croupierViewUpdate);
+            trigger(CroupierUpdate.update(new GradientLocalView(update.view, selfView.rank)), croupierViewUpdate);
         }
     };
 
@@ -204,7 +204,7 @@ public class GradientComp extends ComponentDefinition {
             if (view.checkIfTop(selfView) && selfView.rank != 0) {
                 selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), 0);
                 LOG.debug("{} am top", logPrefix, view.getAllCopy());
-                trigger(new CroupierUpdate(new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
+                trigger(CroupierUpdate.update(new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
                 trigger(new RankUpdate(selfView.rank), rankUpdate);
             }
             LOG.debug("{} rank:{}", logPrefix, selfView.rank);
@@ -323,7 +323,7 @@ public class GradientComp extends ComponentDefinition {
                     if (content.selfGC.rank != Integer.MAX_VALUE && selfView.rank != content.selfGC.rank + nodeDist) {
                         selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), content.selfGC.rank + nodeDist);
                         LOG.debug("{} new rank:{} partner:{} partner rank:{}", new Object[]{logPrefix, selfView.rank, content.selfGC.getSource(), content.selfGC.rank});
-                        trigger(new CroupierUpdate(new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
+                        trigger(CroupierUpdate.update(new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
                         trigger(new RankUpdate(selfView.rank), rankUpdate);
                     }
                 }
