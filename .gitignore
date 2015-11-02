@@ -169,3 +169,5 @@ netty-test/target/
 /overlay-mngr/network/target/
 /overlay-mngr/core/target/
 /overlay-mngr/example/target/
+/fd/core/target/
+/fd/api/target/

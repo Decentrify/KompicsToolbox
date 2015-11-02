@@ -99,7 +99,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     public OverlayMngrComp(OverlayMngrInit init) {
         this.config = init.config;
         this.self = init.self;
-        this.logPrefix = init.self.getBase().toString() + " ";
+        this.logPrefix = "<" + init.self.getId() + "> ";
         LOG.info("{}initiating with seed:{}", logPrefix, config.system.seed);
 
         subscribe(handleStart, control);
@@ -150,7 +150,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         @Override
         public void handle(CroupierDisconnected event) {
             LOG.error("{}global disconnect, shutting down");
-            throw new RuntimeException("global disconnect");
+//            throw new RuntimeException("global disconnect");
         }
     };
 

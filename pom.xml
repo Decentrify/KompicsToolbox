@@ -20,6 +20,7 @@
         <module>simulator</module>
         <module>network-mngr</module>
         <module>overlay-mngr</module>
+        <module>fd</module>
     </modules>
 
     <!-- simulator bumped to 1.8 - check if it is compatible with other modules-->    

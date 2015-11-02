@@ -94,7 +94,7 @@ public class CroupierComp extends ComponentDefinition {
         this.config = init.config;
         this.self = init.self;
         this.overlayId = init.overlayId;
-        this.logPrefix = "<oid:" + overlayId + ",nid:" + self.getBase().toString() + ">";
+        this.logPrefix = "<oid:" + overlayId + ",nid:" + self.getId() + "> ";
         Random rand = new Random(init.seed);
         LOG.info("{} initiating with seed:{}", logPrefix, init.seed);
         this.bootstrapNodes = new ArrayList<>();
@@ -134,10 +134,11 @@ public class CroupierComp extends ComponentDefinition {
     Handler handleSelfViewUpdate = new Handler<CroupierUpdate>() {
         @Override
         public void handle(CroupierUpdate update) {
-            LOG.info("{} updating selfView:{}", new Object[]{logPrefix, update.selfView});
-
             observer = update.observer;
-            selfView = (update.selfView.isPresent() ? update.selfView : selfView);
+            selfView = (update.selfView.isPresent() ? update.selfView.get() : selfView);
+            
+            LOG.info("{} updated observer:{} selfView:{}", new Object[]{logPrefix, observer,
+                selfView == null ? "x" : selfView});
 
             if (!connected()) {
                 startShuffle();

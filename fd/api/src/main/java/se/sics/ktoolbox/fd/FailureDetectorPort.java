@@ -16,29 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.util;
+package se.sics.ktoolbox.fd;
 
-import com.google.common.io.BaseEncoding;
-import java.nio.ByteBuffer;
-import java.util.List;
+import se.sics.kompics.PortType;
+import se.sics.ktoolbox.fd.event.FDEvent.Follow;
+import se.sics.ktoolbox.fd.event.FDEvent.Suspect;
+import se.sics.ktoolbox.fd.event.FDEvent.Unfollow;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView {
-    public final List<ByteBuffer> runningServices;
-    
-    public ServiceView(List<ByteBuffer> runningServices) {
-        this.runningServices = runningServices;
-    }
-    
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("services:");
-        for(ByteBuffer serviceId : runningServices) {
-            sb.append(BaseEncoding.base16().encode(serviceId.array()));
-            sb.append(",");
-        }
-        return sb.toString();
+public class FailureDetectorPort extends PortType {
+    {
+        negative(Follow.class);
+        negative(Unfollow.class);
+        positive(Suspect.class);
     }
 }
