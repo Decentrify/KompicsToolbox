@@ -34,6 +34,7 @@ import se.sics.p2ptoolbox.util.config.options.OpenAddressOption;
 public class SystemKConfig implements KConfigLevel {
     public final static Basic<Long> seed = new Basic("system.seed", Long.class, new SystemKConfig());
     public final static Basic<Integer> id = new Basic("system.id", Integer.class, new SystemKConfig());
+    public final static Basic<Integer> port = new Basic("system.port", Integer.class, new SystemKConfig());
     public final static OpenAddressOption aggregator = new OpenAddressOption("system.aggregator", new SystemKConfig());
     
     @Override

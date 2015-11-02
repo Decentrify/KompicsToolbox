@@ -19,10 +19,6 @@
 package se.sics.p2ptoolbox.util.config.impl;
 
 import com.google.common.base.Optional;
-import java.security.SecureRandom;
-import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigHelper;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -31,15 +27,17 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKCWrapper {
-    public final KConfigCore config;
+    public final KConfigCore configCore;
     public final long seed;
     public final int id;
+    public final int port;
     public final Optional<DecoratedAddress> aggregator;
     
-    public SystemKCWrapper(KConfigCore config) {
-        this.config = config;
-        seed = KConfigHelper.read(config, SystemKConfig.seed);
-        id = KConfigHelper.read(config, SystemKConfig.id);
-        aggregator = config.readValue(SystemKConfig.aggregator);
+    public SystemKCWrapper(KConfigCore configCore) {
+        this.configCore = configCore;
+        seed = KConfigHelper.read(configCore, SystemKConfig.seed);
+        id = KConfigHelper.read(configCore, SystemKConfig.id);
+        port = KConfigHelper.read(configCore, SystemKConfig.port);
+        aggregator = configCore.readValue(SystemKConfig.aggregator);
     }
 }
