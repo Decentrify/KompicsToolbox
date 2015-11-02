@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.networkmngr.hooks;
 
+import java.util.HashSet;
+import java.util.Set;
 import se.sics.kompics.Component;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
@@ -25,7 +27,10 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.ktoolbox.networkmngr.hooks.NetworkHook.*;
+import se.sics.p2ptoolbox.util.other.ConnectionHelperComp;
+import se.sics.p2ptoolbox.util.other.ConnectionHelperComp.ConnectionHelperInit;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
+import se.sics.p2ptoolbox.util.truefilters.DestinationPortFilter;
 
 /**
  *
@@ -72,13 +77,21 @@ public class NetworkHookFactory {
             @Override
             public SetupResult setup(ComponentProxy proxy, Parent hookParent,
                     SetupInit hookInit) {
-                return new SetupResult(new Component[0]);
+                Component[] comp = new Component[1];
+                Set<Class> proxyPorts = new HashSet<>();
+                proxyPorts.add(Network.class);
+                comp[0] = proxy.create(ConnectionHelperComp.class, new ConnectionHelperInit(proxyPorts));
+                proxy.connect(comp[0].getNegative(Network.class), network, new DestinationPortFilter(hookInit.self.getPort(), true));
+                return new SetupResult(comp);
             }
 
             @Override
             public void start(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, StartInit startInit) {
-                hookParent.onResult(new NetworkResult(network));
+                if(!startInit.started) {
+                    proxy.trigger(Start.event, setupResult.comp[0].control());
+                }
+                hookParent.onResult(new NetworkResult(setupResult.comp[0].getPositive(Network.class)));
             }
 
             @Override

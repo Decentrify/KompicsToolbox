@@ -56,7 +56,7 @@ public class CroupierShuffle {
         
         @Override
         public String toString() {
-            return "ShuffleRequest";
+            return "ShuffleRequest<" + id + ">";
         }
         
         @Override
@@ -97,7 +97,7 @@ public class CroupierShuffle {
         
         @Override
         public String toString() {
-            return "ShuffleResponse";
+            return "ShuffleResponse<" + id + ">";
         }
         
         @Override

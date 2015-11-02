@@ -149,7 +149,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     Handler handleGlobalDisconnect = new Handler<CroupierDisconnected>() {
         @Override
         public void handle(CroupierDisconnected event) {
-            LOG.error("{}global disconnect, shutting down");
+            LOG.error("{}global disconnect, shutting down", logPrefix);
 //            throw new RuntimeException("global disconnect");
         }
     };
