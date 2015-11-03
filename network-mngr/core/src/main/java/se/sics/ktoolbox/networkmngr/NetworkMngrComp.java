@@ -79,7 +79,7 @@ public class NetworkMngrComp extends ComponentDefinition {
         this.systemHooks = init.systemHooks;
 
         subscribe(handleStart, control);
-        subscribe(handleCreate, manager);
+        subscribe(handleBind, manager);
     }
 
     Handler handleStart = new Handler<Start>() {
@@ -122,13 +122,13 @@ public class NetworkMngrComp extends ComponentDefinition {
     }
 
     //***************************NETWORK, PORT**********************************
-    Handler handleCreate = new Handler<Bind.Request>() {
+    Handler handleBind = new Handler<Bind.Request>() {
         @Override
         public void handle(Bind.Request req) {
             LOG.info("{}binding on:{} localIp:{}", new Object[]{logPrefix, req.self, publicConfig.localIp.getHostAddress()});
             Optional<Bind.Response> existing = getMapping(req);
             if (existing.isPresent()) {
-                trigger(existing.get(), manager);
+                answer(req, req.answer(existing.get().networkId, existing.get().boundPort));
                 return;
             }
 
@@ -185,8 +185,7 @@ public class NetworkMngrComp extends ComponentDefinition {
         public void onResult(NetworkResult result) {
             this.networkResult = result;
             connect(networkResult.getNetwork(), network, new SourcePortFilter(portBindingResult.boundPort, false));
-            Bind.Response resp = req.answer(id, portBindingResult.boundPort);
-            trigger(resp, manager);
+            answer(req, req.answer(id, portBindingResult.boundPort));
         }
     }
 

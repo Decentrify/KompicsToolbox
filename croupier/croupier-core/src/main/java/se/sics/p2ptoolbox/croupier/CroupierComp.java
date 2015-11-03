@@ -98,6 +98,7 @@ public class CroupierComp extends ComponentDefinition {
         Random rand = new Random(init.seed);
         LOG.info("{} initiating with seed:{}", logPrefix, init.seed);
         this.bootstrapNodes = new ArrayList<>();
+        this.observer = false;
         this.selfView = null;
         this.shuffleCycleId = null;
         this.shuffleTimeoutId = null;
@@ -136,7 +137,7 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(CroupierUpdate update) {
             observer = update.observer;
             selfView = (update.selfView.isPresent() ? update.selfView.get() : selfView);
-            
+
             LOG.info("{} updated observer:{} selfView:{}", new Object[]{logPrefix, observer,
                 selfView == null ? "x" : selfView});
 
@@ -160,7 +161,7 @@ public class CroupierComp extends ComponentDefinition {
     };
 
     private void startShuffle() {
-        if (selfView == null) {
+        if (!observer && selfView == null) {
             LOG.warn("{} no self view - not shuffling", new Object[]{logPrefix});
             return;
         }
@@ -278,7 +279,7 @@ public class CroupierComp extends ComponentDefinition {
                         throw new RuntimeException("tried to shuffle with myself");
                     }
                     LOG.trace("{} received:{} from:{}", new Object[]{logPrefix, content, reqSrc});
-                    if (selfView == null) {
+                    if (!observer && selfView == null) {
                         LOG.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
                                 logPrefix, reqSrc);
                         return;
@@ -292,10 +293,12 @@ public class CroupierComp extends ComponentDefinition {
 
                     Set<CroupierContainer> publicDescCopy = publicView.receiverCopySet(config.shuffleSize, reqSrc);
                     Set<CroupierContainer> privateDescCopy = privateView.receiverCopySet(config.shuffleSize, reqSrc);
-                    if (NatedTrait.isOpen(self)) {
-                        publicDescCopy.add(new CroupierContainer(self, selfView));
-                    } else {
-                        privateDescCopy.add(new CroupierContainer(self, selfView));
+                    if (!observer) {
+                        if (NatedTrait.isOpen(self)) {
+                            publicDescCopy.add(new CroupierContainer(self, selfView));
+                        } else {
+                            privateDescCopy.add(new CroupierContainer(self, selfView));
+                        }
                     }
 
                     DecoratedHeader<DecoratedAddress> responseHeader = new DecoratedHeader(
