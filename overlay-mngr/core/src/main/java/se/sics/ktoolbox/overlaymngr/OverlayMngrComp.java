@@ -99,7 +99,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     public OverlayMngrComp(OverlayMngrInit init) {
         this.config = init.config;
         this.self = init.self;
-        this.logPrefix = "<" + init.self.getId() + "> ";
+        this.logPrefix = "<nid:" + config.system.id + "> ";
         LOG.info("{}initiating with seed:{}", logPrefix, config.system.seed);
 
         subscribe(handleStart, control);

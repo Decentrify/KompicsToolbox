@@ -94,7 +94,7 @@ public class CroupierComp extends ComponentDefinition {
         this.config = init.config;
         this.self = init.self;
         this.overlayId = init.overlayId;
-        this.logPrefix = "<oid:" + overlayId + ",nid:" + self.getId() + "> ";
+        this.logPrefix = "<nid:" + self.getId() + ",oid:" + overlayId + "> ";
         Random rand = new Random(init.seed);
         LOG.info("{} initiating with seed:{}", logPrefix, init.seed);
         this.bootstrapNodes = new ArrayList<>();

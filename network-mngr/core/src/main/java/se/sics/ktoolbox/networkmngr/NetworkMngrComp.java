@@ -73,7 +73,7 @@ public class NetworkMngrComp extends ComponentDefinition {
 
     public NetworkMngrComp(NetworkMngrInit init) {
         this.privateConfig = init.config;
-        this.logPrefix = "<" + privateConfig.system.id + "> ";
+        this.logPrefix = "<nid:" + privateConfig.system.id + "> ";
         LOG.info("{}initiating...", logPrefix);
 
         this.systemHooks = init.systemHooks;
