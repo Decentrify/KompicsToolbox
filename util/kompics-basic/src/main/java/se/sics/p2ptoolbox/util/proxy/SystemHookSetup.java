@@ -31,14 +31,14 @@ import java.util.Set;
 public class SystemHookSetup {
     private final Map<String, Hook.Definition> hooks = new HashMap<>();
  
-    public void register(String hookName, Hook.Definition hook) {
+    public synchronized void register(String hookName, Hook.Definition hook) {
         if(hooks.containsKey(hookName)) {
             throw new RuntimeException("double hook:" + hookName + " definition - logic error");
         }
         hooks.put(hookName, hook);
     }
     
-    public <HR extends Hook.Required> Optional<String> missingHook(HR[] requiredHooks) {
+    public synchronized <HR extends Hook.Required> Optional<String> missingHook(HR[] requiredHooks) {
         for(HR requiredHook : requiredHooks) {
             if(!hooks.containsKey(requiredHook.toString())) {
                 return Optional.of(requiredHook.toString());
@@ -47,7 +47,7 @@ public class SystemHookSetup {
         return Optional.absent();
     }
     
-    public <H extends Hook.Definition> H getHook(String hookName, Class<H> hookClass) {
+    public synchronized <H extends Hook.Definition> H getHook(String hookName, Class<H> hookClass) {
         Hook.Definition hook = hooks.get(hookName);
         if(hook == null) {
             throw new RuntimeException("logic error - hook:" + hookName + " not defined");
