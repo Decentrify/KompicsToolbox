@@ -147,7 +147,7 @@ public class CroupierComp extends ComponentDefinition {
     Handler handleJoin = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
-            LOG.debug("{} joining using nodes:{}", logPrefix, join.peers);
+            LOG.debug("{}joining using nodes:{}", logPrefix, join.peers);
 
             bootstrapNodes.addAll(join.peers);
             cleanSelf();
@@ -265,7 +265,8 @@ public class CroupierComp extends ComponentDefinition {
                     }
                     DecoratedAddress reqSrc = container.getHeader().getSource();
                     if (self.getBase().equals(reqSrc.getBase())) {
-                        LOG.error("{} Tried to shuffle with myself", logPrefix);
+                        LOG.error("{} Tried to shuffle with myself - self:{}, src:{}", 
+                                new Object[]{logPrefix, self, reqSrc});
                         throw new RuntimeException("tried to shuffle with myself");
                     }
                     LOG.trace("{} received:{} from:{}", new Object[]{logPrefix, content, reqSrc});

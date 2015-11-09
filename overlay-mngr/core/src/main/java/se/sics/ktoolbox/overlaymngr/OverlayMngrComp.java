@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,11 +158,15 @@ public class OverlayMngrComp extends ComponentDefinition {
     Handler handleGlobalSample = new Handler<CroupierSample<ServiceView>>() {
         @Override
         public void handle(CroupierSample<ServiceView> sample) {
-            LOG.info("{}sample public:{} private:{}", new Object[]{logPrefix, sample.publicSample, sample.privateSample});
+            LOG.debug("{}sample public:{} private:{}", new Object[]{logPrefix, sample.publicSample, sample.privateSample});
             //rebootstrap disconnected layers;
-            for (ByteBuffer serviceId : pendingJoin) {
+            LOG.info("{}services awaiting bootstrap:{}", logPrefix, pendingJoin);
+            Iterator<ByteBuffer> it = pendingJoin.iterator();
+            while (it.hasNext()) {
+                ByteBuffer serviceId = it.next();
                 if (!croupierLayers.containsKey(serviceId)) {
                     LOG.trace("{}leftover croupier connect", logPrefix);
+                    it.remove();
                     //maybe the node left that overlay and killed its CroupierComp
                     continue;
                 }
@@ -173,7 +178,10 @@ public class OverlayMngrComp extends ComponentDefinition {
                         bootstrap.add(cc.getSource());
                     }
                 }
-                trigger(new CroupierJoin(bootstrap), croupier.getPositive(CroupierControlPort.class));
+                if (!bootstrap.isEmpty()) {
+                    trigger(new CroupierJoin(bootstrap), croupier.getPositive(CroupierControlPort.class));
+                    it.remove();
+                }
             }
         }
     };
