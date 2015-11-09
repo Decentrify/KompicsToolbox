@@ -151,6 +151,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         @Override
         public void handle(CroupierDisconnected event) {
             LOG.error("{}global disconnect, shutting down", logPrefix);
+            trigger(new CroupierJoin(config.bootstrap), globalCroupier.getPositive(CroupierControlPort.class));
 //            throw new RuntimeException("global disconnect");
         }
     };
