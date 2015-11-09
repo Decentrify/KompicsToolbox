@@ -28,8 +28,8 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.p2ptoolbox.util.network.hooks.NetworkHook.*;
-import se.sics.p2ptoolbox.util.other.ConnectionHelperComp;
-import se.sics.p2ptoolbox.util.other.ConnectionHelperComp.ConnectionHelperInit;
+import se.sics.p2ptoolbox.util.network.hooks.SimNetworkComp.SimNetworkInit;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
 import se.sics.p2ptoolbox.util.truefilters.DestinationPortFilter;
 
@@ -59,7 +59,7 @@ public class NetworkHookFactory {
             @Override
             public void start(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, StartInit startInit) {
-                if(!startInit.started) {
+                if (!startInit.started) {
                     proxy.trigger(Start.event, setupResult.comp[0].control());
                 }
                 hookParent.onResult(new NetworkResult(setupResult.comp[0].getPositive(Network.class)));
@@ -82,7 +82,13 @@ public class NetworkHookFactory {
                 Component[] comp = new Component[1];
                 Set<Class> proxyPorts = new HashSet<>();
                 proxyPorts.add(Network.class);
-                comp[0] = proxy.create(ConnectionHelperComp.class, new ConnectionHelperInit(proxyPorts));
+                DecoratedAddress privateAdr;
+                if (hookInit.alternateBind.isPresent()) {
+                    privateAdr = DecoratedAddress.open(hookInit.alternateBind.get(), hookInit.self.getPort(), hookInit.self.getId());
+                } else {
+                    privateAdr = hookInit.self;
+                }
+                comp[0] = proxy.create(SimNetworkComp.class, new SimNetworkInit(privateAdr));
                 proxy.connect(comp[0].getNegative(Network.class), network, new DestinationPortFilter(hookInit.self.getPort(), true));
                 return new SetupResult(comp);
             }
@@ -90,7 +96,7 @@ public class NetworkHookFactory {
             @Override
             public void start(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, StartInit startInit) {
-                if(!startInit.started) {
+                if (!startInit.started) {
                     proxy.trigger(Start.event, setupResult.comp[0].control());
                 }
                 hookParent.onResult(new NetworkResult(setupResult.comp[0].getPositive(Network.class)));
