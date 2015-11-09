@@ -220,7 +220,7 @@ public class CroupierComp extends ComponentDefinition {
                 throw new RuntimeException("Error selecting peer");
             }
 
-            if (NatedTrait.isOpen(peer)) {
+            if (!NatedTrait.isOpen(peer)) {
                 LOG.debug("{} did not pick a public node for shuffling - public view size:{}", new Object[]{logPrefix, publicView.getAllCopy().size()});
             }
 
@@ -265,8 +265,8 @@ public class CroupierComp extends ComponentDefinition {
                     }
                     DecoratedAddress reqSrc = container.getHeader().getSource();
                     if (self.getBase().equals(reqSrc.getBase())) {
-                        LOG.error("{} Tried to shuffle with myself - self:{}, src:{}", 
-                                new Object[]{logPrefix, self, reqSrc});
+                        LOG.error("{} Tried to shuffle with myself - self:{}, src:{}, dst:{}", 
+                                new Object[]{logPrefix, self, container.getHeader().getSource(), container.getHeader().getDestination()});
                         throw new RuntimeException("tried to shuffle with myself");
                     }
                     LOG.trace("{} received:{} from:{}", new Object[]{logPrefix, content, reqSrc});
