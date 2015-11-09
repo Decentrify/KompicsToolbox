@@ -25,6 +25,7 @@ import se.sics.kompics.PortType;
  */
 public class StatusPort extends PortType {
     {
-        positive(Ready.class);
+        positive(Status.Internal.class);
+        negative(Status.External.class);
     }
 }

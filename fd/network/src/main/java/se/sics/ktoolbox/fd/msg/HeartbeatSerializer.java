@@ -16,22 +16,39 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.fd.msg;
 
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import java.util.UUID;
+import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HeartbeatKCWrapper {
-    public final long heartbeatTimeout = 5000;
-    public final long stateCheckTimeout = 30000;
-    public final KConfigCore configCore;
-    public final SystemKCWrapper system;
+public class HeartbeatSerializer implements Serializer {
+    private final int id;
     
-    public HeartbeatKCWrapper(KConfigCore configCore) {
-        this.configCore = configCore;
-        this.system = new SystemKCWrapper(configCore);
+    public HeartbeatSerializer(int id) {
+        this.id = id;
+    }
+    
+    @Override
+    public int identifier() {
+        return id;
+    }
+
+    @Override
+    public void toBinary(Object o, ByteBuf buf) {
+        Heartbeat obj =  (Heartbeat)o;
+        Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
+    }
+
+    @Override
+    public Heartbeat fromBinary(ByteBuf buf, Optional<Object> hint) {
+        UUID msgId = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
+        return new Heartbeat(msgId);
     }
 }

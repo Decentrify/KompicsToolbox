@@ -18,8 +18,9 @@
  */
 package se.sics.ktoolbox.fd.event;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
-import org.javatuples.Pair;
+import se.sics.kompics.Direct;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -28,33 +29,45 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  */
 public interface FDEvent extends KompicsEvent {
 
-    public static class Follow implements FDEvent {
-
-        public final Pair<DecoratedAddress, byte[]> target;
-        public final UUID followerId;
-
-        public Follow(Pair<DecoratedAddress, byte[]> target, UUID followerId) {
+    public static class Follow extends Direct.Request<Suspect> implements FDEvent {
+        public final DecoratedAddress target;
+        public final ByteBuffer service;
+        public final UUID followerId; //typically component id
+        
+        public Follow(DecoratedAddress target, ByteBuffer service, UUID followerId) {
             this.target = target;
+            this.service = service;
             this.followerId = followerId;
+        }
+
+        public Suspect answer() {
+            return new Suspect(target, service, followerId);
         }
     }
 
     public static class Unfollow implements FDEvent {
 
-        public final Pair<DecoratedAddress, byte[]> target;
-        public final UUID followerId;
+        public final DecoratedAddress target;
+        public final ByteBuffer service;
+        public final UUID followerId; //typically component id
 
-        public Unfollow(Pair<DecoratedAddress, byte[]> target, UUID followerId) {
+        public Unfollow(DecoratedAddress target, ByteBuffer service, UUID followerId) {
             this.target = target;
+            this.service = service;
             this.followerId = followerId;
         }
     }
 
-    public static class Suspect implements FDEvent {
-        public final Pair<DecoratedAddress, byte[]> target;
-        
-        public Suspect(Pair<DecoratedAddress, byte[]> target) {
+    public static class Suspect implements Direct.Response, FDEvent {
+
+        public final DecoratedAddress target;
+        public final ByteBuffer service;
+        public final UUID followerId; //typically component id
+
+        public Suspect(DecoratedAddress target, ByteBuffer service, UUID followerId) {
             this.target = target;
+            this.service = service;
+            this.followerId = followerId;
         }
     }
 }

@@ -16,22 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.fd.msg;
 
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import java.nio.ByteBuffer;
+import java.util.Set;
+import java.util.UUID;
+import se.sics.ktoolbox.fd.event.FDEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HeartbeatKCWrapper {
-    public final long heartbeatTimeout = 5000;
-    public final long stateCheckTimeout = 30000;
-    public final KConfigCore configCore;
-    public final SystemKCWrapper system;
+public class Heartbeat implements FDEvent {
+    public final UUID id;
     
-    public HeartbeatKCWrapper(KConfigCore configCore) {
-        this.configCore = configCore;
-        this.system = new SystemKCWrapper(configCore);
+    public Heartbeat(UUID id) {
+        this.id = id;
+    }
+    
+    @Override
+    public String toString() {
+        return "HEARTBEAT<" + id + ">";
     }
 }

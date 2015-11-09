@@ -19,6 +19,7 @@
 
 package se.sics.p2ptoolbox.util.update;
 
+import java.util.UUID;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
@@ -26,9 +27,11 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SelfAddressUpdate implements KompicsEvent {
+    public final UUID id;
     public final DecoratedAddress self;
     
-    public SelfAddressUpdate(DecoratedAddress self) {
+    public SelfAddressUpdate(UUID id, DecoratedAddress self) {
+        this.id = id;
         this.self = self;
     }
     

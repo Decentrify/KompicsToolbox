@@ -16,22 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
 
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+package se.sics.p2ptoolbox.util.network.hooks;
+
+import se.sics.kompics.Positive;
+import se.sics.kompics.network.Network;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HeartbeatKCWrapper {
-    public final long heartbeatTimeout = 5000;
-    public final long stateCheckTimeout = 30000;
-    public final KConfigCore configCore;
-    public final SystemKCWrapper system;
+public class NetworkResult {
+    private final Positive<Network> network;
     
-    public HeartbeatKCWrapper(KConfigCore configCore) {
-        this.configCore = configCore;
-        this.system = new SystemKCWrapper(configCore);
+    public NetworkResult(Positive<Network> network) {
+        this.network = network;
+    }
+    
+    public Positive<Network> getNetwork() {
+        return network;
     }
 }

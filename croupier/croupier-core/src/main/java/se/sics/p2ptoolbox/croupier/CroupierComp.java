@@ -121,6 +121,7 @@ public class CroupierComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{} starting...", logPrefix);
+            schedulePeriodicShuffle();
         }
     };
 
@@ -140,10 +141,6 @@ public class CroupierComp extends ComponentDefinition {
 
             LOG.info("{} updated observer:{} selfView:{}", new Object[]{logPrefix, observer,
                 selfView == null ? "x" : selfView});
-
-            if (!connected()) {
-                startShuffle();
-            }
         }
     };
 
@@ -154,24 +151,8 @@ public class CroupierComp extends ComponentDefinition {
 
             bootstrapNodes.addAll(join.peers);
             cleanSelf();
-            if (!connected()) {
-                startShuffle();
-            }
         }
     };
-
-    private void startShuffle() {
-        if (!observer && selfView == null) {
-            LOG.warn("{} no self view - not shuffling", new Object[]{logPrefix});
-            return;
-        }
-        if (!haveShufflePartners()) {
-            LOG.warn("{} no partners - not shuffling", new Object[]{logPrefix});
-            return;
-        }
-        LOG.info("{} started shuffle", new Object[]{logPrefix});
-        schedulePeriodicShuffle();
-    }
 
     private void stopShuffle() {
         cancelPeriodicShuffle();
@@ -217,9 +198,13 @@ public class CroupierComp extends ComponentDefinition {
             LOG.trace("{} {}", logPrefix, event);
             LOG.debug("{} public view size:{}, private view size:{}, bootstrap nodes size:{}", new Object[]{logPrefix, publicView.size(), privateView.size(), bootstrapNodes.size()});
 
+            if (!observer && selfView == null) {
+                LOG.warn("{} no self view - not shuffling", new Object[]{logPrefix});
+                return;
+            }
             if (!haveShufflePartners()) {
-                LOG.warn("{} no shuffle partners - disconnected", logPrefix);
-                stopShuffle();
+                LOG.warn("{} no partners - not shuffling", new Object[]{logPrefix});
+                trigger(new CroupierDisconnected(overlayId), croupierControlPort);
                 return;
             }
 
@@ -268,6 +253,11 @@ public class CroupierComp extends ComponentDefinition {
 
                 @Override
                 public void handle(CroupierShuffle.Request content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, CroupierShuffle.Request> container) {
+                    if (!observer && selfView == null) {
+                        LOG.warn("{} no self view - not shuffling", new Object[]{logPrefix});
+                        return;
+                    }
+                    
                     DecoratedHeader<DecoratedAddress> header = container.getHeader();
                     if (header.getTrait(OverlayMember.class).getOverlayId() != overlayId) {
                         LOG.error("{} message with header:{} not belonging to croupier overlay:{}", new Object[]{logPrefix, header, overlayId});
@@ -311,9 +301,6 @@ public class CroupierComp extends ComponentDefinition {
 
                     publicView.selectToKeep(reqSrc, content.publicNodes);
                     privateView.selectToKeep(reqSrc, content.privateNodes);
-                    if (!connected() && haveShufflePartners()) {
-                        startShuffle();
-                    }
                 }
             };
 
