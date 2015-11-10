@@ -59,7 +59,7 @@ public class OMngrHostComp extends ComponentDefinition {
     }
     
     private void connectOverlayMngr() {
-        overlayMngr = create(OverlayMngrComp.class, new OverlayMngrInit(config.getKConfigCore(), self));
+        overlayMngr = create(OverlayMngrComp.class, new OverlayMngrInit(config.getKConfigCore(), self, false));
         connect(overlayMngr.getNegative(Timer.class), timer);
         connect(overlayMngr.getNegative(Network.class), network);
 //        connect(overlayMngr.getPositive(SelfAddressUpdatePort.class), ...);

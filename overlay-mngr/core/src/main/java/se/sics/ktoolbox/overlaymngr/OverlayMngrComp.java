@@ -87,6 +87,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     private final OverlayMngrKCWrapper config;
     private DecoratedAddress self;
 
+    private final boolean globalObserver;
     private Component globalCroupier;
     //all croupiers
     private final Map<ByteBuffer, Pair<Component, Handler>> croupierLayers = new HashMap<>();
@@ -98,9 +99,10 @@ public class OverlayMngrComp extends ComponentDefinition {
     private final Set<ByteBuffer> pendingJoin = new HashSet<>();
 
     public OverlayMngrComp(OverlayMngrInit init) {
-        this.config = init.config;
-        this.self = init.self;
-        this.logPrefix = "<nid:" + config.system.id + "> ";
+        config = init.config;
+        self = init.self;
+        globalObserver = init.globalObserver;
+        logPrefix = "<nid:" + config.system.id + "> ";
         LOG.info("{}initiating with seed:{}", logPrefix, config.system.seed);
 
         subscribe(handleStart, control);
@@ -116,8 +118,13 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(Start event) {
             LOG.info("{}starting global croupier with bootstrap:{}", logPrefix, config.bootstrap);
             trigger(new CroupierJoin(config.bootstrap), globalCroupier.getPositive(CroupierControlPort.class));
-            trigger(CroupierUpdate.update(new ServiceView(new ArrayList<ByteBuffer>())),
-                    globalCroupier.getNegative(SelfViewUpdatePort.class));
+            if (globalObserver) {
+                trigger(CroupierUpdate.observer(),
+                        globalCroupier.getNegative(SelfViewUpdatePort.class));
+            } else {
+                trigger(CroupierUpdate.update(new ServiceView(new ArrayList<ByteBuffer>())),
+                        globalCroupier.getNegative(SelfViewUpdatePort.class));
+            }
         }
     };
 
@@ -244,7 +251,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             connectContexts.put(ByteBuffer.wrap(req.croupierId), req);
 
             trigger(Start.event, croupier.control());
-            if (!req.observer) {
+            if (!globalObserver && !req.observer) {
                 //tell global croupier about new overlayservice
                 trigger(CroupierUpdate.update(new ServiceView(getServices())), globalCroupier.getNegative(SelfViewUpdatePort.class));
             }
@@ -404,10 +411,12 @@ public class OverlayMngrComp extends ComponentDefinition {
 
         public final OverlayMngrKCWrapper config;
         public final DecoratedAddress self;
+        public final boolean globalObserver;
 
-        public OverlayMngrInit(KConfigCore configCore, DecoratedAddress self) {
+        public OverlayMngrInit(KConfigCore configCore, DecoratedAddress self, boolean globalObserver) {
             this.config = new OverlayMngrKCWrapper(configCore);
             this.self = self;
+            this.globalObserver = globalObserver;
         }
     }
 }

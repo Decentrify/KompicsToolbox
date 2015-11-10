@@ -28,6 +28,8 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
+import se.sics.p2ptoolbox.util.network.ContentMsg;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
 import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
@@ -40,15 +42,18 @@ public class SimNetworkComp extends ComponentDefinition {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimNetworkComp.class);
     private String logPrefix = "";
-    
-    private final DecoratedAddress privateAdr;
+
+    private final BasicAddress privateAdr; //for private ip
+    private final BasicAddress publicAdr; //for public ip
     private final Positive<Network> remote = requires(Network.class);
     private final Negative<Network> local = provides(Network.class);
 
     public SimNetworkComp(SimNetworkInit init) {
         privateAdr = init.privateAdr;
+        publicAdr = init.publicAdr;
         logPrefix = "<nid:" + init.privateAdr.getId() + "> ";
-        LOG.info("{}initiating...", logPrefix);
+        LOG.info("{}initiating with private:{} public:{}", 
+                new Object[]{logPrefix, privateAdr, publicAdr});
         subscribe(handleStart, control);
         subscribe(handleLocal, local);
         subscribe(handleRemote, remote);
@@ -60,36 +65,43 @@ public class SimNetworkComp extends ComponentDefinition {
             LOG.info("{}starting...", logPrefix);
         }
     };
-    
+
     Handler handleLocal = new Handler<Msg>() {
         @Override
         public void handle(Msg msg) {
             BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Object> contentMsg
-                        = (BasicContentMsg) msg;
-                LOG.trace("{}received outgoing:{} from:{}({}) to:{}", 
-                        new Object[]{logPrefix, contentMsg.getContent(), contentMsg.getSource(), privateAdr, contentMsg.getDestination()});
-            contentMsg.getHeader().changeBasicHeader(new BasicHeader(privateAdr, contentMsg.getDestination(), contentMsg.getProtocol()));
-            trigger(contentMsg, remote);
+                    = (BasicContentMsg) msg;
+            DecoratedHeader newHeader = contentMsg.getHeader().changeBasicHeader(new BasicHeader(contentMsg.getSource().changeBase(privateAdr), contentMsg.getDestination(), contentMsg.getProtocol()));
+            BasicContentMsg newMsg = new BasicContentMsg(newHeader, contentMsg.getContent());
+            LOG.trace("{}received outgoing:{} from:{}({}) to:{}",
+                    new Object[]{logPrefix, newMsg.getContent(), newMsg.getSource(), publicAdr, newMsg.getDestination()});
+
+            trigger(newMsg, remote);
         }
     };
-    
+
     Handler handleRemote = new Handler<Msg>() {
         @Override
         public void handle(Msg msg) {
             BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Object> contentMsg
-                        = (BasicContentMsg) msg;
-                LOG.trace("{}received incoming:{} from:{} to:{}", 
-                        new Object[]{logPrefix, contentMsg.getContent(), contentMsg.getSource(), contentMsg.getDestination()});
-            trigger(contentMsg, local);
+                    = (BasicContentMsg) msg;
+            DecoratedAddress newSelf = contentMsg.getDestination().changeBase(publicAdr);
+            DecoratedHeader newHeader = contentMsg.getHeader().changeBasicHeader(new BasicHeader(contentMsg.getSource(), newSelf, contentMsg.getProtocol()));
+            BasicContentMsg newMsg = new BasicContentMsg(newHeader, contentMsg.getContent());
+            LOG.trace("{}received incoming:{} from:{} to:{}({}) newSelf:{}",
+                    new Object[]{logPrefix, newMsg.getContent(), newMsg.getSource(), newMsg.getDestination(), privateAdr, newSelf});
+            trigger(newMsg, local);
         }
     };
 
     public static class SimNetworkInit extends Init<SimNetworkComp> {
-        public DecoratedAddress privateAdr;
-        
-        public SimNetworkInit(DecoratedAddress privateAdr) {
+
+        public BasicAddress privateAdr;
+        public BasicAddress publicAdr;
+
+        public SimNetworkInit(BasicAddress privateAdr, BasicAddress publicAdr) {
             this.privateAdr = privateAdr;
+            this.publicAdr = publicAdr;
         }
     }
 }
-

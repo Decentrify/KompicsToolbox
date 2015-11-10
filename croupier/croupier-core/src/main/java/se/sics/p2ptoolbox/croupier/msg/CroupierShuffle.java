@@ -30,7 +30,7 @@ public class CroupierShuffle {
 
     public static abstract class Basic implements UUIDIdentifiable, CroupierMsg {
 
-        protected final UUID id;
+        public final UUID id;
         public final Set<CroupierContainer> publicNodes;
         public final Set<CroupierContainer> privateNodes;
 

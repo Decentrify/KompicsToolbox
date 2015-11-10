@@ -29,6 +29,7 @@ import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.p2ptoolbox.util.network.hooks.NetworkHook.*;
 import se.sics.p2ptoolbox.util.network.hooks.SimNetworkComp.SimNetworkInit;
+import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
 import se.sics.p2ptoolbox.util.truefilters.DestinationPortFilter;
@@ -82,13 +83,13 @@ public class NetworkHookFactory {
                 Component[] comp = new Component[1];
                 Set<Class> proxyPorts = new HashSet<>();
                 proxyPorts.add(Network.class);
-                DecoratedAddress privateAdr;
+                BasicAddress privateAdr;
                 if (hookInit.alternateBind.isPresent()) {
-                    privateAdr = DecoratedAddress.open(hookInit.alternateBind.get(), hookInit.self.getPort(), hookInit.self.getId());
+                    privateAdr = new BasicAddress(hookInit.alternateBind.get(), hookInit.self.getPort(), hookInit.self.getId());
                 } else {
-                    privateAdr = hookInit.self;
+                    privateAdr = hookInit.self.getBase();
                 }
-                comp[0] = proxy.create(SimNetworkComp.class, new SimNetworkInit(privateAdr));
+                comp[0] = proxy.create(SimNetworkComp.class, new SimNetworkInit(privateAdr, hookInit.self.getBase()));
                 proxy.connect(comp[0].getNegative(Network.class), network, new DestinationPortFilter(hookInit.self.getPort(), true));
                 return new SetupResult(comp);
             }
