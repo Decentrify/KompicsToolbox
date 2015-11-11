@@ -168,7 +168,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(CroupierSample<ServiceView> sample) {
             LOG.debug("{}sample public:{} private:{}", new Object[]{logPrefix, sample.publicSample, sample.privateSample});
             //rebootstrap disconnected layers;
-            LOG.info("{}services awaiting bootstrap:{}", logPrefix, pendingJoin.size());
+            LOG.debug("{}services awaiting bootstrap:{}", logPrefix, pendingJoin.size());
             Iterator<ByteBuffer> it = pendingJoin.iterator();
             while (it.hasNext()) {
                 ByteBuffer serviceId = it.next();

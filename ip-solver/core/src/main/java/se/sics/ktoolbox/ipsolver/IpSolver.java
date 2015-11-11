@@ -60,7 +60,7 @@ public class IpSolver {
                 if (addr instanceof Inet6Address) {
                     continue; // ignore ipv6 addresses
                 }
-                if(prefferedIp.isPresent() && addr.getCanonicalHostName().equals(prefferedIp.get())) {
+                if(prefferedIp.isPresent() && addr.getHostAddress().equals(prefferedIp.get())) {
                     return Optional.of(addr);
                 }
                 for(int i = 0; i < result.getValue0(); i++) {

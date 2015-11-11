@@ -210,7 +210,7 @@ public class CroupierComp extends ComponentDefinition {
 
             if (!publicView.isEmpty() || !privateView.isEmpty()) {
                 CroupierSample cs = new CroupierSample(overlayId, publicView.getAllCopy(), privateView.getAllCopy());
-                LOG.info("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{logPrefix, cs.publicSample, cs.privateSample});
+                LOG.debug("{} publishing sample \n public nodes:{} \n private nodes:{}", new Object[]{logPrefix, cs.publicSample, cs.privateSample});
                 trigger(cs, croupierPort);
             }
 
