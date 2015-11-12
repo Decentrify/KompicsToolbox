@@ -16,25 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.msg;
+package se.sics.ktoolbox.fd.event;
 
-import java.nio.ByteBuffer;
-import java.util.Set;
-import java.util.UUID;
-import se.sics.ktoolbox.fd.event.FDEvent;
+import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class Heartbeat implements FDEvent {
-    public final UUID id;
-    
-    public Heartbeat(UUID id) {
-        this.id = id;
-    }
-    
-    @Override
-    public String toString() {
-        return "HEARTBEAT<" + id + ">";
-    }
+public interface EPFDEvent extends KompicsEvent {
 }

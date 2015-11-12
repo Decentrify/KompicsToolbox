@@ -16,20 +16,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.fd.event;
 
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.fd.event.FDEvent.Follow;
-import se.sics.ktoolbox.fd.event.FDEvent.Suspect;
-import se.sics.ktoolbox.fd.event.FDEvent.Unfollow;
+import java.nio.ByteBuffer;
+import java.util.UUID;
+import se.sics.kompics.Direct;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FailureDetectorPort extends PortType {
-    {
-        negative(Follow.class);
-        negative(Unfollow.class);
-        positive(Suspect.class);
+public class EPFDFollow extends Direct.Request<EPFDIndication> implements EPFDEvent {
+
+    public final UUID id = UUID.randomUUID();
+    public final DecoratedAddress target;
+    public final ByteBuffer service;
+    public final UUID followerId; //typically component id
+
+    public EPFDFollow(DecoratedAddress target, ByteBuffer service, UUID followerId) {
+        this.target = target;
+        this.service = service;
+        this.followerId = followerId;
+    }
+
+    public EPFDSuspect suspect() {
+        return new EPFDSuspect(this);
+    }
+    
+    public EPFDRestore restore() {
+        return new EPFDRestore(this);
     }
 }

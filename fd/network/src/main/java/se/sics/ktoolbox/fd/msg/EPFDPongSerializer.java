@@ -25,13 +25,12 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HeartbeatSerializer implements Serializer {
+public class EPFDPongSerializer  implements Serializer {
     private final int id;
     
-    public HeartbeatSerializer(int id) {
+    public EPFDPongSerializer(int id) {
         this.id = id;
     }
     
@@ -42,13 +41,15 @@ public class HeartbeatSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        Heartbeat obj =  (Heartbeat)o;
-        Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
+        EPFDPong obj =  (EPFDPong)o;
+        Serializers.lookupSerializer(UUID.class).toBinary(obj.ping.id, buf);
+        buf.writeLong(obj.ping.ts);
     }
 
     @Override
-    public Heartbeat fromBinary(ByteBuf buf, Optional<Object> hint) {
+    public EPFDPong fromBinary(ByteBuf buf, Optional<Object> hint) {
         UUID msgId = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
-        return new Heartbeat(msgId);
+        long ts = buf.readLong();
+        return new EPFDPong(new EPFDPing(msgId, ts));
     }
 }

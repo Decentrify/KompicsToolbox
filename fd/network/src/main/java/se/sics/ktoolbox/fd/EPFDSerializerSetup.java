@@ -20,31 +20,34 @@ package se.sics.ktoolbox.fd;
 
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.fd.msg.Heartbeat;
-import se.sics.ktoolbox.fd.msg.HeartbeatSerializer;
+import se.sics.ktoolbox.fd.msg.EPFDPing;
+import se.sics.ktoolbox.fd.msg.EPFDPingSerializer;
+import se.sics.ktoolbox.fd.msg.EPFDPong;
+import se.sics.ktoolbox.fd.msg.EPFDPongSerializer;
 import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FDSerializerSetup {
-     public static int serializerIds = 1;
+public class EPFDSerializerSetup {
+     public static int serializerIds = 2;
     
-    public static enum FDSerializers {
-        Heartbeat(Heartbeat.class, "heartbeatSerializer");
+    public static enum EPFDSerializers {
+        EPFDPing(EPFDPing.class, "epfdPingSerializer"), 
+        EPFDPong(EPFDPong.class, "epfdPongSerializer");
         
         public final Class serializedClass;
         public final String serializerName;
 
-        private FDSerializers(Class serializedClass, String serializerName) {
+        private EPFDSerializers(Class serializedClass, String serializerName) {
             this.serializedClass = serializedClass;
             this.serializerName = serializerName;
         }
     }
     
     public static void checkSetup() {
-        for (FDSerializers fds : FDSerializers.values()) {
+        for (EPFDSerializers fds : EPFDSerializers.values()) {
             if (Serializers.lookupSerializer(fds.serializedClass) == null) {
                 throw new RuntimeException("No serializer for " + fds.serializedClass);
             }
@@ -55,9 +58,13 @@ public class FDSerializerSetup {
     public static int registerSerializers(int startingId) {
         int currentId = startingId;
         
-        HeartbeatSerializer heartbeatSerializer = new HeartbeatSerializer(currentId++);
-        Serializers.register(heartbeatSerializer, FDSerializers.Heartbeat.serializerName);
-        Serializers.register(FDSerializers.Heartbeat.serializedClass, FDSerializers.Heartbeat.serializerName);
+        EPFDPingSerializer epfdPingSerializer = new EPFDPingSerializer(currentId++);
+        Serializers.register(epfdPingSerializer, EPFDSerializers.EPFDPing.serializerName);
+        Serializers.register(EPFDSerializers.EPFDPing.serializedClass, EPFDSerializers.EPFDPing.serializerName);
+        
+        EPFDPongSerializer epfdPongSerializer = new EPFDPongSerializer(currentId++);
+        Serializers.register(epfdPongSerializer, EPFDSerializers.EPFDPong.serializerName);
+        Serializers.register(EPFDSerializers.EPFDPong.serializedClass, EPFDSerializers.EPFDPong.serializerName);
 
         Assert.assertEquals(serializerIds, currentId - startingId);
         return currentId;
