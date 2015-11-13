@@ -16,29 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.cc.bootstrap.msg;
+package se.sics.ktoolbox.cc.op;
 
-import java.util.List;
-import se.sics.caracaldb.Address;
-import se.sics.kompics.Direct.Request;
-import se.sics.kompics.Direct.Response;
+import se.sics.kompics.Direct;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCGetNodes {
-    public static class Req extends Request {
-        public Req() {
-            super();
-        }
-    }
-    
-    public static class Resp implements Response {
-        public final List<Address> caracalNodes;
-
-        public Resp(List<Address> caracalNodes) {
-            super();
-            this.caracalNodes = caracalNodes;
+public class CCOpFailed {
+    public static class DirectResponse implements Direct.Response {
+        public final Direct.Request req;
+        
+        public DirectResponse(Direct.Request req) {
+            this.req = req;
         }
     }
 }

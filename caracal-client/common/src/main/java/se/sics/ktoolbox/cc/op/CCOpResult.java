@@ -17,20 +17,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.heartbeat;
-
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
+package se.sics.ktoolbox.cc.op;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCHeartbeatPort extends PortType {
-    {
-        request(CCHeartbeat.Start.class);
-        request(CCHeartbeat.Stop.class);
-        request(CCOverlaySample.Request.class);
-        indication(CCOverlaySample.Response.class);
-    }    
+public enum CCOpResult {
+    SUCCESS, FAIL;
 }

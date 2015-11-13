@@ -17,12 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.bootstrap.msg;
+package se.sics.ktoolbox.cc.operation.event;
 
-import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.cc.event.CCEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCUpdate implements KompicsEvent {
+public interface CCOperationEvent extends CCEvent {
 }

@@ -17,27 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.heartbeat.msg;
+package se.sics.ktoolbox.cc.op;
 
 import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCHeartbeat {
-    public static class Start implements KompicsEvent {
-        public final byte[] overlayId;
-        
-        public Start(byte[] overlayId) {
-            this.overlayId = overlayId;
-        }
-    }
-    
-    public static class Stop implements KompicsEvent {
-        public final byte[] overlayId;
-        
-        public Stop(byte[] overlayId) {
-            this.overlayId = overlayId;
-        }
-    }
+public class CCSimpleReady implements KompicsEvent {
 }

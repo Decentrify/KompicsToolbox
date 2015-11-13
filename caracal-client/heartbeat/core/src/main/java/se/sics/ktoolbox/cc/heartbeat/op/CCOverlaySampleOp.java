@@ -26,11 +26,11 @@ import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.operations.CaracalOp;
 import se.sics.caracaldb.operations.RangeQuery;
 import se.sics.caracaldb.operations.ResponseCode;
-import se.sics.ktoolbox.cc.common.op.CCOpEvent;
-import se.sics.ktoolbox.cc.common.op.CCOpManager;
-import se.sics.ktoolbox.cc.common.op.CCOperation;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCOverlaySample;
+import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 import se.sics.ktoolbox.cc.heartbeat.util.CCValueFactory;
+import se.sics.ktoolbox.cc.op.CCOpManager;
+import se.sics.ktoolbox.cc.op.CCOperation;
+import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
@@ -64,7 +64,7 @@ public class CCOverlaySampleOp implements CCOperation {
     @Override
     public void start() {
         this.pendingResp = range.id;
-        opMngr.send(new CCOpEvent.Request(range, range.initRange.begin));
+        opMngr.send(new CCOpRequest(range, range.initRange.begin));
     }
 
     @Override
@@ -80,13 +80,12 @@ public class CCOverlaySampleOp implements CCOperation {
             if (rangeResp.code.equals(ResponseCode.SUCCESS)) {
                 Set<DecoratedAddress> sample = CCValueFactory.extractHeartbeatSrc(rangeResp.data.values());
                 sample.remove(self);
-                opMngr.completed(opId, req, new CCOverlaySample.Response(req.overlayId, sample));
+                opMngr.completed(opId, req, req.answer(sample));
                 return;
             } else {
-                //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issues a retry
+                //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issue a retry
                 LOG.warn("caracal answer:{} - delivering empty answer - hope to succeed in the future", rangeResp.code);
-                opMngr.completed(opId, req, new CCOverlaySample.Response(req.overlayId, new HashSet<DecoratedAddress>()));
-//                opMngr.completed(opId, req, new CCOpFailed.DirectResponse(req));
+                opMngr.completed(opId, req, req.answer(new HashSet<DecoratedAddress>()));
                 return;
             }
         }
@@ -98,7 +97,6 @@ public class CCOverlaySampleOp implements CCOperation {
         pendingResp = null;
         //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issues a retry
         LOG.warn("caracal answer failed - delivering empty answer - hope to succeed in the future");
-        opMngr.completed(opId, req, new CCOverlaySample.Response(req.overlayId, new HashSet<DecoratedAddress>()));
-//        opMngr.completed(opId, req, new CCOpFailed.DirectResponse(req));
+        opMngr.completed(opId, req, req.answer(new HashSet<DecoratedAddress>()));
     }
 }

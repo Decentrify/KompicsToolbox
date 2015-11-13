@@ -33,6 +33,7 @@
         <latest.croupier.version>2.0.1-SNAPSHOT</latest.croupier.version>
         <latest.gradient.version>2.0.1-SNAPSHOT</latest.gradient.version>
         <latest.overlaymngr.version>0.0.1-SNAPSHOT</latest.overlaymngr.version>
+        <latest.caracalclient.version>2.0.0-SNAPSHOT</latest.caracalclient.version>
         
         <original.util.version>1.9-SNAPSHOT</original.util.version>
         <original.simulator.version>1.7-SNAPSHOT</original.simulator.version>

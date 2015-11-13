@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,21 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.ktoolbox.cc.heartbeat;
+package se.sics.ktoolbox.cc.bootstrap;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
+import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
+import se.sics.ktoolbox.cc.operation.event.CCOpResponse;
+import se.sics.ktoolbox.cc.operation.event.CCOpTimeout;
+import se.sics.ktoolbox.cc.operation.event.CCOperationEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCHeartbeatPort extends PortType {
+public class CCOperationPort extends PortType {
     {
-        request(CCHeartbeat.Start.class);
-        request(CCHeartbeat.Stop.class);
-        request(CCOverlaySample.Request.class);
-        indication(CCOverlaySample.Response.class);
-    }    
+        request(CCOpRequest.class);
+        indication(CCOpResponse.class);
+        indication(CCOpTimeout.class);
+    }
 }

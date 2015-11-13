@@ -18,27 +18,47 @@
  */
 package se.sics.p2ptoolbox.util.status;
 
-import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.PatternExtractor;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Status {
 
-    public static class Internal<O extends Object> implements KompicsEvent {
+    public static class Internal<S extends Object> implements PatternExtractor<Class<S>, S> {
 
-        public final O status;
+        public final S status;
 
-        public Internal(O status) {
+        public Internal(S status) {
             this.status = status;
+        }
+
+        @Override
+        public Class<S> extractPattern() {
+            return (Class<S>)status.getClass();
+        }
+
+        @Override
+        public S extractValue() {
+            return status;
         }
     }
     
-    public static class External<O extends Object> implements KompicsEvent {
-        public final O status;
+    public static class External<S extends Object> implements PatternExtractor<Class<S>, S> {
+        public final S status;
 
-        public External(O status) {
+        public External(S status) {
             this.status = status;
+        }
+
+        @Override
+        public Class<S> extractPattern() {
+            return (Class<S>)status.getClass();
+        }
+
+        @Override
+        public S extractValue() {
+            return status;
         }
     }
 }

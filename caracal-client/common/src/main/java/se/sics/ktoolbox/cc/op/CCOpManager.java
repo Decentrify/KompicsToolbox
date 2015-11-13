@@ -17,20 +17,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.heartbeat;
+package se.sics.ktoolbox.cc.op;
 
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
+import java.util.UUID;
+import se.sics.kompics.Direct;
+import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
+import se.sics.ktoolbox.cc.operation.event.CCOperationIndication;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCHeartbeatPort extends PortType {
-    {
-        request(CCHeartbeat.Start.class);
-        request(CCHeartbeat.Stop.class);
-        request(CCOverlaySample.Request.class);
-        indication(CCOverlaySample.Response.class);
-    }    
+public interface CCOpManager {
+    public void completed(UUID opId, KompicsEvent resp);
+    public void completed(UUID opId, Direct.Request req, Direct.Response resp);
+    public void send(CCOpRequest req);
 }

@@ -17,22 +17,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.common.op;
+package se.sics.ktoolbox.cc.bootstrap.event.status;
 
-import java.util.UUID;
-import se.sics.caracaldb.operations.CaracalOp;
+import se.sics.ktoolbox.cc.event.CCEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface CCOperation {
-    public UUID getId();
-    public void start();
-    /**
-     * expect ownResp to be called before any handle call
-     * @param resp 
-     */
-    public boolean ownResp(UUID respId);
-    public void handle(CaracalOp resp);
-    public void fail();
+public class CCBootstrapDisconnected implements CCEvent {
 }

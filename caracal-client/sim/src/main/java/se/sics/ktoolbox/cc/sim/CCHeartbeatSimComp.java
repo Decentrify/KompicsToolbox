@@ -9,8 +9,6 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCOverlaySample;
 import se.sics.ktoolbox.cc.sim.msg.OverlaySample;
 import se.sics.ktoolbox.cc.sim.msg.PutRequest;
 import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
@@ -19,6 +17,9 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
+import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
+import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 
 /**
  * Simulation version of the Heartbeat component used to
@@ -36,7 +37,6 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
     private DecoratedAddress caracalClientAddress;
     private DecoratedAddress selfAddress;
     private Set<byte[]> heartbeats;
-
 
     public CCHeartbeatSimComp(CCHeartbeatSimInit init){
         doInit(init);
@@ -139,7 +139,10 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
         @Override
         public void handle(OverlaySample.Response content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, OverlaySample.Response> context) {
             logger.debug("Received overlay sample response from the caracal client.");
-            CCOverlaySample.Response response = new CCOverlaySample.Response(content.overlayIdentifier, content.neighbors);
+            
+            //TODO Alex - UUID match with request - fix - remember requests
+            CCOverlaySample.Request request  = new CCOverlaySample.Request(UUID.randomUUID(), content.overlayIdentifier);
+            CCOverlaySample.Response response = request.answer(content.neighbors);
             trigger(response, heartbeatPort);
         }
     };
@@ -154,7 +157,4 @@ public class CCHeartbeatSimComp extends ComponentDefinition{
             super(request);
         }
     }
-
-
-
 }

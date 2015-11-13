@@ -57,7 +57,9 @@ public final class KConfigOption {
         }
 
         @Deprecated
-        public abstract Optional<T> read(KConfigCache config);
+        public Optional<T> read(KConfigCache config) {
+             throw new UnsupportedOperationException("should have overwritten this method - not abstract for backward compatibility");
+        }
         
         //TODO Alex fix later to abstract
         public Optional<T> readValue(KConfigCore config) {

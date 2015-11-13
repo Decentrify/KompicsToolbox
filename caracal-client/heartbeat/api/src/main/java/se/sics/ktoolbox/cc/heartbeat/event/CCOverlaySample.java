@@ -16,19 +16,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.cc.common.op;
+package se.sics.ktoolbox.cc.heartbeat.event;
 
+import java.util.Set;
+import java.util.UUID;
 import se.sics.kompics.Direct;
+import se.sics.ktoolbox.cc.event.CCEvent;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCOpFailed {
-    public static class DirectResponse implements Direct.Response {
-        public final Direct.Request req;
+public class CCOverlaySample {
+
+    public static class Request extends Direct.Request<Response> implements CCEvent {
+        public final UUID id;
+        public final byte[] overlayId;
         
-        public DirectResponse(Direct.Request req) {
+        public Request(UUID id, byte[] overlayId) {
+            this.id = id;
+            this.overlayId = overlayId;
+        }
+        
+        public Response answer(Set<DecoratedAddress> overlaySample) {
+            return new Response(this, overlaySample);
+        }
+    }
+
+    public static class Response implements Direct.Response {
+        public final Request req;
+        public final Set<DecoratedAddress> overlaySample;
+        
+        public Response(Request req, Set<DecoratedAddress> overlaySample) {
             this.req = req;
+            this.overlaySample = overlaySample;
         }
     }
 }

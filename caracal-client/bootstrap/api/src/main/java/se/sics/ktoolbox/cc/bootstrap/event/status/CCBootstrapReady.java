@@ -17,17 +17,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.cc.common.op;
+package se.sics.ktoolbox.cc.bootstrap.event.status;
 
-import java.util.UUID;
-import se.sics.kompics.Direct;
-import se.sics.kompics.KompicsEvent;
+import se.sics.caracaldb.global.SchemaData;
+import se.sics.ktoolbox.cc.event.CCEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface CCOpManager {
-    public void completed(UUID opId, KompicsEvent resp);
-    public void completed(UUID opId, Direct.Request req, Direct.Response resp);
-    public void send(CCOpEvent.Request req);
+public class CCBootstrapReady implements CCEvent {
+    public SchemaData caracalSchemaData;
+    
+    public CCBootstrapReady(SchemaData caracalSchemaData) {
+        this.caracalSchemaData = caracalSchemaData;
+    }
 }

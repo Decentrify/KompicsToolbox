@@ -18,88 +18,87 @@
  */
 package se.sics.ktoolbox.cc.heartbeat.example.system;
 
+import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.caracaldb.Address;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.ktoolbox.cc.bootstrap.CCBootstrapComp;
-import se.sics.ktoolbox.cc.bootstrap.CCBootstrapPort;
-import se.sics.ktoolbox.cc.common.config.CaracalClientConfig;
+import se.sics.ktoolbox.cc.bootstrap.CCOperationPort;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatComp;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
-import se.sics.ktoolbox.cc.heartbeat.example.config.BootstrapNodes;
 import se.sics.ktoolbox.cc.heartbeat.example.config.CaracalClientSerializerSetup;
 import se.sics.ktoolbox.cc.heartbeat.example.core.ExampleComp;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
-import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.nat.NatedTrait;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.status.StatusPort;
+import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class Launcher extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(Launcher.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
     private Component timer;
     private Component network;
     private Component ccBootstrap;
-    private Component ccHearbeat;
+    private Component ccHeartbeat;
     private Component example;
 
     public Launcher() {
-        log.info("initiating...");
+        systemSetup();
+        LOG.info("initiating...");
 
         subscribe(handleStart, control);
-        subscribe(handleStop, control);
-
-        CaracalClientSerializerSetup.registerSerializers();
 
         timer = create(JavaTimer.class, Init.NONE);
         Config config = ConfigFactory.load();
-        SystemConfig systemConfig = new SystemConfigBuilder(config).build();
-        Address ccSelf = new Address(systemConfig.self.getIp(), systemConfig.self.getPort(), null);
-        
-        network = create(NettyNetwork.class, new NettyInit(ccSelf));
+        KConfigCore configCore = new KConfigCore(config);
+        AddressHelperKCWrapper helperConfig = new AddressHelperKCWrapper(configCore);
 
-        CaracalClientConfig ccConfig = new CaracalClientConfig(config);
-        ccBootstrap = create(CCBootstrapComp.class, new CCBootstrapComp.CCBootstrapInit(systemConfig, ccConfig, BootstrapNodes.readCaracalBootstrap(config)));
+        network = create(NettyNetwork.class, new NettyInit(helperConfig.openSelf));
+
+        ccBootstrap = create(CCBootstrapComp.class, new CCBootstrapComp.CCBootstrapInit(configCore, helperConfig.openSelf.getBase()));
         connect(ccBootstrap.getNegative(Network.class), network.getPositive(Network.class));
         connect(ccBootstrap.getNegative(Timer.class), timer.getPositive(Timer.class));
 
-        ccHearbeat = create(CCHeartbeatComp.class, new CCHeartbeatComp.CCHeartbeatInit(systemConfig, ccConfig));
-        connect(ccHearbeat.getNegative(Timer.class), timer.getPositive(Timer.class));
-        connect(ccHearbeat.getNegative(CCBootstrapPort.class), ccBootstrap.getPositive(CCBootstrapPort.class));
+        ccHeartbeat = create(CCHeartbeatComp.class, new CCHeartbeatComp.CCHeartbeatInit(configCore, helperConfig.openSelf));
+        connect(ccHeartbeat.getNegative(Timer.class), timer.getPositive(Timer.class));
+        connect(ccHeartbeat.getNegative(CCOperationPort.class), ccBootstrap.getPositive(CCOperationPort.class));
+        connect(ccHeartbeat.getNegative(StatusPort.class), ccBootstrap.getPositive(StatusPort.class));
 
-        example = create(ExampleComp.class, new ExampleComp.ExampleInit(systemConfig, new byte[]{1, 2, 3}, new byte[]{1, 2, 4}));
+        example = create(ExampleComp.class, new ExampleComp.ExampleInit(configCore, new byte[]{1, 2, 3}, new byte[]{1, 2, 4}));
         connect(example.getNegative(Timer.class), timer.getPositive(Timer.class));
-        connect(example.getNegative(CCHeartbeatPort.class), ccHearbeat.getPositive(CCHeartbeatPort.class));
+        connect(example.getNegative(CCHeartbeatPort.class), ccHeartbeat.getPositive(CCHeartbeatPort.class));
+        connect(example.getNegative(StatusPort.class), ccHeartbeat.getPositive(StatusPort.class));
+    }
+    
+    private void systemSetup() {
+        //address setup
+        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
+        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
+        
+        CaracalClientSerializerSetup.registerSerializers();
     }
 
     public Handler<Start> handleStart = new Handler<Start>() {
 
         @Override
         public void handle(Start event) {
-            log.info("starting...");
+            LOG.info("starting...");
         }
     };
-
-    public Handler<Stop> handleStop = new Handler<Stop>() {
-
-        @Override
-        public void handle(Stop event) {
-            log.info("stopping...");
-        }
-    };
-}
+}    

@@ -16,32 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.cc.heartbeat.msg;
 
-import java.util.Set;
-import se.sics.kompics.Direct;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+package se.sics.ktoolbox.cc.heartbeat.event;
+
+import se.sics.ktoolbox.cc.event.CCEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCOverlaySample {
-
-    public static class Request extends Direct.Request<Response> {
+public interface CCHeartbeat {
+    public static class Start implements CCEvent {
         public final byte[] overlayId;
         
-        public Request(byte[] overlayId) {
+        public Start(byte[] overlayId) {
             this.overlayId = overlayId;
         }
     }
-
-    public static class Response implements Direct.Response {
+    
+    public static class Stop implements CCEvent {
         public final byte[] overlayId;
-        public final Set<DecoratedAddress> overlaySample;
         
-        public Response(byte[] overlayId, Set<DecoratedAddress> overlaySample) {
+        public Stop(byte[] overlayId) {
+            
             this.overlayId = overlayId;
-            this.overlaySample = overlaySample;
         }
     }
 }

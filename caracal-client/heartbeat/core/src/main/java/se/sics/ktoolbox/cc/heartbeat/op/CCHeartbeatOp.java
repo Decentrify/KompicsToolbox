@@ -21,9 +21,9 @@ package se.sics.ktoolbox.cc.heartbeat.op;
 import java.util.UUID;
 import se.sics.caracaldb.operations.CaracalOp;
 import se.sics.caracaldb.operations.PutRequest;
-import se.sics.ktoolbox.cc.common.op.CCOpEvent;
-import se.sics.ktoolbox.cc.common.op.CCOpManager;
-import se.sics.ktoolbox.cc.common.op.CCOperation;
+import se.sics.ktoolbox.cc.op.CCOpManager;
+import se.sics.ktoolbox.cc.op.CCOperation;
+import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -51,7 +51,7 @@ public class CCHeartbeatOp implements CCOperation {
     @Override
     public void start() {
         this.pendingResp = put.id;
-        opMngr.send(new CCOpEvent.Request(put, put.key));
+        opMngr.send(new CCOpRequest(put, put.key));
     }
 
     @Override

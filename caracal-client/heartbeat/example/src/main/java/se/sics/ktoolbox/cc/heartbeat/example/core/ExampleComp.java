@@ -19,8 +19,10 @@
 package se.sics.ktoolbox.cc.heartbeat.example.core;
 
 import com.google.common.io.BaseEncoding;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
@@ -30,11 +32,16 @@ import se.sics.kompics.Stop;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.cc.common.op.CCSimpleReady;
+import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapDisconnected;
+import se.sics.ktoolbox.cc.op.CCSimpleReady;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCOverlaySample;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
+import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
+import se.sics.ktoolbox.cc.heartbeat.event.status.CCHeartbeatReady;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.p2ptoolbox.util.status.Status;
+import se.sics.p2ptoolbox.util.status.StatusPort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -44,23 +51,24 @@ public class ExampleComp extends ComponentDefinition {
     private static final Logger log = LoggerFactory.getLogger(ExampleComp.class);
     private final String logPrefix;
 
+    private Positive othersStatus = requires(StatusPort.class);
     private Positive overlaySample = requires(CCHeartbeatPort.class);
     private Positive timer = requires(Timer.class);
 
-    private final SystemConfig systemConfig;
+    private final SystemKCWrapper systemConfig;
     private final byte[] overlay1;
     private final byte[] overlay2;
 
     public ExampleComp(ExampleInit init) {
-        this.systemConfig = init.systemConfig;
-        this.logPrefix = systemConfig.self.toString();
+        this.systemConfig = new SystemKCWrapper(init.configCore);
+        this.logPrefix = "<nid:" + systemConfig.id + "> ";
         this.overlay1 = init.overlay1;
         this.overlay2 = init.overlay2;
-        log.info("{} intiating...", logPrefix);
+        log.info("{}intiating...", logPrefix);
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
-        subscribe(handleCCReady, overlaySample);
+        subscribe(handleCCHeartbeatReady, othersStatus);
         subscribe(handleSampleTimeout, timer);
         subscribe(handleOverlaySample, overlaySample);
     }
@@ -80,29 +88,31 @@ public class ExampleComp extends ComponentDefinition {
             log.info("{} stopping...", logPrefix);
         }
     };
-    Handler handleCCReady = new Handler<CCSimpleReady>() {
-        @Override
-        public void handle(CCSimpleReady event) {
-            log.info("{} received CCReady", logPrefix);
-            scheduleSample();
-            trigger(new CCHeartbeat.Start(overlay1), overlaySample);
-            trigger(new CCHeartbeat.Start(overlay2), overlaySample);
-        }
-    };
+    ClassMatchedHandler handleCCHeartbeatReady
+            = new ClassMatchedHandler<CCHeartbeatReady, Status.Internal<CCHeartbeatReady>>() {
+
+                @Override
+                public void handle(CCHeartbeatReady status, Status.Internal<CCHeartbeatReady> container) {
+                    log.info("{} received CCReady", logPrefix);
+                    scheduleSample();
+                    trigger(new CCHeartbeat.Start(overlay1), overlaySample);
+                    trigger(new CCHeartbeat.Start(overlay2), overlaySample);
+                }
+            };
     //**************************************************************************
     Handler handleSampleTimeout = new Handler<SampleTimeout>() {
         @Override
         public void handle(SampleTimeout event) {
-            trigger(new CCOverlaySample.Request(overlay1), overlaySample);
-            trigger(new CCOverlaySample.Request(overlay2), overlaySample);
+            trigger(new CCOverlaySample.Request(UUID.randomUUID(), overlay1), overlaySample);
+            trigger(new CCOverlaySample.Request(UUID.randomUUID(), overlay2), overlaySample);
         }
     };
 
     Handler handleOverlaySample = new Handler<CCOverlaySample.Response>() {
         @Override
         public void handle(CCOverlaySample.Response event) {
-            log.info("{} overlay:{}, sample:{}", 
-                    new Object[]{logPrefix, BaseEncoding.base16().encode(event.overlayId), event.overlaySample});
+            log.info("{} overlay:{}, sample:{}",
+                    new Object[]{logPrefix, BaseEncoding.base16().encode(event.req.overlayId), event.overlaySample});
         }
     };
 
@@ -115,12 +125,12 @@ public class ExampleComp extends ComponentDefinition {
 
     public static class ExampleInit extends Init<ExampleComp> {
 
-        public final SystemConfig systemConfig;
+        public final KConfigCore configCore;
         public final byte[] overlay1;
         public final byte[] overlay2;
 
-        public ExampleInit(SystemConfig systemConfig, byte[] overlay1, byte[] overlay2) {
-            this.systemConfig = systemConfig;
+        public ExampleInit(KConfigCore configCore, byte[] overlay1, byte[] overlay2) {
+            this.configCore = configCore;
             this.overlay1 = overlay1;
             this.overlay2 = overlay2;
         }

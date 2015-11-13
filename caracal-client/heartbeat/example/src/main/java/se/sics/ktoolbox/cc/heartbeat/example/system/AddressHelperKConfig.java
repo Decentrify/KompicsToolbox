@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,21 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.ktoolbox.cc.heartbeat.example.system;
 
-package se.sics.ktoolbox.cc.heartbeat;
-
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
+import java.util.HashSet;
+import java.util.Set;
+import se.sics.p2ptoolbox.util.config.KConfigLevel;
+import se.sics.p2ptoolbox.util.config.options.OpenAddressOption;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCHeartbeatPort extends PortType {
-    {
-        request(CCHeartbeat.Start.class);
-        request(CCHeartbeat.Stop.class);
-        request(CCOverlaySample.Request.class);
-        indication(CCOverlaySample.Response.class);
-    }    
+public class AddressHelperKConfig implements KConfigLevel {
+     public final static OpenAddressOption openSelf = new OpenAddressOption("self", new AddressHelperKConfig());
+
+     @Override
+    public Set<String> canWrite() {
+        Set<String> canWrite = new HashSet<>();
+        canWrite.add(toString());
+        return canWrite;
+    }
+
+    @Override
+    public String toString() {
+        return "AddressHelperConfig";
+    }
 }
