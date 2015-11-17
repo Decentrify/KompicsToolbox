@@ -19,20 +19,12 @@
 
 package se.sics.p2ptoolbox.simulator.example;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import org.junit.Assert;
+import se.sics.p2ptoolbox.simulator.example.core.ScenarioGen;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import se.sics.kompics.Kompics;
-import se.sics.kompics.simulation.SimulatorScheduler;
 import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
-import se.sics.p2ptoolbox.simulator.example.simulator.MyExperimentResult;
-import se.sics.p2ptoolbox.simulator.example.simulator.ScenarioGen;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  *

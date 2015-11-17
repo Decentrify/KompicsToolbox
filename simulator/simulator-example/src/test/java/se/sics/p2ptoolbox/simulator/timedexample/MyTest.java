@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
-import se.sics.p2ptoolbox.simulator.timedexample.simulation.ScenarioGen;
 import se.sics.p2ptoolbox.simulator.timed.api.TimedLauncher;
+import se.sics.p2ptoolbox.simulator.timedexample.core.ScenarioGen;
 
 /**
  *

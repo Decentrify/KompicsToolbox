@@ -18,115 +18,127 @@
  */
 package se.sics.p2ptoolbox.simulator.example.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.network.Transport;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
+import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
+import se.sics.ktoolbox.util.msg.BasicContentMsg;
+import se.sics.ktoolbox.util.msg.BasicHeader;
+import se.sics.ktoolbox.util.msg.DecoratedHeader;
+import se.sics.p2ptoolbox.simulator.common.Ping;
+import se.sics.p2ptoolbox.simulator.common.Pong;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class MyComponent extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(MyComponent.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MyComponent.class);
+    private String logPrefix;
 
     private Positive<Network> network = requires(Network.class);
     private Positive<Timer> timer = requires(Timer.class);
 
-    private DecoratedAddress self;
-    private DecoratedAddress statusServer;
-    private List<DecoratedAddress> bootstrapNodes;
+    private BasicAddress self;
+    private BasicAddress statusServer;
+    private BasicAddress ping;
+
+    private UUID statusTid;
 
     public MyComponent(MyInit init) {
-        log.debug("initiating test node:{}", init.self);
-
-        this.self = init.self;
-        this.statusServer = init.statusServer;
-        this.bootstrapNodes = new ArrayList<DecoratedAddress>(init.bootstrapNodes);
+        self = init.self;
+        logPrefix = "<nid:" + self.getId() + "> ";
+        ping = init.ping;
+        LOG.info("{}initiating...", logPrefix);
 
         subscribe(handleStart, control);
-        subscribe(handleNetPing, network);
-        subscribe(handleNetPong, network);
-        subscribe(handleTimeout, timer);
-        subscribe(handleNet, network);
+        subscribe(handleStatus, timer);
+        subscribe(handlePing, network);
+        subscribe(handlePong, network);
     }
 
-    private Handler<Start> handleStart = new Handler<Start>() {
-
+    private Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.debug("starting test node:{}", self);
-            schedulePeriodicShuffle();
-        }
-
-    };
-    
-    private Handler<Msg> handleNet = new Handler<Msg>() {
-
-        @Override
-        public void handle(Msg ping) {
-            log.info("msg:{}", ping);
+            LOG.info("{}starting...", logPrefix);
+            scheduleStatus();
         }
     };
 
-    private Handler<MyNetMsg.NetPing> handleNetPing = new Handler<MyNetMsg.NetPing>() {
-
-        @Override
-        public void handle(MyNetMsg.NetPing ping) {
-            log.debug("{} received net ping from {}", self, ping.getHeader().getSource());
-            if (bootstrapNodes.size() > 0) {
-                trigger(new MyNetMsg.NetPong(self, bootstrapNodes.get(0), ping.getContent().id), network);
-            }
-            log.info("sending status msgs");
-        }
-    };
-
-    private Handler<MyNetMsg.NetPong> handleNetPong = new Handler<MyNetMsg.NetPong>() {
-
-        @Override
-        public void handle(MyNetMsg.NetPong event) {
-            log.debug("{} received net pong from {}", self, event.getHeader().getSource());
-        }
-    };
-    
-    private Handler handleTimeout = new Handler<StatusTimeout>() {
+    private void send(Object content, BasicAddress target) {
+        DecoratedHeader<BasicAddress> header = new DecoratedHeader(new BasicHeader(self, target, Transport.UDP), null, null);
+        BasicContentMsg msg = new BasicContentMsg(header, content);
+        LOG.info("{}sending:{} from:{} to:{}", new Object[]{logPrefix, msg.getContent(), msg.getSource(), msg.getDestination()});
+        trigger(msg, network);
+    }
+    private Handler handleStatus = new Handler<StatusTimeout>() {
 
         @Override
         public void handle(StatusTimeout timeout) {
-            log.debug("{} time:{}", self, System.currentTimeMillis());
+            if (ping == null) {
+                cancelStatus();
+                return;
+            }
+            send(new Ping(UUID.randomUUID()), ping);
         }
     };
-    
-    private void schedulePeriodicShuffle() {
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
-        StatusTimeout sc = new StatusTimeout(spt);
-        spt.setTimeoutEvent(sc);
-        trigger(spt, timer);
-    }
+
+    ClassMatchedHandler handlePing
+            = new ClassMatchedHandler<Ping, BasicContentMsg<BasicAddress, DecoratedHeader<BasicAddress>, Ping>>() {
+
+                @Override
+                public void handle(Ping content, BasicContentMsg<BasicAddress, DecoratedHeader<BasicAddress>, Ping> container) {
+                    LOG.info("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource()});
+                    send(new Pong(content.id), container.getSource());
+                }
+            };
+
+    ClassMatchedHandler handlePong
+            = new ClassMatchedHandler<Pong, BasicContentMsg<BasicAddress, DecoratedHeader<BasicAddress>, Pong>>() {
+
+                @Override
+                public void handle(Pong content, BasicContentMsg<BasicAddress, DecoratedHeader<BasicAddress>, Pong> container) {
+                    LOG.info("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource()});
+                    ping = null;
+                    cancelStatus();
+                }
+            };
 
     public static class MyInit extends Init<MyComponent> {
 
-        public final DecoratedAddress self;
-        public final DecoratedAddress statusServer;
-        public final Set<DecoratedAddress> bootstrapNodes;
+        public final BasicAddress self;
+        public final BasicAddress ping;
 
-        public MyInit(DecoratedAddress self, DecoratedAddress statusServer, Set<DecoratedAddress> bootstrapNodes) {
+        public MyInit(BasicAddress self, BasicAddress ping) {
             this.self = self;
-            this.statusServer = statusServer;
-            this.bootstrapNodes = bootstrapNodes;
+            this.ping = ping;
         }
+    }
+
+    private void scheduleStatus() {
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(1000, 1000);
+        StatusTimeout status = new StatusTimeout(spt);
+        spt.setTimeoutEvent(status);
+        trigger(spt, timer);
+        statusTid = status.getTimeoutId();
+    }
+
+    private void cancelStatus() {
+        trigger(new CancelPeriodicTimeout(statusTid), timer);
+        statusTid = null;
     }
 
     public static class StatusTimeout extends Timeout {

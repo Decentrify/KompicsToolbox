@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.simulator.core.P2pSimulator;
 import se.sics.p2ptoolbox.simulator.core.P2pSimulatorInit;
-import se.sics.p2ptoolbox.simulator.core.network.impl.UniformRandomModel;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Kompics;
@@ -35,12 +34,11 @@ import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.simulation.SimulatorScheduler;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
 import se.sics.p2ptoolbox.simulator.ExperimentPort;
 import se.sics.p2ptoolbox.simulator.SimMngrComponent;
 import se.sics.p2ptoolbox.simulator.SystemStatusHandler;
 import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -55,7 +53,7 @@ public class LauncherComp extends ComponentDefinition {
 
     static {
         try {
-            simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+            simulatorClientAddress = new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1);
         } catch (UnknownHostException ex) {
             throw new RuntimeException("cannot create address for localhost");
         }

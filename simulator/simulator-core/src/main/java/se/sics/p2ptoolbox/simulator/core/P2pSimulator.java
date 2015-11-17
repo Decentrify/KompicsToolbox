@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
@@ -118,19 +119,23 @@ public final class P2pSimulator extends ComponentDefinition implements TimedSimu
         networkModel = init.getNetworkModel();
 
     }
-    
+
     @Override
-    public long advanceSimulation(long milis) {
+    public Pair<Long, Boolean> advanceSimulation(long milis) {
+        boolean executingNewEvent = false;
         long nextEventTime = futureEventList.getFirstEventTime();
-        if(nextEventTime == -1) {
-            return -1;
-        }
-        if(nextEventTime > milis) {
+        if (nextEventTime > milis) {
             CLOCK = milis;
-            return nextEventTime;
+            return Pair.with(nextEventTime, executingNewEvent);
+        }
+        if (nextEventTime == -1) {
+            executingNewEvent = false;
+        } else {
+            executingNewEvent = true;
         }
         advanceSimulation();
-        return futureEventList.getFirstEventTime();
+        nextEventTime = futureEventList.getFirstEventTime();
+        return Pair.with(futureEventList.getFirstEventTime(), executingNewEvent);
     }
 
     public boolean advanceSimulation() {
@@ -270,7 +275,7 @@ public final class P2pSimulator extends ComponentDefinition implements TimedSimu
             trigger(e, simulationPort);
             logger.debug("{}: {}", pName(event), e);
         }
-        
+
         if (event.getCurrentCount() > 0) {
             // still have operations to generate, reschedule
             event.setNextTime();

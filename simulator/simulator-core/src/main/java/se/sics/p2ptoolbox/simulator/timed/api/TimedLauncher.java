@@ -31,6 +31,7 @@ import se.sics.kompics.Kompics;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
 import se.sics.p2ptoolbox.simulator.ExperimentPort;
 import se.sics.p2ptoolbox.simulator.SimMngrComponent;
 import se.sics.p2ptoolbox.simulator.SystemStatusHandler;
@@ -40,8 +41,6 @@ import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
 import se.sics.p2ptoolbox.simulator.timed.TimedComp;
 import se.sics.p2ptoolbox.simulator.timed.impl.TimedControlerBuilderImpl;
 import se.sics.p2ptoolbox.simulator.timed.impl.TimedSimulatorScheduler;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  *
@@ -57,7 +56,7 @@ public class TimedLauncher extends ComponentDefinition implements TimedComp {
 
     static {
         try {
-            simulatorClientAddress = new DecoratedAddress(new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1));
+            simulatorClientAddress = new BasicAddress(InetAddress.getByName("127.0.0.1"), 30000, -1);
         } catch (UnknownHostException ex) {
             throw new RuntimeException("cannot create address for localhost");
         }

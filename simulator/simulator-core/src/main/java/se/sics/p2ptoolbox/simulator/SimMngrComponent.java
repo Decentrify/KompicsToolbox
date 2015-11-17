@@ -31,7 +31,6 @@ import se.sics.kompics.Init;
 import se.sics.kompics.Kill;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.KompicsEvent;
-import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
@@ -39,6 +38,7 @@ import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.util.address.IntIdAddress;
 import se.sics.p2ptoolbox.simulator.cmd.impl.ReStartNodeCmd;
 import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
 import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
@@ -49,9 +49,8 @@ import se.sics.p2ptoolbox.simulator.cmd.util.ConnectSimulatorPort;
 import se.sics.p2ptoolbox.simulator.timed.TimedComp;
 import se.sics.p2ptoolbox.simulator.timed.api.Timed;
 import se.sics.p2ptoolbox.simulator.timed.api.TimedControlerBuilder;
-import se.sics.p2ptoolbox.util.filters.IntegerIdentifiableFilter;
+import se.sics.p2ptoolbox.util.filters.DestinationHostFilter;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -109,7 +108,7 @@ public class SimMngrComponent extends ComponentDefinition implements TimedComp {
             log.info("starting...");
 
             simulationClient = create(SimClientComponent.class, new SimClientComponent.SimClientInit(simulationContext));
-            connect(simulationClient.getNegative(Network.class), network, new IntegerIdentifiableFilter(((IntegerIdentifiable) simulationContext.getSimulatorAddress()).getId()));
+            connect(simulationClient.getNegative(Network.class), network, new DestinationHostFilter(((IntIdAddress)simulationContext.getSimulatorAddress()).getId()));
             connect(simulationClient.getNegative(Timer.class), timer);
             connect(simulationClient.getNegative(ExperimentPort.class), experimentPort);
 
@@ -154,7 +153,7 @@ public class SimMngrComponent extends ComponentDefinition implements TimedComp {
             Address aggregatorAdr = cmd.getAddress();
             if (aggregatorAdr instanceof IntegerIdentifiable) {
                 Integer aggregatorId = ((IntegerIdentifiable) aggregatorAdr).getId();
-                connect(aggregator.getNegative(Network.class), network, new IntegerIdentifiableFilter(aggregatorId));
+                connect(aggregator.getNegative(Network.class), network, new DestinationHostFilter(aggregatorId));
             } else {
                 log.error("aggregator address is wrong - not identifiable");
                 throw new RuntimeException("aggregator address is wrong - not identifiable");
@@ -180,17 +179,14 @@ public class SimMngrComponent extends ComponentDefinition implements TimedComp {
             }
             Component node = create(cmd.getNodeComponentDefinition(), compInit);
             connect(node.getNegative(Timer.class), timer);
-            connect(node.getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
+            connect(node.getNegative(Network.class), network, new DestinationHostFilter(cmd.getNodeId()));
 
-            //TODO maybe this should be one method
+            //TODO Alex - clean later
             simulationContext.registerNode(cmd.getNodeId());
             simulationContext.bootNode(cmd.getNodeId(), cmd.getAddress());
             systemNodes.put(cmd.getNodeId(), node);
             //********************************
 
-            if (cmd.getAddress() instanceof DecoratedAddress) {
-                DecoratedAddress dAdr = (DecoratedAddress) cmd.getAddress();
-            }
             trigger(Start.event, node.control());
         }
     };
@@ -224,7 +220,7 @@ public class SimMngrComponent extends ComponentDefinition implements TimedComp {
                 throw new RuntimeException("node does not exist");
             }
             Component node = systemNodes.get(cmd.getNodeId());
-            connect(node.getNegative(Network.class), network, new IntegerIdentifiableFilter(cmd.getNodeId()));
+            connect(node.getNegative(Network.class), network, new DestinationHostFilter(cmd.getNodeId()));
             connect(node.getNegative(Timer.class), timer);
             trigger(Start.event, node.control());
         }

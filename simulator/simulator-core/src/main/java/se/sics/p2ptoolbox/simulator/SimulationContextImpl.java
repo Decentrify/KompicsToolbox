@@ -28,9 +28,9 @@ import java.util.Set;
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
 import se.sics.kompics.network.Address;
+import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatType;
 import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.util.nat.NatedTrait;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -43,16 +43,14 @@ public class SimulationContextImpl implements SimulationContext {
     private final Address simulatorAddress;
 
     private Address aggregatorAddress = null;
-    private final Map<Integer, Map<Class<? extends PortType>, Port>> ports;
-    private final Map<Integer, Address> systemOpenNodes; //subset of started nodes containing open nodes
-    private final Map<String, Object> otherContext;
+    private final Map<Integer, Map<Class<? extends PortType>, Port>> ports = new HashMap<>();
+    //subset of started nodes containing open nodes
+    private final Map<Integer, Address> systemOpenNodes = new HashMap<>(); 
+    private final Map<String, Object> otherContext = new HashMap<>();
 
     public SimulationContextImpl(Random rand, Address simulatorAddress) {
         this.rand = rand;
         this.simulatorAddress = simulatorAddress;
-        this.ports = new HashMap<Integer, Map<Class<? extends PortType>, Port>>();
-        this.systemOpenNodes = new HashMap<Integer, Address>();
-        this.otherContext = new HashMap<String, Object>();
     }
 
     public void registerAggregator(Address aggregatorAddress) {
@@ -68,9 +66,9 @@ public class SimulationContextImpl implements SimulationContext {
             //TODO Alex something fishy
             return;
         }
-        if (nodeAddress instanceof DecoratedAddress) {
-            DecoratedAddress dAdr = (DecoratedAddress) nodeAddress;
-            if (NatedTrait.isOpen(dAdr)) {
+        if (nodeAddress instanceof NatAwareAddress) {
+            NatAwareAddress naAdr = (NatAwareAddress) nodeAddress;
+            if (NatType.isOpen(naAdr)) {
                 systemOpenNodes.put(nodeId, nodeAddress);
             }
         } else {

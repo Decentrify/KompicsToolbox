@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -36,6 +37,7 @@ import se.sics.p2ptoolbox.simulator.timed.api.TimedControler;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class TimedSimulatorScheduler extends SimulatorScheduler {
+
     private static final Logger LOG = LoggerFactory.getLogger(TimedSimulatorScheduler.class);
 
     private final int nodeParalelism;
@@ -72,58 +74,77 @@ public class TimedSimulatorScheduler extends SimulatorScheduler {
     //*****************************SCHEDULER************************************
     @Override
     public void schedule(Component comp, int w) {
-        LOG.info("scheduling:{}", comp.getComponent().getClass());
         if (comp.getComponent() instanceof TimedComp) {
+            LOG.info("scheduling internal:{}", comp.getComponent().getClass().getCanonicalName());
             timedInternal.add(comp);
             return;
         }
+        
         TimedNodeScheduler tns = compMap.get(comp.id());
         if (tns == null) {
             throw new RuntimeException("timed simulation - unregistered component:" + comp.getComponent().getClass());
         }
+        LOG.info("scheduling application:{}", comp.getComponent().getClass().getCanonicalName());
         tns.schedule(comp, w);
     }
 
     @Override
     public void proceed() {
         boolean ok = true;
-        long time = 0;
-        while (ok && !shutdown) {
-            LOG.info("time:{}", time);
+        Pair<Long, Long> timeInterval = Pair.with(0l, 0l);
+        while (timeInterval.getValue1() != Long.MAX_VALUE && !shutdown) {
             while (!timedInternal.isEmpty()) {
+                //internal events do not modify the timeline/time
                 Component component = timedInternal.poll();
                 executeComponent(component, 0);
             }
             // sequentially execute all scheduled events
-            long minDelay = Long.MAX_VALUE;
-            long auxDelay;
-            for (TimedNodeScheduler tns : nodeMap.values()) {
-                auxDelay = tns.advance(sProxy, time);
-                minDelay = (minDelay > auxDelay ? auxDelay : minDelay);
-            }
-            auxDelay = simulator.advanceSimulation(time);
-            if (auxDelay == -1) {
-                ok = false;
+            long nextInTimeline = Long.MAX_VALUE;
+            boolean executingNewEvent = false;
+            Pair<Long, Boolean> auxInTimeline;
+
+            //execute all simulator events for timeInterval.getValue0()
+            auxInTimeline = simulator.advanceSimulation(timeInterval.getValue0());
+            if (auxInTimeline.getValue0() == -1) {
+                //no events in P2pSimulator queue for the moment
             } else {
-                minDelay = (minDelay > auxDelay ? auxDelay : minDelay);
+                nextInTimeline = (nextInTimeline > auxInTimeline.getValue0() ? auxInTimeline.getValue0() : nextInTimeline);
             }
-            time = minDelay;
+            executingNewEvent = executingNewEvent || auxInTimeline.getValue1();
+
+            for (Map.Entry<Integer, TimedNodeScheduler> tns : nodeMap.entrySet()) {
+                LOG.trace("node:{} status - {}", tns.getKey(), tns.getValue());
+                auxInTimeline = tns.getValue().advance(sProxy, timeInterval.getValue0());
+                nextInTimeline = (nextInTimeline > auxInTimeline.getValue0() ? auxInTimeline.getValue0() : nextInTimeline);
+                executingNewEvent = executingNewEvent || auxInTimeline.getValue1();
+            }
+
+            if (executingNewEvent) {
+                continue;
+            }
+            LOG.info("executing events in interval:[{},{}]",
+                    new Object[]{timeInterval.getValue0(), timeInterval.getValue1()});
+            timeInterval = Pair.with(timeInterval.getValue1(), nextInTimeline);
         }
 
+        //TODO Alex should I do this?
         // execute all scheduled events after simulation terminates
-        while (time != Long.MAX_VALUE) {
-            while (!timedInternal.isEmpty()) {
-                Component component = timedInternal.poll();
-                executeComponent(component, 0);
-            }
-            long minDelay = Long.MAX_VALUE;
-            long auxDelay;
-            for (TimedNodeScheduler tns : nodeMap.values()) {
-                auxDelay = tns.advance(sProxy, time);
-                minDelay = (minDelay > auxDelay ? auxDelay : minDelay);
-            }
-            time = minDelay;
-        }
+        LOG.info("simulation ended");
+//        while (timeInterval.getValue1() != Long.MAX_VALUE) {
+//            while (!timedInternal.isEmpty()) {
+//                Component component = timedInternal.poll();
+//                executeComponent(component, 0);
+//            }
+//            long minDelay = Long.MAX_VALUE;
+//            long auxDelay;
+//            for (TimedNodeScheduler tns : nodeMap.values()) {
+//                auxDelay = tns.advance(sProxy, timeInterval.getValue0());
+//                minDelay = (minDelay > auxDelay ? auxDelay : minDelay);
+//            }
+//            LOG.info("executed events in interval:[{},{}]", 
+//                    new Object[]{timeInterval.getValue0(), timeInterval.getValue1()});
+//            timeInterval = Pair.with(timeInterval.getValue1(), minDelay);
+//        }
     }
 
     @Override

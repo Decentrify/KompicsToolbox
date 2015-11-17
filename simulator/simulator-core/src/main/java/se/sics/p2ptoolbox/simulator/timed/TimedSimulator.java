@@ -19,11 +19,12 @@
 
 package se.sics.p2ptoolbox.simulator.timed;
 
+import org.javatuples.Pair;
 import se.sics.kompics.simulation.Simulator;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface TimedSimulator extends Simulator, TimedComp {
-    public long advanceSimulation(long milis);
+    public Pair<Long, Boolean> advanceSimulation(long milis);
 }

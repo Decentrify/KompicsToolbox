@@ -16,18 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.simulator.timedexample.core;
+
+package se.sics.p2ptoolbox.simulator.common;
 
 import java.util.UUID;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class Pong {
-
+public class Ping {
     public final UUID id;
-
-    public Pong(UUID id) {
+    
+    public Ping(UUID id) {
         this.id = id;
+    }
+    
+    @Override
+    public String toString() {
+        return "PING<" + id + ">";
     }
 }

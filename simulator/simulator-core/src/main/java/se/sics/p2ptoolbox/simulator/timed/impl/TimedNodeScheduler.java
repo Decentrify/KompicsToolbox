@@ -26,6 +26,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import org.javatuples.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.p2ptoolbox.simulator.timed.api.TimedControler;
@@ -35,10 +38,14 @@ import se.sics.p2ptoolbox.simulator.timed.api.TimedControler;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class TimedNodeScheduler {
+    private static final Logger LOG = LoggerFactory.getLogger(TimedSimulatorScheduler.class);
+    
     private final int maxThreads;
+    //time controller of all components on a node
     private final Map<UUID, TimedControlerImpl> tcMap = new HashMap<>();
-    private final Map<Long, UUID> busyMap = new HashMap<>();
-    private final Map<UUID, Component> busyComponents = new HashMap<>();
+    //<componentId, busyUntil>
+    private final Map<UUID, Long> busyComponents = new HashMap<>();
+    //scheduled components
     private final LinkedList<Component> waiting = new LinkedList<>();
 
     public TimedNodeScheduler(int maxThreads) {
@@ -58,34 +65,37 @@ public class TimedNodeScheduler {
         waiting.add(comp);
     }
 
-    public long advance(TimedSimulatorScheduler.SchedulerProxy proxy, long timeMilis) {
+    //<nextThingHappeningLocally, executedANewEvent>
+    public Pair<Long, Boolean> advance(TimedSimulatorScheduler.SchedulerProxy proxy, long timeMilis) {
+        boolean executingNewEvent = false;
         long minDelay = cleanBusyMap(timeMilis);
-        if (busyMap.size() == maxThreads) {
-            return minDelay; //all simulated threads are busy... 
+        if (busyComponents.size() == maxThreads) {
+            //all simulated threads are busy
+            return Pair.with(minDelay, executingNewEvent); 
         }
-        while (!waiting.isEmpty() && busyMap.size() < maxThreads) {
+        while (!waiting.isEmpty() && busyComponents.size() < maxThreads) {
             Optional<Component> next = nextComponentToSchedule();
             if (!next.isPresent()) {
-                return minDelay; //all waiting components are busy
+                //all waiting components are busy
+                return Pair.with(minDelay, executingNewEvent); 
             }
             Long taskEnd = timeMilis + executeNextEventOn(proxy, next.get());
-            busyMap.put(taskEnd, next.get().id());
-            busyComponents.put(next.get().id(), next.get());
+            executingNewEvent = true;
+            busyComponents.put(next.get().id(), taskEnd);
             minDelay = (minDelay < taskEnd ? minDelay : taskEnd);
         }
-        return minDelay;
+        return Pair.with(minDelay, executingNewEvent);
     }
 
     private long cleanBusyMap(long timeMilis) {
-        Iterator<Map.Entry<Long, UUID>> it = busyMap.entrySet().iterator();
+        Iterator<Map.Entry<UUID, Long>> it = busyComponents.entrySet().iterator();
         long minDelay = Long.MAX_VALUE;
         while (it.hasNext()) {
-            Map.Entry<Long, UUID> e = it.next();
-            if (e.getKey() <= timeMilis) {
+            Map.Entry<UUID, Long> e = it.next();
+            if (e.getValue() <= timeMilis) {
                 it.remove();
-                busyComponents.remove(e.getValue());
             } else {
-                minDelay = (minDelay < e.getKey() ? minDelay : e.getKey());
+                minDelay = (minDelay < e.getValue() ? minDelay : e.getValue());
             }
         }
         return minDelay;
@@ -112,11 +122,19 @@ public class TimedNodeScheduler {
         proxy.executeComponent(comp, 0);
         try {
             //wait until you know how long the task takes
-            return future.get();
+            LOG.trace("waiting on handler execution of component:{}<{}>", comp.getComponent().getClass().getCanonicalName(), comp.id());
+            long executionTime = future.get();
+            LOG.trace("component:{}<{}> returned, continuing...", comp.getComponent().getClass().getCanonicalName(), comp.id());
+            return executionTime;
         } catch (InterruptedException ex) {
             throw new RuntimeException("scheduler future error");
         } catch (ExecutionException ex) {
             throw new RuntimeException("scheduler future error");
         }
+    }
+    
+    @Override 
+    public String toString() {
+        return "node components:" + tcMap.size() + " busy size:" + busyComponents.size() + " waiting size:" + waiting.size();
     }
 }
