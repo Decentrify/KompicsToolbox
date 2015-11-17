@@ -19,10 +19,8 @@
 
 package se.sics.p2ptoolbox.util.network.hooks;
 
-import com.google.common.base.Optional;
-import java.net.InetAddress;
 import se.sics.kompics.Component;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.kompics.network.Address;
 import se.sics.p2ptoolbox.util.proxy.Hook;
 
 /**
@@ -38,12 +36,10 @@ public class NetworkHook {
     }
 
     public static class SetupInit implements Hook.SetupInit {
-        public final DecoratedAddress self;
-        public final Optional<InetAddress> alternateBind;
+        public final Address localAdr;
         
-        public SetupInit(DecoratedAddress self, Optional<InetAddress> alternateBind) {
-            this.self = self;
-            this.alternateBind = alternateBind;
+        public SetupInit(Address localAdr) {
+            this.localAdr = localAdr;
         }
     }
 

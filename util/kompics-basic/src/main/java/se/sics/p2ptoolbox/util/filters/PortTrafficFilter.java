@@ -33,10 +33,6 @@ public class PortTrafficFilter extends ChannelFilter<Msg, Boolean> {
         this.port = port;
     }
 
-    /**
-     * @param msg
-     * @return
-     */
     @Override
     public Boolean getValue(Msg msg) {
         return port.equals(msg.getHeader().getDestination().getPort());

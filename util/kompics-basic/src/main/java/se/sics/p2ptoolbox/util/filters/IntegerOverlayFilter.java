@@ -19,9 +19,9 @@
 package se.sics.p2ptoolbox.util.filters;
 
 import se.sics.kompics.ChannelFilter;
+import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.util.msg.DecoratedHeader;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
 /**
@@ -36,7 +36,7 @@ public class IntegerOverlayFilter extends ChannelFilter<Msg, Integer> {
     @Override
     public Integer getValue(Msg msg) {
         if (msg.getHeader() instanceof DecoratedHeader) {
-            DecoratedHeader<DecoratedAddress> dHeader = (DecoratedHeader<DecoratedAddress>) msg.getHeader();
+            DecoratedHeader<Address> dHeader = (DecoratedHeader<Address>) msg.getHeader();
             if (dHeader.hasTrait(OverlayMember.class)) {
                 return dHeader.getTrait(OverlayMember.class).getOverlayId();
             }

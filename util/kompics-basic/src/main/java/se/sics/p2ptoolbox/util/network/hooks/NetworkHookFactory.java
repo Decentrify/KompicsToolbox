@@ -28,11 +28,10 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.p2ptoolbox.util.network.hooks.NetworkHook.*;
-import se.sics.p2ptoolbox.util.network.hooks.SimNetworkComp.SimNetworkInit;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.other.ConnectionHelperComp;
+import se.sics.p2ptoolbox.util.other.ConnectionHelperComp.ConnectionHelperInit;
 import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
-import se.sics.p2ptoolbox.util.truefilters.DestinationPortFilter;
+import se.sics.p2ptoolbox.util.filters.DestinationPortFilter;
 
 /**
  *
@@ -47,13 +46,7 @@ public class NetworkHookFactory {
             public SetupResult setup(ComponentProxy proxy, final Parent hookParent,
                     final SetupInit setupInit) {
                 Component[] comp = new Component[1];
-                if (setupInit.alternateBind.isPresent()) {
-                    System.setProperty("altBindIf", setupInit.alternateBind.get().getCanonicalHostName());
-                }
-                comp[0] = proxy.create(NettyNetwork.class, new NettyInit(setupInit.self));
-                if (setupInit.alternateBind.isPresent()) {
-                    System.clearProperty("altBindIf");
-                }
+                comp[0] = proxy.create(NettyNetwork.class, new NettyInit(setupInit.localAdr));
                 return new SetupResult(comp);
             }
 
@@ -83,14 +76,8 @@ public class NetworkHookFactory {
                 Component[] comp = new Component[1];
                 Set<Class> proxyPorts = new HashSet<>();
                 proxyPorts.add(Network.class);
-                BasicAddress privateAdr;
-                if (hookInit.alternateBind.isPresent()) {
-                    privateAdr = new BasicAddress(hookInit.alternateBind.get(), hookInit.self.getPort(), hookInit.self.getId());
-                } else {
-                    privateAdr = hookInit.self.getBase();
-                }
-                comp[0] = proxy.create(SimNetworkComp.class, new SimNetworkInit(privateAdr, hookInit.self.getBase()));
-                proxy.connect(comp[0].getNegative(Network.class), network, new DestinationPortFilter(hookInit.self.getPort(), true));
+                comp[0] = proxy.create(ConnectionHelperComp.class, new ConnectionHelperInit(proxyPorts));
+                proxy.connect(comp[0].getNegative(Network.class), network, new DestinationPortFilter(hookInit.localAdr.getPort(), true));
                 return new SetupResult(comp);
             }
 

@@ -21,7 +21,7 @@ package se.sics.p2ptoolbox.util.traits;
 
 import java.util.List;
 import se.sics.kompics.network.Address;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
+import se.sics.ktoolbox.util.msg.DecoratedHeader;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

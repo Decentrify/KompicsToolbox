@@ -30,7 +30,7 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
-import se.sics.p2ptoolbox.util.network.ContentMsg;
+import se.sics.ktoolbox.util.msg.ContentMsg;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

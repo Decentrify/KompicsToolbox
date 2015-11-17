@@ -25,11 +25,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
-import se.sics.p2ptoolbox.util.network.impl.Route;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
+import se.sics.ktoolbox.util.msg.BasicHeader;
+import se.sics.ktoolbox.util.msg.DecoratedHeader;
+import se.sics.ktoolbox.util.msg.Route;
 import se.sics.p2ptoolbox.util.traits.Forwardable;
 import se.sics.p2ptoolbox.util.traits.OverlayMember;
 
@@ -41,20 +40,20 @@ public class DecoratedHeaderTest {
     @Test
     public void test() throws UnknownHostException {
         InetAddress localHost = InetAddress.getByName("localhost");
-        DecoratedHeader<DecoratedAddress> testHeader;
-        DecoratedAddress src1 = new DecoratedAddress(new BasicAddress(localHost, 1234, 1));
-        DecoratedAddress src2 = new DecoratedAddress(new BasicAddress(localHost, 1234, 2));
-        DecoratedAddress src3 = new DecoratedAddress(new BasicAddress(localHost, 1234, 3));
-        DecoratedAddress src4 = new DecoratedAddress(new BasicAddress(localHost, 1234, 4));
-        DecoratedAddress src5 = new DecoratedAddress(new BasicAddress(localHost, 1234, 5));
-        BasicHeader<DecoratedAddress> baseHeader = new BasicHeader(src1, src2, Transport.UDP);
-        ArrayList<DecoratedAddress> route;
+        DecoratedHeader<Address> testHeader;
+        Address src1 = new BasicAddress(localHost, 1234, 1);
+        Address src2 = new BasicAddress(localHost, 1234, 2);
+        Address src3 = new BasicAddress(localHost, 1234, 3);
+        Address src4 = new BasicAddress(localHost, 1234, 4);
+        Address src5 = new BasicAddress(localHost, 1234, 5);
+        BasicHeader<Address> baseHeader = new BasicHeader(src1, src2, Transport.UDP);
+        ArrayList<Address> route;
                 
         testHeader = DecoratedHeader.addOverlayMemberTrait(baseHeader, 10);
         Assert.assertFalse(testHeader.hasTrait(Forwardable.class));
         Assert.assertTrue(testHeader.hasTrait(OverlayMember.class));
 
-        route = new ArrayList<DecoratedAddress>();
+        route = new ArrayList<Address>();
         route.add(src1);
         route.add(src3);
         route.add(src4);
@@ -72,7 +71,7 @@ public class DecoratedHeaderTest {
         Assert.assertEquals(src4, testHeader.getSource());
         Assert.assertEquals(src2, testHeader.getDestination());
         
-        route = new ArrayList<DecoratedAddress>();
+        route = new ArrayList<Address>();
         route.add(src5);
         testHeader = testHeader.getTrait(Forwardable.class).prependRoute(route);
         Assert.assertEquals(src4, testHeader.getSource());

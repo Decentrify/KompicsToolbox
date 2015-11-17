@@ -26,7 +26,7 @@ import java.util.Set;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigLevel;
 import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
-import se.sics.p2ptoolbox.util.config.options.OpenAddressOption;
+import se.sics.p2ptoolbox.util.config.options.BasicAddressOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,7 +35,7 @@ public class SystemKConfig implements KConfigLevel {
     public final static Basic<Long> seed = new Basic("system.seed", Long.class, new SystemKConfig());
     public final static Basic<Integer> id = new Basic("system.id", Integer.class, new SystemKConfig());
     public final static Basic<Integer> port = new Basic("system.port", Integer.class, new SystemKConfig());
-    public final static OpenAddressOption aggregator = new OpenAddressOption("system.aggregator", new SystemKConfig());
+    public static BasicAddressOption aggregator = new BasicAddressOption("system.aggregator", new SystemKConfig());
     
     @Override
     public Set<String> canWrite() {

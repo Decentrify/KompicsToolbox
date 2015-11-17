@@ -19,9 +19,9 @@
 package se.sics.p2ptoolbox.util.config.impl;
 
 import com.google.common.base.Optional;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
 import se.sics.p2ptoolbox.util.config.KConfigCore;
 import se.sics.p2ptoolbox.util.config.KConfigHelper;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -31,7 +31,7 @@ public class SystemKCWrapper {
     public final long seed;
     public final int id;
     public final int port;
-    public final Optional<DecoratedAddress> aggregator;
+    public final Optional<BasicAddress> aggregator;
     
     public SystemKCWrapper(KConfigCore configCore) {
         this.configCore = configCore;
