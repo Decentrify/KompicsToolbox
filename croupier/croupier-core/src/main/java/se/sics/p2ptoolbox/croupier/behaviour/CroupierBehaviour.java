@@ -16,25 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.msg;
+package se.sics.p2ptoolbox.croupier.behaviour;
 
-import java.util.List;
-import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
+import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierJoin implements KompicsEvent {
-
-    public final List<DecoratedAddress> peers;
-
-    public CroupierJoin(List<DecoratedAddress> peers) {
-        this.peers = peers;
-    }
-
-    @Override
-    public String toString() {
-        return "JOIN";
-    }
+public interface CroupierBehaviour {
+    public CroupierBehaviour process(OverlayView viewUpdate);
+    public CroupierBehaviour process(AddressUpdate update);
 }

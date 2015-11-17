@@ -23,7 +23,7 @@ package se.sics.p2ptoolbox.croupier.util;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
 
 /**
  * The <code>RandomViewEntry</code> class represents an entry in a node's

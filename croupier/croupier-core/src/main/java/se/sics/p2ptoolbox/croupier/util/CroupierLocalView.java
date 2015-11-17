@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import se.sics.p2ptoolbox.croupier.CroupierSelectionPolicy;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 /**

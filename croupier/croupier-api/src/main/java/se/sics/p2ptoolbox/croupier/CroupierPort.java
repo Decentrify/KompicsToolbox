@@ -20,8 +20,7 @@
 package se.sics.p2ptoolbox.croupier;
 
 import se.sics.kompics.PortType;
-import se.sics.p2ptoolbox.croupier.msg.CroupierSample;
-import se.sics.p2ptoolbox.croupier.msg.CroupierUpdate;
+import se.sics.p2ptoolbox.croupier.event.CroupierSample;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

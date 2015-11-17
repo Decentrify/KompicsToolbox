@@ -8,7 +8,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>util</module>
-        <module>croupier</module>
+        <module>simulator</module>
+<!--        <module>croupier</module>
         <module>gradient</module>
         <module>chunk-manager</module>
         <module>aggregator</module>
@@ -17,9 +18,8 @@
         <module>ip-solver</module>
         <module>caracal-client</module>
         <module>nat-echo</module>
-        <module>simulator</module>
         <module>overlay-mngr</module>
-        <module>fd</module>
+        <module>fd</module>-->
     </modules>
 
     <!-- simulator bumped to 1.8 - check if it is compatible with other modules-->    

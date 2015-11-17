@@ -85,7 +85,8 @@ public class OverlayMngrComp extends ComponentDefinition {
     private final Positive<SelfAddressUpdatePort> addressUpdate = requires(SelfAddressUpdatePort.class);
 
     private final OverlayMngrKCWrapper config;
-    private DecoratedAddress self;
+    private DecoratedAddress localAdr; 
+    private DecoratedAddress advertisedAdr; 
 
     private final boolean globalObserver;
     private Component globalCroupier;
@@ -100,16 +101,12 @@ public class OverlayMngrComp extends ComponentDefinition {
 
     public OverlayMngrComp(OverlayMngrInit init) {
         config = init.config;
-        self = init.self;
-        globalObserver = init.globalObserver;
         logPrefix = "<nid:" + config.system.id + "> ";
         LOG.info("{}initiating with seed:{}", logPrefix, config.system.seed);
 
         subscribe(handleStart, control);
         subscribe(handleSelfAddressUpdate, addressUpdate);
         subscribe(handleConnectCroupier, overlayMngr);
-
-        connectGlobalCroupier();
     }
 
     //****************************CONTROL***************************************
@@ -410,13 +407,9 @@ public class OverlayMngrComp extends ComponentDefinition {
     public static class OverlayMngrInit extends Init<OverlayMngrComp> {
 
         public final OverlayMngrKCWrapper config;
-        public final DecoratedAddress self;
-        public final boolean globalObserver;
 
-        public OverlayMngrInit(KConfigCore configCore, DecoratedAddress self, boolean globalObserver) {
+        public OverlayMngrInit(KConfigCore configCore) {
             this.config = new OverlayMngrKCWrapper(configCore);
-            this.self = self;
-            this.globalObserver = globalObserver;
         }
     }
 }

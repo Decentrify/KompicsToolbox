@@ -16,30 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.croupier.msg;
+package se.sics.p2ptoolbox.croupier.behaviour;
 
-import java.util.Set;
-import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.util.Container;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import com.google.common.base.Optional;
+import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
+import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierSample<C extends Object> implements KompicsEvent {
-
-    public final int overlayId;
-    public final Set<Container<DecoratedAddress, C>> publicSample;
-    public final Set<Container<DecoratedAddress, C>> privateSample;
-    
-    public CroupierSample(int overlayId, Set<Container<DecoratedAddress, C>> publicSample, Set<Container<DecoratedAddress, C>> privateSample) {
-        this.overlayId = overlayId;
-        this.publicSample = publicSample;
-        this.privateSample = privateSample;
+public class CroupierObserver implements CroupierBehaviour {
+    private boolean observer;
+    private View view;
+    private DecoratedAddress 
+    @Override
+    public CroupierBehaviour process(OverlayView viewUpdate) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public String toString() {
-        return "SAMPLE";
+    public CroupierBehaviour process(AddressUpdate update) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
 }
