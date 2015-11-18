@@ -20,6 +20,9 @@ package se.sics.ktoolbox.util.nat;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.javatuples.Pair;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.ktoolbox.util.address.nat.Nat;
@@ -65,6 +68,10 @@ public class NatTypeSerializer implements Serializer {
                 return;
             case UDP_BLOCKED:
                 bb.write(Pair.with(2, true));
+                buf.writeBytes(bb.finalise());
+                return;
+            case UNKNOWN:
+                bb.write(Pair.with(0, true), Pair.with(2, true));
                 buf.writeBytes(bb.finalise());
                 return;
             default:
@@ -136,24 +143,28 @@ public class NatTypeSerializer implements Serializer {
                 int delta = buf.readInt();
                 long bindingTimeout = buf.readLong();
                 return NatType.nated(mappingPolicy, allocationPolicy, delta, filteringPolicy, bindingTimeout);
+            case UNKNOWN:
+                return NatType.unknown();
             default:
                 throw new RuntimeException("unknown NatType");
         }
     }
 
     private Nat.Type getNatType(boolean[] traitFlags) {
-        if (traitFlags[0]) {
-            if (traitFlags[1]) {
-                return Nat.Type.FIREWALL;
-            } else {
-                return Nat.Type.NAT;
-            }
+        if(traitFlags[0] && traitFlags[2]) {
+            return Nat.Type.UNKNOWN;
         }
-        if (traitFlags[1]) {
+        if(traitFlags[0] && traitFlags[1]) {
+            return Nat.Type.FIREWALL;
+        }
+        if(traitFlags[2]) {
+            return Nat.Type.UDP_BLOCKED;
+        }
+        if(traitFlags[1]) {
             return Nat.Type.UPNP;
         }
-        if (traitFlags[2]) {
-            return Nat.Type.UDP_BLOCKED;
+        if(traitFlags[0]) {
+            return Nat.Type.NAT;
         }
         return Nat.Type.OPEN;
     }

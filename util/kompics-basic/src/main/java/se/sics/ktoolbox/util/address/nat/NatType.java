@@ -92,11 +92,12 @@ public class NatType {
             case FIREWALL:
             case UDP_BLOCKED:
             case UPNP:
+            case UNKNOWN:
                 return type.code;
             case NAT:
                 return type.code + "_" + mappingPolicy.code + "_" + allocationPolicy.code + "_" + filteringPolicy.code;
             default:
-                return "unknown";
+                return "undefined";
          }
      }
     
@@ -125,7 +126,15 @@ public class NatType {
         return new NatType(Nat.Type.NAT, mappingPolicy, allocationPolicy, delta, filteringPolicy, bindingTimeout);
     }
     
+    public static NatType unknown() {
+        return new NatType(Nat.Type.UNKNOWN, null, null, 0, null, 0);
+    }
+    
     public static boolean isOpen(NatAwareAddress address) {
         return Nat.Type.OPEN.equals(address.getNatType().type);
+    }
+    
+    public static boolean isUnknown(NatAwareAddress address) {
+        return Nat.Type.UNKNOWN.equals(address.getNatType().type);
     }
 }

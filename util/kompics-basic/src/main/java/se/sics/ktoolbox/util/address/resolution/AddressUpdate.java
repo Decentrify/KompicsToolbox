@@ -37,20 +37,18 @@ public class AddressUpdate {
             this.id = id;
         }
         
-        public Indication answer(NatAwareAddress privateAddress, NatAwareAddress publicAddress) {
-            return new Indication(id, privateAddress, Optional.fromNullable(publicAddress));
+        public Indication answer(NatAwareAddress localAddress) {
+            return new Indication(id, localAddress);
         }
     }
     
     public static class Indication implements Direct.Response {
         public final UUID id;
-        public final NatAwareAddress privateAddress;
-        public final Optional<NatAwareAddress> publicAddress;
+        public final NatAwareAddress localAddress;
         
-        private Indication(UUID id, NatAwareAddress privateAddress, Optional<NatAwareAddress> publicAddress) {
+        private Indication(UUID id, NatAwareAddress localAddress) {
             this.id = id;
-            this.privateAddress = privateAddress;
-            this.publicAddress = publicAddress;
+            this.localAddress = localAddress;
         }
     }
 }

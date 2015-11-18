@@ -112,7 +112,19 @@ public class NatTypeSerializerTest {
         
         //******************
         buf = Unpooled.buffer();
-        NatType natType = NatType.nated(Nat.MappingPolicy.HOST_DEPENDENT, Nat.AllocationPolicy.PORT_CONTIGUITY, 0, Nat.FilteringPolicy.HOST_DEPENDENT, 10000);
+        original = NatType.nated(Nat.MappingPolicy.HOST_DEPENDENT, Nat.AllocationPolicy.PORT_CONTIGUITY, 0, Nat.FilteringPolicy.HOST_DEPENDENT, 10000);
+        natTypeSerializer.toBinary(original, buf);
+        
+        copyBuf = Unpooled.buffer();
+        buf.getBytes(0, copyBuf, buf.readableBytes());
+        copy = (NatType) natTypeSerializer.fromBinary(copyBuf, Optional.absent());
+        
+        Assert.assertEquals(original, copy);
+        Assert.assertEquals(0, copyBuf.readableBytes());
+        
+        //******************
+        buf = Unpooled.buffer();
+        original = NatType.unknown();
         natTypeSerializer.toBinary(original, buf);
         
         copyBuf = Unpooled.buffer();
