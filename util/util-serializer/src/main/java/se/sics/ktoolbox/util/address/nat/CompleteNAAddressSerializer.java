@@ -25,7 +25,6 @@ import java.util.List;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.address.basic.BasicAddress;
-import se.sics.ktoolbox.util.address.nat.CompleteNAAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

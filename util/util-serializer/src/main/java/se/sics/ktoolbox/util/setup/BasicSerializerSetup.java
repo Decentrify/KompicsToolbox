@@ -32,7 +32,7 @@ import se.sics.ktoolbox.util.msg.DecoratedHeader;
 import se.sics.ktoolbox.util.msg.DecoratedHeaderSerializer;
 import se.sics.ktoolbox.util.msg.Route;
 import se.sics.ktoolbox.util.msg.RouteSerializer;
-import se.sics.ktoolbox.util.nat.NatTypeSerializer;
+import se.sics.ktoolbox.util.address.nat.NatTypeSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

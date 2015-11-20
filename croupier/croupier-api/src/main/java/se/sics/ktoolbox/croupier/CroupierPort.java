@@ -17,15 +17,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util;
+package se.sics.ktoolbox.croupier;
 
-import se.sics.kompics.network.Address;
+import se.sics.kompics.PortType;
+import se.sics.ktoolbox.croupier.event.CroupierSample;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface Container<S extends Address, C extends Object> {
-    public S getSource();
-    public C getContent();
-    public Container copy();
+public class CroupierPort extends PortType {
+    {
+        indication(CroupierSample.class);
+    }
 }

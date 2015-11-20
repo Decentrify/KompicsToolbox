@@ -16,30 +16,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.p2ptoolbox.croupier.msg;
+package se.sics.ktoolbox.croupier.msg;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.update.view.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierShuffleSerializer {
+
     public abstract static class Basic implements Serializer {
+
         private final int id;
-        
+
         Basic(int id) {
             this.id = id;
         }
-        
+
         @Override
         public int identifier() {
             return id;
@@ -47,66 +53,76 @@ public class CroupierShuffleSerializer {
 
         @Override
         public void toBinary(Object o, ByteBuf buf) {
-            CroupierShuffle.Basic obj = (CroupierShuffle.Basic)o;
+            CroupierShuffle.Basic obj = (CroupierShuffle.Basic) o;
             Serializers.lookupSerializer(UUID.class).toBinary(obj.getId(), buf);
-            
+
+            if(obj.selfView.isPresent()) {
+                buf.writeBoolean(true);
+                Serializers.toBinary(obj.selfView.get(), buf);
+            } else {
+                buf.writeBoolean(false);
+            }
             buf.writeByte(obj.publicNodes.size());
-            for(CroupierContainer cc : obj.publicNodes) {
+            for (CroupierContainer cc : obj.publicNodes.values()) {
                 Serializers.lookupSerializer(CroupierContainer.class).toBinary(cc, buf);
             }
-            
+
             buf.writeByte(obj.privateNodes.size());
-            for(CroupierContainer cc : obj.privateNodes) {
+            for (CroupierContainer cc : obj.privateNodes.values()) {
                 Serializers.lookupSerializer(CroupierContainer.class).toBinary(cc, buf);
             }
         }
 
-        public Triplet<UUID, Set<CroupierContainer>, Set<CroupierContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
-            UUID id = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
+        public Quartet<UUID, Optional<View>, Map, Map> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
+            UUID msgId = (UUID) Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
             
+            Optional<View> selfView;
+            if(buf.readBoolean()) {
+                selfView = Optional.of((View)Serializers.fromBinary(buf, hint));
+            } else {
+                selfView = Optional.absent();
+            }
             int publicNodesSize = buf.readByte();
-            Set<CroupierContainer> publicNodes = new HashSet<CroupierContainer>(); 
-            while(publicNodesSize > 0) {
-                CroupierContainer cc = (CroupierContainer)Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
-                publicNodes.add(cc);
-                publicNodesSize--;
+            Map publicNodes = new HashMap();
+            for (int i = 0; i < publicNodesSize; i++) {
+                CroupierContainer cc = (CroupierContainer) Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
+                publicNodes.put(cc.getSource(), cc);
             }
-            
+
             int privateNodesSize = buf.readByte();
-            Set<CroupierContainer> privateNodes = new HashSet<CroupierContainer>(); 
-            while(privateNodesSize > 0) {
-                CroupierContainer cc = (CroupierContainer)Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
-                privateNodes.add(cc);
-                privateNodesSize--;
+            Map privateNodes = new HashMap();
+            for (int i = 0; i < privateNodesSize; i++) {
+                CroupierContainer cc = (CroupierContainer) Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
+                privateNodes.put(cc.getSource(), cc);
             }
-            
-            return Triplet.with(id, publicNodes, privateNodes);
+
+            return Quartet.with(msgId, selfView, publicNodes, privateNodes);
         }
     }
-    
+
     public static class Request extends Basic {
 
         public Request(int id) {
             super(id);
         }
-        
+
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Triplet<UUID, Set<CroupierContainer>, Set<CroupierContainer>> contents = fromBinaryBase(buf, hint);
-            return new CroupierShuffle.Request(contents.getValue0(), contents.getValue1(), contents.getValue2());
+            Quartet<UUID, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
+            return new CroupierShuffle.Request(contents.getValue0(), contents.getValue1(), contents.getValue2(), contents.getValue3());
         }
     }
-    
+
     public static class Response extends Basic {
 
         public Response(int id) {
             super(id);
         }
-        
+
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Triplet<UUID, Set<CroupierContainer>, Set<CroupierContainer>> contents = fromBinaryBase(buf, hint);
-            return new CroupierShuffle.Response(contents.getValue0(), contents.getValue1(), contents.getValue2());
+            Quartet<UUID, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
+            return new CroupierShuffle.Response(contents.getValue0(), contents.getValue1(), contents.getValue2(), contents.getValue3());
         }
     }
 }

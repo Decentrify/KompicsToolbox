@@ -16,30 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.ktoolbox.croupier.event;
 
-package se.sics.p2ptoolbox.croupier;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
+import java.util.Map;
+import java.util.UUID;
+import se.sics.kompics.network.Address;
+import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.p2ptoolbox.util.AgingContainer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierConfigTest {
-    @Test
-    public void test1() {
-        Config config = ConfigFactory.load("application1.conf");
-        CroupierKCWrapper croupierConfig = new CroupierKCWrapper(new KConfigCore(config, 0));
-        
-        Assert.assertEquals(CroupierSelectionPolicy.RANDOM, croupierConfig.policy);
-        Assert.assertEquals(10, croupierConfig.viewSize);
-        Assert.assertEquals(5, croupierConfig.shuffleSize);
-        Assert.assertEquals(2000, croupierConfig.shufflePeriod);
-        Assert.assertEquals(1000, croupierConfig.shuffleTimeout);
-        Assert.assertEquals(500, croupierConfig.softMaxTemp, 0.0001);
+public class CroupierSample<C extends Object> implements CroupierEvent {
+
+    public final UUID id;
+    public final int overlayId;
+    public final Map<Address, AgingContainer<Address, C>> publicSample;
+    public final Map<Address, AgingContainer<Address, C>> privateSample;
+    
+    public CroupierSample(UUID id, int overlayId, Map publicSample, Map privateSample) {
+        this.id = id;
+        this.overlayId = overlayId;
+        this.publicSample = publicSample;
+        this.privateSample = privateSample;
+    }
+
+    @Override
+    public String toString() {
+        return "CROUPIER_SAMPLE<" + id + ">";
     }
 }

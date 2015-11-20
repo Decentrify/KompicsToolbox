@@ -17,15 +17,15 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.croupier;
+package se.sics.ktoolbox.croupier;
 
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.croupier.msg.CroupierShuffle;
-import se.sics.p2ptoolbox.croupier.msg.CroupierShuffleSerializer;
-import se.sics.p2ptoolbox.croupier.util.CroupierContainer;
-import se.sics.p2ptoolbox.croupier.util.CroupierContainerSerializer;
-import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
+import se.sics.ktoolbox.croupier.msg.CroupierShuffleSerializer;
+import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.croupier.util.CroupierContainerSerializer;
+import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

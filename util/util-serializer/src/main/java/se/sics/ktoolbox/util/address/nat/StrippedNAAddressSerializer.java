@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,22 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.p2ptoolbox.croupier.util;
+package se.sics.ktoolbox.util.address.nat;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
+import java.util.List;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.util.address.basic.BasicAddress;
+import se.sics.ktoolbox.util.address.resolution.AddressResolutionHelper;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierContainerSerializer implements Serializer {
+public class StrippedNAAddressSerializer implements Serializer {
     private final int id;
-    
-    public CroupierContainerSerializer(int id) {
+
+    public StrippedNAAddressSerializer(int id) {
         this.id = id;
     }
     
@@ -42,17 +44,15 @@ public class CroupierContainerSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        CroupierContainer obj = (CroupierContainer)o;
-        buf.writeInt(obj.getAge());
-        Serializers.lookupSerializer(DecoratedAddress.class).toBinary(obj.getSource(), buf);
-        Serializers.toBinary(obj.getContent(), buf);
+        StrippedNAAddress strippedAdr = (StrippedNAAddress)o;
+        CompleteNAAddress completeAdr = (CompleteNAAddress)AddressResolutionHelper.resolve(strippedAdr);
+        Serializers.lookupSerializer(CompleteNAAddress.class).toBinary(completeAdr, buf);
     }
 
     @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        int age = buf.readInt();
-        DecoratedAddress src = (DecoratedAddress)Serializers.lookupSerializer(DecoratedAddress.class).fromBinary(buf, hint);
-        Object content = Serializers.fromBinary(buf, hint);
-        return new CroupierContainer(src, content, age);
+    public StrippedNAAddress fromBinary(ByteBuf buf, Optional<Object> hint) {
+        CompleteNAAddress completeAdr = (CompleteNAAddress)Serializers.lookupSerializer(CompleteNAAddress.class).fromBinary(buf, hint);
+        AddressResolutionHelper.setIndirect(completeAdr);
+        return completeAdr.strip();
     }
 }

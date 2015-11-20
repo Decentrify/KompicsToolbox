@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * 2009 Royal Institute of Technology (KTH)
+ * Copyright (C) 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * Croupier is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,24 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.ktoolbox.croupier.behaviour;
 
-package se.sics.p2ptoolbox.croupier;
+import com.google.common.base.Optional;
+import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
+import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
- public enum CroupierSelectionPolicy {
+public interface CroupierBehaviour {
 
-        TAIL, RANDOM, HEALER;
+    public NatAwareAddress getSelf();
 
-        public static CroupierSelectionPolicy create(String policy) {
-            if (policy.compareToIgnoreCase(CroupierSelectionPolicy.TAIL.name()) == 0) {
-                return TAIL;
-            } else if (policy.compareToIgnoreCase(CroupierSelectionPolicy.HEALER.name()) == 0) {
-                return HEALER;
-            } else if (policy.compareToIgnoreCase(CroupierSelectionPolicy.RANDOM.name()) == 0) {
-                return RANDOM;
-            }
-            return null;
-        }
-    };
+    public Optional<View> getView();
+
+    public CroupierBehaviour processView(OverlayView viewUpdate);
+
+    public CroupierBehaviour processAddress(AddressUpdate.Indication update);
+}

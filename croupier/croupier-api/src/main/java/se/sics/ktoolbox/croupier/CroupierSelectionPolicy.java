@@ -17,15 +17,23 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.util;
-
-import se.sics.kompics.network.Address;
+package se.sics.ktoolbox.croupier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface Container<S extends Address, C extends Object> {
-    public S getSource();
-    public C getContent();
-    public Container copy();
-}
+ public enum CroupierSelectionPolicy {
+
+        TAIL, RANDOM, HEALER;
+
+        public static CroupierSelectionPolicy create(String policy) {
+            if (policy.compareToIgnoreCase(CroupierSelectionPolicy.TAIL.name()) == 0) {
+                return TAIL;
+            } else if (policy.compareToIgnoreCase(CroupierSelectionPolicy.HEALER.name()) == 0) {
+                return HEALER;
+            } else if (policy.compareToIgnoreCase(CroupierSelectionPolicy.RANDOM.name()) == 0) {
+                return RANDOM;
+            }
+            return null;
+        }
+    };
