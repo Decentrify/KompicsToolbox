@@ -172,3 +172,8 @@ netty-test/target/
 /fd/core/target/
 /fd/api/target/
 /fd/network/target/
+/util/k-core/target/
+/util/core/k-core/target/
+/util/kcore/target/
+/util/example/target/
+/util/network/target/
