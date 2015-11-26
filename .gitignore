@@ -179,3 +179,5 @@ netty-test/target/
 /util/network/target/
 /aggregator/example/client/target/
 /aggregator/example/server/target/
+/simulator/core/target/
+/simulator/example/target/
