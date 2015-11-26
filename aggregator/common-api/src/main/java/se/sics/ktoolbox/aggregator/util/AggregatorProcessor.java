@@ -16,28 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.msg;
+package se.sics.ktoolbox.aggregator.util;
 
-import java.util.UUID;
-import se.sics.ktoolbox.aggregator.util.PacketInfo;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import com.google.common.base.Optional;
 
 /**
- * Container for the packet information which is sent
- * by the application to the global container.
+ * Marker interface for the processor responsible for the data conversion at
+ * different stages of the aggregation.
  *
- * Created by babbarshaer on 2015-09-01.
+ * Created by babbar on 2015-09-04.
  */
-public class PacketContainer implements AggregatorMsg {
-
-    public final UUID uuid;
-    public final DecoratedAddress sourceAddress;
-    public final PacketInfo packetInfo;
-
-    public PacketContainer(UUID uuid, DecoratedAddress sourceAddress, PacketInfo packetInfo){
-
-        this.uuid = uuid;
-        this.sourceAddress = sourceAddress;
-        this.packetInfo = packetInfo;
-    }
+public interface AggregatorProcessor<P_IN extends AggregatorPacket, P_OUT extends AggregatorPacket> {
+    /**
+     * @param previous
+     * @param current
+     * @return next
+     */
+    public P_OUT process(Optional<P_OUT> previous, P_IN current);
+    public Class<P_OUT> getAggregatedType();
 }

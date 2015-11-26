@@ -16,21 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.server;
-
-import se.sics.kompics.Init;
+package se.sics.ktoolbox.aggregator.server.util;
 
 /**
- * Main initialization class for the aggregator component.
- *
- * Created by babbarshaer on 2015-09-01.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class GlobalAggregatorInit extends Init<GlobalAggregator> {
-
-    public final long timeout;
-
-    public GlobalAggregatorInit(long timeout){
-        this.timeout = timeout;
-    }
-
+public interface VisualizerPacket {
 }

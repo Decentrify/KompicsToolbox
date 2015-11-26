@@ -16,13 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.util;
+package se.sics.ktoolbox.aggregator.server;
+
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.config.KConfigHelper;
 
 /**
- * Marker interface for the processor responsible for the data conversion at
- * different stages of the aggregation.
- *
- * Created by babbar on 2015-09-04.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface Processor {
+public class VisualizerKCWrapper {
+    public final KConfigCore configCore;
+    public final int snapshotMaxSize;
+    
+    public VisualizerKCWrapper(KConfigCore configCore) {
+        this.configCore = configCore;
+        snapshotMaxSize = KConfigHelper.read(configCore, VisualizerKConfig.snapshotMaxSize);
+    }
 }

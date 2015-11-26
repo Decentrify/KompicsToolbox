@@ -19,7 +19,8 @@
         <module>common-core</module>
         <module>server</module>
         <module>client</module>
-        <module>network</module>
+        <!--<module>network</module>-->
+        <module>example</module>
     </modules>
 
     <properties>

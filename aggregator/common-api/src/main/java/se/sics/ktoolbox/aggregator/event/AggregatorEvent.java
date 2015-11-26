@@ -16,21 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.server.util;
+package se.sics.ktoolbox.aggregator.event;
 
-import se.sics.kompics.timer.SchedulePeriodicTimeout;
-import se.sics.kompics.timer.Timeout;
+import se.sics.kompics.KompicsEvent;
+import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
 
 /**
- * Timeout indicating the global aggregator to stop aggregating
- * and start processing the information.
+ * Marker interface for segregating the messages belonging to the
+ * aggregator in the system.
  *
- * Created by babbarshaer on 2015-09-01.
+ * Created by babbar on 2015-09-15.
  */
-public class AggregationTimeout extends Timeout{
-
-    public AggregationTimeout(SchedulePeriodicTimeout request) {
-        super(request);
-    }
-
+public interface AggregatorEvent extends KompicsEvent, UUIDIdentifiable {
 }

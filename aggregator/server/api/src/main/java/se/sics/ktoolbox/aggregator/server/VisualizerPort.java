@@ -19,17 +19,17 @@
 package se.sics.ktoolbox.aggregator.server;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.server.event.WindowProcessing;
+import se.sics.ktoolbox.aggregator.server.event.VisualizerWindow;
 
 /**
- * Port for interaction with the visualizer component
- * in the system.
+ * Port for interaction with the visualizer component in the system.
  *
  * Created by babbar on 2015-09-02.
  */
-public class VisualizerPort extends PortType{{
+public class VisualizerPort extends PortType {
 
-    request(WindowProcessing.Request.class);
-    indication(WindowProcessing.Response.class);
-
-}}
+    {
+        request(VisualizerWindow.Request.class);
+        indication(VisualizerWindow.Response.class);
+    }
+}

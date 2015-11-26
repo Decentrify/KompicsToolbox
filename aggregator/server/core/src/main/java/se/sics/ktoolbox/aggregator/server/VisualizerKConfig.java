@@ -18,23 +18,27 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
-import se.sics.kompics.Init;
-import se.sics.ktoolbox.aggregator.server.util.DesignProcessor;
-
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import se.sics.p2ptoolbox.util.config.KConfigLevel;
+import se.sics.p2ptoolbox.util.config.KConfigOption;
 
 /**
- * Init class for the visualizer component.
  *
- * Created by babbar on 2015-09-02.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class VisualizerInit extends Init<Visualizer>{
+public class VisualizerKConfig implements KConfigLevel{
+    public final static KConfigOption.Basic<Integer> snapshotMaxSize = new KConfigOption.Basic("visualizer.snapshotMaxSize", Integer.class, new VisualizerKConfig());
 
-    public final int maxSnapshots;
-    public final Map<String, DesignProcessor> designerNameMap;
+    @Override
+    public Set<String> canWrite() {
+        Set<String> canWrite = new HashSet<>();
+        canWrite.add(toString());
+        return canWrite;
+    }
 
-    public VisualizerInit(int maxSnapshots, Map<String, DesignProcessor> designerNameMap){
-        this.maxSnapshots = maxSnapshots;
-        this.designerNameMap = designerNameMap;
+    @Override
+    public String toString() {
+        return "VisualizerKConfig";
     }
 }

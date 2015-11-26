@@ -16,20 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.client.util;
+package se.sics.ktoolbox.aggregator.server.util;
 
-import se.sics.kompics.timer.SchedulePeriodicTimeout;
-import se.sics.kompics.timer.Timeout;
+import com.google.common.collect.Table;
+import se.sics.kompics.network.Address;
+import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 
 /**
- * Timeout indication the aggregation is over
- * and the data needs to be sent for filtering.
  *
- * Created by babbar on 2015-08-31.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AggregationTimeout extends Timeout{
-
-    public AggregationTimeout(SchedulePeriodicTimeout request) {
-        super(request);
-    }
+public interface VisualizerProcessor {
+    public VisualizerPacket getFirst();
+    public VisualizerPacket process(VisualizerPacket old, Table<Address, Class, AggregatorPacket> window);
 }

@@ -16,13 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.util;
+package se.sics.ktoolbox.aggregator.client;
+
+import se.sics.kompics.network.Address;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.config.KConfigHelper;
 
 /**
- * Marker Interface for the packet information which needs to be processed by the
- * global aggregator component.
- *
- * Created by babbar on 2015-08-31.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface PacketInfo {
+public class LocalAggregatorKCWrapper {
+    public final KConfigCore configCore;
+    public final Address localAddress;
+    public final Address globalAddress;
+    public final long aggregationPeriod;
+    
+    public LocalAggregatorKCWrapper(KConfigCore configCore) {
+        this.configCore = configCore;
+        localAddress = KConfigHelper.read(configCore, LocalAggregatorKConfig.localAddress);
+        globalAddress = KConfigHelper.read(configCore, LocalAggregatorKConfig.globalAddress);
+        aggregationPeriod = KConfigHelper.read(configCore, LocalAggregatorKConfig.aggregationPeriod);
+    }
 }

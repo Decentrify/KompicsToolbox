@@ -16,24 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.client.events;
+package se.sics.ktoolbox.aggregator.server;
 
-import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.aggregator.client.util.ComponentInfo;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.config.KConfigHelper;
 
 /**
- * Event carrying the component information which will be
- * locally aggregated by the local aggregator.
- *
- * Created by babbar on 2015-08-31.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ComponentInfoEvent implements KompicsEvent {
-
-    public final ComponentInfo componentInfo;
-    public final Integer overlayId;
-
-    public ComponentInfoEvent(Integer overlayId, ComponentInfo componentInfo) {
-        this.overlayId = overlayId;
-        this.componentInfo = componentInfo;
+public class GlobalAggregatorKCWrapper {
+    public final KConfigCore configCore;
+    public final long aggregationPeriod;
+    
+    public GlobalAggregatorKCWrapper(KConfigCore configCore) {
+        this.configCore = configCore;
+        aggregationPeriod = KConfigHelper.read(configCore, GlobalAggregatorKConfig.aggregationPeriod);
     }
 }

@@ -177,3 +177,5 @@ netty-test/target/
 /util/kcore/target/
 /util/example/target/
 /util/network/target/
+/aggregator/example/client/target/
+/aggregator/example/server/target/

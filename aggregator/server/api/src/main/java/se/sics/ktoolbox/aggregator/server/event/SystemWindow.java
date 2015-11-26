@@ -16,19 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.server;
+package se.sics.ktoolbox.aggregator.server.event;
 
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.msg.NodeWindow;
-import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
+import com.google.common.collect.Table;
+import java.util.UUID;
+import se.sics.kompics.network.Address;
+import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
+import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+
 
 /**
- * Port with which the aggregator communicates with the
- * outside application.
+ * Event from the aggregator indicating the
+ * aggregated information from the nodes in the system.
  *
  * Created by babbarshaer on 2015-09-02.
  */
-public class GlobalAggregatorPort extends PortType{{
+public class SystemWindow implements AggregatorEvent {
+    public final UUID id;
+    public final Table<Address, Class, AggregatorPacket> systemWindow;
 
-    indication(SystemWindow.class);
-}}
+    public SystemWindow(UUID id, Table<Address, Class, AggregatorPacket> systemWindow){
+        this.id = id;
+        this.systemWindow = systemWindow;
+    }
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+    
+    @Override
+    public String toString() {
+        return getClass() + "<" + id + ">";
+    }
+}

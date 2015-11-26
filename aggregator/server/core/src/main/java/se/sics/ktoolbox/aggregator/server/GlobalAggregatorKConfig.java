@@ -16,23 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.client.events;
+package se.sics.ktoolbox.aggregator.server;
 
-import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import java.util.HashSet;
+import java.util.Set;
+import se.sics.p2ptoolbox.util.config.KConfigLevel;
+import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
 
 /**
- * Update Event sent by the application indicating update in the
- * address on the node.
- *
- * Created by babbar on 2015-08-31.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UpdateEvent implements KompicsEvent{
+public class GlobalAggregatorKConfig implements KConfigLevel {
+    public final static Basic<Long> aggregationPeriod = new Basic("aggregator.local.aggregationPeriod", Long.class, new GlobalAggregatorKConfig());
 
-    public final DecoratedAddress selfAddress;
-
-    public UpdateEvent(DecoratedAddress address){
-        this.selfAddress = address;
+    @Override
+    public Set<String> canWrite() {
+        Set<String> canWrite = new HashSet<>();
+        canWrite.add(toString());
+        return canWrite;
     }
 
+    @Override
+    public String toString() {
+        return "GlobalAggregatorKConfig";
+    }
 }

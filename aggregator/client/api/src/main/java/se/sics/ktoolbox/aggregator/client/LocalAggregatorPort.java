@@ -19,16 +19,15 @@
 package se.sics.ktoolbox.aggregator.client;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.client.events.ComponentInfoEvent;
-import se.sics.ktoolbox.aggregator.client.events.UpdateEvent;
+import se.sics.ktoolbox.aggregator.client.events.ComponentPacketEvent;
 
 /**
  * Main Port for interaction with the local aggregator.
  *
  * Created by babbar on 2015-08-31.
  */
-public class LocalAggregatorPort extends PortType {{
-
-    request(ComponentInfoEvent.class);
-    request(UpdateEvent.class);
-}}
+public class LocalAggregatorPort extends PortType {
+    {
+        request(ComponentPacketEvent.class);
+    }
+}

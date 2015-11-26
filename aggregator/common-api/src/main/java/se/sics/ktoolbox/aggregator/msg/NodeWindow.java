@@ -18,11 +18,30 @@
  */
 package se.sics.ktoolbox.aggregator.msg;
 
+import java.util.Map;
+import java.util.UUID;
+import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
+import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+
 /**
- * Marker interface for segregating the messages belonging to the
- * aggregator in the system.
- *
- * Created by babbar on 2015-09-15.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface AggregatorMsg {
+public class NodeWindow implements AggregatorEvent {
+    public final UUID id;
+    public final Map<Class, AggregatorPacket> window;
+    
+    public NodeWindow(UUID id, Map<Class, AggregatorPacket> window) {
+        this.id = id;
+        this.window = window;
+    }
+    
+    @Override
+    public UUID getId() {
+        return id;
+    }
+    
+    @Override
+    public String toString() {
+        return "AGG_NODE_WINDOW<" + id + ">";
+    }
 }

@@ -16,31 +16,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.aggregator.server.event;
+package se.sics.ktoolbox.aggregator.client.events;
 
-import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-
-import java.util.List;
-import java.util.Map;
-import se.sics.ktoolbox.aggregator.util.PacketInfo;
-
+import java.util.UUID;
+import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
+import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 
 /**
- * Event from the aggregator indicating the
- * aggregated information from the nodes in the system.
+ * Event carrying the component information which will be
+ * locally aggregated by the local aggregator.
  *
- * Created by babbarshaer on 2015-09-02.
+ * Created by babbar on 2015-08-31.
  */
-public class AggregatedInfo implements KompicsEvent {
+public class ComponentPacketEvent implements AggregatorEvent {
 
-    private final Map<Integer, List<PacketInfo>> nodePacketMap;
+    public final UUID id;
+    public final AggregatorPacket packet;
 
-    public AggregatedInfo(Map<Integer, List<PacketInfo>> nodePacketMap){
-        this.nodePacketMap = nodePacketMap;
+    public ComponentPacketEvent(AggregatorPacket packet) {
+        this.id = UUID.randomUUID();
+        this.packet = packet;
     }
 
-    public Map<Integer, List<PacketInfo>> getNodePacketMap() {
-        return nodePacketMap;
+    @Override
+    public UUID getId() {
+        return id;
+    }
+    
+    @Override
+    public String toString() {
+        return getClass() + "<" + id + ">";
     }
 }
