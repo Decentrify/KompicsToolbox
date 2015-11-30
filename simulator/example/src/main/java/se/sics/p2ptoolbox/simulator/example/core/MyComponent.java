@@ -30,7 +30,6 @@ import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
-import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
@@ -49,8 +48,8 @@ public class MyComponent extends ComponentDefinition {
     private static final Logger LOG = LoggerFactory.getLogger(MyComponent.class);
     private String logPrefix;
 
-    private Positive<Network> network = requires(Network.class);
-    private Positive<Timer> timer = requires(Timer.class);
+    private final Positive network = requires(Network.class);
+    private final Positive timer = requires(Timer.class);
 
     private BasicAddress self;
     private BasicAddress statusServer;

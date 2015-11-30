@@ -20,7 +20,6 @@
 package se.sics.p2ptoolbox.simulator;
 
 import java.util.Random;
-import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

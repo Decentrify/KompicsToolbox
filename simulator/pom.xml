@@ -13,8 +13,8 @@
     <name>Simulator</name>
     <modules>
         <module>dsl</module>
-<!--        <module>core</module>
-        <module>example</module>-->
+        <module>core</module>
+        <!--<module>example</module>-->
     </modules>
     
     <properties>

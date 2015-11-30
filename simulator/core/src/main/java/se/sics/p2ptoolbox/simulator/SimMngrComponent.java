@@ -18,12 +18,14 @@
  */
 package se.sics.p2ptoolbox.simulator;
 
+import se.sics.ktoolbox.simulator.SimulatorPort;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.Channel;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -33,59 +35,50 @@ import se.sics.kompics.Kompics;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.address.IntIdAddress;
-import se.sics.p2ptoolbox.simulator.cmd.impl.ReStartNodeCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.StartAggregatorCmd;
-import se.sics.p2ptoolbox.simulator.dsl.events.TerminateExperiment;
-import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.KillNodeCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.SetupCmd;
-import se.sics.p2ptoolbox.simulator.cmd.util.ConnectSimulatorPort;
-import se.sics.p2ptoolbox.simulator.timed.TimedComp;
-import se.sics.p2ptoolbox.simulator.timed.api.Timed;
-import se.sics.p2ptoolbox.simulator.timed.api.TimedControlerBuilder;
-import se.sics.p2ptoolbox.util.filters.DestinationHostFilter;
+import se.sics.ktoolbox.simulator.SimulatorComponent;
+import se.sics.ktoolbox.simulator.SimulatorControlPort;
+import se.sics.ktoolbox.simulator.events.SetupEvent;
+import se.sics.ktoolbox.simulator.events.TerminateExperiment;
+import se.sics.ktoolbox.simulator.events.system.KillNodeEvent;
+import se.sics.ktoolbox.simulator.events.system.StartAggregatorEvent;
+import se.sics.ktoolbox.simulator.events.system.StartNodeEvent;
+import se.sics.ktoolbox.util.selectors.DestinationHostSelector;
 import se.sics.p2ptoolbox.util.identifiable.IntegerIdentifiable;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SimMngrComponent extends ComponentDefinition implements TimedComp {
+public class SimMngrComponent extends ComponentDefinition implements SimulatorComponent {
 
     private static final Logger log = LoggerFactory.getLogger(SimMngrComponent.class);
+    private String logPrefix = "";
+
+    private final Positive simPort = requires(SimulatorPort.class);
+    private final Positive simControlPort = requires(SimulatorControlPort.class);
+    private final Positive network = requires(Network.class);
+    private final Positive timer = requires(Timer.class);
 
     private final SimulationContextImpl simulationContext;
-    private final TimedControlerBuilder tcb;
 
-    private Positive<ExperimentPort> experimentPort = requires(ExperimentPort.class);
-    private Positive<Network> network = requires(Network.class);
-    private Positive<Timer> timer = requires(Timer.class);
-
-    private Map<Integer, Component> systemNodes;
     private Component aggregator;
-    private Component simulationClient;
+    private Map<Integer, Component> systemNodes = new HashMap<>();
 
     public SimMngrComponent(SimMngrInit init) {
-        log.info("initiating...");
-        this.simulationContext = new SimulationContextImpl(init.rand, init.simAddress);
-        this.tcb = init.tcb;
-        this.systemNodes = new HashMap<Integer, Component>();
+        log.info("{}initiating...", logPrefix);
+        this.simulationContext = new SimulationContextImpl(init.rand);
 
         subscribe(handleStart, control);
-        subscribe(handleStop, control);
+        subscribe(handleSetup, simPort);
+        subscribe(handleStartAggregator, simPort);
+        subscribe(handleStartNode, simPort);
+        subscribe(handleKillNode, simPort);
+        subscribe(handleTerminateExperiment, simControlPort);
 
-        subscribe(handleSetup, experimentPort);
-        subscribe(handleStartAggregator, experimentPort);
-        subscribe(handleStartNode, experimentPort);
-        subscribe(handleStopNode, experimentPort);
-//        subscribe(handleNet, network);
-        //stop-restart does not work in kompics now
-//        subscribe(handleReStartNode, experimentPort); 
+        //subscribe custom handlers for specific network events
         for (final SystemStatusHandler systemStatusHandler : init.systemStatusHandlers) {
             Class<? extends Msg> msgType = systemStatusHandler.getStatusMsgType();
             Handler handler = new Handler(msgType) {
@@ -97,156 +90,104 @@ public class SimMngrComponent extends ComponentDefinition implements TimedComp {
             };
             subscribe(handler, network);
         }
-        subscribe(handleTerminateExperiment, experimentPort);
     }
 
     //**********CONTROL HANDLERS************************************************
-    private Handler<Start> handleStart = new Handler<Start>() {
-
+    private final Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.info("starting...");
-
-            simulationClient = create(SimClientComponent.class, new SimClientComponent.SimClientInit(simulationContext));
-            connect(simulationClient.getNegative(Network.class), network, new DestinationHostFilter(((IntIdAddress)simulationContext.getSimulatorAddress()).getId()));
-            connect(simulationClient.getNegative(Timer.class), timer);
-            connect(simulationClient.getNegative(ExperimentPort.class), experimentPort);
-
-            trigger(Start.event, simulationClient.control());
+            log.info("{}starting...", logPrefix);
         }
-
     };
-
-    private Handler<Stop> handleStop = new Handler<Stop>() {
-
-        @Override
-        public void handle(Stop event) {
-            log.info("stopping...");
-        }
-
-    };
-
-    //**************************************************************************
-    private Handler handleNet = new Handler<Msg>() {
+    //************************TESTING_HANDLERS**********************************
+    private final Handler handleNet = new Handler<Msg>() {
         @Override
         public void handle(Msg msg) {
-           log.info("net msg:{}",msg);
+            log.info("{}net msg:{}", logPrefix, msg);
         }
     };
-    
-    private Handler handleSetup = new Handler<SetupCmd>() {
+    //**************************************************************************
+    private final Handler handleSetup = new Handler<SetupEvent>() {
         @Override
-        public void handle(SetupCmd cmd) {
-            log.info("received setup cm:{}", cmd);
-            cmd.runSetup();
+        public void handle(SetupEvent setup) {
+            log.info("{}received setup cm:{}", logPrefix, setup);
+            setup.runSetup();
         }
     };
-    
-    private Handler<StartAggregatorCmd> handleStartAggregator = new Handler<StartAggregatorCmd>() {
+
+    private final Handler handleStartAggregator = new Handler<StartAggregatorEvent>() {
 
         @Override
-        public void handle(StartAggregatorCmd cmd) {
-            log.info("received start aggregator cmd:{}", cmd);
+        public void handle(StartAggregatorEvent startAggregator) {
+            log.info("{}received start aggregator cmd:{}", logPrefix, startAggregator);
 
-            aggregator = create(cmd.getNodeComponentDefinition(), cmd.getNodeComponentInit());
-            connect(aggregator.getNegative(Timer.class), timer);
-            Address aggregatorAdr = cmd.getAddress();
+            aggregator = create(startAggregator.getComponentDefinition(), startAggregator.getComponentInit());
+            connect(aggregator.getNegative(Timer.class), timer, Channel.TWO_WAY);
+            Address aggregatorAdr = startAggregator.getAddress();
             if (aggregatorAdr instanceof IntegerIdentifiable) {
                 Integer aggregatorId = ((IntegerIdentifiable) aggregatorAdr).getId();
-                connect(aggregator.getNegative(Network.class), network, new DestinationHostFilter(aggregatorId));
+                connect(aggregator.getNegative(Network.class), network, new DestinationHostSelector(aggregatorId, true), Channel.TWO_WAY);
             } else {
-                log.error("aggregator address is wrong - not identifiable");
+                log.error("{}aggregator address is wrong - not identifiable", logPrefix);
                 throw new RuntimeException("aggregator address is wrong - not identifiable");
             }
-            if(cmd instanceof ConnectSimulatorPort) {
-                connect(aggregator.getNegative(ExperimentPort.class), experimentPort);
-            }
+            connect(aggregator.getNegative(SimulatorPort.class), simPort, Channel.TWO_WAY);
             simulationContext.registerAggregator(aggregatorAdr);
             trigger(Start.event, aggregator.control());
         }
     };
 
-    private Handler<StartNodeCmd> handleStartNode = new Handler<StartNodeCmd>() {
+    private final Handler handleStartNode = new Handler<StartNodeEvent>() {
 
         @Override
-        public void handle(StartNodeCmd cmd) {
-            log.info("received start cmd:{} for node:{}", cmd, cmd.getNodeId());
+        public void handle(StartNodeEvent startNode) {
+            log.info("{}received start:{} for node:{}", new Object[]{logPrefix, startNode,
+                startNode.getNodeId()});
 
-            Init compInit = cmd.getNodeComponentInit(simulationContext.getAggregatorAddress(), simulationContext.systemOpenNodesSample(cmd.bootstrapSize(), cmd.getAddress()));
-            if(compInit instanceof Timed) {
-                Timed timed = (Timed)compInit;
-                timed.set(tcb);
-            }
-            Component node = create(cmd.getNodeComponentDefinition(), compInit);
-            connect(node.getNegative(Timer.class), timer);
-            connect(node.getNegative(Network.class), network, new DestinationHostFilter(cmd.getNodeId()));
+            Component node = create(startNode.getComponentDefinition(), startNode.getComponentInit());
+            connect(node.getNegative(Timer.class), timer, Channel.TWO_WAY);
+            connect(node.getNegative(Network.class), network, 
+                    new DestinationHostSelector(startNode.getNodeId(), true), Channel.TWO_WAY);
 
-            //TODO Alex - clean later
-            simulationContext.registerNode(cmd.getNodeId());
-            simulationContext.bootNode(cmd.getNodeId(), cmd.getAddress());
-            systemNodes.put(cmd.getNodeId(), node);
-            //********************************
+            simulationContext.startNode(startNode.getNodeId(), startNode.getAddress());
+            systemNodes.put(startNode.getNodeId(), node);
 
             trigger(Start.event, node.control());
         }
     };
 
-    private Handler<KillNodeCmd> handleStopNode = new Handler<KillNodeCmd>() {
+    private Handler handleKillNode = new Handler<KillNodeEvent>() {
 
         @Override
-        public void handle(KillNodeCmd cmd) {
-            log.info("received kill cmd:{} for node:{}", cmd, cmd.getNodeId());
-
-            Component node = systemNodes.remove(cmd.getNodeId());
+        public void handle(KillNodeEvent killNode) {
+            log.info("{}received kill cmd:{} for node:{}", killNode, killNode.getNodeId());
+            Component node = systemNodes.remove(killNode.getNodeId());
             if (node == null) {
                 throw new RuntimeException("node does not exist");
             }
-            simulationContext.killNode(cmd.getNodeId());
+            simulationContext.killNode(killNode.getNodeId());
             disconnect(node.getNegative(Network.class), network);
             disconnect(node.getNegative(Timer.class), timer);
             trigger(Kill.event, node.control());
-            if (node != null) {
-                trigger(Kill.event, node.control());
-            }
         }
     };
 
-    private Handler<ReStartNodeCmd> handleReStartNode = new Handler<ReStartNodeCmd>() {
-
-        @Override
-        public void handle(ReStartNodeCmd cmd) {
-            log.info("received re-start cmd:{} for node:{}", cmd, cmd.getNodeId());
-            if (!systemNodes.containsKey(cmd.getNodeId())) {
-                throw new RuntimeException("node does not exist");
-            }
-            Component node = systemNodes.get(cmd.getNodeId());
-            connect(node.getNegative(Network.class), network, new DestinationHostFilter(cmd.getNodeId()));
-            connect(node.getNegative(Timer.class), timer);
-            trigger(Start.event, node.control());
-        }
-    };
-
-    private Handler<TerminateExperiment> handleTerminateExperiment = new Handler<TerminateExperiment>() {
+    private final Handler handleTerminateExperiment = new Handler<TerminateExperiment>() {
 
         @Override
         public void handle(TerminateExperiment event) {
-            log.info("terminating simulation...");
+            log.info("{}terminating simulation...", logPrefix);
             Kompics.forceShutdown();
-
         }
     };
 
     public static class SimMngrInit extends Init<SimMngrComponent> {
 
-        public final TimedControlerBuilder tcb;
         public final Random rand;
-        public final Address simAddress;
         public final Set<SystemStatusHandler> systemStatusHandlers;
 
-        public SimMngrInit(TimedControlerBuilder tcb, Random rand, Address simAddress, Set<SystemStatusHandler> systemStatusHandlers) {
-            this.tcb = tcb;
+        public SimMngrInit(Random rand, Set<SystemStatusHandler> systemStatusHandlers) {
             this.rand = rand;
-            this.simAddress = simAddress;
             this.systemStatusHandlers = systemStatusHandlers;
         }
     }

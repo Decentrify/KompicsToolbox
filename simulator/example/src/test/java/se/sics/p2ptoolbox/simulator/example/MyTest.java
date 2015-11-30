@@ -19,11 +19,17 @@
 
 package se.sics.p2ptoolbox.simulator.example;
 
+import java.util.HashSet;
+import java.util.Set;
 import se.sics.p2ptoolbox.simulator.example.core.ScenarioGen;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
+import se.sics.ktoolbox.simulator.SimulationScenario;
+import se.sics.ktoolbox.simulator.instrumentation.decorators.HandlerDecorator;
+import se.sics.ktoolbox.simulator.instrumentation.decorators.HandlerDecoratorRegistry;
+import se.sics.ktoolbox.simulator.instrumentation.decorators.simple.FingerprintDecorator;
+import se.sics.ktoolbox.simulator.instrumentation.decorators.simple.SimpleSimulationStatistics;
 import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 
 /**

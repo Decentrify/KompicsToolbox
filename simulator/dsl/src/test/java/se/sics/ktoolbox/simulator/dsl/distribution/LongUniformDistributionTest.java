@@ -20,6 +20,7 @@
  */
 package se.sics.ktoolbox.simulator.dsl.distribution;
 
+import se.sics.ktoolbox.simulator.distributions.LongUniformDistribution;
 import java.util.Random;
 
 import org.junit.Assert;

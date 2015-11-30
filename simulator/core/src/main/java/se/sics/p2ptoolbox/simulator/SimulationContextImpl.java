@@ -30,27 +30,21 @@ import se.sics.kompics.PortType;
 import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.util.address.NatAwareAddress;
 import se.sics.ktoolbox.util.address.nat.NatType;
-import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class SimulationContextImpl implements SimulationContext {
 
-    private OperationCmd.ValidationException failureCause = null;
-
     private final Random rand;
-    private final Address simulatorAddress;
 
     private Address aggregatorAddress = null;
-    private final Map<Integer, Map<Class<? extends PortType>, Port>> ports = new HashMap<>();
     //subset of started nodes containing open nodes
-    private final Map<Integer, Address> systemOpenNodes = new HashMap<>(); 
+    private final Map<Integer, Address> systemNodes = new HashMap<>();
     private final Map<String, Object> otherContext = new HashMap<>();
 
-    public SimulationContextImpl(Random rand, Address simulatorAddress) {
+    public SimulationContextImpl(Random rand) {
         this.rand = rand;
-        this.simulatorAddress = simulatorAddress;
     }
 
     public void registerAggregator(Address aggregatorAddress) {
@@ -61,83 +55,16 @@ public class SimulationContextImpl implements SimulationContext {
         return aggregatorAddress;
     }
 
-    public void bootNode(Integer nodeId, Address nodeAddress) {
-        if (systemOpenNodes.containsKey(nodeId)) {
+    public void startNode(Integer nodeId, Address nodeAddress) {
+        if (systemNodes.containsKey(nodeId)) {
             //TODO Alex something fishy
             return;
         }
-        if (nodeAddress instanceof NatAwareAddress) {
-            NatAwareAddress naAdr = (NatAwareAddress) nodeAddress;
-            if (NatType.isOpen(naAdr)) {
-                systemOpenNodes.put(nodeId, nodeAddress);
-            }
-        } else {
-            systemOpenNodes.put(nodeId, nodeAddress);
-        }
+        systemNodes.put(nodeId, nodeAddress);
     }
 
     public void killNode(Integer nodeId) {
-        systemOpenNodes.remove(nodeId);
-    }
-
-    public Set<Address> systemOpenNodesSample(int n, Address self) {
-        Set<Address> result = new HashSet<Address>();
-        if (systemOpenNodes.size() < n) {
-            result.addAll(systemOpenNodes.values());
-            result.remove(self);
-            return result;
-        }
-        List<Address> nodeList = new ArrayList<Address>(systemOpenNodes.values());
-        while (result.size() < n) {
-            int nodeIndex = rand.nextInt(nodeList.size());
-            result.add(nodeList.remove(nodeIndex));
-        }
-        result.remove(self);
-        return result;
-    }
-
-    public boolean registerNode(Integer nodeId) {
-        if (ports.containsKey(nodeId)) {
-            return false;
-        }
-        ports.put(nodeId, new HashMap<Class<? extends PortType>, Port>());
-        return true;
-    }
-
-    public boolean isNodeRegistered(Integer nodeId) {
-        return ports.containsKey(nodeId);
-    }
-
-    public boolean registerPort(Integer nodeId, Class<? extends PortType> portType, Port port) {
-        Map<Class<? extends PortType>, Port> localPorts = ports.get(nodeId);
-        if (localPorts == null) {
-            return false;
-        }
-        if (localPorts.containsKey(portType)) {
-            return false;
-        }
-        localPorts.put(portType, port);
-        return true;
-    }
-
-    public Port getPort(Integer nodeId, Class<? extends PortType> portType) {
-        Map<Class<? extends PortType>, Port> localPorts = ports.get(nodeId);
-        if (localPorts == null) {
-            return null;
-        }
-        return localPorts.get(portType);
-    }
-
-    public Address getSimulatorAddress() {
-        return simulatorAddress;
-    }
-
-    public boolean canContinue() {
-        return failureCause == null;
-    }
-
-    public void fail(OperationCmd.ValidationException cause) {
-        this.failureCause = cause;
+        systemNodes.remove(nodeId);
     }
 
     @Override
@@ -163,9 +90,5 @@ public class SimulationContextImpl implements SimulationContext {
     @Override
     public Object get(String identifier) {
         return otherContext.get(identifier);
-    }
-
-    public OperationCmd.ValidationException getSimulationResult() {
-        return failureCause;
     }
 }

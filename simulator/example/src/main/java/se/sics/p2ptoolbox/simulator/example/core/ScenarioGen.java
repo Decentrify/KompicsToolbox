@@ -18,30 +18,16 @@
  */
 package se.sics.p2ptoolbox.simulator.example.core;
 
-import se.sics.p2ptoolbox.simulator.example.core.MyComponent;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-import se.sics.kompics.network.Msg;
+import se.sics.ktoolbox.simulator.SimulationScenario;
+import se.sics.ktoolbox.simulator.adaptor.Operation1;
+import se.sics.ktoolbox.simulator.distributions.extra.BasicIntSequentialDistribution;
+import se.sics.ktoolbox.simulator.events.system.StartNodeEvent;
 import se.sics.ktoolbox.util.address.basic.BasicAddress;
-import se.sics.p2ptoolbox.simulator.cmd.impl.StartNodeCmd;
-import se.sics.p2ptoolbox.simulator.SimulationContext;
-import se.sics.p2ptoolbox.simulator.cmd.impl.ChangeNetworkModelCmd;
-import se.sics.p2ptoolbox.simulator.cmd.NetworkOpCmd;
-import se.sics.p2ptoolbox.simulator.cmd.OperationCmd;
-import se.sics.p2ptoolbox.simulator.cmd.impl.SimulationResult;
-import se.sics.p2ptoolbox.simulator.core.network.NetworkModel;
-import se.sics.p2ptoolbox.simulator.core.network.impl.PartitionedNetworkModel;
-import se.sics.p2ptoolbox.simulator.core.network.impl.UniformRandomModel;
-import se.sics.p2ptoolbox.simulator.core.network.PartitionMapperFactory;
-import se.sics.p2ptoolbox.simulator.dsl.SimulationScenario;
-import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation;
-import se.sics.p2ptoolbox.simulator.dsl.adaptor.Operation1;
-import se.sics.p2ptoolbox.simulator.dsl.distribution.ConstantDistribution;
-import se.sics.p2ptoolbox.simulator.dsl.distribution.extra.BasicIntSequentialDistribution;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -63,11 +49,11 @@ public class ScenarioGen {
         nodeAddressMap.put(4, new BasicAddress(localHost, 12348, 4));
     }
 
-    static Operation1<StartNodeCmd, Integer> startNodeOp = new Operation1<StartNodeCmd, Integer>() {
+    static Operation1<StartNodeEvent, Integer> startNodeOp = new Operation1<StartNodeEvent, Integer>() {
 
         @Override
-        public StartNodeCmd generate(final Integer nodeId) {
-            return new StartNodeCmd<MyComponent, BasicAddress>() {
+        public StartNodeEvent generate(final Integer nodeId) {
+            return new StartNodeEvent<MyComponent, BasicAddress>() {
 
                 @Override
                 public Integer getNodeId() {
@@ -75,12 +61,12 @@ public class ScenarioGen {
                 }
 
                 @Override
-                public Class getNodeComponentDefinition() {
+                public Class getComponentDefinition() {
                     return MyComponent.class;
                 }
 
                 @Override
-                public MyComponent.MyInit getNodeComponentInit(BasicAddress aggregatorServer, Set<BasicAddress> bootstrapNodes) {
+                public MyComponent.MyInit getComponentInit() {
                     BasicAddress self = nodeAddressMap.get(nodeId);
                     BasicAddress ping = null;
                     if (nodeId < nodeAddressMap.size()) {
@@ -95,13 +81,8 @@ public class ScenarioGen {
                 }
 
                 @Override
-                public int bootstrapSize() {
-                    return 5;
-                }
-
-                @Override
                 public String toString() {
-                    return "START<" + MyComponent.class.getCanonicalName() + ">";
+                    return "START<" + MyComponent.class.getName() + ":" + nodeId + ">";
                 }
             };
         }
@@ -113,20 +94,6 @@ public class ScenarioGen {
 //        public ChangeNetworkModelCmd generate() {
 //            NetworkModel networkModel = new PartitionedNetworkModel(new UniformRandomModel(50, 500), PartitionMapperFactory.get2EqualPartitions());
 //            return new ChangeNetworkModelCmd(networkModel);
-//        }
-//    };
-//    static Operation<SimulationResult> simulationResult = new Operation<SimulationResult>() {
-//
-//        public SimulationResult generate() {
-//            return new SimulationResult() {
-//
-//                @Override
-//                public void setSimulationResult(OperationCmd.ValidationException failureCause) {
-//                    MyExperimentResult.failureCause = failureCause;
-//                }
-//
-//            };
-//
 //        }
 //    };
     public static SimulationScenario simpleBoot() {
@@ -141,42 +108,9 @@ public class ScenarioGen {
 
                 startPeers.start();
                 terminateAfterTerminationOf(20000, startPeers);
-
             }
         };
 
         return scen;
     }
-
-//    public static SimulationScenario simpleChangeNetworkModel(final long seed) {
-//        SimulationScenario scen = new SimulationScenario() {
-//            {
-//                StochasticProcess startPeer = new StochasticProcess() {
-//                    {
-//                        eventInterArrivalTime(constant(1000));
-//                        raise(1, startNodeOp, new ConstantDistribution<Integer>(Integer.class, 1));
-//                    }
-//                };
-//                StochasticProcess changeNetworkModel = new StochasticProcess() {
-//                    {
-//                        eventInterArrivalTime(constant(1000));
-//                        raise(1, changeNetworkModelOp);
-//                    }
-//                };
-//                StochasticProcess fetchSimulationResult = new StochasticProcess() {
-//                    {
-//                        eventInterArrivalTime(constant(1000));
-//                        raise(1, simulationResult);
-//                    }
-//                };
-//
-//                startPeer.start();
-//                changeNetworkModel.startAfterTerminationOf(1000, startPeer);
-//                fetchSimulationResult.startAfterTerminationOf(1000, changeNetworkModel);
-//                terminateAfterTerminationOf(1000, fetchSimulationResult);
-//            }
-//        };
-//        scen.setSeed(seed);
-//        return scen;
-//    }
 }
