@@ -23,9 +23,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import se.sics.kompics.Component;
+import se.sics.kompics.ComponentProxy;
 import se.sics.ktoolbox.ipsolver.IpSolver;
 import se.sics.ktoolbox.ipsolver.hooks.IpSolverHook.*;
-import se.sics.p2ptoolbox.util.proxy.ComponentProxy;
 
 /**
  *
@@ -55,7 +55,7 @@ public class IpSolverHookFactory {
             }
 
             @Override
-            public void preStop(ComponentProxy proxy, Parent hookParnt,
+            public void tearDown(ComponentProxy proxy, Parent hookParnt,
                     SetupResult setupResult, TearInit hookTear) {
             }
         };
@@ -86,7 +86,7 @@ public class IpSolverHookFactory {
             }
 
             @Override
-            public void preStop(ComponentProxy proxy, Parent hookParent,
+            public void tearDown(ComponentProxy proxy, Parent hookParent,
                     SetupResult setupResult, TearInit hookTear) {
             }
         };

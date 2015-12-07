@@ -22,7 +22,7 @@ import com.google.common.base.Optional;
 import java.util.List;
 import se.sics.kompics.Component;
 import se.sics.ktoolbox.ipsolver.msg.GetIp;
-import se.sics.p2ptoolbox.util.proxy.Hook;
+import se.sics.ktoolbox.util.proxy.Hook;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -57,6 +57,9 @@ public class IpSolverHook {
         }
     }
 
-    public static class TearInit implements Hook.TearInit {
+    public static class TearInit extends Hook.TearInit {
+        public TearInit(boolean killed) {
+            super(killed);
+        }
     }
 }

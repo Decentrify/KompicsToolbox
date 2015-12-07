@@ -2,33 +2,40 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>se.sics</groupId>
-    <artifactId>kompics-toolbox</artifactId>
+    <artifactId>ktoolbox</artifactId>
     <name>Kompics Toolbox</name>
     <version>2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>util</module>
+        <module>aggregator</module>
         <module>simulator</module>
-<!--        <module>croupier</module>
+        <module>ip-solver</module>
+        <!--<module>croupier</module>-->
+        <!--       
         <module>gradient</module>
         <module>chunk-manager</module>
         <module>aggregator</module>
         <module>videostream</module>
         <module>leader-election</module> 
-        <module>ip-solver</module>
         <module>caracal-client</module>
         <module>nat-echo</module>
         <module>overlay-mngr</module>
         <module>fd</module>-->
     </modules>
 
-    <!-- simulator bumped to 1.8 - check if it is compatible with other modules-->    
     <properties>
         <java.version>1.7</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kompics.version>0.9.0-SNAPSHOT</kompics.version>
         
+        <latest.util.version>2.0.1-SNAPSHOT</latest.util.version>
+        <latest.aggregator.version>2.0.1-SNAPSHOT</latest.aggregator.version>
+        <latest.simulator.version>2.0.1-SNAPSHOT</latest.simulator.version>
+        <latest.ipsolver.version>2.0.1-SNAPSHOT</latest.ipsolver.version>
+<!--        <latest.util.version>2.0.1-SNAPSHOT</latest.util.version>
         <latest.simulator.version>1.8-SNAPSHOT</latest.simulator.version>
         <latest.croupier.version>2.0.1-SNAPSHOT</latest.croupier.version>
         <latest.gradient.version>2.0.1-SNAPSHOT</latest.gradient.version>
@@ -45,9 +52,8 @@
         <original.leader.version>1.4-SNAPSHOT</original.leader.version>
         <original.ipsolver.version>1.1-SNAPSHOT</original.ipsolver.version>
         <original.caracal.version>1.2-SNAPSHOT</original.caracal.version>
-        <original.natecho.version>0.0.2-SNAPSHOT</original.natecho.version>
+        <original.natecho.version>0.0.2-SNAPSHOT</original.natecho.version>-->
 
-        <kompics.version>0.8.3-SNAPSHOT</kompics.version>
         <junit.version>4.11</junit.version>
         <guava.version>18.0</guava.version>
         <tuples.version>1.2</tuples.version>
