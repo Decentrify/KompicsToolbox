@@ -21,8 +21,7 @@ package se.sics.ktoolbox.croupier.event;
 import java.util.Map;
 import java.util.UUID;
 import se.sics.kompics.network.Address;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
-import se.sics.p2ptoolbox.util.AgingContainer;
+import se.sics.ktoolbox.util.other.AgingContainer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

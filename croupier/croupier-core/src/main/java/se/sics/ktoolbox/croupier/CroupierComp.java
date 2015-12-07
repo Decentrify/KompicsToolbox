@@ -21,7 +21,6 @@
 package se.sics.ktoolbox.croupier;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -53,9 +52,6 @@ import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
-import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.msg.BasicContentMsg;
 import se.sics.ktoolbox.util.msg.BasicHeader;
 import se.sics.ktoolbox.util.msg.DecoratedHeader;
@@ -66,6 +62,8 @@ import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
 import se.sics.ktoolbox.croupier.history.DeleteAndForgetHistory;
 import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.view.LocalView;
+import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

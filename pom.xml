@@ -11,7 +11,7 @@
         <module>aggregator</module>
         <module>simulator</module>
         <module>ip-solver</module>
-        <!--<module>croupier</module>-->
+        <module>croupier</module>
         <!--       
         <module>gradient</module>
         <module>chunk-manager</module>
