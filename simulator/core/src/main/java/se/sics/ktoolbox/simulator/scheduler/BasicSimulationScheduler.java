@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import se.sics.kompics.Component;
 import se.sics.kompics.Scheduler;
 import se.sics.ktoolbox.simulator.Simulator;
-import se.sics.ktoolbox.simulator.scheduler.SimulationScheduler;
 
 /**
  * The <code>BasicSimulationScheduler</code> class.

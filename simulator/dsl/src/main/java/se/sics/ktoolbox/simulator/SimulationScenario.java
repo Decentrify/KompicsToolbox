@@ -28,13 +28,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.Set;
 import java.util.TimeZone;
 import javassist.ClassPool;
 import javassist.Loader;
 import javassist.Translator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.KompicsEvent;
 import se.sics.ktoolbox.simulator.adaptor.ConcreteOperation;
@@ -63,10 +60,8 @@ import se.sics.ktoolbox.simulator.events.stochastic.StochasticSimulationTerminat
 import se.sics.ktoolbox.simulator.events.stochastic.StochasticSimulatorEvent;
 import se.sics.ktoolbox.simulator.events.other.TakeSnapshot;
 import se.sics.ktoolbox.simulator.events.stochastic.StochasticTakeSnapshotEvent;
-import se.sics.ktoolbox.simulator.instrumentation.CodeInstrumenter;
 import se.sics.ktoolbox.simulator.instrumentation.InstrumentationHelper;
 import se.sics.ktoolbox.simulator.instrumentation.CodeInterceptor;
-import se.sics.ktoolbox.simulator.instrumentation.decorators.HandlerDecorator;
 
 /**
  * The <code>SimulationScenario</code> class.
@@ -78,24 +73,22 @@ public abstract class SimulationScenario implements Serializable {
 
     private static final long serialVersionUID = 5278102582431240537L;
 
-    private static Logger LOG = LoggerFactory.getLogger(CodeInstrumenter.class);
-
-    private final Random random;
+    private static Random random = new Random(0l);
+    
+    public static void setSeed(long seed) {
+        random.setSeed(seed);
+    }
+    
+    public static Random getRandom() {
+        return random;
+    }
+    
     private final LinkedList<StochasticProcess> processes = new LinkedList<>();
     private int processCount;
     private StochasticSimulationTerminatedEvent terminatedEvent;
 
     public SimulationScenario() {
-        random = new Random();
         processCount = 0;
-    }
-
-    public void setSeed(long seed) {
-        random.setSeed(seed);
-    }
-
-    public Random getRandom() {
-        return random;
     }
 
     protected abstract class StochasticProcess implements Serializable {
@@ -372,7 +365,6 @@ public abstract class SimulationScenario implements Serializable {
             }
         }
         if (started == 0) {
-            LOG.error("Processes have circular relative start times");
             throw new RuntimeException("Processes have circular relative start times");
         }
         if (terminatedEvent != null && !terminatedEvent.isRelativeTime()) {

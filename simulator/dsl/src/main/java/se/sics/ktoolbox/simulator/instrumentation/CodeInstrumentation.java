@@ -18,25 +18,33 @@
  */
 package se.sics.ktoolbox.simulator.instrumentation;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.util.HashSet;
 import java.util.Set;
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.JavaComponent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CodeInstrumentation {
 
-    private static final Logger LOG = LoggerFactory.getLogger("CodeInstrumentation");
-    
+    //LOGS
+    public static final Logger INSTRUMENTATION_LOG = LoggerFactory.getLogger("CodeInstrumentation");
+    private static final Logger STATISTICS_LOG = LoggerFactory.getLogger("SimulationStatistics");
+
+    //EXCEPTIONS
     public static final String INTERCEPTOR_EXCEPTIONS = "instrumentation.exceptions";
-    public static final String HANDLER_DECORATORS = "instrumentation.handler.decorators";
-    public static final String HANDLER_DECORATOR_BEFORE = "before";
-    public static final String HANDLER_DECORATOR_AFTER = "after";
+    public static final Set<String> instrumentationExceptedClass = new HashSet<>();
+
+    static {
+        instrumentationExceptedClass.addAll(knownInterceptorExceptions());
+        instrumentationExceptedClass.addAll(readInterceptorExceptionsFromTypesafeConfig());
+    }
 
     public static Set<String> knownInterceptorExceptions() {
         Set<String> exceptions = new HashSet<>();
@@ -49,17 +57,10 @@ public class CodeInstrumentation {
         exceptions.add("org.apache.commons.math.stat.descriptive.DescriptiveStatistics");
         return exceptions;
     }
-    
+
     public static Set<String> readInterceptorExceptionsFromTypesafeConfig() {
         Config config = ConfigFactory.load();
         Set<String> exceptions = new HashSet<>(config.getStringList(INTERCEPTOR_EXCEPTIONS));
         return exceptions;
     }
-
-//    public static Pair<Set<String>, Set<String>> readHandlerDecoratorsFromTypesafeConfig() {
-//        Config config = ConfigFactory.load();
-//        Set<String> beforeHandler = new HashSet<>(config.getStringList(HANDLER_DECORATORS + "." + HANDLER_DECORATOR_BEFORE));
-//        Set<String> afterHandler = new HashSet<>(config.getStringList(HANDLER_DECORATORS + "." + HANDLER_DECORATOR_AFTER));
-//        return Pair.with(beforeHandler, afterHandler);
-//    }
 }

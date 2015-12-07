@@ -30,7 +30,6 @@ import java.util.TimeZone;
  * @version $Id$
  */
 public class SimulatorSystem {
-
     private static Simulator simulator = null;
 
     public static void setSimulator(Simulator s) {

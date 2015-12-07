@@ -58,7 +58,7 @@ import se.sics.ktoolbox.simulator.scheduler.SimulationScheduler;
  * @author Cosmin Arad <cosmin@sics.se>
  * @version $Id$
  */
-public final class P2pSimulator extends ComponentDefinition implements Simulator, SimulatorComponent {
+public final class P2pSimulator extends ComponentDefinition implements Simulator, SimulatorComp {
 
     private static final Logger LOG = LoggerFactory.getLogger(P2pSimulator.class);
     private String logPrefix = "";
@@ -89,12 +89,13 @@ public final class P2pSimulator extends ComponentDefinition implements Simulator
 
         scheduler = init.scheduler;
         scheduler.setSimulator(this);
-        // set myself as the simulated time provider
-        SimulatorSystem.setSimulator(this);
         scenario = init.scenario;
         networkModel = init.networkModel;
+        random = SimulationScenario.getRandom();
+        
+         //simulator system
+        SimulatorSystem.setSimulator(this);
 
-        random = scenario.getRandom();
         futureEventList = new FutureEventList();
         CLOCK = 0;
         simulationStartTime = System.currentTimeMillis();
