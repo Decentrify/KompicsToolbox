@@ -18,12 +18,11 @@
  */
 package se.sics.p2ptoolbox.tgradient.util;
 
+import com.google.common.primitives.Ints;
 import java.util.Comparator;
-import se.sics.p2ptoolbox.gradient.util.GradientContainer;
-import se.sics.p2ptoolbox.util.Java6Util;
+import se.sics.ktoolbox.gradient.util.GradientContainer;
 
 /**
- *
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class ParentPreferenceComparator implements Comparator<GradientContainer> {
@@ -67,15 +66,15 @@ public class ParentPreferenceComparator implements Comparator<GradientContainer>
         
         //best range
         if (firstRange(o1) && firstRange(o2)) {
-            return Java6Util.compareInt(o1.rank, o2.rank); //prefer smaller one
+            return Ints.compare(o1.rank, o2.rank); //prefer smaller one
         }
         //second range
         if (secondRange(o1) && secondRange(o2)) {
-            return -1 * Java6Util.compareInt(o1.rank, o2.rank); //prefer larger one 
+            return -1 * Ints.compare(o1.rank, o2.rank); //prefer larger one 
         }
         
         if (thirdRange(o1) && thirdRange(o2)) {
-            return Java6Util.compareInt(o1.rank, o2.rank); //prefer smaller one 
+            return Ints.compare(o1.rank, o2.rank); //prefer smaller one 
         }
         
         if(firstRange(o1)) {
@@ -97,7 +96,7 @@ public class ParentPreferenceComparator implements Comparator<GradientContainer>
             return 1;
         }
         
-        return Java6Util.compareInt(o1.rank, o2.rank);
+        return Ints.compare(o1.rank, o2.rank);
     }
     
     private boolean firstRange(GradientContainer o) {

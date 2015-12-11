@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * KompicsToolbox is free software; you can redistribute it and/or
+ * GVoD is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,14 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.tgradient;
+package se.sics.ktoolbox.gradient.msg;
 
-import se.sics.ktoolbox.util.config.KConfigOption;
+import java.util.Collection;
+import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.network.Address;
+import se.sics.ktoolbox.util.other.Container;
 
 /**
- * @author Alex Ormenisan <aaor@kth.se>
+ * Set of peer views published by the gradient periodically.
+ *
+ * Created by babbarshaer on 2015-02-26.
  */
-public class TGradientKConfig {
-    public final static KConfigOption.Basic<Integer> centerNodes = new KConfigOption.Basic("tgradient.centerNodes", Integer.class);
-    public final static KConfigOption.Basic<Integer> branching = new KConfigOption.Basic("tgradient.branching", Integer.class);
+public class GradientSample<C extends Object> implements KompicsEvent {
+    public final C selfView;
+    public final Collection<Container<Address, C>> gradientSample;
+    
+    public GradientSample(C selfView, Collection<Container<Address, C>> gradientPeerViewSet) {
+        super();
+        this.selfView = selfView;
+        this.gradientSample = gradientPeerViewSet;
+    }
 }

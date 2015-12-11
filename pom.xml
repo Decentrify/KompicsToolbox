@@ -12,9 +12,8 @@
         <!--<module>simulator</module>-->
         <module>ip-solver</module>
         <module>croupier</module>
-               <!--
         <module>gradient</module>
-        <module>chunk-manager</module>
+<!--        <module>chunk-manager</module>
         <module>aggregator</module>
         <module>videostream</module>
         <module>leader-election</module> 

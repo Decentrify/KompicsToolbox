@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * KompicsToolbox is free software; you can redistribute it and/or
+ * GVoD is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,14 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.tgradient;
 
-import se.sics.ktoolbox.util.config.KConfigOption;
+package se.sics.ktoolbox.gradient.util;
 
 /**
- * @author Alex Ormenisan <aaor@kth.se>
+ * @author Alex Ormenisan <aaor@sics.se>
  */
-public class TGradientKConfig {
-    public final static KConfigOption.Basic<Integer> centerNodes = new KConfigOption.Basic("tgradient.centerNodes", Integer.class);
-    public final static KConfigOption.Basic<Integer> branching = new KConfigOption.Basic("tgradient.branching", Integer.class);
+public class ViewConfig {
+    public final int viewSize;
+    public final double exchangeSMTemp;
+    public final int oldThreshold;
+    
+    public ViewConfig(int viewSize, double exchangeSMTemp, int oldThreshold) {
+        this.viewSize = viewSize;
+        this.exchangeSMTemp = exchangeSMTemp;
+        this.oldThreshold = oldThreshold;
+    }
 }

@@ -16,14 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.tgradient;
+package se.sics.ktoolbox.gradient;
 
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TGradientKConfig {
-    public final static KConfigOption.Basic<Integer> centerNodes = new KConfigOption.Basic("tgradient.centerNodes", Integer.class);
-    public final static KConfigOption.Basic<Integer> branching = new KConfigOption.Basic("tgradient.branching", Integer.class);
+public class GradientKConfig {
+    public final static KConfigOption.Basic<Integer> viewSize = new KConfigOption.Basic("gradient.viewSize", Integer.class);
+    public final static KConfigOption.Basic<Integer> shuffleSize = new KConfigOption.Basic("gradient.shuffleSize", Integer.class);
+    public final static KConfigOption.Basic<Long> shufflePeriod = new KConfigOption.Basic("gradient.shufflePeriod", Long.class);
+    public final static KConfigOption.Basic<Long> shuffleTimeout = new KConfigOption.Basic("gradient.shuffleTimeout", Long.class);
+    public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("gradient.softMaxTemperature", Double.class);
+    public final static KConfigOption.Basic<Integer> oldThreshold = new KConfigOption.Basic("gradient.oldThreshold", Integer.class);
 }

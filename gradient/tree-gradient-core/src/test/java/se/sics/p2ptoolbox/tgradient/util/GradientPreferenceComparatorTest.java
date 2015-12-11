@@ -19,16 +19,14 @@
 package se.sics.p2ptoolbox.tgradient.util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import junit.framework.Assert;
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import se.sics.p2ptoolbox.gradient.util.GradientContainer;
+import se.sics.ktoolbox.gradient.util.GradientContainer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
