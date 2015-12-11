@@ -18,27 +18,11 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
+import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class VisualizerKConfig implements KConfigLevel{
-    public final static KConfigOption.Basic<Integer> snapshotMaxSize = new KConfigOption.Basic("visualizer.snapshotMaxSize", Integer.class, new VisualizerKConfig());
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "VisualizerKConfig";
-    }
+public class VisualizerKConfig {
+    public final static KConfigOption.Basic<Integer> snapshotMaxSize = new KConfigOption.Basic("visualizer.snapshotMaxSize", Integer.class);
 }

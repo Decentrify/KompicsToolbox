@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.util.managedStore;
 
+import se.sics.ktoolbox.util.managedStore.HashUtil;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,7 +33,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
-import se.sics.p2ptoolbox.util.managedStore.HashUtil.HashBuilderException;
+import se.sics.ktoolbox.util.managedStore.HashUtil.HashBuilderException;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

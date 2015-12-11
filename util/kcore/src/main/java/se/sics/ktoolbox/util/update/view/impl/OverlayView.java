@@ -19,9 +19,7 @@
 package se.sics.ktoolbox.util.update.view.impl;
 
 import com.google.common.base.Optional;
-import java.util.UUID;
 import se.sics.ktoolbox.util.update.view.View;
-import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

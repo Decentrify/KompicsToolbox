@@ -22,12 +22,13 @@ import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
 import io.netty.buffer.ByteBuf;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.netty.serialization.Serializer;
-import se.sics.ktoolbox.util.address.basic.BasicAddress;
+import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.simutil.identifiable.Identifier;
+import se.sics.kompics.simutil.msg.impl.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -49,19 +50,19 @@ public class BasicAddressSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        BasicAddress addr = (BasicAddress) o;
-        if (addr == null) {
+        BasicAddress adr = (BasicAddress) o;
+        if (adr == null) {
             buf.writeInt(0); //simply put four 0 bytes since 0.0.0.0 is not a valid host ip
             return;
         }
 
-        buf.writeBytes(addr.getIp().getAddress());
+        buf.writeBytes(adr.getIp().getAddress());
         // Write ports as 2 bytes instead of 4
-        byte[] portBytes = Ints.toByteArray(addr.getPort());
+        byte[] portBytes = Ints.toByteArray(adr.getPort());
         buf.writeByte(portBytes[2]);
         buf.writeByte(portBytes[3]);
         // Id
-        buf.writeInt(addr.getId());
+        Serializers.toBinary(adr.getId(), buf);
     }
 
     @Override
@@ -81,15 +82,8 @@ public class BasicAddressSerializer implements Serializer {
         byte portUpper = buf.readByte();
         byte portLower = buf.readByte();
         int addressPort = Ints.fromBytes((byte) 0, (byte) 0, portUpper, portLower);
-        //TODO Alex - check if removing hint breaks stuff
-//        if(hint.isPresent() && hint.get() instanceof InetSocketAddress) {
-//            InetSocketAddress adr = (InetSocketAddress)hint.get();
-//            addressIp = adr.getAddress();
-//            addressPort = adr.getPort();
-//        } 
-        int addressId = buf.readInt();
+        Identifier addressId = (Identifier)Serializers.fromBinary(buf, hint);
         
         return new BasicAddress(addressIp, addressPort, addressId);
     }
-
 }

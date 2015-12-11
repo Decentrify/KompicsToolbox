@@ -23,8 +23,8 @@
 
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>util-serializer</artifactId>
-            <version>${util.version}</version>
+            <artifactId>network</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

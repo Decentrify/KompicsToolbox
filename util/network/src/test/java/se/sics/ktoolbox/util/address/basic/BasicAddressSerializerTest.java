@@ -28,8 +28,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.address.basic.BasicAddress;
-import se.sics.ktoolbox.util.address.resolution.AddressResolutionHelper;
+import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
+import se.sics.kompics.simutil.msg.impl.BasicAddress;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -40,9 +40,6 @@ public class BasicAddressSerializerTest {
     public static void setup() {
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
-        
-        AddressResolutionHelper.reset();
-        AddressResolutionHelper.useNatAwareAddresses();
     }
     
     @Test
@@ -51,7 +48,7 @@ public class BasicAddressSerializerTest {
         BasicAddress original, copy;
         ByteBuf buf;
 
-        original = new BasicAddress(InetAddress.getLocalHost(), 10000, 1);
+        original = new BasicAddress(InetAddress.getLocalHost(), 10000, new IntIdentifier(1));
         buf = Unpooled.buffer();
         serializer.toBinary(original, buf);
         

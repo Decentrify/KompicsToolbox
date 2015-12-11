@@ -33,8 +33,8 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.ktoolbox.util.proxy.network.NetworkHook.*;
-import se.sics.ktoolbox.util.other.ConnectionHelperComp;
-import se.sics.ktoolbox.util.other.ConnectionHelperComp.ConnectionHelperInit;
+import se.sics.ktoolbox.util.connect.ConnectionHelperComp;
+import se.sics.ktoolbox.util.connect.ConnectionHelperComp.ConnectionHelperInit;
 import se.sics.ktoolbox.util.selectors.DestinationPortSelector;
 
 /**

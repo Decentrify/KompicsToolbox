@@ -27,7 +27,7 @@ import org.javatuples.Pair;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.ktoolbox.util.address.nat.Nat;
 import se.sics.ktoolbox.util.address.nat.NatType;
-import se.sics.p2ptoolbox.util.BitBuffer;
+import se.sics.ktoolbox.util.BitBuffer;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

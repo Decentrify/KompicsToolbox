@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.aggregator.event;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
 
 /**
  * Marker interface for segregating the messages belonging to the
@@ -27,5 +26,5 @@ import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
  *
  * Created by babbar on 2015-09-15.
  */
-public interface AggregatorEvent extends KompicsEvent, UUIDIdentifiable {
+public interface AggregatorEvent extends KompicsEvent {
 }

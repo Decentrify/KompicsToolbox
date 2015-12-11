@@ -21,20 +21,20 @@ package se.sics.ktoolbox.util.setup;
 import se.sics.ktoolbox.util.msg.BasicHeaderSerializer;
 import se.sics.ktoolbox.util.address.basic.BasicAddressSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.address.basic.BasicAddress;
-import se.sics.ktoolbox.util.address.nat.CompleteNAAddress;
-import se.sics.ktoolbox.util.address.nat.CompleteNAAddressSerializer;
+import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
+import se.sics.kompics.simutil.identifiable.impl.UUIDIdentifier;
+import se.sics.kompics.simutil.msg.impl.BasicAddress;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
+import se.sics.ktoolbox.util.IntIdentifierSerializer;
+import se.sics.ktoolbox.util.UUIDIdentifierSerializer;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddressImpl;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddressImplSerializer;
 import se.sics.ktoolbox.util.address.nat.NatType;
-import se.sics.ktoolbox.util.msg.BasicContentMsg;
 import se.sics.ktoolbox.util.msg.BasicContentMsgSerializer;
-import se.sics.ktoolbox.util.msg.BasicHeader;
-import se.sics.ktoolbox.util.msg.DecoratedHeader;
 import se.sics.ktoolbox.util.msg.DecoratedHeaderSerializer;
-import se.sics.ktoolbox.util.msg.Route;
-import se.sics.ktoolbox.util.msg.RouteSerializer;
 import se.sics.ktoolbox.util.address.nat.NatTypeSerializer;
-import se.sics.ktoolbox.util.address.nat.StrippedNAAddress;
-import se.sics.ktoolbox.util.address.nat.StrippedNAAddressSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -44,10 +44,11 @@ public class BasicSerializerSetup {
     public static final int serializerIds = 8;
 
     public static enum BasicSerializers {
+
+        IntIdentifier(IntIdentifier.class, "intIdentifierSerializer"),
+        UUIDIdentifier(UUIDIdentifier.class, "uuidIdentifierSerializer"),
         BasicAddress(BasicAddress.class, "basicAddressSerializer"),
-        StrippedNAAddress(StrippedNAAddress.class, "strippedNAAddressSerializer"),
-        CompleteNAAddress(CompleteNAAddress.class, "completeNAAddressSerializer"),
-        Route(Route.class, "routeSerializer"),
+        NatAwareAddressImpl(NatAwareAddressImpl.class, "strippedNAAddressSerializer"),
         BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
         DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
         BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
@@ -71,26 +72,26 @@ public class BasicSerializerSetup {
     }
 
     public static int registerBasicSerializers(int startingId) {
-        if(startingId < 128) {
+        if (startingId < 128) {
             throw new RuntimeException("start your serializer ids at 128");
         }
         int currentId = startingId;
 
+        IntIdentifierSerializer intIdentifierSerializer = new IntIdentifierSerializer(currentId++);
+        Serializers.register(intIdentifierSerializer, BasicSerializers.IntIdentifier.serializerName);
+        Serializers.register(BasicSerializers.IntIdentifier.serializedClass, BasicSerializers.IntIdentifier.serializerName);
+
+        UUIDIdentifierSerializer uuidIdentifierSerializer = new UUIDIdentifierSerializer(currentId++);
+        Serializers.register(uuidIdentifierSerializer, BasicSerializers.UUIDIdentifier.serializerName);
+        Serializers.register(BasicSerializers.UUIDIdentifier.serializedClass, BasicSerializers.UUIDIdentifier.serializerName);
+
         BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(currentId++);
         Serializers.register(basicAddressSerializer, BasicSerializers.BasicAddress.serializerName);
         Serializers.register(BasicSerializers.BasicAddress.serializedClass, BasicSerializers.BasicAddress.serializerName);
-        
-        CompleteNAAddressSerializer completeNAAddressSerializer = new CompleteNAAddressSerializer(currentId++);
-        Serializers.register(completeNAAddressSerializer, BasicSerializers.CompleteNAAddress.serializerName);
-        Serializers.register(BasicSerializers.CompleteNAAddress.serializedClass, BasicSerializers.CompleteNAAddress.serializerName);
 
-        StrippedNAAddressSerializer strippedNAAddressSerializer = new StrippedNAAddressSerializer(currentId++);
-        Serializers.register(strippedNAAddressSerializer, BasicSerializers.StrippedNAAddress.serializerName);
-        Serializers.register(BasicSerializers.StrippedNAAddress.serializedClass, BasicSerializers.StrippedNAAddress.serializerName);
-
-        RouteSerializer routeSerializer = new RouteSerializer(currentId++);
-        Serializers.register(routeSerializer, BasicSerializers.Route.serializerName);
-        Serializers.register(BasicSerializers.Route.serializedClass, BasicSerializers.Route.serializerName);
+        NatAwareAddressImplSerializer natAwareAddressSerializer = new NatAwareAddressImplSerializer(currentId++);
+        Serializers.register(natAwareAddressSerializer, BasicSerializers.NatAwareAddressImpl.serializerName);
+        Serializers.register(BasicSerializers.NatAwareAddressImpl.serializedClass, BasicSerializers.NatAwareAddressImpl.serializerName);
 
         BasicHeaderSerializer basicHeaderSerializer = new BasicHeaderSerializer(currentId++);
         Serializers.register(basicHeaderSerializer, BasicSerializers.BasicHeader.serializerName);
@@ -103,7 +104,7 @@ public class BasicSerializerSetup {
         BasicContentMsgSerializer basicContentMsgSerializer = new BasicContentMsgSerializer(currentId++);
         Serializers.register(basicContentMsgSerializer, BasicSerializers.BasicContentMsg.serializerName);
         Serializers.register(BasicSerializers.BasicContentMsg.serializedClass, BasicSerializers.BasicContentMsg.serializerName);
-        
+
         NatTypeSerializer natTypeSerializer = new NatTypeSerializer(currentId++);
         Serializers.register(natTypeSerializer, BasicSerializers.NatType.serializerName);
         Serializers.register(BasicSerializers.NatType.serializedClass, BasicSerializers.NatType.serializerName);

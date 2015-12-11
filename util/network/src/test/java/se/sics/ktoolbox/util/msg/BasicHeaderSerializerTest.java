@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,13 +31,14 @@ import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.address.basic.BasicAddress;
-import se.sics.ktoolbox.util.address.nat.CompleteNAAddress;
-import se.sics.ktoolbox.util.address.resolution.AddressResolutionHelper;
+import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
+import se.sics.kompics.simutil.msg.impl.BasicAddress;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BasicHeaderSerializerTest {
@@ -49,9 +51,6 @@ public class BasicHeaderSerializerTest {
 
     @Test
     public void testBasicAddress() throws UnknownHostException {
-        AddressResolutionHelper.reset();
-        AddressResolutionHelper.useBasicAddresses();
-        
         Serializer serializer = Serializers.lookupSerializer(BasicHeader.class);
         BasicHeader<Address> original, copy;
         ByteBuf serializedOriginal, serializedCopy;
@@ -62,8 +61,8 @@ public class BasicHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        BasicAddress simpleAdr1 = new BasicAddress(localHost, 10000, 1);
-        BasicAddress simpleAdr2 = new BasicAddress(localHost, 10000, 2);
+        BasicAddress simpleAdr1 = new BasicAddress(localHost, 10000, new IntIdentifier(1));
+        BasicAddress simpleAdr2 = new BasicAddress(localHost, 10000, new IntIdentifier(2));
         original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
@@ -72,17 +71,16 @@ public class BasicHeaderSerializerTest {
         serializedOriginal.getBytes(0, serializedCopy, serializedOriginal.readableBytes());
         copy = (BasicHeader) serializer.fromBinary(serializedCopy, Optional.absent());
 
-        Assert.assertEquals(original, copy);
+        Assert.assertEquals(original.getSource(), copy.getSource());
+        Assert.assertEquals(original.getDestination(), copy.getDestination());
+        Assert.assertEquals(original.getProtocol(), copy.getProtocol());
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
     
     @Test
     public void testNatAwareOpenAddress() throws UnknownHostException {
-        AddressResolutionHelper.reset();
-        AddressResolutionHelper.useNatAwareAddresses();
-        
         Serializer serializer = Serializers.lookupSerializer(BasicHeader.class);
-        BasicHeader<Address> original, copy;
+        BasicHeader<NatAwareAddress> original, copy;
         ByteBuf serializedOriginal, serializedCopy;
 
         InetAddress localHost;
@@ -91,8 +89,8 @@ public class BasicHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        CompleteNAAddress simpleAdr1 = CompleteNAAddress.open(new BasicAddress(localHost, 10000, 1));
-        CompleteNAAddress simpleAdr2 = CompleteNAAddress.open(new BasicAddress(localHost, 10000, 2));
+        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, new IntIdentifier(1)));
+        NatAwareAddressImpl simpleAdr2 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, new IntIdentifier(2)));
         original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
@@ -101,7 +99,15 @@ public class BasicHeaderSerializerTest {
         serializedOriginal.getBytes(0, serializedCopy, serializedOriginal.readableBytes());
         copy = (BasicHeader) serializer.fromBinary(serializedCopy, Optional.absent());
 
-        Assert.assertEquals(original, copy);
+        Assert.assertFalse(copy.getSource().getPrivateAdr().isPresent());
+        Assert.assertEquals(original.getSource().getPublicAdr(), copy.getSource().getPublicAdr());
+        Assert.assertEquals(original.getSource().getNatType(), copy.getSource().getNatType());
+        Assert.assertTrue(Objects.equals(original.getSource().getParents(), copy.getSource().getParents()));
+        Assert.assertFalse(copy.getDestination().getPrivateAdr().isPresent());
+        Assert.assertEquals(original.getDestination().getPublicAdr(), copy.getDestination().getPublicAdr());
+        Assert.assertEquals(original.getDestination().getNatType(), copy.getDestination().getNatType());
+        Assert.assertTrue(Objects.equals(original.getDestination().getParents(), copy.getDestination().getParents()));
+        Assert.assertEquals(original.getProtocol(), copy.getProtocol());
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
 }

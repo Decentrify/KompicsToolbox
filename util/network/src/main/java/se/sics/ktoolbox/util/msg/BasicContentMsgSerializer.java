@@ -24,6 +24,7 @@ import io.netty.channel.socket.DatagramPacket;
 import se.sics.kompics.network.Header;
 import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

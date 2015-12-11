@@ -22,7 +22,7 @@ package se.sics.ktoolbox.util.address.resolution;
 import com.google.common.base.Optional;
 import java.util.UUID;
 import se.sics.kompics.Direct;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 
 /**
  *

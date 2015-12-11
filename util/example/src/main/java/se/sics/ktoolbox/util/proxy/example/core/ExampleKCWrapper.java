@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.util.proxy.example.core;
 
 import se.sics.kompics.network.Address;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

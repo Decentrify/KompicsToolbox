@@ -19,7 +19,6 @@
 
 package se.sics.ktoolbox.util.proxy.example.deploy;
 
-import se.sics.ktoolbox.util.address.resolution.AddressResolutionHelper;
 import se.sics.ktoolbox.util.proxy.SystemHookSetup;
 import se.sics.ktoolbox.util.proxy.example.core.ExampleComp;
 import se.sics.ktoolbox.util.proxy.example.hooks.XYHookDefinition;
@@ -34,9 +33,6 @@ public class SystemSetup {
     public static void setup(SystemHookSetup systemHooks) {
         systemHooks.register(ExampleComp.RequiredHooks.XY_HOOK.name(), new XYHookDefinition());
         systemHooks.register(ExampleComp.RequiredHooks.NETWORK_HOOK.name(), NetworkHookFactory.getNettyNetwork());
-        
-        AddressResolutionHelper.reset();
-        AddressResolutionHelper.useBasicAddresses();
         
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);

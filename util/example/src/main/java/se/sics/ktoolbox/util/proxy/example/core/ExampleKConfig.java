@@ -20,9 +20,9 @@ package se.sics.ktoolbox.util.proxy.example.core;
 
 import java.util.HashSet;
 import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
-import se.sics.p2ptoolbox.util.config.options.BasicAddressOption;
+import se.sics.ktoolbox.util.config.KConfigLevel;
+import se.sics.ktoolbox.util.config.KConfigOption.Basic;
+import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

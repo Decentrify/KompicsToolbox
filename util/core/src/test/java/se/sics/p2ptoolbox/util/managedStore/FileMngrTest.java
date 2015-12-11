@@ -18,6 +18,9 @@
  */
 package se.sics.p2ptoolbox.util.managedStore;
 
+import se.sics.ktoolbox.util.managedStore.FileMngr;
+import se.sics.ktoolbox.util.managedStore.HashUtil;
+import se.sics.ktoolbox.util.managedStore.StorageMngrFactory;
 import com.google.common.io.BaseEncoding;
 import java.io.File;
 import java.io.FileOutputStream;

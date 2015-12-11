@@ -30,9 +30,8 @@ import org.javatuples.Pair;
 import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerProcessor;
-import se.sics.ktoolbox.aggregator.util.AggregatorProcessor;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * Visualizer component used for providing the visualizations to the end user.

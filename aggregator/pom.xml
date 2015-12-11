@@ -5,27 +5,21 @@
     <parent>
         <groupId>se.sics</groupId>
         <artifactId>ktoolbox</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
 
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>aggregator</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
     <name>Aggregator</name>
     <packaging>pom</packaging>
 
     <modules>
         <module>common-api</module>
-        <module>common-core</module>
         <module>server</module>
         <module>client</module>
-        <!--<module>network</module>-->
-        <module>example</module>
+        <module>network</module>
+        <!--<module>example</module>-->
     </modules>
-
-    <properties>
-        <util.version>${latest.util.version}</util.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -47,7 +41,7 @@
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
             <artifactId>kcore</artifactId>
-            <version>${util.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>

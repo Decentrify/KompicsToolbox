@@ -31,13 +31,14 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.UniDirectionalChannel;
+import se.sics.kompics.config.Config;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.proxy.Hook;
 import se.sics.ktoolbox.util.proxy.SystemHookSetup;
 import se.sics.ktoolbox.util.proxy.example.core.BaseComp.BaseInit;
 import se.sics.ktoolbox.util.proxy.network.NetworkHook;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

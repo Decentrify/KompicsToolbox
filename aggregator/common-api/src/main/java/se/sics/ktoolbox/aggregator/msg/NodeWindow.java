@@ -36,11 +36,6 @@ public class NodeWindow implements AggregatorEvent {
     }
     
     @Override
-    public UUID getId() {
-        return id;
-    }
-    
-    @Override
     public String toString() {
         return "AGG_NODE_WINDOW<" + id + ">";
     }

@@ -51,11 +51,6 @@ public class VisualizerWindow {
             return getClass() + "<" + id + ">";
         }
 
-        @Override
-        public UUID getId() {
-            return id;
-        }
-        
         public <P extends VisualizerPacket> Response answer(P visualizationWindow) {
             return new Response(this, visualizationWindow);
         }
@@ -82,11 +77,6 @@ public class VisualizerWindow {
             return this.window;
         }
 
-        @Override
-        public UUID getId() {
-            return req.getId();
-        }
-        
         @Override
         public String toString() {
             return getClass() + "<" + req.id + ">";

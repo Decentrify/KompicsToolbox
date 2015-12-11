@@ -22,14 +22,13 @@ import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.socket.DatagramPacket;
 import org.javatuples.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.BitBuffer;
-import se.sics.p2ptoolbox.util.traits.Forwardable;
-import se.sics.p2ptoolbox.util.traits.OverlayMember;
+import se.sics.kompics.simutil.identifiable.Identifier;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
+import se.sics.ktoolbox.util.BitBuffer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -51,17 +50,13 @@ public class DecoratedHeaderSerializer implements DatagramSerializer {
         DecoratedHeader obj = (DecoratedHeader) o;
         Serializers.lookupSerializer(BasicHeader.class).toBinary(obj.getBase(), buf);
 
-        //traits - uses flag 0 for OverlayMember and 1 for Forwardable
-        BitBuffer flags = BitBuffer.create(2);
-        flags.write(Pair.with(0, obj.hasTrait(OverlayMember.class)));
-        flags.write(Pair.with(1, obj.hasTrait(Forwardable.class)));
+        //traits - uses flag 0 for Overlay
+        BitBuffer flags = BitBuffer.create(1);
+        flags.write(Pair.with(0, obj.getOverlayId() != null));
         buf.writeBytes(flags.finalise());
 
-        if (obj.hasTrait(OverlayMember.class)) {
-            buf.writeInt(obj.getOverlayId());
-        }
-        if (obj.hasTrait(Forwardable.class)) {
-            Serializers.lookupSerializer(Route.class).toBinary(obj.getRoute(), buf);
+        if (obj.getOverlayId() != null) {
+            Serializers.toBinary(obj.getOverlayId(), buf);
         }
     }
 
@@ -79,18 +74,14 @@ public class DecoratedHeaderSerializer implements DatagramSerializer {
         DatagramSerializer dHeaderS = (DatagramSerializer)headerS;
         BasicHeader base = (BasicHeader) dHeaderS.fromBinary(buf, datagram);
 
-        Route route = null;
-        Integer overlayId = null;
+        Identifier overlayId = null;
 
         byte[] bFlags = new byte[1];
         buf.readBytes(bFlags);
-        boolean[] flags = BitBuffer.extract(2, bFlags);
+        boolean[] flags = BitBuffer.extract(1, bFlags);
         if (flags[0]) {
-            overlayId = buf.readInt();
+            overlayId = (Identifier)Serializers.fromBinary(buf, Optional.absent());
         }
-        if (flags[1]) {
-            route = (Route) Serializers.lookupSerializer(Route.class).fromBinary(buf, Optional.absent());
-        }
-        return new DecoratedHeader(base, route, overlayId);
+        return new DecoratedHeader(base, overlayId);
     }
 }

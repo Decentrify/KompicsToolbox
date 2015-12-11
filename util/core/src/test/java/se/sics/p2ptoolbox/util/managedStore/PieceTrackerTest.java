@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.TreeSet;
 import org.junit.Assert;
 import org.junit.Test;
-import se.sics.p2ptoolbox.util.managerStore.pieceTracker.IncompletePieceTracker;
+import se.sics.ktoolbox.util.managerStore.pieceTracker.IncompletePieceTracker;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

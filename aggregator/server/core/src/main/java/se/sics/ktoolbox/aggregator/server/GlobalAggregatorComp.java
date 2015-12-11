@@ -31,13 +31,13 @@ import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 import java.util.Map;
 import java.util.UUID;
 import se.sics.kompics.network.Address;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 import se.sics.kompics.timer.Timeout;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.msg.NodeWindow;
-import se.sics.ktoolbox.util.msg.BasicContentMsg;
-import se.sics.ktoolbox.util.msg.DecoratedHeader;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * Main global aggregator component.
@@ -123,11 +123,6 @@ public class GlobalAggregatorComp extends ComponentDefinition {
 
         public AggregationTimeout(SchedulePeriodicTimeout request) {
             super(request);
-        }
-
-        @Override
-        public UUID getId() {
-            return getTimeoutId();
         }
 
         @Override

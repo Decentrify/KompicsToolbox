@@ -18,8 +18,9 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.KConfigHelper;
+
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

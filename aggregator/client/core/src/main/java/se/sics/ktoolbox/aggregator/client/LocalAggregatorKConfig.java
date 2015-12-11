@@ -20,27 +20,14 @@ package se.sics.ktoolbox.aggregator.client;
 
 import java.util.HashSet;
 import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
-import se.sics.p2ptoolbox.util.config.options.BasicAddressOption;
+import se.sics.ktoolbox.util.config.KConfigOption;
+import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class LocalAggregatorKConfig implements KConfigLevel {
-    public final static Basic<Long> aggregationPeriod = new Basic("aggregator.local.aggregationPeriod", Long.class, new LocalAggregatorKConfig());
-    public final static BasicAddressOption localAddress = new BasicAddressOption("aggregator.localAddress", new LocalAggregatorKConfig());
-    public final static BasicAddressOption globalAddress = new BasicAddressOption("aggregator.globalAddress", new LocalAggregatorKConfig());
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "LocalAggregatorKConfig";
-    }
+public class LocalAggregatorKConfig {
+    public final static KConfigOption.Basic<Long> aggregationPeriod = new KConfigOption.Basic("aggregator.local.aggregationPeriod", Long.class);
+    public final static BasicAddressOption localAddress = new BasicAddressOption("aggregator.localAddress");
+    public final static BasicAddressOption globalAddress = new BasicAddressOption("aggregator.globalAddress");
 }

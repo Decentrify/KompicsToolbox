@@ -1,6 +1,6 @@
 package se.sics.p2ptoolbox.utility.test;
 
-import se.sics.p2ptoolbox.util.ProbabilitiesHelper;
+import se.sics.ktoolbox.util.ProbabilitiesHelper;
 
 import java.util.*;
 import java.util.logging.Logger;

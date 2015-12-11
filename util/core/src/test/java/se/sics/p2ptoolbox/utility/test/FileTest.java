@@ -29,9 +29,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import org.junit.Assert;
 import org.junit.Test;
-import se.sics.p2ptoolbox.util.managedStore.BlockMngr;
-import se.sics.p2ptoolbox.util.managedStore.FileMngr;
-import se.sics.p2ptoolbox.util.managedStore.StorageMngrFactory;
+import se.sics.ktoolbox.util.managedStore.BlockMngr;
+import se.sics.ktoolbox.util.managedStore.FileMngr;
+import se.sics.ktoolbox.util.managedStore.StorageMngrFactory;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

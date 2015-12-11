@@ -19,9 +19,9 @@
 package se.sics.ktoolbox.aggregator;
 
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.aggregator.msg.PacketContainer;
-import se.sics.ktoolbox.aggregator.msg.PacketContainerSerializer;
-import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.ktoolbox.aggregator.msg.NodeWindow;
+import se.sics.ktoolbox.aggregator.msg.NodeWindowSerializer;
+import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  * Setup for the serializers required to communicate with the global aggregator.
@@ -31,7 +31,7 @@ public class AggregatorSerializerSetup {
 
     public static enum AggregatorSerializers {
 
-        packetContainer(PacketContainer.class, "aggregatedStateContainer");
+        nodeWindow(NodeWindow.class, "aggregatorNodeWindow");
 
         public final Class serializedClass;
         public final String serializerName;
@@ -56,9 +56,9 @@ public class AggregatorSerializerSetup {
 
         int currentId = startId;
 
-        PacketContainerSerializer aggregatedStateContainerSerializer = new PacketContainerSerializer(currentId++);
-        Serializers.register(aggregatedStateContainerSerializer, AggregatorSerializers.packetContainer.serializerName);
-        Serializers.register(AggregatorSerializers.packetContainer.serializedClass, AggregatorSerializers.packetContainer.serializerName);
+        NodeWindowSerializer aggregatorNodeWindow = new NodeWindowSerializer(currentId++);
+        Serializers.register(aggregatorNodeWindow, AggregatorSerializers.nodeWindow.serializerName);
+        Serializers.register(AggregatorSerializers.nodeWindow.serializedClass, AggregatorSerializers.nodeWindow.serializerName);
 
         return currentId;
     }

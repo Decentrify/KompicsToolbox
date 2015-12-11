@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.address.resolution.AddressResolutionHelper;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -39,9 +38,6 @@ public class NatTypeSerializerTest {
     public static void setup() {
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
-        
-        AddressResolutionHelper.reset();
-        AddressResolutionHelper.useNatAwareAddresses();
     }
 
     @Test

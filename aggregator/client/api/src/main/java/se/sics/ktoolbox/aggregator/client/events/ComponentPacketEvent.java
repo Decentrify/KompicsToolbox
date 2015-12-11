@@ -39,11 +39,6 @@ public class ComponentPacketEvent implements AggregatorEvent {
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-    
-    @Override
     public String toString() {
         return getClass() + "<" + id + ">";
     }

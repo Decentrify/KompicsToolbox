@@ -181,3 +181,7 @@ netty-test/target/
 /aggregator/example/server/target/
 /simulator/core/target/
 /simulator/example/target/
+/croupier/api/target/
+/croupier/core/target/
+/croupier/network/target/
+/croupier/example/target/

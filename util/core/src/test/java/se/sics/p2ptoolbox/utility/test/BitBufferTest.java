@@ -22,7 +22,7 @@ import java.util.Arrays;
 import org.javatuples.Pair;
 import org.junit.Assert;
 import org.junit.Test;
-import se.sics.p2ptoolbox.util.BitBuffer;
+import se.sics.ktoolbox.util.BitBuffer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

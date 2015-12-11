@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.util.address.nat;
 
 import java.util.Objects;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -132,6 +131,10 @@ public class NatType {
     
     public static boolean isOpen(NatAwareAddress address) {
         return Nat.Type.OPEN.equals(address.getNatType().type);
+    }
+    
+    public static boolean isNated(NatAwareAddress address) {
+        return Nat.Type.NAT.equals(address.getNatType().type);
     }
     
     public static boolean isUnknown(NatAwareAddress address) {

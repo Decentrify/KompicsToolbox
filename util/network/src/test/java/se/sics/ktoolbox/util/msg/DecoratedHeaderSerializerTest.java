@@ -25,34 +25,36 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.address.basic.BasicAddress;
-import se.sics.ktoolbox.util.address.nat.CompleteNAAddress;
-import se.sics.ktoolbox.util.address.resolution.AddressResolutionHelper;
+import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
+import se.sics.kompics.simutil.msg.impl.BasicAddress;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class DecoratedHeaderSerializerTest {
+
     @BeforeClass
     public static void setup() {
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
-        
-        AddressResolutionHelper.reset();
-        AddressResolutionHelper.useNatAwareAddresses();
     }
-    
+
     @Test
     public void test1() throws UnknownHostException {
         Serializer serializer = Serializers.lookupSerializer(DecoratedHeader.class);
-        DecoratedHeader<CompleteNAAddress> original, copy;
+        DecoratedHeader<BasicAddress> original, copy;
         ByteBuf serializedOriginal, serializedCopy;
 
         InetAddress localHost;
@@ -61,24 +63,23 @@ public class DecoratedHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        
-        BasicAddress basicAdr1 = new BasicAddress(localHost, 10000, 1);
-        BasicAddress basicAdr2 = new BasicAddress(localHost, 10000, 2);
-        BasicAddress basicAdr3 = new BasicAddress(localHost, 10000, 3);
-        BasicAddress basicAdr4 = new BasicAddress(localHost, 10000, 4);
-        
-        List<BasicAddress> route = new ArrayList<>();
-        route.add(basicAdr2);
-        route.add(basicAdr3);
-        original = new DecoratedHeader(new BasicHeader(basicAdr1, basicAdr4, Transport.UDP), new Route(route), 10);
+
+        BasicAddress basicAdr1 = new BasicAddress(localHost, 10000, new IntIdentifier(1));
+        BasicAddress basicAdr2 = new BasicAddress(localHost, 10000, new IntIdentifier(2));
+
+        original = new DecoratedHeader(new BasicHeader(basicAdr1, basicAdr2, Transport.UDP), new IntIdentifier(10));
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
-        
+
         serializedCopy = Unpooled.buffer();
         serializedOriginal.getBytes(0, serializedCopy, serializedOriginal.readableBytes());
         copy = (DecoratedHeader) serializer.fromBinary(serializedCopy, Optional.absent());
 
-        Assert.assertEquals(original, copy);
+        Assert.assertEquals(original.getSource(), copy.getSource());
+        Assert.assertEquals(original.getDestination(), copy.getDestination());
+        Assert.assertEquals(original.getProtocol(), copy.getProtocol());
+        Assert.assertEquals(original.getOverlayId(), copy.getOverlayId());
+        
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
 }

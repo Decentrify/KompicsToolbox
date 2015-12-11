@@ -23,7 +23,7 @@ import com.typesafe.config.ConfigFactory;
 import se.sics.kompics.Kompics;
 import se.sics.ktoolbox.util.proxy.SystemHookSetup;
 import se.sics.ktoolbox.util.proxy.example.core.ExampleComp;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.KConfigCore;
 
 /**
  *

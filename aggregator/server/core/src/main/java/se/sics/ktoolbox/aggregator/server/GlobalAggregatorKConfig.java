@@ -18,26 +18,11 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
+import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class GlobalAggregatorKConfig implements KConfigLevel {
-    public final static Basic<Long> aggregationPeriod = new Basic("aggregator.local.aggregationPeriod", Long.class, new GlobalAggregatorKConfig());
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "GlobalAggregatorKConfig";
-    }
+public class GlobalAggregatorKConfig {
+    public final static KConfigOption.Basic<Long> aggregationPeriod = new KConfigOption.Basic("aggregator.local.aggregationPeriod", Long.class);
 }

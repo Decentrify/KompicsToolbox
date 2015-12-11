@@ -25,6 +25,7 @@ import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -79,13 +80,13 @@ public class BasicHeaderSerializer implements DatagramSerializer {
     public Object fromBinary(ByteBuf buf, DatagramPacket datagram) {
         Address src;
         Address dst;
-//        if (datagram != null) {
-//            src = (Address) Serializers.fromBinary(buf, Optional.fromNullable((Object) datagram.sender()));
-//        } else {
-//            src = (Address) Serializers.fromBinary(buf, Optional.absent());
-//        }
-        src = (Address) Serializers.fromBinary(buf, Optional.absent());
-        dst = (Address) Serializers.fromBinary(buf, Optional.absent());
+        if (datagram != null) {
+            src = (Address) Serializers.fromBinary(buf, Optional.fromNullable((Object) datagram.sender()));
+            dst = (Address) Serializers.fromBinary(buf, Optional.fromNullable((Object) datagram.recipient()));
+        } else {
+            src = (Address) Serializers.fromBinary(buf, Optional.absent());
+            dst = (Address) Serializers.fromBinary(buf, Optional.absent());
+        }
         
         byte protocolByte = buf.readByte();
         Transport protocol;

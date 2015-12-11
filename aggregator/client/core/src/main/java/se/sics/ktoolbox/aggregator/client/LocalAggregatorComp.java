@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
@@ -36,11 +39,8 @@ import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.msg.NodeWindow;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.aggregator.util.AggregatorProcessor;
-import se.sics.ktoolbox.util.msg.BasicContentMsg;
-import se.sics.ktoolbox.util.msg.BasicHeader;
-import se.sics.ktoolbox.util.msg.DecoratedHeader;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * Main aggregator component used to collect the information from the components
@@ -112,10 +112,9 @@ public class LocalAggregatorComp extends ComponentDefinition {
     };
     
     private void sendWindow() {
-        DecoratedHeader header
-                = new DecoratedHeader(new BasicHeader(aggregatorConfig.localAddress, aggregatorConfig.globalAddress, Transport.UDP), null, null);
-        NodeWindow content
-                = new NodeWindow(UUID.randomUUID(), currentWindow);
+        DecoratedHeader header = new DecoratedHeader(new BasicHeader(
+                aggregatorConfig.localAddress, aggregatorConfig.globalAddress, Transport.UDP), null);
+        NodeWindow content = new NodeWindow(UUID.randomUUID(), currentWindow);
         BasicContentMsg msg = new BasicContentMsg(header, content);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, msg.getContent(), msg.getDestination()});
         trigger(msg, network);
@@ -145,11 +144,6 @@ public class LocalAggregatorComp extends ComponentDefinition {
 
         public AggregationTimeout(SchedulePeriodicTimeout request) {
             super(request);
-        }
-
-        @Override
-        public UUID getId() {
-            return getTimeoutId();
         }
 
         @Override
