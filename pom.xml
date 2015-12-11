@@ -10,7 +10,7 @@
         <module>util</module>
         <module>aggregator</module>
         <!--<module>simulator</module>-->
-        <!--<module>ip-solver</module>-->
+        <module>ip-solver</module>
         <!--<module>croupier</module>-->
                <!--
         <module>gradient</module>

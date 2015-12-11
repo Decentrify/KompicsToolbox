@@ -21,7 +21,7 @@
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
             <artifactId>kcore</artifactId>
-            <version>${util.version}</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
