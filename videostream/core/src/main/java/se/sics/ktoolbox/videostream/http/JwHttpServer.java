@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package se.sics.p2ptoolbox.videostream.http;
+package se.sics.ktoolbox.videostream.http;
 
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpHandler;

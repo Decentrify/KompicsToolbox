@@ -3,18 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package se.sics.p2ptoolbox.example;
+package se.sics.ktoolbox.example;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
-import se.sics.p2ptoolbox.util.managedStore.FileMngr;
-import se.sics.p2ptoolbox.util.managedStore.StorageMngrFactory;
-import se.sics.p2ptoolbox.videostream.VideoStreamMngrImpl;
-import se.sics.p2ptoolbox.videostream.http.BaseHandler;
-import se.sics.p2ptoolbox.videostream.http.JwHttpServer;
-import se.sics.p2ptoolbox.videostream.http.RangeCapableMp4Handler;
+import se.sics.ktoolbox.util.managedStore.FileMngr;
+import se.sics.ktoolbox.util.managedStore.StorageMngrFactory;
+import se.sics.ktoolbox.videostream.VideoStreamMngrImpl;
+import se.sics.ktoolbox.videostream.http.BaseHandler;
+import se.sics.ktoolbox.videostream.http.JwHttpServer;
+import se.sics.ktoolbox.videostream.http.RangeCapableMp4Handler;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

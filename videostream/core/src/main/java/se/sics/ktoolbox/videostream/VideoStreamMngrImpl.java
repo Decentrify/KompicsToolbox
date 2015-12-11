@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.videostream;
+package se.sics.ktoolbox.videostream;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.util.managedStore.FileMngr;
+import se.sics.ktoolbox.util.managedStore.FileMngr;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

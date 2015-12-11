@@ -1,8 +1,8 @@
-package se.sics.p2ptoolbox.videostream.manager;
+package se.sics.ktoolbox.videostream.manager;
 
 
-import se.sics.p2ptoolbox.videostream.manager.util.FileStatus;
-import se.sics.p2ptoolbox.videostream.wsmodel.VideoInfo;
+import se.sics.ktoolbox.videostream.manager.util.FileStatus;
+import se.sics.ktoolbox.videostream.wsmodel.VideoInfo;
 
 import java.util.Map;
 

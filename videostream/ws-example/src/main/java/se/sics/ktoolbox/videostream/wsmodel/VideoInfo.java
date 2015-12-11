@@ -17,44 +17,29 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.videostream.wsmodel;
+package se.sics.ktoolbox.videostream.wsmodel;
 
 /**
- *
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class PlayPosInfo {
+public class VideoInfo {
+    private String name;
     private int overlayId;
-    private String videoName;
-    private long playPos;
-    
-    public PlayPosInfo(int overlayId, String videoName, long playPos) {
-        this.overlayId = overlayId;
-        this.videoName = videoName;
-        this.playPos = playPos;
+
+    public String getName() {
+        return name;
     }
 
-    public void setOverlayId(int overlayId) {
-        this.overlayId = overlayId;
-    }
-
-    public void setVideoName(String videoName) {
-        this.videoName = videoName;
-    }
-
-    public void setPlayPos(long playPos) {
-        this.playPos = playPos;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int getOverlayId() {
         return overlayId;
     }
 
-    public String getVideoName() {
-        return videoName;
+    public void setOverlayId(int overlayId) {
+        this.overlayId = overlayId;
     }
 
-    public long getPlayPos() {
-        return playPos;
-    }
 }

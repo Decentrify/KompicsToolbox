@@ -17,25 +17,44 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.videostream.util;
-
-import junit.framework.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+package se.sics.ktoolbox.videostream.wsmodel;
 
 /**
  *
  * @author Alex Ormenisan <aaor@sics.se>
  */
-@RunWith(JUnit4.class)
-public class UtilTest {
-    @Test
-    public void test1() {
-        String sRange = "0-";
-        String start = sRange.substring(0, sRange.indexOf("-"));
-        String end = sRange.substring(sRange.indexOf("-") + 1);
-        Assert.assertEquals("0", start);
-        Assert.assertEquals("",end);
+public class PlayPosInfo {
+    private int overlayId;
+    private String videoName;
+    private long playPos;
+    
+    public PlayPosInfo(int overlayId, String videoName, long playPos) {
+        this.overlayId = overlayId;
+        this.videoName = videoName;
+        this.playPos = playPos;
+    }
+
+    public void setOverlayId(int overlayId) {
+        this.overlayId = overlayId;
+    }
+
+    public void setVideoName(String videoName) {
+        this.videoName = videoName;
+    }
+
+    public void setPlayPos(long playPos) {
+        this.playPos = playPos;
+    }
+
+    public int getOverlayId() {
+        return overlayId;
+    }
+
+    public String getVideoName() {
+        return videoName;
+    }
+
+    public long getPlayPos() {
+        return playPos;
     }
 }

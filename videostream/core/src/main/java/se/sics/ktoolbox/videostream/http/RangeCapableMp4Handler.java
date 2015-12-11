@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.videostream.http;
+package se.sics.ktoolbox.videostream.http;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -28,7 +28,7 @@ import java.util.List;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.videostream.VideoStreamManager;
+import se.sics.ktoolbox.videostream.VideoStreamManager;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

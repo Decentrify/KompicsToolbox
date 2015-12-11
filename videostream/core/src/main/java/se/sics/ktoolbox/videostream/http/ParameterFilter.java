@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package se.sics.p2ptoolbox.videostream.http;
+package se.sics.ktoolbox.videostream.http;
 
 import com.sun.net.httpserver.Filter;
 import com.sun.net.httpserver.Filter.Chain;

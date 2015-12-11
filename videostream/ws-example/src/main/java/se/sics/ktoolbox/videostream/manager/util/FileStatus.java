@@ -1,4 +1,4 @@
-package se.sics.p2ptoolbox.videostream.manager.util;
+package se.sics.ktoolbox.videostream.manager.util;
 
 /**
  * Created by babbar on 2015-03-12.

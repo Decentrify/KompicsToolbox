@@ -1,11 +1,11 @@
-package se.sics.p2ptoolbox.videostream.manager.impl;
+package se.sics.ktoolbox.videostream.manager.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.videostream.manager.VodManager;
+import se.sics.ktoolbox.videostream.manager.VodManager;
 
-import se.sics.p2ptoolbox.videostream.manager.util.FileStatus;
-import se.sics.p2ptoolbox.videostream.wsmodel.VideoInfo;
+import se.sics.ktoolbox.videostream.manager.util.FileStatus;
+import se.sics.ktoolbox.videostream.wsmodel.VideoInfo;
 
 import java.util.HashMap;
 import java.util.Map;
