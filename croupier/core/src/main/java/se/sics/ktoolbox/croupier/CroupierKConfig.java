@@ -19,43 +19,27 @@
 package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierKConfig implements KConfigLevel {
+public class CroupierKConfig {
 
-    private final static Basic<String> policy = new Basic("croupier.policy", String.class, new CroupierKConfig());
-    public final static CSelectionPolicyOption sPolicy = new CSelectionPolicyOption("croupier.sPolicy", new CroupierKConfig());
-    public final static Basic<Integer> viewSize = new Basic("croupier.viewSize", Integer.class, new CroupierKConfig());
-    public final static Basic<Integer> shuffleSize = new Basic("croupier.shuffleSize", Integer.class, new CroupierKConfig());
-    public final static Basic<Long> shufflePeriod = new Basic("croupier.shufflePeriod", Long.class, new CroupierKConfig());
-    public final static Basic<Long> shuffleTimeout = new Basic("croupier.shuffleTimeout", Long.class, new CroupierKConfig());
-    public final static Basic<Boolean> softMax = new Basic("croupier.softMax", Boolean.class, new CroupierKConfig());
-    public final static Basic<Double> softMaxTemp = new Basic("croupier.softMaxTemperature", Double.class, new CroupierKConfig());
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "NetworkMngrConfig";
-    }
+    private final static KConfigOption.Basic<String> policy = new KConfigOption.Basic("croupier.policy", String.class);
+    public final static CSelectionPolicyOption sPolicy = new CSelectionPolicyOption("croupier.sPolicy");
+    public final static KConfigOption.Basic<Integer> viewSize = new KConfigOption.Basic("croupier.viewSize", Integer.class);
+    public final static KConfigOption.Basic<Integer> shuffleSize = new KConfigOption.Basic("croupier.shuffleSize", Integer.class);
+    public final static KConfigOption.Basic<Long> shufflePeriod = new KConfigOption.Basic("croupier.shufflePeriod", Long.class);
+    public final static KConfigOption.Basic<Long> shuffleTimeout = new KConfigOption.Basic("croupier.shuffleTimeout", Long.class);
+    public final static KConfigOption.Basic<Boolean> softMax = new KConfigOption.Basic("croupier.softMax", Boolean.class);
+    public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("croupier.softMaxTemperature", Double.class);
 
     public static class CSelectionPolicyOption extends KConfigOption.Composite<CroupierSelectionPolicy> {
 
-        public CSelectionPolicyOption(String name, KConfigLevel lvl) {
-            super(name, CroupierSelectionPolicy.class, lvl);
+        public CSelectionPolicyOption(String name) {
+            super(name, CroupierSelectionPolicy.class);
         }
 
         @Override

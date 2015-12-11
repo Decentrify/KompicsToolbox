@@ -20,21 +20,18 @@ package se.sics.ktoolbox.croupier.msg;
 
 import com.google.common.base.Optional;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import org.javatuples.Pair;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierShuffle {
 
-    public static abstract class Basic implements UUIDIdentifiable, CroupierEvent {
+    public static abstract class Basic implements CroupierEvent {
         public final UUID id;
         public final Optional<View> selfView;
         public final Map<NatAwareAddress, CroupierContainer> publicNodes;
@@ -49,11 +46,6 @@ public class CroupierShuffle {
             if(publicNodes.size() > 128 || privateNodes.size() > 128) {
                 throw new RuntimeException("Croupier shuffle message is too large - limit yourself to 128 public nodes and 128 private nodes per shuffle");
             }
-        }
-        
-        @Override
-        public final UUID getId() {
-            return id;
         }
     }
     

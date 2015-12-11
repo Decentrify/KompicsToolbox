@@ -28,13 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import org.javatuples.Pair;
+import se.sics.kompics.simutil.identifiable.Identifiable;
+import se.sics.kompics.simutil.identifiable.Identifier;
 import se.sics.ktoolbox.croupier.CroupierKCWrapper;
 import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.util.ProbabilisticHelper;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.p2ptoolbox.util.identifiable.UUIDIdentifiable;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -50,7 +51,7 @@ public class LocalView {
         }
     };
 
-    private final HashMap<NatAwareAddress, CroupierContainer> containers = new HashMap<>();
+    private final HashMap<Identifier, CroupierContainer> containers = new HashMap<>();
 
     public LocalView(CroupierKCWrapper croupierConfig, Random rand) {
         this.croupierConfig = croupierConfig;
@@ -72,7 +73,7 @@ public class LocalView {
     }
 
     private void addContainer(CroupierContainer container) {
-        containers.put(container.src, container.copy());
+        containers.put(container.src.getId(), container.copy());
     }
 
     private void removeContainer(ShuffleHistory history, CroupierContainer container) {
@@ -147,7 +148,7 @@ public class LocalView {
 
         int selfCounter = 0;
         for (Map.Entry<NatAwareAddress, CroupierContainer> remoteContainer : partnerContainers.entrySet()) {
-            if(remoteContainer.getKey().getLocalAdr().equals(selfAdr.getLocalAdr())) {
+            if(remoteContainer.getKey().getId().equals(selfAdr.getId())) {
                 selfCounter++;
                 continue;
             }
@@ -212,8 +213,8 @@ public class LocalView {
     }
 
     private boolean sameView(View v1, View v2) {
-        if (v1 instanceof UUIDIdentifiable && v2 instanceof UUIDIdentifiable) {
-            return ((UUIDIdentifiable) v1).getId().equals(((UUIDIdentifiable) v2).getId());
+        if (v1 instanceof Identifiable && v2 instanceof Identifiable) {
+            return ((Identifiable) v1).getId().equals(((Identifiable) v2).getId());
         } else {
             return false;
         }

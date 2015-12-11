@@ -18,8 +18,7 @@
  */
 package se.sics.ktoolbox.croupier.util;
 
-import java.util.Objects;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.other.AgingContainer;
 import se.sics.ktoolbox.util.update.view.View;
 
@@ -75,38 +74,6 @@ public class CroupierContainer implements AgingContainer<NatAwareAddress, View> 
     
     @Override
     public String toString() {
-        return "<" + src.getLocalAdr() + ":" + age + ">";
+        return "<" + src.getId() + ":" + age + ">";
     }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 23 * hash + Objects.hashCode(this.src);
-        hash = 23 * hash + Objects.hashCode(this.content);
-        hash = 23 * hash + this.age;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CroupierContainer other = (CroupierContainer) obj;
-        if (!Objects.equals(this.src, other.src)) {
-            return false;
-        }
-        if (!Objects.equals(this.content, other.content)) {
-            return false;
-        }
-        if (this.age != other.age) {
-            return false;
-        }
-        return true;
-    }
-    
-    
 }

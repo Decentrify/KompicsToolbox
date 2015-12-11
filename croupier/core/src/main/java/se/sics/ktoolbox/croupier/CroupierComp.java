@@ -38,13 +38,16 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
+import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
+import se.sics.kompics.simutil.msg.impl.BasicHeader;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
 import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
 import se.sics.ktoolbox.util.address.resolution.AddressUpdatePort;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
@@ -52,18 +55,16 @@ import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
-import se.sics.ktoolbox.util.msg.BasicContentMsg;
-import se.sics.ktoolbox.util.msg.BasicHeader;
-import se.sics.ktoolbox.util.msg.DecoratedHeader;
-import se.sics.ktoolbox.util.update.view.ViewUpdate;
 import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 import se.sics.ktoolbox.croupier.behaviour.CroupierBehaviour;
 import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
 import se.sics.ktoolbox.croupier.history.DeleteAndForgetHistory;
 import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.view.LocalView;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.update.view.ViewUpdate;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -82,7 +83,7 @@ public class CroupierComp extends ComponentDefinition {
 
     private final SystemKCWrapper systemConfig;
     private final CroupierKCWrapper croupierConfig;
-    private final int overlayId;
+    private final IntIdentifier overlayId;
     private CroupierBehaviour behaviour;
     private final List<NatAwareAddress> bootstrapNodes = new ArrayList<>();
     private final Pair<LocalView, ShuffleHistory> publicView;
@@ -94,15 +95,15 @@ public class CroupierComp extends ComponentDefinition {
     public CroupierComp(CroupierInit init) {
         systemConfig = new SystemKCWrapper(init.configCore);
         croupierConfig = new CroupierKCWrapper(init.configCore);
-        overlayId = init.overlayId;
+        overlayId = new IntIdentifier(init.overlayId);
         logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initiating...", logPrefix);
 
         behaviour = new CroupierObserver(init.localAdr);
-        LocalView publicLocalView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId));
+        LocalView publicLocalView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.id));
         ShuffleHistory publicShuffleHistory = new DeleteAndForgetHistory();
         publicView = Pair.with(publicLocalView, publicShuffleHistory);
-        LocalView privateLocalView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId));
+        LocalView privateLocalView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.id));
         ShuffleHistory privateShuffleHistory = new DeleteAndForgetHistory();
         privateView = Pair.with(privateLocalView, privateShuffleHistory);
 
@@ -234,7 +235,7 @@ public class CroupierComp extends ComponentDefinition {
         Iterator<NatAwareAddress> it = addresses.iterator();
         while (it.hasNext()) {
             NatAwareAddress node = it.next();
-            if (!node.getLocalAdr().equals(behaviour.getSelf().getLocalAdr())) {
+            if (!node.getId().equals(behaviour.getSelf().getId())) {
                 result.add(node);
             }
         }
@@ -269,7 +270,7 @@ public class CroupierComp extends ComponentDefinition {
 
     private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
         DecoratedHeader requestHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), null, overlayId);
+                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
         CroupierShuffle.Request requestContent
                 = new CroupierShuffle.Request(UUID.randomUUID(), behaviour.getView(), publicSample, privateSample);
         BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
@@ -280,7 +281,7 @@ public class CroupierComp extends ComponentDefinition {
 
     public void sendShuffleResponse(NatAwareAddress to, Map publicSample, Map privateSample) {
         DecoratedHeader responseHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), null, overlayId);
+                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
         CroupierShuffle.Request responseContent
                 = new CroupierShuffle.Request(UUID.randomUUID(), behaviour.getView(), publicSample, privateSample);
         BasicContentMsg response = new BasicContentMsg(responseHeader, responseContent);

@@ -20,7 +20,7 @@ package se.sics.ktoolbox.croupier.event;
 
 import java.util.List;
 import java.util.UUID;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

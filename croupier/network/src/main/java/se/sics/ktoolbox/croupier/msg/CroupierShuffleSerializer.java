@@ -50,7 +50,7 @@ public class CroupierShuffleSerializer {
         @Override
         public void toBinary(Object o, ByteBuf buf) {
             CroupierShuffle.Basic obj = (CroupierShuffle.Basic) o;
-            Serializers.lookupSerializer(UUID.class).toBinary(obj.getId(), buf);
+            Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
 
             if(obj.selfView.isPresent()) {
                 buf.writeBoolean(true);

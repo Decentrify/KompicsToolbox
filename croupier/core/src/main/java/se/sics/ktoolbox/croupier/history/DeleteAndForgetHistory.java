@@ -20,8 +20,8 @@ package se.sics.ktoolbox.croupier.history;
 
 import java.util.HashMap;
 import java.util.Map;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

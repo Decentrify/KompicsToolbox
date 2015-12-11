@@ -23,13 +23,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
+import se.sics.kompics.simutil.msg.impl.BasicAddress;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
-import se.sics.ktoolbox.util.address.basic.BasicAddress;
 import se.sics.ktoolbox.util.address.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
@@ -38,18 +40,19 @@ import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CroupierContainerSerializerTest {
+
     @BeforeClass
     public static void setup() {
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
-        
+
         TestHelper.TestContent1Serializer testSerializer = new TestHelper.TestContent1Serializer(serializerId++);
         Serializers.register(testSerializer, "testContent1Serializer");
         Serializers.register(TestHelper.TestContent1.class, "testContent1Serializer");
     }
-    
-     @Test
+
+    @Test
     public void testCroupierContainer() {
         Serializer serializer = Serializers.lookupSerializer(CroupierContainer.class);
         CroupierContainer original, copy;
@@ -61,8 +64,8 @@ public class CroupierContainerSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-            
-        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, 1));
+
+        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, new IntIdentifier(1)));
         original = new CroupierContainer(simpleAdr1, new TestHelper.TestContent1(1));
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
@@ -71,7 +74,12 @@ public class CroupierContainerSerializerTest {
         serializedOriginal.getBytes(0, serializedCopy, serializedOriginal.readableBytes());
         copy = (CroupierContainer) serializer.fromBinary(serializedCopy, Optional.absent());
 
-        Assert.assertEquals(original, copy);
+        Assert.assertEquals(original.age, copy.age);
+        Assert.assertEquals(original.content, copy.content);
+        Assert.assertEquals(original.src.getPrivateAdr(), copy.src.getPrivateAdr());
+        Assert.assertEquals(original.src.getPublicAdr(), copy.src.getPublicAdr());
+        Assert.assertEquals(original.src.getNatType(), copy.src.getNatType());
+        Assert.assertTrue(Objects.equals(original.src.getParents(), copy.src.getParents()));
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
 }

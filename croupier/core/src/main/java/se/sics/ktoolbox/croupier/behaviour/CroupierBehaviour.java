@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.croupier.behaviour;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.address.NatAwareAddress;
+import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.util.update.view.impl.OverlayView;

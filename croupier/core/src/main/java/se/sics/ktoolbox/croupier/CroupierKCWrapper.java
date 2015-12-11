@@ -19,12 +19,10 @@
 package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.croupier.CroupierSelectionPolicy;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CroupierKCWrapper {
