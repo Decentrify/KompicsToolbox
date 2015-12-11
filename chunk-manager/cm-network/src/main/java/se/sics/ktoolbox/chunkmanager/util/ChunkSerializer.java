@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.chunkmanager.util;
+package se.sics.ktoolbox.chunkmanager.util;
 
 import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;

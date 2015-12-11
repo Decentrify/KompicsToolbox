@@ -17,13 +17,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.chunkmanager;
+package se.sics.ktoolbox.chunkmanager;
 
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
-import se.sics.p2ptoolbox.chunkmanager.util.ChunkSerializer;
-import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.ktoolbox.chunkmanager.util.Chunk;
+import se.sics.ktoolbox.chunkmanager.util.ChunkSerializer;
+import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.chunkmanager.util;
+package se.sics.ktoolbox.chunkmanager.util;
 
 import java.util.Arrays;
 import java.util.UUID;

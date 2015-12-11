@@ -16,28 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.chunkmanager.util;
 
-import se.sics.kompics.ChannelFilter;
+package se.sics.ktoolbox.chunkmanager.util;
+
+import se.sics.kompics.ChannelSelector;
+import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Transport;
-import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
+import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FragmentableTrafficFilter extends ChannelFilter<Msg, Boolean> {
+public class CMInternalFilter extends ChannelSelector<Msg, Boolean> {
 
-    public FragmentableTrafficFilter() {
+    public CMInternalFilter() {
         super(Msg.class, true, true);
     }
-
+    
     @Override
     public Boolean getValue(Msg msg) {
-        BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, Object> contentMsg = null;
+        BasicContentMsg<Address, DecoratedHeader<Address>, Object> contentMsg = null;
         if (!(msg instanceof BasicContentMsg)) {
             return false;
         }
@@ -45,7 +46,9 @@ public class FragmentableTrafficFilter extends ChannelFilter<Msg, Boolean> {
         if (!contentMsg.getProtocol().equals(Transport.UDP)) {
             return false;
         }
-        
+        if(!(contentMsg.getContent() instanceof Chunk)) {
+            return false;
+        }
         return true;
     }
 }

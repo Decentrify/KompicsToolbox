@@ -17,14 +17,28 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.chunkmanager.util;
+package se.sics.ktoolbox.chunkmanager.util;
+
+import se.sics.ktoolbox.chunkmanager.util.IncompleteChunkTracker;
+import se.sics.ktoolbox.chunkmanager.util.Chunk;
+import java.util.UUID;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class ChunkPrefixHelper {
-    //TODO Alex remove this - introduce Chunked as Trait
-    public static int getChunkPrefixSize() {
-        return 8 + 8 + 1 + 1 + 2; //uuid.part1 + uuid.part2 + chunkNr + lastChunk + nrOfBytes
+public class MsgChunkTrackerTest {
+    @Test
+    public void test() {
+        IncompleteChunkTracker mct = new IncompleteChunkTracker(4);
+        mct.add(new Chunk(UUID.randomUUID(), 0, 4, new byte[]{1}));
+        mct.add(new Chunk(UUID.randomUUID(), 3, 4, new byte[]{1,2}));
+        mct.add(new Chunk(UUID.randomUUID(), 1, 4, new byte[]{2}));
+        mct.add(new Chunk(UUID.randomUUID(), 4, 4, new byte[]{1,3,4}));
+        mct.add(new Chunk(UUID.randomUUID(), 2, 4, new byte[]{1}));
+        
+        byte[] msg = mct.getMsg();
+        Assert.assertEquals(8, msg.length);
     }
 }

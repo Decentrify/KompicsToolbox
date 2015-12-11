@@ -17,26 +17,40 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.chunkmanager.util;
+package se.sics.ktoolbox.chunkmanager.util;
 
-import java.util.UUID;
-import org.junit.Assert;
-import org.junit.Test;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class MsgChunkTrackerTest {
-    @Test
-    public void test() {
-        IncompleteChunkTracker mct = new IncompleteChunkTracker(4);
-        mct.add(new Chunk(UUID.randomUUID(), 0, 4, new byte[]{1}));
-        mct.add(new Chunk(UUID.randomUUID(), 3, 4, new byte[]{1,2}));
-        mct.add(new Chunk(UUID.randomUUID(), 1, 4, new byte[]{2}));
-        mct.add(new Chunk(UUID.randomUUID(), 4, 4, new byte[]{1,3,4}));
-        mct.add(new Chunk(UUID.randomUUID(), 2, 4, new byte[]{1}));
-        
-        byte[] msg = mct.getMsg();
-        Assert.assertEquals(8, msg.length);
+public class IncompleteChunkTracker {
+    public final Map<Integer, Chunk> chunks;
+    public final int nrChunks;
+    
+    public IncompleteChunkTracker(int lastChunk) {
+        this.chunks = new HashMap<Integer, Chunk>();
+        this.nrChunks = lastChunk + 1;
+    }
+    
+    public void add(Chunk chunk) {
+        chunks.put(chunk.chunkNr, chunk);
+    }
+    
+    public boolean isComplete() {
+        return chunks.size() == nrChunks;
+    }
+    
+    public byte[] getMsg() {
+        ByteBuf buf = Unpooled.buffer();
+        for(Chunk chunk : chunks.values()) {
+            buf.writeBytes(chunk.content);
+        }
+        byte[] result = new byte[buf.readableBytes()];
+        buf.readBytes(result);
+        return result;
     }
 }

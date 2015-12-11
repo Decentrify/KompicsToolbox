@@ -17,40 +17,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.p2ptoolbox.chunkmanager.util;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import java.util.HashMap;
-import java.util.Map;
+package se.sics.ktoolbox.chunkmanager.util;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class IncompleteChunkTracker {
-    public final Map<Integer, Chunk> chunks;
-    public final int nrChunks;
-    
-    public IncompleteChunkTracker(int lastChunk) {
-        this.chunks = new HashMap<Integer, Chunk>();
-        this.nrChunks = lastChunk + 1;
-    }
-    
-    public void add(Chunk chunk) {
-        chunks.put(chunk.chunkNr, chunk);
-    }
-    
-    public boolean isComplete() {
-        return chunks.size() == nrChunks;
-    }
-    
-    public byte[] getMsg() {
-        ByteBuf buf = Unpooled.buffer();
-        for(Chunk chunk : chunks.values()) {
-            buf.writeBytes(chunk.content);
-        }
-        byte[] result = new byte[buf.readableBytes()];
-        buf.readBytes(result);
-        return result;
+public class ChunkPrefixHelper {
+    //TODO Alex remove this - introduce Chunked as Trait
+    public static int getChunkPrefixSize() {
+        return 8 + 8 + 1 + 1 + 2; //uuid.part1 + uuid.part2 + chunkNr + lastChunk + nrOfBytes
     }
 }

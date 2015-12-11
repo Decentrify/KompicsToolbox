@@ -18,7 +18,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-package se.sics.p2ptoolbox.chunkmanager;
+package se.sics.ktoolbox.chunkmanager;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
@@ -29,7 +29,7 @@ import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.ChannelFilter;
+import se.sics.kompics.ChannelSelector;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
@@ -37,25 +37,26 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
+import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Header;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.simutil.identifiable.Identifiable;
+import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.p2ptoolbox.chunkmanager.util.CMInternalFilter;
-import se.sics.p2ptoolbox.chunkmanager.util.Chunk;
-import se.sics.p2ptoolbox.chunkmanager.util.ChunkPrefixHelper;
-import se.sics.p2ptoolbox.chunkmanager.util.IncompleteChunkTracker;
-import se.sics.p2ptoolbox.chunkmanager.util.CompleteChunkTracker;
-import se.sics.p2ptoolbox.chunkmanager.util.FragmentableTrafficFilter;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
-import se.sics.p2ptoolbox.util.filters.AndFilter;
-import se.sics.p2ptoolbox.util.filters.NotFilter;
-import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
+import se.sics.ktoolbox.util.config.impl.SystemKConfig;
+import se.sics.ktoolbox.chunkmanager.util.CMInternalFilter;
+import se.sics.ktoolbox.chunkmanager.util.Chunk;
+import se.sics.ktoolbox.chunkmanager.util.ChunkPrefixHelper;
+import se.sics.ktoolbox.chunkmanager.util.IncompleteChunkTracker;
+import se.sics.ktoolbox.chunkmanager.util.CompleteChunkTracker;
+import se.sics.ktoolbox.chunkmanager.util.FragmentableTrafficFilter;
+import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * Created by alidar on 10/21/14.
@@ -68,18 +69,20 @@ public class ChunkManagerComp extends ComponentDefinition {
     private Negative<Network> providedNetwork = provides(Network.class);
     private Positive<Timer> timer = positive(Timer.class);
 
-    private final SystemConfig systemConfig;
+    private final SystemKCWrapper systemConfig;
     private final ChunkManagerConfig config;
     private final String logPrefix;
-    private final ChannelFilter<Msg, Boolean> fragmentableTraffic = new FragmentableTrafficFilter();
-    private final ChannelFilter<Msg, Boolean> internalTraffic = new CMInternalFilter();
+    private final ChannelSelector<Msg, Boolean> fragmentableTraffic = new FragmentableTrafficFilter();
+    private final ChannelSelector<Msg, Boolean> internalTraffic = new CMInternalFilter();
 
     private final Map<UUID, Pair<IncompleteChunkTracker, UUID>> incomingChunks;
 
+    private Address self;
     public ChunkManagerComp(CMInit init) {
+        this.self = self;
         this.systemConfig = init.systemConfig;
         this.config = init.config;
-        this.logPrefix = systemConfig.self.toString();
+        this.logPrefix = "<nid:"+ ((Identifiable)self).getId().toString();
         log.info("{} initiating...", logPrefix);
 
         this.incomingChunks = new HashMap<UUID, Pair<IncompleteChunkTracker, UUID>>();
@@ -205,12 +208,14 @@ public class ChunkManagerComp extends ComponentDefinition {
 
     public static class CMInit extends Init<ChunkManagerComp> {
 
-        public final SystemConfig systemConfig;
+        public final Address self;
+        public final SystemKCWrapper systemConfig;
         public final ChunkManagerConfig config;
 
-        public CMInit(SystemConfig systemConfig, ChunkManagerConfig config) {
-            this.systemConfig = systemConfig;
+        public CMInit(KConfigCore configCore, ChunkManagerConfig config, Address self) {
+            this.systemConfig = new SystemKCWrapper(configCore);
             this.config = config;
+            this.self = self;
         }
     }
 
