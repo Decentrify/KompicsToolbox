@@ -23,8 +23,8 @@ import java.util.UUID;
 import se.sics.kompics.Channel;
 import se.sics.kompics.Component;
 import se.sics.kompics.Positive;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.proxy.Hook;
 
 /**
@@ -41,9 +41,9 @@ public class NetworkHook {
 
     public static class SetupInit implements Hook.SetupInit {
         public final UUID id;
-        public final Address bindAdr;
+        public final KAddress bindAdr;
         
-        public SetupInit(UUID id, Address bindAdr) {
+        public SetupInit(UUID id, KAddress bindAdr) {
             this.id = id;
             this.bindAdr = bindAdr;
         }

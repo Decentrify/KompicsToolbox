@@ -15,8 +15,8 @@
         <module>gradient</module>
         <module>chunk-manager</module>
         <module>videostream</module>
-<!--        <module>leader-election</module> 
-        <module>caracal-client</module>
+        <module>leader-election</module> 
+<!--        <module>caracal-client</module>
         <module>nat-echo</module>
         <module>overlay-mngr</module>
         <module>fd</module>-->

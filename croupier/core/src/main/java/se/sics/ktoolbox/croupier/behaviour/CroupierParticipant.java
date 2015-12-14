@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.croupier.behaviour;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
+import se.sics.ktoolbox.util.address.AddressUpdate;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.update.view.OverlayView;
 import se.sics.ktoolbox.util.update.view.View;
-import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -49,7 +49,7 @@ public class CroupierParticipant implements CroupierBehaviour {
 
     @Override
     public CroupierBehaviour processAddress(AddressUpdate.Indication update) {
-        self = update.localAddress;
+        self = (NatAwareAddress)update.localAddress;
         return this;
     }
 

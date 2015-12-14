@@ -20,19 +20,18 @@ package se.sics.ktoolbox.util.config.options;
 
 import com.google.common.base.Optional;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
-import se.sics.kompics.simutil.msg.impl.BasicAddress;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigOption.Base;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.config.KConfigOption.Basic;
-import se.sics.ktoolbox.util.config.KConfigOption.Composite;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class BasicAddressOption extends Composite<BasicAddress> {
+public class BasicAddressOption extends Base<BasicAddress> {
     private static final Logger LOG = LoggerFactory.getLogger("KConfig");
     
     public BasicAddressOption(String optName) {
@@ -40,32 +39,26 @@ public class BasicAddressOption extends Composite<BasicAddress> {
     }
 
     @Override
-    public Optional<BasicAddress> readValue(KConfigCore config) {
-        Basic<String> ipOpt = new Basic(name + ".ip", String.class);
-        Optional<String> ip = config.readValue(ipOpt);
+    public Optional<BasicAddress> readValue(Config config) {
+        InetAddressOption ipOpt = new InetAddressOption(name + ".ip");
+        Optional<InetAddress> ip = ipOpt.readValue(config);
         if (!ip.isPresent()) {
             LOG.debug("missing:{}", ipOpt.name);
             return Optional.absent();
         }
         Basic<Integer> portOpt = new Basic(name + ".port", Integer.class);
-        Optional<Integer> port = config.readValue(portOpt);
+        Optional<Integer> port = portOpt.readValue(config);
         if (!port.isPresent()) {
             LOG.debug("missing:{}", portOpt.name);
             return Optional.absent();
         }
         Basic<Integer> idOpt = new Basic(name + ".id", Integer.class);
-        Optional<Integer> id = config.readValue(idOpt);
+        Optional<Integer> id = idOpt.readValue(config);
         if (!id.isPresent()) {
             LOG.debug("missing:{}", idOpt.name);
             return Optional.absent();
         }
-        BasicAddress adr;
-        try {
-            adr = new BasicAddress(InetAddress.getByName(ip.get()), port.get(), new IntIdentifier(id.get()));
-        } catch (UnknownHostException ex) {
-            LOG.error("ip error:{}", ex.getMessage());
-            throw new RuntimeException(ex);
-        }
+        BasicAddress adr = new BasicAddress(ip.get(), port.get(), new IntIdentifier(id.get()));
         return Optional.of(adr);
     }
 }

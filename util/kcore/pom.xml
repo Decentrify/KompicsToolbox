@@ -34,10 +34,5 @@
             <artifactId>kompics-component-netty-network</artifactId>
             <version>${kompics.version}</version>
         </dependency>
-        <dependency>
-            <groupId>se.sics.kompics.simulator</groupId>
-            <artifactId>util</artifactId>
-            <version>${kompicssimulator.version}</version>
-        </dependency>
     </dependencies>
 </project>

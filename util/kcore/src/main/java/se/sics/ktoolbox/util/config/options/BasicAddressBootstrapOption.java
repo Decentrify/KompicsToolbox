@@ -23,15 +23,15 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.simutil.msg.impl.BasicAddress;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigOption.Base;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.config.KConfigOption.Basic;
-import se.sics.ktoolbox.util.config.KConfigOption.Composite;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class BasicAddressBootstrapOption extends Composite<List> {
+public class BasicAddressBootstrapOption extends Base<List> {
 
     private static final Logger LOG = LoggerFactory.getLogger("KConfig");
 
@@ -40,10 +40,10 @@ public class BasicAddressBootstrapOption extends Composite<List> {
     }
 
     @Override
-    public Optional<List> readValue(KConfigCore config) {
+    public Optional<List> readValue(Config config) {
         String sPartnersOpt = name + ".partners";
         Basic<List> partnersOpt = new Basic(sPartnersOpt, List.class);
-        Optional<List> partners = config.readValue(partnersOpt);
+        Optional<List> partners = partnersOpt.readValue(config);
         if (!partners.isPresent()) {
             LOG.debug("missing partners:{}", sPartnersOpt);
             return Optional.absent();
@@ -52,7 +52,7 @@ public class BasicAddressBootstrapOption extends Composite<List> {
         for(String partner : (List<String>)partners.get()) {
             String sAdrOpt = name + "." + partner;
             BasicAddressOption adrOpt = new BasicAddressOption(sAdrOpt);
-            Optional<BasicAddress> adr = config.readValue(adrOpt);
+            Optional<BasicAddress> adr = adrOpt.readValue(config);
             if(adr.isPresent()) {
                 partnerAdr.add(adr.get());
             } else {

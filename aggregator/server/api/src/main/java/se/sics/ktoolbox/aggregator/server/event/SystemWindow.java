@@ -19,10 +19,9 @@
 package se.sics.ktoolbox.aggregator.server.event;
 
 import com.google.common.collect.Table;
-import java.util.UUID;
-import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 
 /**
@@ -32,10 +31,10 @@ import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
  * Created by babbarshaer on 2015-09-02.
  */
 public class SystemWindow implements AggregatorEvent {
-    public final UUID id;
-    public final Table<Address, Class, AggregatorPacket> systemWindow;
+    public final Identifier id;
+    public final Table<Identifier, Class, AggregatorPacket> systemWindow;
 
-    public SystemWindow(UUID id, Table<Address, Class, AggregatorPacket> systemWindow){
+    public SystemWindow(Identifier id, Table<Identifier, Class, AggregatorPacket> systemWindow){
         this.id = id;
         this.systemWindow = systemWindow;
     }
@@ -43,5 +42,10 @@ public class SystemWindow implements AggregatorEvent {
     @Override
     public String toString() {
         return getClass() + "<" + id + ">";
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

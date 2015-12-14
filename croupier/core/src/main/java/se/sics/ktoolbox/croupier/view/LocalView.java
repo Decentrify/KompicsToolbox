@@ -28,14 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import org.javatuples.Pair;
-import se.sics.kompics.simutil.identifiable.Identifiable;
-import se.sics.kompics.simutil.identifiable.Identifier;
 import se.sics.ktoolbox.croupier.CroupierKCWrapper;
 import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.util.ProbabilisticHelper;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

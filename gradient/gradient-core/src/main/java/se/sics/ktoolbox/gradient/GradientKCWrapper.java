@@ -18,17 +18,16 @@
  */
 package se.sics.ktoolbox.gradient;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class GradientKCWrapper {
 
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final int viewSize;
     public final int shuffleSize;
     public final long shufflePeriod;
@@ -37,9 +36,9 @@ public class GradientKCWrapper {
     public final int oldThreshold;
     
     public final long seed;
-    public final int overlayId;
+    public final Identifier overlayId;
 
-    public GradientKCWrapper(KConfigCore configCore, long seed, int overlayId) {
+    public GradientKCWrapper(Config configCore, long seed, Identifier overlayId) {
         this.configCore = configCore;
         this.viewSize = KConfigHelper.read(this.configCore, GradientKConfig.viewSize);
         this.shuffleSize = KConfigHelper.read(this.configCore, GradientKConfig.shuffleSize);

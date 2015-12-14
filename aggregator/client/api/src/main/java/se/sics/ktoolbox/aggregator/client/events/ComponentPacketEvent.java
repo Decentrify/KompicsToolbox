@@ -18,9 +18,9 @@
  */
 package se.sics.ktoolbox.aggregator.client.events;
 
-import java.util.UUID;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Event carrying the component information which will be
@@ -30,16 +30,21 @@ import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
  */
 public class ComponentPacketEvent implements AggregatorEvent {
 
-    public final UUID id;
+    public final Identifier id;
     public final AggregatorPacket packet;
 
-    public ComponentPacketEvent(AggregatorPacket packet) {
-        this.id = UUID.randomUUID();
+    public ComponentPacketEvent(Identifier id, AggregatorPacket packet) {
+        this.id = id;
         this.packet = packet;
     }
 
     @Override
     public String toString() {
         return getClass() + "<" + id + ">";
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

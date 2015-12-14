@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.util.config;
 
 import com.google.common.base.Optional;
+import se.sics.kompics.config.Config;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,6 +36,8 @@ public final class KConfigOption {
             this.type = type;
         }
 
+        public abstract Optional<T> readValue(Config config);
+        
         @Override
         public String toString() {
             return name + " type" + type;
@@ -45,15 +48,10 @@ public final class KConfigOption {
         public Basic(String name, Class<T> type) {
             super(name, type);
         }
-    }
 
-    public static abstract class Composite<T extends Object> extends Base<T>{
-
-        public Composite(String name, Class<T> type) {
-            super(name, type);
+        @Override
+        public Optional<T> readValue(Config config) {
+            return config.readValue(name, type);
         }
-
-        //TODO Alex fix later to abstract
-        public abstract Optional<T> readValue(KConfigCore config);
     }
 }

@@ -21,6 +21,7 @@ package se.sics.ktoolbox.util.config;
 import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigOption.Base;
 
 /**
@@ -28,14 +29,9 @@ import se.sics.ktoolbox.util.config.KConfigOption.Base;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KConfigHelper {
-    public static <O extends Object> O read(KConfigCore config, Base<O> opt) {
+    public static <O extends Object> O read(Config config, Base<O> opt) {
         Logger LOG = LoggerFactory.getLogger("KConfig");
-        Optional<O> optValue;
-        try {
-            optValue = config.readValue(opt);
-        } catch (IllegalArgumentException ex) {
-            throw new RuntimeException(ex);
-        }
+        Optional<O> optValue = config.readValue(opt.name, opt.type);
         if (!optValue.isPresent()) {
             LOG.error("missing:{}", opt.name);
             throw new RuntimeException("missing " + opt.name);

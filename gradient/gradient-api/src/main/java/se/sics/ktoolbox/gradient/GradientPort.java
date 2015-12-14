@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.gradient;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.gradient.msg.GradientSample;
+import se.sics.ktoolbox.gradient.event.GradientSample;
 
 /**
  * Normal Functioning port of the gradient service.

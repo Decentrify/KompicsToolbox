@@ -22,7 +22,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timer;
@@ -30,14 +29,22 @@ import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 import java.util.Map;
 import java.util.UUID;
-import se.sics.kompics.network.Address;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
+import se.sics.kompics.ClassMatchedHandler;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
+import se.sics.kompics.Start;
 import se.sics.kompics.timer.Timeout;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.msg.NodeWindow;
-import se.sics.ktoolbox.util.config.KConfigCore;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
  * Main global aggregator component.
@@ -58,11 +65,11 @@ public class GlobalAggregatorComp extends ComponentDefinition {
     
     private UUID aggregationTid;
 
-    private final Table<Address, Class, AggregatorPacket> currentWindow = HashBasedTable.create();
+    private final Table<Identifier, Class, AggregatorPacket> currentWindow = HashBasedTable.create();
 
     public GlobalAggregatorComp(GlobalAggregatorInit init) {
-        systemConfig = new SystemKCWrapper(init.configCore);
-        aggregatorConfig = new GlobalAggregatorKCWrapper(init.configCore);
+        systemConfig = new SystemKCWrapper(config());
+        aggregatorConfig = new GlobalAggregatorKCWrapper(config());
         logPrefix = "<nid:" + systemConfig.id + ">";
         LOG.info("{}initializing...", logPrefix);
 
@@ -85,29 +92,25 @@ public class GlobalAggregatorComp extends ComponentDefinition {
         @Override
         public void handle(AggregationTimeout timeout) {
             LOG.trace("{}received:{}", logPrefix, timeout);
-            SystemWindow systemWindowEvent = new SystemWindow(UUID.randomUUID(), currentWindow);
+            SystemWindow systemWindowEvent = new SystemWindow(UUIDIdentifier.randomId(), currentWindow);
             LOG.trace("{}sending:{}", logPrefix, systemWindowEvent);
             trigger(systemWindowEvent, aggregatorPort);
             currentWindow.clear();
         }
     };
 
-    ClassMatchedHandler handleNodeWindow = new ClassMatchedHandler<NodeWindow, BasicContentMsg<Address, DecoratedHeader<Address>, NodeWindow>>() {
+    ClassMatchedHandler handleNodeWindow = new ClassMatchedHandler<NodeWindow, BasicContentMsg<KAddress, BasicHeader<KAddress>, NodeWindow>>() {
         @Override
-        public void handle(NodeWindow content, BasicContentMsg<Address, DecoratedHeader<Address>, NodeWindow> container) {
+        public void handle(NodeWindow content, BasicContentMsg<KAddress, BasicHeader<KAddress>, NodeWindow> container) {
             LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource()});
             for(Map.Entry<Class, AggregatorPacket> packet : content.window.entrySet()) {
-                currentWindow.put(container.getSource(), packet.getKey(), packet.getValue());
+                currentWindow.put(container.getSource().getId(), packet.getKey(), packet.getValue());
             }
         }
     };
 
     public static class GlobalAggregatorInit extends Init<GlobalAggregatorComp> {
-
-        public final KConfigCore configCore;
-
-        public GlobalAggregatorInit(KConfigCore configCore) {
-            this.configCore = configCore;
+        public GlobalAggregatorInit() {
         }
     }
 
@@ -128,6 +131,11 @@ public class GlobalAggregatorComp extends ComponentDefinition {
         @Override
         public String toString() {
             return getClass() + "<" + getTimeoutId() + ">";
+        }
+
+        @Override
+        public Identifier getId() {
+            return new UUIDIdentifier(getTimeoutId());
         }
     }
 }

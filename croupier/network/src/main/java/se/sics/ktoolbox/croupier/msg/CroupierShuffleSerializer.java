@@ -27,6 +27,7 @@ import org.javatuples.Quartet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.update.view.View;
 
 /**
@@ -50,7 +51,7 @@ public class CroupierShuffleSerializer {
         @Override
         public void toBinary(Object o, ByteBuf buf) {
             CroupierShuffle.Basic obj = (CroupierShuffle.Basic) o;
-            Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
+            Serializers.toBinary(obj.id, buf);
 
             if(obj.selfView.isPresent()) {
                 buf.writeBoolean(true);
@@ -69,8 +70,8 @@ public class CroupierShuffleSerializer {
             }
         }
 
-        public Quartet<UUID, Optional<View>, Map, Map> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
-            UUID msgId = (UUID) Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
+        public Quartet<Identifier, Optional<View>, Map, Map> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
+            Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
             
             Optional<View> selfView;
             if(buf.readBoolean()) {
@@ -104,7 +105,7 @@ public class CroupierShuffleSerializer {
 
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Quartet<UUID, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
+            Quartet<Identifier, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
             return new CroupierShuffle.Request(contents.getValue0(), contents.getValue1(), contents.getValue2(), contents.getValue3());
         }
     }
@@ -117,7 +118,7 @@ public class CroupierShuffleSerializer {
 
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Quartet<UUID, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
+            Quartet<Identifier, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
             return new CroupierShuffle.Response(contents.getValue0(), contents.getValue1(), contents.getValue2(), contents.getValue3());
         }
     }

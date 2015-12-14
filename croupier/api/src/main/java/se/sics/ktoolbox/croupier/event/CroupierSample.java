@@ -19,9 +19,8 @@
 package se.sics.ktoolbox.croupier.event;
 
 import java.util.Map;
-import java.util.UUID;
-import se.sics.kompics.network.Address;
-import se.sics.kompics.simutil.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.AgingContainer;
 
 /**
@@ -29,12 +28,12 @@ import se.sics.ktoolbox.util.other.AgingContainer;
  */
 public class CroupierSample<C extends Object> implements CroupierEvent {
 
-    public final UUID id;
+    public final Identifier id;
     public final Identifier overlayId;
-    public final Map<Address, AgingContainer<Address, C>> publicSample;
-    public final Map<Address, AgingContainer<Address, C>> privateSample;
+    public final Map<KAddress, AgingContainer<KAddress, C>> publicSample;
+    public final Map<KAddress, AgingContainer<KAddress, C>> privateSample;
     
-    public CroupierSample(UUID id, Identifier overlayId, Map publicSample, Map privateSample) {
+    public CroupierSample(Identifier id, Identifier overlayId, Map publicSample, Map privateSample) {
         this.id = id;
         this.overlayId = overlayId;
         this.publicSample = publicSample;
@@ -44,5 +43,10 @@ public class CroupierSample<C extends Object> implements CroupierEvent {
     @Override
     public String toString() {
         return "CROUPIER_SAMPLE<" + id + ">";
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

@@ -19,31 +19,37 @@
 
 package se.sics.ktoolbox.util.update.view;
 
-import java.util.UUID;
 import se.sics.kompics.Direct;
 import se.sics.kompics.PatternExtractor;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ViewUpdate {
-    public static class Request extends Direct.Request<Indication> {
-        public final UUID id;
+    public static class Request extends Direct.Request<Indication> implements Identifiable {
+        public final Identifier id;
         
-        public Request(UUID id) {
+        public Request(Identifier id) {
             this.id = id;
         }
         
         public Indication answer(View view) {
             return new Indication(id, view);
         }
+
+        @Override
+        public Identifier getId() {
+            return id;
+        }
     }
     
-    public static class Indication<V extends View> implements Direct.Response, PatternExtractor<Class<V>, V> {
-        public final UUID id;
+    public static class Indication<V extends View> implements Direct.Response, PatternExtractor<Class<V>, V>, Identifiable {
+        public final Identifier id;
         public final V view;
         
-        public Indication(UUID id, V view) {
+        public Indication(Identifier id, V view) {
             this.id = id;
             this.view = view;
         }
@@ -56,6 +62,11 @@ public class ViewUpdate {
         @Override
         public V extractValue() {
             return view;
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 }

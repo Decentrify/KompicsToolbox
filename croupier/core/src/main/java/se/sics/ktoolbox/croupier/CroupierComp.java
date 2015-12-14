@@ -38,32 +38,32 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
-import se.sics.kompics.simutil.msg.impl.BasicHeader;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
-import se.sics.ktoolbox.util.address.resolution.AddressUpdatePort;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
-import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 import se.sics.ktoolbox.croupier.behaviour.CroupierBehaviour;
 import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
 import se.sics.ktoolbox.croupier.history.DeleteAndForgetHistory;
 import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.view.LocalView;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.ktoolbox.util.address.AddressUpdate;
+import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.update.view.OverlayView;
 import se.sics.ktoolbox.util.update.view.ViewUpdate;
 
 /**
@@ -93,8 +93,8 @@ public class CroupierComp extends ComponentDefinition {
     private UUID shuffleTid;
 
     public CroupierComp(CroupierInit init) {
-        systemConfig = new SystemKCWrapper(init.configCore);
-        croupierConfig = new CroupierKCWrapper(init.configCore);
+        systemConfig = new SystemKCWrapper(config());
+        croupierConfig = new CroupierKCWrapper(config());
         overlayId = new IntIdentifier(init.overlayId);
         logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initiating...", logPrefix);
@@ -167,7 +167,7 @@ public class CroupierComp extends ComponentDefinition {
                 sendShuffleRequest(shufflePartner, publicSample, privateSample);
             } else {
                 LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
-                trigger(new CroupierDisconnected(UUID.randomUUID(), overlayId), croupierControlPort);
+                trigger(new CroupierDisconnected(UUIDIdentifier.randomId(), overlayId), croupierControlPort);
             }
         }
     };
@@ -261,7 +261,7 @@ public class CroupierComp extends ComponentDefinition {
     }
 
     private void publishSample() {
-        CroupierSample cs = new CroupierSample(UUID.randomUUID(), overlayId, 
+        CroupierSample cs = new CroupierSample(UUIDIdentifier.randomId(), overlayId, 
                 publicView.getValue0().publish(), privateView.getValue0().publish());
         LOG.debug("{}publishing public nodes:{}", new Object[]{logPrefix, cs.publicSample});
         LOG.debug("{}publishing private nodes:{}", new Object[]{logPrefix, cs.privateSample});
@@ -272,7 +272,7 @@ public class CroupierComp extends ComponentDefinition {
         DecoratedHeader requestHeader
                 = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
         CroupierShuffle.Request requestContent
-                = new CroupierShuffle.Request(UUID.randomUUID(), behaviour.getView(), publicSample, privateSample);
+                = new CroupierShuffle.Request(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
         BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, requestContent, request.getDestination()});
         trigger(request, network);
@@ -283,7 +283,7 @@ public class CroupierComp extends ComponentDefinition {
         DecoratedHeader responseHeader
                 = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
         CroupierShuffle.Request responseContent
-                = new CroupierShuffle.Request(UUID.randomUUID(), behaviour.getView(), publicSample, privateSample);
+                = new CroupierShuffle.Request(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
         BasicContentMsg response = new BasicContentMsg(responseHeader, responseContent);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
         trigger(response, network);
@@ -291,12 +291,10 @@ public class CroupierComp extends ComponentDefinition {
 
     public static class CroupierInit extends Init<CroupierComp> {
 
-        public final KConfigCore configCore;
         public final NatAwareAddress localAdr;
         public final int overlayId;
 
-        public CroupierInit(KConfigCore configCore, NatAwareAddress localAdr, int overlayId) {
-            this.configCore = configCore;
+        public CroupierInit(NatAwareAddress localAdr, int overlayId) {
             this.localAdr = localAdr;
             this.overlayId = overlayId;
         }

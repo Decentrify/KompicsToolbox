@@ -23,6 +23,7 @@ import se.sics.kompics.Direct;
 import se.sics.kompics.PatternExtractor;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Event indicating the processing of the windows being held by the visualizer.
@@ -30,16 +31,14 @@ import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
  * Created by babbar on 2015-09-04.
  */
 public class VisualizerWindow {
-
     public static class Request extends Direct.Request<Response> implements AggregatorEvent {
 
-        public final UUID id;
+        public final Identifier id;
         public final Class processor;
         public final int startLoc;
         public final int endLoc;
 
-        public Request(UUID id, Class processor, int startLoc, int endLoc) {
-
+        public Request(Identifier id, Class processor, int startLoc, int endLoc) {
             this.id = id;
             this.processor = processor;
             this.startLoc = startLoc;
@@ -53,6 +52,11 @@ public class VisualizerWindow {
 
         public <P extends VisualizerPacket> Response answer(P visualizationWindow) {
             return new Response(this, visualizationWindow);
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 
@@ -80,6 +84,11 @@ public class VisualizerWindow {
         @Override
         public String toString() {
             return getClass() + "<" + req.id + ">";
+        }
+
+        @Override
+        public Identifier getId() {
+            return req.id;
         }
     }
 }

@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 
@@ -26,10 +26,10 @@ import se.sics.ktoolbox.util.config.KConfigHelper;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class GlobalAggregatorKCWrapper {
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final long aggregationPeriod;
     
-    public GlobalAggregatorKCWrapper(KConfigCore configCore) {
+    public GlobalAggregatorKCWrapper(Config configCore) {
         this.configCore = configCore;
         aggregationPeriod = KConfigHelper.read(configCore, GlobalAggregatorKConfig.aggregationPeriod);
     }

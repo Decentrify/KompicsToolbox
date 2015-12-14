@@ -19,23 +19,23 @@
 package se.sics.ktoolbox.util.config.impl;
 
 import com.google.common.base.Optional;
-import se.sics.kompics.simutil.msg.impl.BasicAddress;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKCWrapper {
-    public final KConfigCore configCore;
+    private final Config configCore;
     public final long seed;
     public final int id;
     public final Optional<BasicAddress> aggregator;
     
-    public SystemKCWrapper(KConfigCore configCore) {
+    public SystemKCWrapper(Config configCore) {
         this.configCore = configCore;
         seed = KConfigHelper.read(configCore, SystemKConfig.seed);
         id = KConfigHelper.read(configCore, SystemKConfig.id);
-        aggregator = configCore.readValue(SystemKConfig.aggregator);
+        aggregator = SystemKConfig.aggregator.readValue(configCore);
     }
 }

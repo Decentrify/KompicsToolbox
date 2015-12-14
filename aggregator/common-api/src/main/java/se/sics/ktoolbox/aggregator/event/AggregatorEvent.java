@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.aggregator.event;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 
 /**
  * Marker interface for segregating the messages belonging to the
@@ -26,5 +27,5 @@ import se.sics.kompics.KompicsEvent;
  *
  * Created by babbar on 2015-09-15.
  */
-public interface AggregatorEvent extends KompicsEvent {
+public interface AggregatorEvent extends KompicsEvent, Identifiable {
 }

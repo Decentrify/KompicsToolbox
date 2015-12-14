@@ -31,15 +31,15 @@ import java.util.Random;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.network.Address;
-import se.sics.kompics.simutil.identifiable.Identifiable;
-import se.sics.kompics.simutil.identifiable.Identifier;
 import se.sics.ktoolbox.gradient.GradientComp;
 import se.sics.ktoolbox.gradient.GradientFilter;
 import se.sics.ktoolbox.util.InvertedComparator;
 import se.sics.ktoolbox.util.ProbabilitiesHelper;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -97,22 +97,22 @@ public class GradientView {
 
     public void merge(Collection<GradientContainer> newSample, GradientContainer selfView) {
         for (GradientContainer gc : newSample) {
-            if (((Identifiable)gc).getId().equals(((Identifiable)selfView).getId())) {
+            if (gc.getSource().getId().equals(selfView.getSource().getId())) {
                 continue;
             }
             if (!filter.retainOther(selfView.getContent(), gc.getContent())) {
                 //The Filter says the new descriptor should not be in the view.
                 //If we have an old descriptor in the view, we should remove it.
-                view.remove(((Identifiable)gc).getId());
+                view.remove(gc.getSource().getId());
                 continue;
             }
-            GradientContainer currentGc = view.get(((Identifiable)gc).getId());
+            GradientContainer currentGc = view.get(gc.getSource().getId());
             if (currentGc != null) {
                 if (currentGc.getAge() > gc.getAge()) {
-                    view.put(((Identifiable)gc).getId(), gc);
+                    view.put(gc.getSource().getId(), gc);
                 }
             } else {
-                view.put(((Identifiable)gc).getId(), gc);
+                view.put(gc.getSource().getId(), gc);
             }
         }
         log.debug("{} remove - before shrink:{}", new Object[]{logPrefix, view.values()});
@@ -123,7 +123,7 @@ public class GradientView {
         for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
             if (toRemove.getAge() >= config.oldThreshold) {
                 log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
-                view.remove(((Identifiable)toRemove).getId());
+                view.remove(toRemove.getSource().getId());
             }
         }
 //        }
@@ -132,7 +132,7 @@ public class GradientView {
             int reduceSize = view.size() - config.viewSize;
             for (GradientContainer toRemove : reduceSize(preferenceComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
-                view.remove(((Identifiable)toRemove).getId());
+                view.remove(toRemove.getSource().getId());
             }
         }
         log.debug("{} remove - after shrink:{}", logPrefix, view.values());
@@ -172,8 +172,8 @@ public class GradientView {
         return copyList;
     }
 
-    public void clean(Address node) {
-        view.remove(((Identifiable)node).getId());
+    public void clean(KAddress node) {
+        view.remove(node.getId());
     }
 
     public boolean checkIfTop(GradientContainer selfView) {

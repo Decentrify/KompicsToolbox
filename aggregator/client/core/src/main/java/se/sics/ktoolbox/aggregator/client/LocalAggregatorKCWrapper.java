@@ -18,20 +18,20 @@
  */
 package se.sics.ktoolbox.aggregator.client;
 
-import se.sics.kompics.network.Address;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class LocalAggregatorKCWrapper {
-    public final KConfigCore configCore;
-    public final Address localAddress;
-    public final Address globalAddress;
+    public final Config configCore;
+    public final KAddress localAddress;
+    public final KAddress globalAddress;
     public final long aggregationPeriod;
     
-    public LocalAggregatorKCWrapper(KConfigCore configCore) {
+    public LocalAggregatorKCWrapper(Config configCore) {
         this.configCore = configCore;
         localAddress = KConfigHelper.read(configCore, LocalAggregatorKConfig.localAddress);
         globalAddress = KConfigHelper.read(configCore, LocalAggregatorKConfig.globalAddress);

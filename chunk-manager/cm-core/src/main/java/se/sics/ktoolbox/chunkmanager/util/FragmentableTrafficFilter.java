@@ -19,30 +19,26 @@
 package se.sics.ktoolbox.chunkmanager.util;
 
 import se.sics.kompics.ChannelSelector;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FragmentableTrafficFilter extends ChannelSelector<Msg, Boolean> {
+public class FragmentableTrafficFilter extends ChannelSelector<KContentMsg, Boolean> {
 
     public FragmentableTrafficFilter() {
-        super(Msg.class, true, true);
+        super(KContentMsg.class, true, true);
     }
 
     @Override
-    public Boolean getValue(Msg msg) {
-        BasicContentMsg<Address, DecoratedHeader<Address>, Object> contentMsg = null;
-        if (!(msg instanceof BasicContentMsg)) {
-            return false;
-        }
-        contentMsg = (BasicContentMsg) msg;
-        if (!contentMsg.getProtocol().equals(Transport.UDP)) {
+    public Boolean getValue(KContentMsg msg) {
+        if (!msg.getHeader().getProtocol().equals(Transport.UDP)) {
             return false;
         }
         

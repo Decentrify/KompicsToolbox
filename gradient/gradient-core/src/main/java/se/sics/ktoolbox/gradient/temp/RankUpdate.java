@@ -19,15 +19,23 @@
 
 package se.sics.ktoolbox.gradient.temp;
 
-import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.gradient.event.GradientEvent;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class RankUpdate implements KompicsEvent {
+public class RankUpdate implements GradientEvent {
+    public final Identifier id;
     public final int rank;
     
-    public RankUpdate(int rank) {
+    public RankUpdate(Identifier id, int rank) {
+        this.id = id;
         this.rank = rank;
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

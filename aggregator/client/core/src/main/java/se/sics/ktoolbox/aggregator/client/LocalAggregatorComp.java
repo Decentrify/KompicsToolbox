@@ -25,12 +25,14 @@ import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.*;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
+import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
-import se.sics.kompics.simutil.msg.impl.BasicHeader;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
@@ -39,8 +41,11 @@ import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.msg.NodeWindow;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.aggregator.util.AggregatorProcessor;
-import se.sics.ktoolbox.util.config.KConfigCore;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
  * Main aggregator component used to collect the information from the components
@@ -67,8 +72,8 @@ public class LocalAggregatorComp extends ComponentDefinition {
     private UUID aggregationTid;
 
     public LocalAggregatorComp(LocalAggregatorInit init) {
-        systemConfig = new SystemKCWrapper(init.configCore);
-        aggregatorConfig = new LocalAggregatorKCWrapper(init.configCore);
+        systemConfig = new SystemKCWrapper(config());
+        aggregatorConfig = new LocalAggregatorKCWrapper(config());
         logPrefix = "<nid:" + systemConfig.id + ">";
         LOG.info("{}initializing...", logPrefix);
 
@@ -112,9 +117,8 @@ public class LocalAggregatorComp extends ComponentDefinition {
     };
     
     private void sendWindow() {
-        DecoratedHeader header = new DecoratedHeader(new BasicHeader(
-                aggregatorConfig.localAddress, aggregatorConfig.globalAddress, Transport.UDP), null);
-        NodeWindow content = new NodeWindow(UUID.randomUUID(), currentWindow);
+        BasicHeader header = new BasicHeader(aggregatorConfig.localAddress, aggregatorConfig.globalAddress, Transport.UDP);
+        NodeWindow content = new NodeWindow(UUIDIdentifier.randomId(), currentWindow);
         BasicContentMsg msg = new BasicContentMsg(header, content);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, msg.getContent(), msg.getDestination()});
         trigger(msg, network);
@@ -122,12 +126,9 @@ public class LocalAggregatorComp extends ComponentDefinition {
 
     public class LocalAggregatorInit extends Init<LocalAggregatorComp> {
 
-        public final KConfigCore configCore;
         public final Multimap<Class, AggregatorProcessor> compPacketAggregators;
 
-        public LocalAggregatorInit(KConfigCore configCore,
-                Multimap<Class, AggregatorProcessor> compPacketAggregators) {
-            this.configCore = configCore;
+        public LocalAggregatorInit(Multimap<Class, AggregatorProcessor> compPacketAggregators) {
             this.compPacketAggregators = compPacketAggregators;
         }
     }
@@ -149,6 +150,11 @@ public class LocalAggregatorComp extends ComponentDefinition {
         @Override
         public String toString() {
             return getClass() + "<" + getTimeoutId() + ">";
+        }
+
+        @Override
+        public Identifier getId() {
+            return new UUIDIdentifier(getTimeoutId());
         }
     }
 }

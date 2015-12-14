@@ -18,23 +18,23 @@
  */
 package se.sics.ktoolbox.util.setup;
 
-import se.sics.ktoolbox.util.msg.BasicHeaderSerializer;
-import se.sics.ktoolbox.util.address.basic.BasicAddressSerializer;
+import se.sics.ktoolbox.util.network.basic.BasicHeaderSerializer;
+import se.sics.ktoolbox.util.network.basic.BasicAddressSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
-import se.sics.kompics.simutil.identifiable.impl.UUIDIdentifier;
-import se.sics.kompics.simutil.msg.impl.BasicAddress;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
-import se.sics.kompics.simutil.msg.impl.BasicHeader;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
-import se.sics.ktoolbox.util.IntIdentifierSerializer;
-import se.sics.ktoolbox.util.UUIDIdentifierSerializer;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddressImpl;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddressImplSerializer;
-import se.sics.ktoolbox.util.address.nat.NatType;
-import se.sics.ktoolbox.util.msg.BasicContentMsgSerializer;
-import se.sics.ktoolbox.util.msg.DecoratedHeaderSerializer;
-import se.sics.ktoolbox.util.address.nat.NatTypeSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifierSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifierSerializer;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddressImplSerializer;
+import se.sics.ktoolbox.util.network.nat.NatType;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsgSerializer;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeaderSerializer;
+import se.sics.ktoolbox.util.network.nat.NatTypeSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

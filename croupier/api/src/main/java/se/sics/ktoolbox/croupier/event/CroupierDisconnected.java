@@ -19,16 +19,15 @@
 
 package se.sics.ktoolbox.croupier.event;
 
-import java.util.UUID;
-import se.sics.kompics.simutil.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierDisconnected implements CroupierEvent {
-    public final UUID id;
+    public final Identifier id;
     public final Identifier overlayId;
-    public CroupierDisconnected(UUID id, Identifier overlayId) {
+    public CroupierDisconnected(Identifier id, Identifier overlayId) {
         this.id = id;
         this.overlayId = overlayId;
     }
@@ -36,5 +35,10 @@ public class CroupierDisconnected implements CroupierEvent {
     @Override
     public String toString() {
         return "CROUPIER_DISCONNECTED<" + id + ">";
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

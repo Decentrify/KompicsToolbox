@@ -19,9 +19,10 @@
 package se.sics.ktoolbox.croupier.event;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface CroupierEvent extends KompicsEvent {
+public interface CroupierEvent extends KompicsEvent, Identifiable {
 }

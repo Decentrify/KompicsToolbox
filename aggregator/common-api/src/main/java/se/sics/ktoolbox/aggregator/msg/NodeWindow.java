@@ -19,18 +19,18 @@
 package se.sics.ktoolbox.aggregator.msg;
 
 import java.util.Map;
-import java.util.UUID;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NodeWindow implements AggregatorEvent {
-    public final UUID id;
+    public final Identifier id;
     public final Map<Class, AggregatorPacket> window;
     
-    public NodeWindow(UUID id, Map<Class, AggregatorPacket> window) {
+    public NodeWindow(Identifier id, Map<Class, AggregatorPacket> window) {
         this.id = id;
         this.window = window;
     }
@@ -38,5 +38,10 @@ public class NodeWindow implements AggregatorEvent {
     @Override
     public String toString() {
         return "AGG_NODE_WINDOW<" + id + ">";
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

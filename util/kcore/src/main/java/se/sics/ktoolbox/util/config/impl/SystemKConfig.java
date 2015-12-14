@@ -18,41 +18,31 @@
  */
 package se.sics.ktoolbox.util.config.impl;
 
-import com.google.common.base.Optional;
-import java.security.SecureRandom;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import se.sics.ktoolbox.util.config.KConfigCore;
-import se.sics.ktoolbox.util.config.KConfigOption.Basic;
+import se.sics.ktoolbox.util.config.KConfigOption;
 import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKConfig {
-    public final static Basic<Long> seed = new Basic("system.seed", Long.class);
-    public final static Basic<Integer> id = new Basic("system.id", Integer.class);
+    public final static KConfigOption.Basic<Long> seed = new KConfigOption.Basic("system.seed", Long.class);
+    public final static KConfigOption.Basic<Integer> id = new KConfigOption.Basic("system.id", Integer.class);
     public static BasicAddressOption aggregator = new BasicAddressOption("system.aggregator");
     
-    public String toString() {
-        return "SystemKConfig";
-    }
-    
-    public static void setup(KConfigCore config) {
-        Long rSeed;
-        Optional<Long> readSeed = config.readValue(seed);
-        if(!readSeed.isPresent()) {
-            SecureRandom rand = new SecureRandom();
-            rSeed = rand.nextLong();
-            config.writeValue(seed, rSeed);
-        } else {
-            rSeed = readSeed.get();
-        }
-        Optional<Integer> readId = config.readValue(SystemKConfig.id);
-        if(!readId.isPresent()) {
-            Random rand = new Random(rSeed);
-            config.writeValue(id, rand.nextInt());
-        }
-    }
+//    public static void setup(KConfigCore config) {
+//        Long rSeed;
+//        Optional<Long> readSeed = config.readValue(seed);
+//        if(!readSeed.isPresent()) {
+//            SecureRandom rand = new SecureRandom();
+//            rSeed = rand.nextLong();
+//            config.writeValue(seed, rSeed);
+//        } else {
+//            rSeed = readSeed.get();
+//        }
+//        Optional<Integer> readId = config.readValue(SystemKConfig.id);
+//        if(!readId.isPresent()) {
+//            Random rand = new Random(rSeed);
+//            config.writeValue(id, rand.nextInt());
+//        }
+//    }
 }

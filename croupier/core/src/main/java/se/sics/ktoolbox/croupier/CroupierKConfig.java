@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
@@ -36,15 +36,15 @@ public class CroupierKConfig {
     public final static KConfigOption.Basic<Boolean> softMax = new KConfigOption.Basic("croupier.softMax", Boolean.class);
     public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("croupier.softMaxTemperature", Double.class);
 
-    public static class CSelectionPolicyOption extends KConfigOption.Composite<CroupierSelectionPolicy> {
+    public static class CSelectionPolicyOption extends KConfigOption.Base<CroupierSelectionPolicy> {
 
         public CSelectionPolicyOption(String name) {
             super(name, CroupierSelectionPolicy.class);
         }
 
         @Override
-        public Optional<CroupierSelectionPolicy> readValue(KConfigCore config) {
-            Optional<String> sPolicy = config.readValue(policy);
+        public Optional<CroupierSelectionPolicy> readValue(Config config) {
+            Optional<String> sPolicy = policy.readValue(config);
             if (!sPolicy.isPresent()) {
                 return Optional.absent();
             }

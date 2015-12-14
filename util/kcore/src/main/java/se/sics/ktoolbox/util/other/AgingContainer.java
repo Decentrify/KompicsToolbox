@@ -18,13 +18,12 @@
  */
 package se.sics.ktoolbox.util.other;
 
-import se.sics.kompics.network.Address;
-
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface AgingContainer<S extends Address, C extends Object> extends Container<S, C> {
+public interface AgingContainer<S extends KAddress, C extends Object> extends Container<S, C> {
     public void incrementAge();
     public int getAge();
 }

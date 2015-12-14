@@ -27,11 +27,10 @@ import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 import se.sics.ktoolbox.aggregator.server.event.VisualizerWindow;
 import java.util.*;
 import org.javatuples.Pair;
-import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerProcessor;
-import se.sics.ktoolbox.util.config.KConfigCore;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Visualizer component used for providing the visualizations to the end user.
@@ -50,12 +49,12 @@ public class Visualizer extends ComponentDefinition {
     private final VisualizerKCWrapper visualizerConfig;
 
     private final Map<Class, VisualizerProcessor> visualizerProcessors;
-    private final Map<Integer, Table<Address, Class, AggregatorPacket>> snapshots = new HashMap<>();
+    private final Map<Integer, Table<Identifier, Class, AggregatorPacket>> snapshots = new HashMap<>();
     private Pair<Integer, Integer> snapshotInterval;
 
     public Visualizer(VisualizerInit init) {
-        systemConfig = new SystemKCWrapper(init.configCore);
-        visualizerConfig = new VisualizerKCWrapper(init.configCore);
+        systemConfig = new SystemKCWrapper(config());
+        visualizerConfig = new VisualizerKCWrapper(config());
         logPrefix = "<nid:" + systemConfig.id + ">";
         LOG.info("{}initiating...", logPrefix);
 
@@ -135,11 +134,9 @@ public class Visualizer extends ComponentDefinition {
 
     public static class VisualizerInit extends Init<Visualizer> {
 
-        public final KConfigCore configCore;
         public final Map<Class, VisualizerProcessor> visualizerProcessors;
 
-        public VisualizerInit(KConfigCore configCore, Map<Class, VisualizerProcessor> visualizerProcessors) {
-            this.configCore = configCore;
+        public VisualizerInit(Map<Class, VisualizerProcessor> visualizerProcessors) {
             this.visualizerProcessors = visualizerProcessors;
         }
     }

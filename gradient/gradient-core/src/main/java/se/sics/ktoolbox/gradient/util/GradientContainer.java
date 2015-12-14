@@ -18,8 +18,8 @@
  */
 package se.sics.ktoolbox.gradient.util;
 
-import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.util.Wrapper;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 import se.sics.ktoolbox.util.traits.Ageing;
 
@@ -27,14 +27,14 @@ import se.sics.ktoolbox.util.traits.Ageing;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientContainer<C extends Object> implements Container<Address, C>, Ageing, Wrapper<C> {
+public class GradientContainer<C extends Object> implements Container<KAddress, C>, Ageing, Wrapper<C> {
 
     private int age;
-    private Address src;
+    private KAddress src;
     public final int rank;
     private final C content;
 
-    public GradientContainer(Address src, C content, int age, int rank) {
+    public GradientContainer(KAddress src, C content, int age, int rank) {
         this.age = age;
         this.src = src;
         this.rank = rank;
@@ -47,7 +47,7 @@ public class GradientContainer<C extends Object> implements Container<Address, C
     }
 
     @Override
-    public Address getSource() {
+    public KAddress getSource() {
         return src;
     }
 

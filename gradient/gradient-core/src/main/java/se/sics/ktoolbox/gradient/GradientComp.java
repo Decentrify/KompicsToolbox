@@ -19,8 +19,6 @@
 package se.sics.ktoolbox.gradient;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.gradient.GradientPort;
-import se.sics.ktoolbox.gradient.GradientFilter;
 import se.sics.ktoolbox.gradient.util.GradientView;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -35,14 +33,8 @@ import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.simutil.identifiable.Identifiable;
-import se.sics.kompics.simutil.identifiable.impl.IntIdentifier;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
-import se.sics.kompics.simutil.msg.impl.BasicHeader;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
@@ -51,22 +43,28 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
-import se.sics.ktoolbox.gradient.msg.GradientSample;
-import se.sics.ktoolbox.gradient.msg.GradientUpdate;
+import se.sics.ktoolbox.gradient.event.GradientSample;
+import se.sics.ktoolbox.gradient.event.GradientUpdate;
 import se.sics.ktoolbox.gradient.msg.GradientShuffle;
 import se.sics.ktoolbox.gradient.temp.RankUpdate;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.gradient.util.GradientLocalView;
-import se.sics.ktoolbox.util.address.resolution.AddressUpdate;
-import se.sics.ktoolbox.util.address.resolution.AddressUpdatePort;
+import se.sics.ktoolbox.util.address.AddressUpdate;
+import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.other.AgingContainer;
-import se.sics.ktoolbox.util.other.Container;
+import se.sics.ktoolbox.util.update.view.OverlayView;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.util.update.view.ViewUpdate;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
-import se.sics.ktoolbox.util.update.view.impl.OverlayView;
 
 /**
  * Main Gradient class responsible for shuffling peer views with neighbors. It
@@ -80,7 +78,7 @@ public class GradientComp extends ComponentDefinition {
     private final String logPrefix;
 
     private final GradientKCWrapper config;
-    private Address self;
+    private KAddress self;
 
     private GradientFilter filter;
     private GradientContainer selfView;
@@ -101,9 +99,9 @@ public class GradientComp extends ComponentDefinition {
     Positive addressUpdate = requires(AddressUpdatePort.class);
 
     public GradientComp(GradientInit init) {
-        this.config = init.config;
+        this.config = new GradientKCWrapper(config(), init.seed, init.overlayId);
         this.self = init.self;
-        this.logPrefix = "<oid:" + config.overlayId + ":nid:" + ((Identifiable) self).getId().toString() + "> ";
+        this.logPrefix = "<oid:" + config.overlayId + ":nid:" + self.getId().toString() + "> ";
         LOG.info("{} initializing with seed:{}", logPrefix, config.seed);
         this.utilityComp = new WrapperComparator<GradientContainer>(init.utilityComparator);
         this.view = new GradientView(config, logPrefix, init.utilityComparator, init.gradientFilter);
@@ -148,7 +146,7 @@ public class GradientComp extends ComponentDefinition {
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
-            trigger(new ViewUpdate.Indication(UUID.randomUUID(), new OverlayView(false, Optional.of(
+            trigger(new ViewUpdate.Indication(UUIDIdentifier.randomId(), new OverlayView(false, Optional.of(
                     (View) new GradientLocalView(update.view, selfView.rank)))), croupierViewUpdate);
         }
     };
@@ -174,11 +172,11 @@ public class GradientComp extends ComponentDefinition {
                     new Object[]{logPrefix, sample.publicSample, sample.privateSample});
 
             Set<GradientContainer> gradientCopy = new HashSet<GradientContainer>();
-            for (AgingContainer<Address, GradientLocalView> container : sample.publicSample.values()) {
+            for (AgingContainer<KAddress, GradientLocalView> container : sample.publicSample.values()) {
                 int age = container.getAge();
                 gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
             }
-            for (AgingContainer<Address, GradientLocalView> container : sample.privateSample.values()) {
+            for (AgingContainer<KAddress, GradientLocalView> container : sample.privateSample.values()) {
                 int age = container.getAge();
                 gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
             }
@@ -200,9 +198,9 @@ public class GradientComp extends ComponentDefinition {
             if (view.checkIfTop(selfView) && selfView.rank != 0) {
                 selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), 0);
                 LOG.debug("{} am top", logPrefix, view.getAllCopy());
-                trigger(new ViewUpdate.Indication(UUID.randomUUID(), new OverlayView(false, Optional.of(
+                trigger(new ViewUpdate.Indication(UUIDIdentifier.randomId(), new OverlayView(false, Optional.of(
                         (View) new GradientLocalView(selfView.getContent(), selfView.rank)))), croupierViewUpdate);
-                trigger(new RankUpdate(selfView.rank), rankUpdate);
+                trigger(new RankUpdate(UUIDIdentifier.randomId(), selfView.rank), rankUpdate);
             }
             LOG.debug("{} rank:{}", logPrefix, selfView.rank);
 
@@ -214,7 +212,7 @@ public class GradientComp extends ComponentDefinition {
 
             if (!view.isEmpty()) {
                 LOG.info("{} view:{}", logPrefix, view.getAllCopy());
-                trigger(new GradientSample(selfView.getContent(), view.getAllCopy()), gradient);
+                trigger(new GradientSample(UUIDIdentifier.randomId(), selfView.getContent(), view.getAllCopy()), gradient);
             }
 
             // NOTE:
@@ -222,9 +220,9 @@ public class GradientComp extends ComponentDefinition {
             view.incrementAges();
 
             Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, config.shuffleSize);
-            DecoratedHeader<Address> requestHeader = new DecoratedHeader(
-                    new BasicHeader(self, partner.getSource(), Transport.UDP), new IntIdentifier(config.overlayId));
-            GradientShuffle.Request requestContent = new GradientShuffle.Request(UUID.randomUUID(), selfView, exchangeGC);
+            DecoratedHeader<KAddress> requestHeader = new DecoratedHeader(
+                    new BasicHeader(self, partner.getSource(), Transport.UDP), config.overlayId);
+            GradientShuffle.Request requestContent = new GradientShuffle.Request(UUIDIdentifier.randomId(), selfView, exchangeGC);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
             LOG.debug("{} sending:{} to:{}", new Object[]{logPrefix, requestContent.exchangeNodes, partner.getSource()});
             trigger(request, network);
@@ -249,13 +247,13 @@ public class GradientComp extends ComponentDefinition {
     };
 
     ClassMatchedHandler handleShuffleRequest
-            = new ClassMatchedHandler<GradientShuffle.Request, BasicContentMsg<Address, DecoratedHeader<Address>, GradientShuffle.Request>>() {
+            = new ClassMatchedHandler<GradientShuffle.Request, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Request>>() {
 
                 @Override
-                public void handle(GradientShuffle.Request content, BasicContentMsg<Address, DecoratedHeader<Address>, GradientShuffle.Request> container) {
-                    DecoratedHeader<Address> header = container.getHeader();
-                    Address reqSrc = container.getHeader().getSource();
-                    if (((Identifiable) self).getId().equals(((Identifiable) reqSrc).getId())) {
+                public void handle(GradientShuffle.Request content, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Request> container) {
+                    DecoratedHeader<KAddress> header = container.getHeader();
+                    KAddress reqSrc = container.getHeader().getSource();
+                    if (self.getId().equals(reqSrc.getId())) {
                         LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
@@ -269,12 +267,10 @@ public class GradientComp extends ComponentDefinition {
                     view.incrementAges();
 
                     Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, config.shuffleSize);
-                    DecoratedHeader<Address> responseHeader = new DecoratedHeader(
-                            new BasicHeader(self, container.getHeader().getSource(), Transport.UDP), new IntIdentifier(config.overlayId));
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.id, selfView, exchangeGC);
-                    BasicContentMsg request = new BasicContentMsg(responseHeader, responseContent);
+                    BasicContentMsg response = container.answer(responseContent);
                     LOG.debug("{} sending:{} to:{}", new Object[]{logPrefix, responseContent.exchangeNodes, container.getHeader().getSource()});
-                    trigger(request, network);
+                    trigger(response, network);
 
                     view.merge(content.exchangeNodes, selfView);
                     view.merge(content.selfGC, selfView);
@@ -282,13 +278,13 @@ public class GradientComp extends ComponentDefinition {
             };
 
     ClassMatchedHandler handleShuffleResponse
-            = new ClassMatchedHandler<GradientShuffle.Response, BasicContentMsg<Address, DecoratedHeader<Address>, GradientShuffle.Response>>() {
+            = new ClassMatchedHandler<GradientShuffle.Response, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Response>>() {
 
                 @Override
-                public void handle(GradientShuffle.Response content, BasicContentMsg<Address, DecoratedHeader<Address>, GradientShuffle.Response> container) {
-                    DecoratedHeader<Address> header = container.getHeader();
-                    Address respSrc = container.getHeader().getSource();
-                    if (((Identifiable) self).getId().equals(((Identifiable) respSrc).getId())) {
+                public void handle(GradientShuffle.Response content, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Response> container) {
+                    DecoratedHeader<KAddress> header = container.getHeader();
+                    KAddress respSrc = container.getHeader().getSource();
+                    if (self.getId().equals(respSrc.getId())) {
                         LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
@@ -310,9 +306,9 @@ public class GradientComp extends ComponentDefinition {
                     if (content.selfGC.rank != Integer.MAX_VALUE && selfView.rank != content.selfGC.rank + nodeDist) {
                         selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), content.selfGC.rank + nodeDist);
                         LOG.debug("{} new rank:{} partner:{} partner rank:{}", new Object[]{logPrefix, selfView.rank, content.selfGC.getSource(), content.selfGC.rank});
-                        trigger(new ViewUpdate.Indication(UUID.randomUUID(), new OverlayView(false, Optional.of(
+                        trigger(new ViewUpdate.Indication(UUIDIdentifier.randomId(), new OverlayView(false, Optional.of(
                                                         (View) new GradientLocalView(selfView.getContent(), selfView.rank)))), croupierViewUpdate);
-                        trigger(new RankUpdate(selfView.rank), rankUpdate);
+                        trigger(new RankUpdate(UUIDIdentifier.randomId(), selfView.rank), rankUpdate);
                     }
                 }
             };
@@ -339,7 +335,7 @@ public class GradientComp extends ComponentDefinition {
         trigger(cpt, timer);
     }
 
-    private void scheduleShuffleTimeout(Address dest) {
+    private void scheduleShuffleTimeout(KAddress dest) {
         if (shuffleTimeoutId != null) {
             LOG.warn("{} double starting shuffle timeout", logPrefix);
             return;
@@ -374,9 +370,9 @@ public class GradientComp extends ComponentDefinition {
 
     public class ShuffleTimeout extends Timeout {
 
-        public final Address dest;
+        public final KAddress dest;
 
-        public ShuffleTimeout(ScheduleTimeout request, Address dest) {
+        public ShuffleTimeout(ScheduleTimeout request, KAddress dest) {
             super(request);
             this.dest = dest;
         }
@@ -389,17 +385,18 @@ public class GradientComp extends ComponentDefinition {
 
     public static class GradientInit extends Init<GradientComp> {
 
-        public final GradientKCWrapper config;
-        public final Address self;
+        public final KAddress self;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
+        public final long seed;
+        public final Identifier overlayId;
 
-        public GradientInit(GradientKCWrapper config, Address self,
-                Comparator utilityComparator, GradientFilter gradientFilter) {
-            this.config = config;
+        public GradientInit(KAddress self, Comparator utilityComparator, GradientFilter gradientFilter, long seed, Identifier overlayId) {
             this.self = self;
             this.utilityComparator = utilityComparator;
             this.gradientFilter = gradientFilter;
+            this.seed = seed;
+            this.overlayId = overlayId;
         }
     }
 }

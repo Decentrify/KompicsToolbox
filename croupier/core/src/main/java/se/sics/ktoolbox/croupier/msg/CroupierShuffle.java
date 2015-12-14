@@ -24,7 +24,8 @@ import java.util.UUID;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -32,12 +33,12 @@ import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
 public class CroupierShuffle {
 
     public static abstract class Basic implements CroupierEvent {
-        public final UUID id;
+        public final Identifier id;
         public final Optional<View> selfView;
         public final Map<NatAwareAddress, CroupierContainer> publicNodes;
         public final Map<NatAwareAddress, CroupierContainer> privateNodes;
 
-        Basic(UUID id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
+        Basic(Identifier id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
                 Map<NatAwareAddress, CroupierContainer> privateNodes) {
             this.id = id;
             this.selfView = selfView;
@@ -50,7 +51,7 @@ public class CroupierShuffle {
     }
     
     public static class Request extends Basic {
-        public Request(UUID id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
+        public Request(Identifier id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
                 Map<NatAwareAddress, CroupierContainer> privateNodes) {
             super(id, selfView, publicNodes, privateNodes);
         }
@@ -59,10 +60,15 @@ public class CroupierShuffle {
         public String toString() {
             return "CROUPIER_SREQUEST<" + id + ">";
         }
+
+        @Override
+        public Identifier getId() {
+            return id;
+        }
     }
     
     public static class Response extends Basic {
-        public Response(UUID id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
+        public Response(Identifier id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
                 Map<NatAwareAddress, CroupierContainer> privateNodes) {
             super(id, selfView, publicNodes, privateNodes);
         }
@@ -70,6 +76,11 @@ public class CroupierShuffle {
         @Override
         public String toString() {
             return "CROUPIER_SRESPONSE<" + id + ">";
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 }

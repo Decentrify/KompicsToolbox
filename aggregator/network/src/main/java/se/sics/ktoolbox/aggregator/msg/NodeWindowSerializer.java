@@ -26,6 +26,7 @@ import java.util.UUID;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Serializer for the packet container mainly containing the packet information.
@@ -47,7 +48,7 @@ public class NodeWindowSerializer implements Serializer {
     @Override
     public void toBinary(Object o, ByteBuf buf) {
         NodeWindow window = (NodeWindow) o;
-        Serializers.lookupSerializer(UUID.class).toBinary(window.id, buf);
+        Serializers.toBinary(window.id, buf);
         buf.writeInt(window.window.size());
         for (Map.Entry<Class, AggregatorPacket> e : window.window.entrySet()) {
             buf.writeInt(e.getKey().getName().length());
@@ -58,7 +59,7 @@ public class NodeWindowSerializer implements Serializer {
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        UUID uuid = (UUID) Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
+        Identifier windowId = (Identifier) Serializers.fromBinary(buf, hint);
         int windowSize = buf.readInt();
         Map<Class, AggregatorPacket> window = new HashMap<>();
         while (windowSize > 0) {
@@ -74,6 +75,6 @@ public class NodeWindowSerializer implements Serializer {
             AggregatorPacket ap = (AggregatorPacket) Serializers.fromBinary(buf, hint);
             window.put(c, ap);
         }
-        return new NodeWindow(uuid, window);
+        return new NodeWindow(windowId, window);
     }
 }

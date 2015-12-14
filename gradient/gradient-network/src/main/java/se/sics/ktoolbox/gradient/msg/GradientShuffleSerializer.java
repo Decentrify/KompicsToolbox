@@ -23,11 +23,11 @@ import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import org.javatuples.Triplet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -48,8 +48,7 @@ public class GradientShuffleSerializer {
         @Override
         public void toBinary(Object o, ByteBuf buf) {
             GradientShuffle.Basic obj = (GradientShuffle.Basic)o;
-            Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
-            
+            Serializers.toBinary(obj.id, buf);
             Serializers.lookupSerializer(GradientContainer.class).toBinary(obj.selfGC, buf);
             
             buf.writeByte(obj.exchangeNodes.size());
@@ -58,8 +57,8 @@ public class GradientShuffleSerializer {
             }
         }
 
-        public Triplet<UUID, GradientContainer, Set<GradientContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
-            UUID id = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
+        public Triplet<Identifier, GradientContainer, Set<GradientContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
+            Identifier msgId = (Identifier)Serializers.fromBinary(buf, hint);
             
             GradientContainer selfGC = (GradientContainer)Serializers.lookupSerializer(GradientContainer.class).fromBinary(buf, hint);
             
@@ -71,7 +70,7 @@ public class GradientShuffleSerializer {
                 exchangedNodesSize--;
             }
             
-            return Triplet.with(id, selfGC, exchangedNodes);
+            return Triplet.with(msgId, selfGC, exchangedNodes);
         }
     }
     
@@ -83,7 +82,7 @@ public class GradientShuffleSerializer {
         
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Triplet<UUID, GradientContainer, Set<GradientContainer>> contents = fromBinaryBase(buf, hint);
+            Triplet<Identifier, GradientContainer, Set<GradientContainer>> contents = fromBinaryBase(buf, hint);
             return new GradientShuffle.Request(contents.getValue0(), contents.getValue1(), contents.getValue2());
         }
     }
@@ -96,7 +95,7 @@ public class GradientShuffleSerializer {
         
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Triplet<UUID, GradientContainer, Set<GradientContainer>> contents = fromBinaryBase(buf, hint);
+            Triplet<Identifier, GradientContainer, Set<GradientContainer>> contents = fromBinaryBase(buf, hint);
             return new GradientShuffle.Response(contents.getValue0(), contents.getValue1(), contents.getValue2());
         }
     }

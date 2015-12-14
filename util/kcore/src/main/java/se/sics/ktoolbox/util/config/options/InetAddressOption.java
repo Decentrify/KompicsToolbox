@@ -21,35 +21,25 @@ package se.sics.ktoolbox.util.config.options;
 import com.google.common.base.Optional;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigOption.Base;
 import se.sics.ktoolbox.util.config.KConfigOption.Basic;
-import se.sics.ktoolbox.util.config.KConfigOption.Composite;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class InetAddressOption extends Composite<InetAddress> {
-    private final Basic<String> sIpOption;
-    
-    public InetAddressOption(String optionName, Basic<String> host) {
-        super(optionName, InetAddress.class);
-        this.sIpOption = host;
-    }
+public class InetAddressOption extends Base<InetAddress> {
     
     public InetAddressOption(String optionName) {
-        this(optionName, null);
+        super(optionName, InetAddress.class);
     }
-
+    
     @Override
-    public Optional<InetAddress> readValue(KConfigCore config) {
-        if(sIpOption == null) {
-            return Optional.absent();
-        }
-        Optional<String> sPrefferedInterface = config.readValue(sIpOption);
+    public Optional<InetAddress> readValue(Config config) {
+        Optional<String> sPrefferedInterface = config.readValue(name, String.class);
         if (!sPrefferedInterface.isPresent()) {
             return Optional.absent();
         }
-        
         try {
             return Optional.of(InetAddress.getByName(sPrefferedInterface.get()));
         } catch (UnknownHostException ex) {

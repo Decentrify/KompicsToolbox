@@ -19,17 +19,17 @@
 package se.sics.ktoolbox.croupier.event;
 
 import java.util.List;
-import java.util.UUID;
-import se.sics.ktoolbox.util.address.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierJoin implements CroupierEvent {
-    public final UUID id;
+    public final Identifier id;
     public final List<NatAwareAddress> peers;
 
-    public CroupierJoin(UUID id, List<NatAwareAddress> peers) {
+    public CroupierJoin(Identifier id, List<NatAwareAddress> peers) {
         this.id = id;
         this.peers = peers;
     }
@@ -37,5 +37,10 @@ public class CroupierJoin implements CroupierEvent {
     @Override
     public String toString() {
         return "CROUPIER_JOIN<" +  id + ">";
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

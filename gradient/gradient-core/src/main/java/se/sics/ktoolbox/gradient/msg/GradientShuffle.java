@@ -1,8 +1,9 @@
 package se.sics.ktoolbox.gradient.msg;
 
 import java.util.Collection;
-import java.util.UUID;
+import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Wrapper class used by Gradient Service in order to encapsulate the Data
@@ -12,13 +13,13 @@ import se.sics.ktoolbox.gradient.util.GradientContainer;
  */
 public class GradientShuffle {
 
-    public static abstract class Basic implements GradientMsg {
+    public static abstract class Basic implements GradientEvent {
 
-        public final UUID id;
+        public final Identifier id;
         public final GradientContainer selfGC;
         public final Collection<GradientContainer> exchangeNodes;
         
-        public Basic(UUID id, GradientContainer selfGC, Collection<GradientContainer> exchangeNodes) {
+        public Basic(Identifier id, GradientContainer selfGC, Collection<GradientContainer> exchangeNodes) {
             this.id = id;
             this.selfGC = selfGC;
             this.exchangeNodes = exchangeNodes;
@@ -26,7 +27,7 @@ public class GradientShuffle {
     }
     
     public static class Request extends Basic {
-        public Request(UUID id, GradientContainer selfGC, Collection<GradientContainer> sample) {
+        public Request(Identifier id, GradientContainer selfGC, Collection<GradientContainer> sample) {
             super(id, selfGC, sample);
         }
         
@@ -34,17 +35,26 @@ public class GradientShuffle {
         public String toString() {
             return "ShuffleRequest";
         }
-        
+
+        @Override
+        public Identifier getId() {
+            return id;
+        }
     }
     
     public static class Response extends Basic {
-        public Response(UUID id, GradientContainer selfGC, Collection<GradientContainer> sample) {
+        public Response(Identifier id, GradientContainer selfGC, Collection<GradientContainer> sample) {
             super(id,  selfGC, sample);
         }
         
         @Override
         public String toString() {
             return "ShuffleResponse";
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 }

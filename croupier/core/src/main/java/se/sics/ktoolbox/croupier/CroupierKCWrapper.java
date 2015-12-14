@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
@@ -27,7 +27,7 @@ import se.sics.ktoolbox.util.config.KConfigHelper;
  */
 public class CroupierKCWrapper {
 
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final CroupierSelectionPolicy policy;
     public final int viewSize;
     public final int minViewSize;
@@ -37,7 +37,7 @@ public class CroupierKCWrapper {
     public final boolean softMax;
     public final Optional<Double> softMaxTemp;
 
-    public CroupierKCWrapper(KConfigCore configCore) {
+    public CroupierKCWrapper(Config configCore) {
         this.configCore = configCore;
         policy = KConfigHelper.read(configCore, CroupierKConfig.sPolicy);
         viewSize = KConfigHelper.read(configCore, CroupierKConfig.viewSize);
@@ -46,6 +46,6 @@ public class CroupierKCWrapper {
         shufflePeriod = KConfigHelper.read(configCore, CroupierKConfig.shufflePeriod);
         shuffleTimeout = KConfigHelper.read(configCore, CroupierKConfig.shuffleTimeout);
         softMax = KConfigHelper.read(configCore, CroupierKConfig.softMax);
-        softMaxTemp = configCore.readValue(CroupierKConfig.softMaxTemp);
+        softMaxTemp = CroupierKConfig.softMaxTemp.readValue(configCore);
     }
 }

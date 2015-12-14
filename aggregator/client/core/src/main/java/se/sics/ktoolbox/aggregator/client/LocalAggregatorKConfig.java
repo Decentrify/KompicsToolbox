@@ -18,8 +18,6 @@
  */
 package se.sics.ktoolbox.aggregator.client;
 
-import java.util.HashSet;
-import java.util.Set;
 import se.sics.ktoolbox.util.config.KConfigOption;
 import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 

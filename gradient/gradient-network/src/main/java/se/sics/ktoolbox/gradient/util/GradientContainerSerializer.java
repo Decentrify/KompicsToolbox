@@ -21,9 +21,9 @@ package se.sics.ktoolbox.gradient.util;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -52,7 +52,7 @@ public class GradientContainerSerializer implements Serializer {
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         int age = buf.readInt();
-        Address src = (Address)Serializers.fromBinary(buf, hint);
+        KAddress src = (KAddress)Serializers.fromBinary(buf, hint);
         int rank = buf.readInt();
         Object content = Serializers.fromBinary(buf, hint);
         return new GradientContainer(src, content, age, rank);

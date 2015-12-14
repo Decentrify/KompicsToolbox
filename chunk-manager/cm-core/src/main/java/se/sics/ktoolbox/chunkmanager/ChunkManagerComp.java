@@ -37,26 +37,23 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.network.Address;
-import se.sics.kompics.network.Header;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.kompics.simutil.identifiable.Identifiable;
-import se.sics.kompics.simutil.msg.impl.BasicContentMsg;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.config.impl.SystemKConfig;
 import se.sics.ktoolbox.chunkmanager.util.CMInternalFilter;
 import se.sics.ktoolbox.chunkmanager.util.Chunk;
 import se.sics.ktoolbox.chunkmanager.util.ChunkPrefixHelper;
 import se.sics.ktoolbox.chunkmanager.util.IncompleteChunkTracker;
 import se.sics.ktoolbox.chunkmanager.util.CompleteChunkTracker;
 import se.sics.ktoolbox.chunkmanager.util.FragmentableTrafficFilter;
-import se.sics.ktoolbox.util.config.KConfigCore;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 
 /**
  * Created by alidar on 10/21/14.
@@ -72,20 +69,18 @@ public class ChunkManagerComp extends ComponentDefinition {
     private final SystemKCWrapper systemConfig;
     private final ChunkManagerConfig config;
     private final String logPrefix;
-    private final ChannelSelector<Msg, Boolean> fragmentableTraffic = new FragmentableTrafficFilter();
-    private final ChannelSelector<Msg, Boolean> internalTraffic = new CMInternalFilter();
+    private final ChannelSelector<KContentMsg, Boolean> fragmentableTraffic = new FragmentableTrafficFilter();
+    private final ChannelSelector<KContentMsg, Boolean> internalTraffic = new CMInternalFilter();
 
-    private final Map<UUID, Pair<IncompleteChunkTracker, UUID>> incomingChunks;
+    private final Map<UUID, Pair<IncompleteChunkTracker, UUID>> incomingChunks = new HashMap<>();
 
-    private Address self;
+    private KAddress self;
     public ChunkManagerComp(CMInit init) {
-        this.self = self;
-        this.systemConfig = init.systemConfig;
+        this.self = init.self;
+        this.systemConfig = new SystemKCWrapper(config());
         this.config = init.config;
-        this.logPrefix = "<nid:"+ ((Identifiable)self).getId().toString();
+        this.logPrefix = "<nid:"+ self.getId().toString();
         log.info("{} initiating...", logPrefix);
-
-        this.incomingChunks = new HashMap<UUID, Pair<IncompleteChunkTracker, UUID>>();
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
@@ -109,21 +104,20 @@ public class ChunkManagerComp extends ComponentDefinition {
     };
     //**************************************************************************
 
-    Handler handleOutgoing = new Handler<Msg>() {
+    Handler handleOutgoing = new Handler<BasicContentMsg>() {
         @Override
-        public void handle(Msg msg) {
+        public void handle(BasicContentMsg msg) {
             log.trace("{} received:{}", logPrefix, msg);
             if (!fragmentableTraffic.getValue(msg)) {
                 log.debug("{} forwarding outgoing non fragmentable message:{}", logPrefix, msg);
                 trigger(msg, requiredNetwork);
                 return;
             }
-            BasicContentMsg contentMsg = (BasicContentMsg)msg;
 
             ByteBuf content = Unpooled.buffer();
             ByteBuf header = Unpooled.buffer();
-            Serializers.toBinary(contentMsg.getContent(), content);
-            Serializers.toBinary(contentMsg.getHeader(), header);
+            Serializers.toBinary(msg.getContent(), content);
+            Serializers.toBinary(msg.getHeader(), header);
 
             //we have to accommodate the headers info of the chunked message as well.
             int headerSize = header.readableBytes();
@@ -148,9 +142,9 @@ public class ChunkManagerComp extends ComponentDefinition {
         }
     };
 
-    Handler handleIncoming = new Handler<Msg>() {
+    Handler handleIncoming = new Handler<BasicContentMsg>() {
         @Override
-        public void handle(Msg msg) {
+        public void handle(BasicContentMsg msg) {
             log.trace("{} received:{}", logPrefix, msg);
             if (!internalTraffic.getValue(msg)) {
                 log.debug("{} forwarding incoming non fragmentable message:{}", logPrefix, msg);
@@ -158,7 +152,7 @@ public class ChunkManagerComp extends ComponentDefinition {
                 return;
             }
 
-            Chunk chunk = (Chunk)((BasicContentMsg)msg).getContent();
+            Chunk chunk = (Chunk)msg.getContent();
 
             if (!incomingChunks.containsKey(chunk.messageId)) {
                 IncompleteChunkTracker chunkTracker = new IncompleteChunkTracker(chunk.lastChunk);
@@ -175,7 +169,7 @@ public class ChunkManagerComp extends ComponentDefinition {
                 incomingChunks.remove(chunk.messageId);
                 byte[] msgBytes = chunkTracker.getMsg();
 
-                Header header = msg.getHeader();
+                KHeader header = msg.getHeader();
                 Object content = Serializers.fromBinary(Unpooled.wrappedBuffer(msgBytes), Optional.absent());
                 BasicContentMsg rebuiltMsg = new BasicContentMsg(header, content);
                 log.debug("{} rebuilt chunked message:{}", logPrefix, rebuiltMsg);
@@ -208,12 +202,10 @@ public class ChunkManagerComp extends ComponentDefinition {
 
     public static class CMInit extends Init<ChunkManagerComp> {
 
-        public final Address self;
-        public final SystemKCWrapper systemConfig;
+        public final KAddress self;
         public final ChunkManagerConfig config;
 
-        public CMInit(KConfigCore configCore, ChunkManagerConfig config, Address self) {
-            this.systemConfig = new SystemKCWrapper(configCore);
+        public CMInit(ChunkManagerConfig config, KAddress self) {
             this.config = config;
             this.self = self;
         }

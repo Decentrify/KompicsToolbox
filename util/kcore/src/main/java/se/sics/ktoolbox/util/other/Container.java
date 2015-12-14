@@ -19,12 +19,13 @@
 
 package se.sics.ktoolbox.util.other;
 
-import se.sics.kompics.network.Address;
+import se.sics.ktoolbox.util.network.KAddress;
+
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface Container<S extends Address, C extends Object> {
+public interface Container<S extends KAddress, C extends Object> {
     public S getSource();
     public C getContent();
     public Container copy();

@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.util.selectors;
 
 import se.sics.kompics.ChannelSelector;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Msg;
-import se.sics.kompics.simutil.identifiable.Identifier;
-import se.sics.kompics.simutil.msg.impl.DecoratedHeader;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -36,7 +36,7 @@ public class OverlaySelector extends ChannelSelector<Msg, Identifier> {
     @Override
     public Identifier getValue(Msg msg) {
         if (msg.getHeader() instanceof DecoratedHeader) {
-            DecoratedHeader<Address> dHeader = (DecoratedHeader<Address>) msg.getHeader();
+            DecoratedHeader<KAddress> dHeader = (DecoratedHeader<KAddress>) msg.getHeader();
             return dHeader.getOverlayId();
         }
         return null;

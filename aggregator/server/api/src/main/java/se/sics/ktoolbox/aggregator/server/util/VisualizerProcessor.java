@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.aggregator.server.util;
 
 import com.google.common.collect.Table;
-import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  *
@@ -28,5 +28,5 @@ import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
  */
 public interface VisualizerProcessor {
     public VisualizerPacket getFirst();
-    public VisualizerPacket process(VisualizerPacket old, Table<Address, Class, AggregatorPacket> window);
+    public VisualizerPacket process(VisualizerPacket old, Table<Identifier, Class, AggregatorPacket> window);
 }

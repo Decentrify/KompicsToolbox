@@ -18,17 +18,17 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
-import se.sics.ktoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class VisualizerKCWrapper {
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final int snapshotMaxSize;
     
-    public VisualizerKCWrapper(KConfigCore configCore) {
+    public VisualizerKCWrapper(Config configCore) {
         this.configCore = configCore;
         snapshotMaxSize = KConfigHelper.read(configCore, VisualizerKConfig.snapshotMaxSize);
     }

@@ -19,17 +19,20 @@
 package se.sics.ktoolbox.util.status;
 
 import se.sics.kompics.PatternExtractor;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Status {
 
-    public static class Internal<S extends Object> implements PatternExtractor<Class<S>, S> {
-
+    public static class Internal<S extends Object> implements PatternExtractor<Class<S>, S>, Identifiable {
+        private final Identifier id; 
         public final S status;
 
-        public Internal(S status) {
+        public Internal(Identifier id, S status) {
+            this.id = id;
             this.status = status;
         }
 
@@ -41,13 +44,20 @@ public class Status {
         @Override
         public S extractValue() {
             return status;
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
     
-    public static class External<S extends Object> implements PatternExtractor<Class<S>, S> {
+    public static class External<S extends Object> implements PatternExtractor<Class<S>, S>, Identifiable {
+        private final Identifier id;
         public final S status;
 
-        public External(S status) {
+        public External(Identifier id, S status) {
+            this.id = id;
             this.status = status;
         }
 
@@ -59,6 +69,11 @@ public class Status {
         @Override
         public S extractValue() {
             return status;
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 }
