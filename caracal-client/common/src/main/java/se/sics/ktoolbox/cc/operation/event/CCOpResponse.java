@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.cc.operation.event;
 
 import se.sics.caracaldb.operations.CaracalOp;
-import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -37,5 +37,10 @@ public class CCOpResponse implements CCOperationIndication {
     @Override
     public String toString() {
         return opResp.toString();
+    }
+
+    @Override
+    public Identifier getId() {
+        return opReq.getId();
     }
 }

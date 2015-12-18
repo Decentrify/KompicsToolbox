@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.epfd;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,25 +38,21 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.fd.event.EPFDEvent;
-import se.sics.ktoolbox.fd.event.EPFDFollow;
-import se.sics.ktoolbox.fd.event.EPFDIndication;
-import se.sics.ktoolbox.fd.event.EPFDRestore;
-import se.sics.ktoolbox.fd.event.EPFDSuspect;
-import se.sics.ktoolbox.fd.event.EPFDUnfollow;
-import se.sics.ktoolbox.fd.msg.EPFDPing;
-import se.sics.ktoolbox.fd.msg.EPFDPong;
-import se.sics.ktoolbox.fd.util.HostProber;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.network.impl.BasicContentMsg;
-import se.sics.p2ptoolbox.util.network.impl.BasicHeader;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedHeader;
-import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
-import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
-import static sun.rmi.transport.TransportConstants.Ping;
+import se.sics.ktoolbox.epfd.event.EPFDEvent;
+import se.sics.ktoolbox.epfd.event.EPFDFollow;
+import se.sics.ktoolbox.epfd.event.EPFDIndication;
+import se.sics.ktoolbox.epfd.event.EPFDUnfollow;
+import se.sics.ktoolbox.epfd.msg.EPFDPing;
+import se.sics.ktoolbox.epfd.msg.EPFDPong;
+import se.sics.ktoolbox.epfd.util.HostProber;
+import se.sics.ktoolbox.util.address.AddressUpdate;
+import se.sics.ktoolbox.util.address.AddressUpdatePort;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -69,20 +65,20 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
     private final Negative<EPFDPort> epfd = provides(EPFDPort.class);
     private final Positive<Network> network = requires(Network.class);
     private final Positive<Timer> timer = requires(Timer.class);
-    private final Positive<SelfAddressUpdatePort> addressUpdate = requires(SelfAddressUpdatePort.class);
+    private final Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
 
     private final SystemKCWrapper systemConfig;
     private final EPFDKCWrapper epfdConfig;
-    private DecoratedAddress selfAdr;
+    private KAddress selfAdr;
 
-    private final HashMap<BasicAddress, HostProber> hostProbers = new HashMap<>();
+    private final HashMap<Identifier, HostProber> hostProbers = new HashMap<>();
     private final HashSet<UUID> outstandingTimeouts = new HashSet<>();
     
     private UUID periodicStateCheckTid;
 
     public EPFDComp(EPFDInit init) {
-        systemConfig = new SystemKCWrapper(init.configCore);
-        epfdConfig = new EPFDKCWrapper(init.configCore);
+        systemConfig = new SystemKCWrapper(config());
+        epfdConfig = new EPFDKCWrapper(config());
         selfAdr = init.selfAdr;
         logPrefix = "<nid:" + systemConfig.id + ">: ";
         LOG.info("{}initiating...", logPrefix);
@@ -118,51 +114,51 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         }
     };
 
-    Handler handleAddressUpdate = new Handler<SelfAddressUpdate>() {
+    Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
-        public void handle(SelfAddressUpdate update) {
-            LOG.info("{}update address:{}", logPrefix, update.self);
-            selfAdr = update.self;
+        public void handle(AddressUpdate.Indication update) {
+            LOG.info("{}update address:{}", logPrefix, update.localAddress);
+            selfAdr = update.localAddress;
         }
     };
     //**************************************************************************
     Handler handleFollow = new Handler<EPFDFollow>() {
         @Override
         public void handle(EPFDFollow request) {
-            DecoratedAddress hostAddress = request.target;
-            HostProber hostProber = hostProbers.get(hostAddress.getBase());
+            KAddress hostAddress = request.target;
+            HostProber hostProber = hostProbers.get(hostAddress.getId());
             if (hostProber == null) {
                 hostProber = new HostProber(EPFDComp.this, hostAddress, epfdConfig.minRto);
-                hostProbers.put(hostAddress.getBase(), hostProber);
+                hostProbers.put(hostAddress.getId(), hostProber);
                 hostProber.start();
-                LOG.debug("{}started probing host:{}", logPrefix, hostAddress.getBase());
+                LOG.debug("{}started probing host:{}", logPrefix, hostAddress.getId());
             }
             hostProber.addRequest(request);
             LOG.trace("{}new follower:{} for host:{}",
-                    new Object[]{logPrefix, request.followerId, hostAddress.getBase()});
+                    new Object[]{logPrefix, request.followerId, hostAddress.getId()});
         }
     };
 
     Handler handleUnfollow = new Handler<EPFDUnfollow>() {
         @Override
         public void handle(EPFDUnfollow update) {
-            DecoratedAddress hostAddress = update.req.target;
-            HostProber prober = hostProbers.get(hostAddress.getBase());
+            KAddress hostAddress = update.req.target;
+            HostProber prober = hostProbers.get(hostAddress.getId());
             if (prober != null) {
-                UUID requestId = update.req.id;
+                Identifier requestId = update.req.id;
                 if (prober.hasRequest(requestId)) {
                     boolean last = prober.removeRequest(requestId);
                     if (last) {
-                        hostProbers.remove(hostAddress.getBase());
+                        hostProbers.remove(hostAddress.getId());
                         prober.stop();
-                        LOG.debug("{}stopped probing host:{}", logPrefix, hostAddress.getBase());
+                        LOG.debug("{}stopped probing host:{}", logPrefix, hostAddress.getId());
                     }
                 } else {
                     LOG.warn("{}no request of id:{} for the probing of host:{}",
-                            new Object[]{logPrefix, requestId, hostAddress.getBase()});
+                            new Object[]{logPrefix, requestId, hostAddress.getId()});
                 }
             } else {
-                LOG.debug("{}host:{} is not currently being probed(STOP)", logPrefix, hostAddress.getBase());
+                LOG.debug("{}host:{} is not currently being probed(STOP)", logPrefix, hostAddress.getId());
             }
         }
     };
@@ -171,12 +167,12 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         @Override
         public void handle(NextPingTimeout timeout) {
             if (outstandingTimeouts.remove(timeout.getTimeoutId())) {
-                HostProber prober = hostProbers.get(timeout.target.getBase());
+                HostProber prober = hostProbers.get(timeout.target.getId());
                 if (prober != null) {
                     prober.ping();
                 } else {
                     LOG.debug("{}host:{} is not currently being probed (SEND_PING)",
-                            logPrefix, timeout.target.getBase());
+                            logPrefix, timeout.target.getId());
                 }
             }
         }
@@ -186,51 +182,50 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         @Override
         public void handle(PongTimeout timeout) {
             if (outstandingTimeouts.remove(timeout.getTimeoutId())) {
-                DecoratedAddress host = timeout.target;
-                HostProber hostProber = hostProbers.get(host.getBase());
+                KAddress host = timeout.target;
+                HostProber hostProber = hostProbers.get(host.getId());
                 if (hostProber != null) {
                     LOG.debug("{}host:{} SUSPECTED due to timeout:{}",
-                            new Object[]{logPrefix, host.getBase(), timeout.getTimeoutId()});
+                            new Object[]{logPrefix, host.getId(), timeout.getTimeoutId()});
                     hostProber.pongTimeout();
                 } else {
-                    LOG.debug("{}host:{} is not currently being probed (TIMEOUT)", logPrefix, host.getBase());
+                    LOG.debug("{}host:{} is not currently being probed (TIMEOUT)", logPrefix, host.getId());
                 }
             }
         }
     };
 
     ClassMatchedHandler handlePing
-            = new ClassMatchedHandler<EPFDPing, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, EPFDPing>>() {
+            = new ClassMatchedHandler<EPFDPing, BasicContentMsg<KAddress, BasicHeader<KAddress>, EPFDPing>>() {
 
                 @Override
-                public void handle(EPFDPing content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, EPFDPing> container) {
-                    LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource().getBase()});
+                public void handle(EPFDPing content, BasicContentMsg<KAddress, BasicHeader<KAddress>, EPFDPing> container) {
+                    LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource().getId()});
                     send(content.pong(), container.getSource());
                 }
             };
 
     ClassMatchedHandler handlePong
-            = new ClassMatchedHandler<EPFDPong, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, EPFDPong>>() {
+            = new ClassMatchedHandler<EPFDPong, BasicContentMsg<KAddress, BasicHeader<KAddress>, EPFDPong>>() {
 
                 @Override
-                public void handle(EPFDPong content, BasicContentMsg<DecoratedAddress, DecoratedHeader<DecoratedAddress>, EPFDPong> container) {
-                    LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource().getBase()});
-                    cancelPongTimeout(content.ping.id);
-                    HostProber hostProber = hostProbers.get(container.getSource().getBase());
+                public void handle(EPFDPong content, BasicContentMsg<KAddress, BasicHeader<KAddress>, EPFDPong> container) {
+                    LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource().getId()});
+                    cancelPongTimeout(((UUIDIdentifier)content.ping.id).id);
+                    HostProber hostProber = hostProbers.get(container.getSource().getId());
                     if (hostProber != null) {
                         hostProber.pong(content.ping.id, content.ping.ts);
                     } else {
                         LOG.debug("{}host:{} is not currently being probed (GOT_PONG)", 
-                                logPrefix, container.getSource().getBase());
+                                logPrefix, container.getSource().getId());
                     }
                 }
             };
 
-    private void send(Object content, DecoratedAddress dst) {
-        DecoratedHeader<DecoratedAddress> header = new DecoratedHeader(
-                new BasicHeader(selfAdr, dst, Transport.UDP), null, null);
+    private void send(Object content, KAddress dst) {
+        BasicHeader<KAddress> header = new BasicHeader(selfAdr, dst, Transport.UDP);
         BasicContentMsg msg = new BasicContentMsg(header, content);
-        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, content, dst.getBase()});
+        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, content, dst.getId()});
         trigger(msg, network);
     }
     //********************************EPFD**************************************
@@ -240,37 +235,34 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
     }
 
     @Override
-    public UUID nextPing(boolean suspected, DecoratedAddress probedHost) {
+    public Identifier nextPing(boolean suspected, KAddress probedHost) {
         long timeout = suspected ? epfdConfig.deadPingInterval : epfdConfig.livePingInterval;
-        return scheduleNextPingTimeout(timeout, probedHost);
+        return new UUIDIdentifier(scheduleNextPingTimeout(timeout, probedHost));
     }
 
     @Override
-    public UUID ping(long ts, DecoratedAddress probedHost, long expectedRtt) {
+    public Identifier ping(long ts, KAddress probedHost, long expectedRtt) {
         long timeout = expectedRtt + epfdConfig.pingTimeoutIncrement;
-        UUID pingTid = schedulePongTimeout(timeout, probedHost);
+        Identifier pingTid = new UUIDIdentifier(schedulePongTimeout(timeout, probedHost));
         send(new EPFDPing(pingTid, ts), probedHost);
         return pingTid;
     }
 
     @Override
-    public void stop(UUID nextPingTid, UUID pongTid) {
-        cancelNextPingTimeout(nextPingTid);
-        cancelPongTimeout(pongTid);
+    public void stop(Identifier nextPingTid, Identifier pongTid) {
+        cancelNextPingTimeout(((UUIDIdentifier)nextPingTid).id);
+        cancelPongTimeout(((UUIDIdentifier)pongTid).id);
     }
 
     public static class EPFDInit extends Init<EPFDComp> {
+        public final KAddress selfAdr;
 
-        public final KConfigCore configCore;
-        public final DecoratedAddress selfAdr;
-
-        public EPFDInit(KConfigCore configCore, DecoratedAddress selfAdr) {
+        public EPFDInit(KAddress selfAdr) {
             this.selfAdr = selfAdr;
-            this.configCore = configCore;
         }
     }
 
-    private UUID scheduleNextPingTimeout(long timeout, DecoratedAddress target) {
+    private UUID scheduleNextPingTimeout(long timeout, KAddress target) {
         ScheduleTimeout st = new ScheduleTimeout(timeout);
         NextPingTimeout pt = new NextPingTimeout(st, target);
         st.setTimeoutEvent(pt);
@@ -288,9 +280,9 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
 
     public static class NextPingTimeout extends Timeout implements EPFDEvent {
 
-        public final DecoratedAddress target;
+        public final KAddress target;
 
-        public NextPingTimeout(ScheduleTimeout st, DecoratedAddress target) {
+        public NextPingTimeout(ScheduleTimeout st, KAddress target) {
             super(st);
             this.target = target;
         }
@@ -299,9 +291,14 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         public String toString() {
             return "PING_TIMEOUT<" + getTimeoutId() + ">";
         }
+
+        @Override
+        public Identifier getId() {
+            return new UUIDIdentifier(getTimeoutId());
+        }
     }
 
-    private UUID schedulePongTimeout(long timeout, DecoratedAddress target) {
+    private UUID schedulePongTimeout(long timeout, KAddress target) {
         ScheduleTimeout st = new ScheduleTimeout(timeout);
         PongTimeout pt = new PongTimeout(st, target);
         st.setTimeoutEvent(pt);
@@ -319,9 +316,9 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
 
     public static class PongTimeout extends Timeout implements EPFDEvent {
 
-        public final DecoratedAddress target;
+        public final KAddress target;
 
-        public PongTimeout(ScheduleTimeout st, DecoratedAddress target) {
+        public PongTimeout(ScheduleTimeout st, KAddress target) {
             super(st);
             this.target = target;
         }
@@ -329,6 +326,11 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         @Override
         public String toString() {
             return "PONG_TIMEOUT<" + getTimeoutId() + ">";
+        }
+
+        @Override
+        public Identifier getId() {
+            return new UUIDIdentifier(getTimeoutId());
         }
     }
     
@@ -354,10 +356,15 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         trigger(cpt, timer);
     }
 
-    public static class PeriodicStateCheck extends Timeout {
+    public static class PeriodicStateCheck extends Timeout implements EPFDEvent {
 
         public PeriodicStateCheck(SchedulePeriodicTimeout spt) {
             super(spt);
+        }
+
+        @Override
+        public Identifier getId() {
+            return new UUIDIdentifier(getTimeoutId());
         }
     }
 }

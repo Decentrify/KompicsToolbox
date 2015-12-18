@@ -18,7 +18,8 @@
  */
 package se.sics.ktoolbox.cc.operation.event;
 
-import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -34,5 +35,10 @@ public class CCOpTimeout implements CCOperationIndication {
     @Override
     public String toString() {
         return "Client_Timeout:" + opReq.toString();
+    }
+
+    @Override
+    public Identifier getId() {
+        return opReq.getId();
     }
 }

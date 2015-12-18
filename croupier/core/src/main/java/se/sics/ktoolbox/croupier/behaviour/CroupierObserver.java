@@ -22,7 +22,7 @@ import com.google.common.base.Optional;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatType;
-import se.sics.ktoolbox.util.update.view.OverlayView;
+import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
 
 /**
@@ -32,20 +32,21 @@ public class CroupierObserver implements CroupierBehaviour {
 
     private NatAwareAddress self;
     private boolean observer;
-    private Optional<View> view;
+    private View view;
 
     public CroupierObserver(NatAwareAddress self) {
         this.self = self;
         this.view = null;
         this.observer = true;
     }
+    public CroupierObserver() {
+        this(null);
+    }
 
     @Override
-    public CroupierBehaviour processView(OverlayView viewUpdate) {
+    public CroupierBehaviour processView(OverlayViewUpdate.Indication viewUpdate) {
         observer = viewUpdate.observer;
-        if (viewUpdate.view.isPresent()) {
-            view = viewUpdate.view;
-        }
+        view = viewUpdate.view;
         return build();
     }
 
@@ -54,19 +55,21 @@ public class CroupierObserver implements CroupierBehaviour {
         self = (NatAwareAddress)update.localAddress;
         return build();
     }
-
-    private CroupierBehaviour build() {
-        if (observer || view.isPresent() || NatType.isUnknown(self)) {
-            return this;
-        }
-        return new CroupierParticipant(self, view.get());
-    }
     
+    @Override
     public NatAwareAddress getSelf() {
         return self;
     }
     
+    @Override
     public Optional<View> getView() {
-        return view;
+        return Optional.absent();
+    }
+
+    private CroupierBehaviour build() {
+        if (observer || view == null || self == null || NatType.isUnknown(self)) {
+            return this;
+        }
+        return new CroupierParticipant(self, view);
     }
 }

@@ -28,24 +28,20 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ViewUpdate {
-    public static class Request extends Direct.Request<Indication> implements Identifiable {
+    public static abstract class Request extends Direct.Request<Indication> implements Identifiable {
         public final Identifier id;
         
         public Request(Identifier id) {
             this.id = id;
         }
         
-        public Indication answer(View view) {
-            return new Indication(id, view);
-        }
-
         @Override
         public Identifier getId() {
             return id;
         }
     }
     
-    public static class Indication<V extends View> implements Direct.Response, PatternExtractor<Class<V>, V>, Identifiable {
+    public static abstract class Indication<V extends View> implements Direct.Response, PatternExtractor<Class<V>, V>, Identifiable {
         public final Identifier id;
         public final V view;
         

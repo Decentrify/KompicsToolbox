@@ -16,16 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.event;
+package se.sics.ktoolbox.epfd.event;
+
+import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EPFDUnfollow implements EPFDEvent {
-
-    public final EPFDFollow req;
-
-    public EPFDUnfollow(EPFDFollow req) {
-        this.req = req;
-    }
+public interface EPFDEvent extends KompicsEvent, Identifiable {
 }

@@ -20,21 +20,20 @@ package se.sics.ktoolbox.cc.bootstrap;
 
 import java.util.List;
 import se.sics.caracaldb.Address;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCBootstrapKCWrapper {
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final long stateCheckPeriod = 30000;
     public final List<Address> caracalBootstrap;
     public final int bootstrapSize = 5;
     public final long caracalRtt = 1000;
     
-    public CCBootstrapKCWrapper(KConfigCore configCore) {
+    public CCBootstrapKCWrapper(Config configCore) {
         this.configCore = configCore;
         this.caracalBootstrap = KConfigHelper.read(configCore, CCBootstrapKConfig.bootstrap);
     }

@@ -20,13 +20,14 @@ package se.sics.ktoolbox.util.config.impl;
 
 import se.sics.ktoolbox.util.config.KConfigOption;
 import se.sics.ktoolbox.util.config.options.BasicAddressOption;
+import se.sics.ktoolbox.util.config.options.IntIdentifierOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKConfig {
     public final static KConfigOption.Basic<Long> seed = new KConfigOption.Basic("system.seed", Long.class);
-    public final static KConfigOption.Basic<Integer> id = new KConfigOption.Basic("system.id", Integer.class);
+    public final static IntIdentifierOption id = new IntIdentifierOption("system.id");
     public static BasicAddressOption aggregator = new BasicAddressOption("system.aggregator");
     
 //    public static void setup(KConfigCore config) {

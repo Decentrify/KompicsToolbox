@@ -18,13 +18,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.util;
+package se.sics.ktoolbox.epfd.util;
 
 import java.util.HashMap;
-import java.util.UUID;
-import se.sics.ktoolbox.fd.EPFDService;
-import se.sics.ktoolbox.fd.event.EPFDFollow;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.epfd.EPFDService;
+import se.sics.ktoolbox.epfd.event.EPFDFollow;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Lars Kroll <lkroll@sics.se>
@@ -32,15 +32,15 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class HostProber {
 
     private final EPFDService epfd;
-    private final DecoratedAddress probedHost;
+    private final KAddress probedHost;
     private final HostResponseTime times;
-    private final HashMap<UUID, EPFDFollow> requests = new HashMap<>();
+    private final HashMap<Identifier, EPFDFollow> requests = new HashMap<>();
 
-    private UUID nextPingTid;
-    private UUID pongTid;
+    private Identifier nextPingTid;
+    private Identifier pongTid;
     private boolean suspected;
 
-    public HostProber(EPFDService epfd, DecoratedAddress probedHost, long minRto) {
+    public HostProber(EPFDService epfd, KAddress probedHost, long minRto) {
         this.epfd = epfd;
         this.probedHost = probedHost;
         times = new HostResponseTime(minRto);
@@ -60,7 +60,10 @@ public class HostProber {
         pongTid = epfd.ping(System.nanoTime(), probedHost, times.getRTO());
     }
 
-    public void pong(UUID pongId, long ts) {
+    public void pong(Identifier id, long ts) {
+        if(!pongTid.equals(id)) {
+            return; //late
+        }
         long RTT = System.nanoTime() - ts;
         times.updateRTO(RTT);
 
@@ -98,12 +101,12 @@ public class HostProber {
         requests.put(request.id, request);
     }
 
-    public boolean removeRequest(UUID requestId) {
+    public boolean removeRequest(Identifier requestId) {
         requests.remove(requestId);
         return requests.isEmpty();
     }
 
-    public boolean hasRequest(UUID requestId) {
+    public boolean hasRequest(Identifier requestId) {
         return requests.containsKey(requestId);
     }
 }

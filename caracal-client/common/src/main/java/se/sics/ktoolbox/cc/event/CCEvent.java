@@ -19,9 +19,10 @@
 package se.sics.ktoolbox.cc.event;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface CCEvent extends KompicsEvent {
+public interface CCEvent extends KompicsEvent, Identifiable {
 }

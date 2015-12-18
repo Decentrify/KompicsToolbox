@@ -16,21 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.msg;
+package se.sics.ktoolbox.epfd.msg;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
-import java.util.UUID;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EPFDPongSerializer  implements Serializer {
+public class EPFDPingSerializer implements Serializer {
     private final int id;
     
-    public EPFDPongSerializer(int id) {
+    public EPFDPingSerializer(int id) {
         this.id = id;
     }
     
@@ -41,15 +42,15 @@ public class EPFDPongSerializer  implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        EPFDPong obj =  (EPFDPong)o;
-        Serializers.lookupSerializer(UUID.class).toBinary(obj.ping.id, buf);
-        buf.writeLong(obj.ping.ts);
+        EPFDPing obj =  (EPFDPing)o;
+        Serializers.toBinary(obj.id, buf);
+        buf.writeLong(obj.ts);
     }
 
     @Override
-    public EPFDPong fromBinary(ByteBuf buf, Optional<Object> hint) {
-        UUID msgId = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
+    public EPFDPing fromBinary(ByteBuf buf, Optional<Object> hint) {
+        Identifier msgId = (Identifier)Serializers.fromBinary(buf, hint);
         long ts = buf.readLong();
-        return new EPFDPong(new EPFDPing(msgId, ts));
+        return new EPFDPing(msgId, ts);
     }
 }

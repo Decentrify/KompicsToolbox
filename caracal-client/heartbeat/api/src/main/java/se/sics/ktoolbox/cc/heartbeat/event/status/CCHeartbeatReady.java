@@ -19,10 +19,21 @@
 package se.sics.ktoolbox.cc.heartbeat.event.status;
 
 import se.sics.ktoolbox.cc.event.CCEvent;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCHeartbeatReady implements CCEvent {
+    public final Identifier id;
+    
+    public CCHeartbeatReady() {
+        this.id = UUIDIdentifier.randomId();
+    }
+    
+    @Override
+    public Identifier getId() {
+        return id;
+    }
 }

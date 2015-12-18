@@ -21,7 +21,7 @@ package se.sics.ktoolbox.croupier.behaviour;
 import com.google.common.base.Optional;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.update.view.OverlayView;
+import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
 
 /**
@@ -38,11 +38,11 @@ public class CroupierParticipant implements CroupierBehaviour {
     }
 
     @Override
-    public CroupierBehaviour processView(OverlayView viewUpdate) {
+    public CroupierBehaviour processView(OverlayViewUpdate.Indication viewUpdate) {
         if (viewUpdate.observer) {
             return new CroupierObserver(self);
         } else {
-            view = viewUpdate.view.get();
+            view = viewUpdate.view;
         }
         return this;
     }

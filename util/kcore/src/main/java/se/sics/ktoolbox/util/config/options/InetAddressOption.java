@@ -23,27 +23,31 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigOption.Base;
-import se.sics.ktoolbox.util.config.KConfigOption.Basic;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class InetAddressOption extends Base<InetAddress> {
-    
+
     public InetAddressOption(String optionName) {
         super(optionName, InetAddress.class);
     }
-    
+
     @Override
     public Optional<InetAddress> readValue(Config config) {
-        Optional<String> sPrefferedInterface = config.readValue(name, String.class);
-        if (!sPrefferedInterface.isPresent()) {
-            return Optional.absent();
+        Optional ip = config.readValue(name);
+
+        if (ip.isPresent()) {
+            if (ip.get() instanceof InetAddress) {
+                return ip;
+            } else if (ip.get() instanceof String) {
+                try {
+                    return Optional.of(InetAddress.getByName((String) ip.get()));
+                } catch (UnknownHostException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
-        try {
-            return Optional.of(InetAddress.getByName(sPrefferedInterface.get()));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex);
-        }
+        return Optional.absent();
     }
 }

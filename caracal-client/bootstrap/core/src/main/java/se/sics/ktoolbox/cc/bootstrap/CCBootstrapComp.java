@@ -51,11 +51,11 @@ import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapDisconnected;
 import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapReady;
 import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-import se.sics.p2ptoolbox.util.status.Status;
-import se.sics.p2ptoolbox.util.status.StatusPort;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.status.Status;
+import se.sics.ktoolbox.util.status.StatusPort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -80,8 +80,8 @@ public class CCBootstrapComp extends ComponentDefinition {
     private UUID sanityCheckTId = null;
 
     public CCBootstrapComp(CCBootstrapInit init) {
-        systemConfig = new SystemKCWrapper(init.configCore);
-        bootstrapConfig = new CCBootstrapKCWrapper(init.configCore);
+        systemConfig = new SystemKCWrapper(config());
+        bootstrapConfig = new CCBootstrapKCWrapper(config());
         privateAdr = init.privateAdr;
         caracalTracker = new CaracalTracker();
         operationTracker = new OperationTracker();
@@ -120,7 +120,7 @@ public class CCBootstrapComp extends ComponentDefinition {
         subscribe(operationTracker.handleCCOpRequest, ccop);
 
         LOG.info("{}caracal ready", logPrefix);
-        trigger(new Status.Internal(new CCBootstrapReady(caracalTracker.schemas)), status);
+        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCBootstrapReady(caracalTracker.schemas)), status);
     }
 
     private void disconnected() {
@@ -129,7 +129,7 @@ public class CCBootstrapComp extends ComponentDefinition {
         unsubscribe(operationTracker.handleCCOpResponse, network);
 
         LOG.info("{}caracal disconnected", logPrefix);
-        trigger(new Status.Internal(new CCBootstrapDisconnected()), status);
+        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCBootstrapDisconnected()), status);
     }
 
     //**************************************************************************
@@ -362,11 +362,9 @@ public class CCBootstrapComp extends ComponentDefinition {
     //**************************************************************************
     public static class CCBootstrapInit extends Init<CCBootstrapComp> {
 
-        public final KConfigCore configCore;
         public final Address privateAdr;
 
-        public CCBootstrapInit(KConfigCore configCore, BasicAddress privateAdr) {
-            this.configCore = configCore;
+        public CCBootstrapInit(BasicAddress privateAdr) {
             this.privateAdr = new Address(privateAdr.getIp(), privateAdr.getPort(), null);
         }
     }

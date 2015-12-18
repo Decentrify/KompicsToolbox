@@ -16,15 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.epfd;
 
-import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.fd.msg.EPFDPing;
-import se.sics.ktoolbox.fd.msg.EPFDPingSerializer;
-import se.sics.ktoolbox.fd.msg.EPFDPong;
-import se.sics.ktoolbox.fd.msg.EPFDPongSerializer;
-import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
+import se.sics.ktoolbox.epfd.msg.EPFDPing;
+import se.sics.ktoolbox.epfd.msg.EPFDPong;
+import se.sics.ktoolbox.epfd.msg.EPFDPingSerializer;
+import se.sics.ktoolbox.epfd.msg.EPFDPongSerializer;
+import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  *
@@ -66,7 +65,7 @@ public class EPFDSerializerSetup {
         Serializers.register(epfdPongSerializer, EPFDSerializers.EPFDPong.serializerName);
         Serializers.register(EPFDSerializers.EPFDPong.serializedClass, EPFDSerializers.EPFDPong.serializerName);
 
-        Assert.assertEquals(serializerIds, currentId - startingId);
+        assert currentId - startingId == serializerIds;
         return currentId;
     }
 }

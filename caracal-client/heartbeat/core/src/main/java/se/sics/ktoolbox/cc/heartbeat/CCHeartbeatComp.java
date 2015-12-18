@@ -18,8 +18,6 @@
  */
 package se.sics.ktoolbox.cc.heartbeat;
 
-import com.google.common.io.BaseEncoding;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,7 +42,6 @@ import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
@@ -64,13 +61,14 @@ import se.sics.ktoolbox.cc.op.CCOperation;
 import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 import se.sics.ktoolbox.cc.operation.event.CCOpResponse;
 import se.sics.ktoolbox.cc.operation.event.CCOpTimeout;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.status.Status;
-import se.sics.p2ptoolbox.util.status.StatusPort;
-import se.sics.p2ptoolbox.util.update.SelfAddressUpdate;
-import se.sics.p2ptoolbox.util.update.SelfAddressUpdatePort;
+import se.sics.ktoolbox.util.address.AddressUpdate;
+import se.sics.ktoolbox.util.address.AddressUpdatePort;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.status.Status;
+import se.sics.ktoolbox.util.status.StatusPort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -82,7 +80,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
 
     //There is no need to set timers on caracal requests - it should always answer and it should have a timer of its own
     Positive<Timer> timer = requires(Timer.class);
-    Positive<SelfAddressUpdatePort> addressUpdate = requires(SelfAddressUpdatePort.class);
+    Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
     Positive<CCOperationPort> caracal = requires(CCOperationPort.class);
     Positive<StatusPort> otherStatus = requires(StatusPort.class);
     Negative<StatusPort> myStatus = provides(StatusPort.class);
@@ -90,20 +88,20 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
 
     private final SystemKCWrapper systemConfig;
     private final CCHeartbeatKCWrapper heartbeatConfig;
-    private DecoratedAddress publicAdr;
+    private KAddress selfAdr;
     private final Random rand;
 
     private byte[] schemaPrefix;
-    private final Set<ByteBuffer> heartbeats = new HashSet<>();
+    private final Set<Identifier> heartbeats = new HashSet<>();
     private final Map<UUID, CCOperation> activeOps = new HashMap<>();
     private final Set<UUID> opsToRemove = new HashSet<>();
     private UUID sanityCheckTId;
     private UUID heartbeatTId;
 
     public CCHeartbeatComp(CCHeartbeatInit init) {
-        this.systemConfig = new SystemKCWrapper(init.configCore);
-        this.heartbeatConfig = new CCHeartbeatKCWrapper(init.configCore);
-        this.publicAdr = init.publicAdr;
+        this.systemConfig = new SystemKCWrapper(config());
+        this.heartbeatConfig = new CCHeartbeatKCWrapper(config());
+        this.selfAdr = init.selfAdr;
         this.logPrefix = "<nid:" + systemConfig.id + "> ";
         this.rand = new Random(systemConfig.seed);
 
@@ -138,7 +136,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
                         LOG.info("{}starting...", logPrefix);
                         scheduleHeartbeat();
                         scheduleSanityCheck();
-                        trigger(new Status.Internal(new CCHeartbeatReady()), myStatus);
+                        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCHeartbeatReady()), myStatus);
                     }
                     schemaPrefix = status.caracalSchemaData.getId(heartbeatConfig.heartbeatSchema);
                     if (schemaPrefix == null) {
@@ -159,12 +157,8 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         @Override
         public void handle(PeriodicStateCheck event) {
             cleanOps();
-            Set<String> stringHeartbeats = new HashSet<String>();
-            for (ByteBuffer bb : heartbeats) {
-                stringHeartbeats.add(BaseEncoding.base16().encode(bb.array()));
-            }
             LOG.info("{}activeOps:{}, heartbeats:{}",
-                    new Object[]{logPrefix, activeOps.size(), stringHeartbeats});
+                    new Object[]{logPrefix, activeOps.size(), heartbeats});
         }
     };
 
@@ -174,35 +168,27 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         }
     }
 
-    Handler handleSelfAddressUpdate = new Handler<SelfAddressUpdate>() {
+    Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
-        public void handle(SelfAddressUpdate update) {
-            LOG.info("{}update self address:{}", logPrefix, update.self);
-            publicAdr = update.self.changeBase(publicAdr.getBase());
+        public void handle(AddressUpdate.Indication update) {
+            LOG.info("{}update self address:{}", logPrefix, update.localAddress);
+            selfAdr = update.localAddress;
         }
     };
     //**************************************************************************
     Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
         @Override
         public void handle(CCHeartbeat.Start start) {
-            LOG.debug("{}updating heartbeat:{}",
-                    new Object[]{logPrefix, BaseEncoding.base16().encode(start.overlayId)});
-            if (start.overlayId.length > 127) {
-                LOG.error("{}overlay identifier is too long - try to stick to 127 bytes", logPrefix);
-                throw new RuntimeException("overlay identifier is too long - try to stick to 127 bytes");
-            }
-            ByteBuffer bKey = ByteBuffer.wrap(start.overlayId);
-            heartbeats.add(bKey);
+            LOG.debug("{}updating heartbeat:{}", new Object[]{logPrefix, start.overlayId});
+            heartbeats.add(start.overlayId);
         }
     };
 
     Handler handleHeartbeatStop = new Handler<CCHeartbeat.Stop>() {
         @Override
         public void handle(CCHeartbeat.Stop stop) {
-            LOG.debug("{}stopping heartbeat:{}",
-                    new Object[]{logPrefix, BaseEncoding.base16().encode(stop.overlayId)});
-            ByteBuffer bKey = ByteBuffer.wrap(stop.overlayId);
-            heartbeats.remove(bKey);
+            LOG.debug("{}stopping heartbeat:{}", new Object[]{logPrefix, stop.overlayId});
+            heartbeats.remove(stop.overlayId);
         }
     };
 
@@ -210,12 +196,11 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         @Override
         public void handle(PeriodicHeartbeat event) {
             LOG.debug("{}periodic heartbeat", logPrefix);
-            byte[] value = CCValueFactory.getHeartbeatValue(publicAdr);
-            for (ByteBuffer overlay : heartbeats) {
-                Key heartbeatKey = CCKeyFactory.getHeartbeatKey(schemaPrefix, overlay.array(), rand.nextInt(heartbeatConfig.heartbeatSpace));
+            byte[] value = CCValueFactory.getHeartbeatValue(selfAdr);
+            for (Identifier overlayId : heartbeats) {
+                Key heartbeatKey = CCKeyFactory.getHeartbeatKey(schemaPrefix, overlayId, rand.nextInt(heartbeatConfig.heartbeatSpace));
                 PutRequest put = new PutRequest(UUID.randomUUID(), heartbeatKey, value);
-                LOG.trace("{}sending heartbeat for:{}",
-                        new Object[]{logPrefix, BaseEncoding.base16().encode(overlay.array())});
+                LOG.trace("{}sending heartbeat for:{}", new Object[]{logPrefix, overlayId});
                 CCOperation op = new CCHeartbeatOp(UUID.randomUUID(), CCHeartbeatComp.this, put);
                 activeOps.put(op.getId(), op);
                 op.start();
@@ -226,12 +211,11 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     Handler handleOverlaySampleRequest = new Handler<CCOverlaySample.Request>() {
         @Override
         public void handle(CCOverlaySample.Request event) {
-            LOG.debug("{}received sample request for:{}",
-                    new Object[]{logPrefix, BaseEncoding.base16().encode(event.overlayId)});
+            LOG.debug("{}received sample request for:{}", new Object[]{logPrefix, event.overlayId});
             KeyRange overlaySampleRange = CCKeyFactory.getHeartbeatRange(schemaPrefix, event.overlayId);
             RangeQuery.Request range = new RangeQuery.Request(UUID.randomUUID(), overlaySampleRange,
                     Limit.toItems(heartbeatConfig.heartbeatSpace), TFFactory.noTF(), ActionFactory.noop(), RangeQuery.Type.SEQUENTIAL);
-            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), publicAdr, CCHeartbeatComp.this, event, range);
+            CCOperation op = new CCOverlaySampleOp(UUID.randomUUID(), selfAdr, CCHeartbeatComp.this, event, range);
             activeOps.put(op.getId(), op);
             op.start();
         }
@@ -298,12 +282,10 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
     //**************************************************************************
     public static class CCHeartbeatInit extends Init<CCHeartbeatComp> {
 
-        public final KConfigCore configCore;
-        public final DecoratedAddress publicAdr;
+        public final KAddress selfAdr;
 
-        public CCHeartbeatInit(KConfigCore configCore, DecoratedAddress publicAdr) {
-            this.configCore = configCore;
-            this.publicAdr = publicAdr;
+        public CCHeartbeatInit(KAddress selfAdr) {
+            this.selfAdr = selfAdr;
         }
     }
 

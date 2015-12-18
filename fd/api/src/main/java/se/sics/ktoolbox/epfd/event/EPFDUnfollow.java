@@ -16,13 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.event;
+package se.sics.ktoolbox.epfd.event;
 
-import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface EPFDIndication extends Direct.Response, EPFDEvent {
+public class EPFDUnfollow implements EPFDEvent {
+
+    public final EPFDFollow req;
+
+    public EPFDUnfollow(EPFDFollow req) {
+        this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+        return req.getId();
+    }
 }

@@ -33,19 +33,27 @@ public class CroupierKCWrapper {
     public final int minViewSize;
     public final int shuffleSize;
     public final long shufflePeriod;
+    public final int shuffleSpeedFactor;
     public final long shuffleTimeout;
     public final boolean softMax;
     public final Optional<Double> softMaxTemp;
 
     public CroupierKCWrapper(Config configCore) {
         this.configCore = configCore;
-        policy = KConfigHelper.read(configCore, CroupierKConfig.sPolicy);
+        policy = KConfigHelper.read(configCore, CroupierKConfig.selectionPolicy);
         viewSize = KConfigHelper.read(configCore, CroupierKConfig.viewSize);
         minViewSize = (viewSize / 4 < 2 ? viewSize / 4 : 2);
         shuffleSize = KConfigHelper.read(configCore, CroupierKConfig.shuffleSize);
         shufflePeriod = KConfigHelper.read(configCore, CroupierKConfig.shufflePeriod);
+        shuffleSpeedFactor = KConfigHelper.read(configCore, CroupierKConfig.shuffleSpeedFactor);
         shuffleTimeout = KConfigHelper.read(configCore, CroupierKConfig.shuffleTimeout);
         softMax = KConfigHelper.read(configCore, CroupierKConfig.softMax);
         softMaxTemp = CroupierKConfig.softMaxTemp.readValue(configCore);
+        if (shufflePeriod / shuffleSpeedFactor < shuffleTimeout) {
+            String cause = "shufflePeriod:" + shufflePeriod;
+            cause += "should be at least shuffleTimeout" + shuffleTimeout;
+            cause += " * shuffleSpeedFactor:" + shuffleSpeedFactor;
+            throw new RuntimeException(cause);
+        }
     }
 }

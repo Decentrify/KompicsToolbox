@@ -24,33 +24,32 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.Address;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigOption;
+import se.sics.ktoolbox.util.config.KConfigOption.Basic;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CaracalAddressBootstrapOption extends KConfigOption.Composite<List> {
+public class CaracalAddressBootstrapOption extends KConfigOption.Base<List> {
     private static final Logger LOG = LoggerFactory.getLogger("KConfig");
 
-    public CaracalAddressBootstrapOption(String optName, KConfigLevel optLvl) {
-        super(optName, List.class, optLvl);
+    public CaracalAddressBootstrapOption(String optName) {
+        super(optName, List.class);
     }
 
     @Override
-    public Optional<List> readValue(KConfigCore config) {
-        Basic<List> partnersOpt = new Basic(name + ".partners", List.class, lvl);
-        Optional<List> partners = config.readValue(partnersOpt);
+    public Optional<List> readValue(Config config) {
+        Basic<List> partnersOpt = new Basic(name + ".partners", List.class);
+        Optional<List> partners = partnersOpt.readValue(config);
         if (!partners.isPresent()) {
             LOG.debug("missing partners");
             return Optional.absent();
         }
         List<Address> partnerAdr = new ArrayList<>();
         for(String partner : (List<String>)partners.get()) {
-            CaracalAddressOption adrOpt = new CaracalAddressOption(name + "." + partner, lvl);
-            Optional<Address> adr = config.readValue(adrOpt);
+            CaracalAddressOption adrOpt = new CaracalAddressOption(name + "." + partner);
+            Optional<Address> adr = adrOpt.readValue(config);
             if(adr.isPresent()) {
                 partnerAdr.add(adr.get());
             } else {

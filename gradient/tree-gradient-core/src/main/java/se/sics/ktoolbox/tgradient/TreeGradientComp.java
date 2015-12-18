@@ -21,6 +21,7 @@ package se.sics.ktoolbox.tgradient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,6 @@ import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.event.GradientSample;
 import se.sics.ktoolbox.gradient.msg.GradientShuffle;
-import se.sics.ktoolbox.gradient.event.GradientUpdate;
 import se.sics.ktoolbox.gradient.temp.RankUpdate;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
@@ -57,7 +57,6 @@ import se.sics.ktoolbox.gradient.util.ViewConfig;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
@@ -66,6 +65,8 @@ import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.other.AgingContainer;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.tgradient.util.TGParentView;
+import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.update.view.View;
 
 /**
  *
@@ -90,7 +91,7 @@ public class TreeGradientComp extends ComponentDefinition {
     private UUID shuffleCycleId;
     private UUID shuffleTimeoutId;
 
-    private Collection<GradientContainer> neighbours;
+    private List<GradientContainer> neighbours = new ArrayList<>();
 
     // == Identify Ports.
     Negative tGradient = provides(GradientPort.class);
@@ -111,12 +112,11 @@ public class TreeGradientComp extends ComponentDefinition {
         ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.softMaxTemp, gradientConfig.oldThreshold);
         this.parents = new TGParentView(gradientConfig, tgradientConfig, logPrefix, init.gradientFilter);
         this.filter = init.gradientFilter;
-        this.neighbours = new HashSet<GradientContainer>();
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleSelfAddressUpdate, addressUpdate);
-        subscribe(handleSelfViewUpdate, viewUpdate);
+        subscribe(handleViewUpdate, viewUpdate);
         subscribe(handleRankUpdate, rankUpdate);
 
         subscribe(handleCroupierSample, croupier);
@@ -151,9 +151,9 @@ public class TreeGradientComp extends ComponentDefinition {
         }
     };
     
-    Handler handleSelfViewUpdate = new Handler<GradientUpdate>() {
+    Handler handleViewUpdate = new Handler<OverlayViewUpdate.Indication<View>>() {
         @Override
-        public void handle(GradientUpdate update) {
+        public void handle(OverlayViewUpdate.Indication<View> update) {
             log.info("{} update self view:{}", logPrefix, update.view);
             if (selfView != null && filter.cleanOldView(selfView.getContent(), update.view)) {
                 neighbours = new ArrayList<GradientContainer>();
@@ -233,7 +233,7 @@ public class TreeGradientComp extends ComponentDefinition {
             log.trace("{} {}", logPrefix, sample);
             log.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientSample});
 
-            neighbours = (Collection<GradientContainer>) (Collection) sample.gradientSample; //again java stupid generics
+            neighbours = (List)sample.gradientSample; //again java stupid generics
             parents.merge(neighbours, selfView);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();

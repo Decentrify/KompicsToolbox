@@ -19,38 +19,28 @@
 package se.sics.ktoolbox.overlaymngr;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.options.OpenAddressBootstrapOption;
+import se.sics.ktoolbox.util.config.options.BasicAddressBootstrapOption;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayMngrConfig implements KConfigLevel {
+public class OverlayMngrConfig {
 
     public static final byte[] GLOBAL_CROUPIER_ID = new byte[]{};
     public static final byte[] GLOBAL_CROUPIER_ID_ALT = new byte[]{0,0,0,0};
 
-    public final static OpenAddressBootstrapOption bootstrap = new OpenAddressBootstrapOption("globalcroupier.bootstrap", new OverlayMngrConfig());
+    public final static BasicAddressBootstrapOption bootstrap = new BasicAddressBootstrapOption("globalcroupier.bootstrap");
     
-    public static Integer getGlobalCroupierIntegerId() {
-        return 0;
+    public static Identifier getGlobalCroupierIntegerId() {
+        return new IntIdentifier(0);
     }
     
+    public static boolean isGlobalCroupier(Identifier overlayId) {
+        return getGlobalCroupierIntegerId().equals(overlayId);
+    }
     public static boolean isGlobalCroupier(byte[] id) {
         return (Arrays.equals(id, GLOBAL_CROUPIER_ID) || Arrays.equals(id, GLOBAL_CROUPIER_ID_ALT));
-    }
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "OverlayMngrConfig";
     }
 }

@@ -19,34 +19,33 @@
 package se.sics.ktoolbox.overlaymngr.events;
 
 import java.util.Comparator;
-import java.util.UUID;
 import se.sics.kompics.Direct;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
-import se.sics.p2ptoolbox.gradient.GradientFilter;
-import se.sics.p2ptoolbox.gradient.GradientPort;
-import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
+import se.sics.ktoolbox.gradient.GradientFilter;
+import se.sics.ktoolbox.gradient.GradientPort;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OMngrTGradient {
 
     public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
-        public final UUID id;
-        public final byte[] parentId;
-        public final byte[] croupierId;
-        public final byte[] gradientId;
-        public final byte[] tgradientId;
+        public final Identifier id;
+        public final Identifier parentId;
+        public final Identifier croupierId;
+        public final Identifier gradientId;
+        public final Identifier tgradientId;
         public final Negative<GradientPort> tgradient;
-        public final Positive<SelfViewUpdatePort> viewUpdate;
+        public final Positive<ViewUpdatePort> viewUpdate;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
 
-        public ConnectRequest(UUID id, byte[] parentId, byte[] croupierId, byte[] gradientId, byte[] tgradientId,
-                Negative<GradientPort> tgradient, Positive<SelfViewUpdatePort> viewUpdate,
+        public ConnectRequest(Identifier id, Identifier parentId, Identifier croupierId, Identifier gradientId, 
+                Identifier tgradientId, Negative<GradientPort> tgradient, Positive<ViewUpdatePort> viewUpdate,
                 Comparator utilityComparator, GradientFilter gradientFilter) {
             this.id = id;
             this.parentId = parentId;
@@ -62,32 +61,37 @@ public class OMngrTGradient {
         public ConnectResponse answer() {
             return new ConnectResponse(this);
         }
+
+        @Override
+        public Identifier getId() {
+            return id;
+        }
     }
 
     public static class ConnectRequestBuilder {
 
-        public final UUID id;
-        private byte[] parentId;
-        private byte[] croupierId;
-        private byte[] gradientId;
-        private byte[] tgradientId;
+        public final Identifier id;
+        private Identifier parentId;
+        private Identifier croupierId;
+        private Identifier gradientId;
+        private Identifier tgradientId;
         private Negative<GradientPort> tgradient;
-        private Positive<SelfViewUpdatePort> viewUpdate;
+        private Positive<ViewUpdatePort> viewUpdate;
         private Comparator utilityComparator;
         private GradientFilter gradientFilter;
 
-        public ConnectRequestBuilder(UUID id) {
+        public ConnectRequestBuilder(Identifier id) {
             this.id = id;
         }
 
-        public void setIdentifiers(byte[] parentId, byte[] croupierId, byte[] gradientId, byte[] tgradientId) {
+        public void setIdentifiers(Identifier parentId, Identifier croupierId, Identifier gradientId, Identifier tgradientId) {
             this.parentId = parentId;
             this.croupierId = croupierId;
             this.gradientId = gradientId;
             this.tgradientId = tgradientId;
         }
 
-        public void connectTo(Negative<GradientPort> tgradient, Positive<SelfViewUpdatePort> viewUpdate) {
+        public void connectTo(Negative<GradientPort> tgradient, Positive<ViewUpdatePort> viewUpdate) {
             this.tgradient = tgradient;
             this.viewUpdate = viewUpdate;
         }
@@ -119,14 +123,25 @@ public class OMngrTGradient {
         public ConnectResponse(ConnectRequest req) {
             this.req = req;
         }
+
+        @Override
+        public Identifier getId() {
+            return req.getId();
+        }
     }
 
     public static class Disconnect implements OverlayMngrEvent {
+        public final Identifier id;
+        public final Identifier croupierId;
 
-        public final byte[] croupierId;
-
-        public Disconnect(byte[] croupierId) {
+        public Disconnect(Identifier id, Identifier croupierId) {
+            this.id = id;
             this.croupierId = croupierId;
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 }

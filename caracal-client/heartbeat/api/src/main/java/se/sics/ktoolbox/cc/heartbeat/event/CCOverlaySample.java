@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.cc.heartbeat.event;
 
 import java.util.Set;
-import java.util.UUID;
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.cc.event.CCEvent;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -30,26 +30,36 @@ import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 public class CCOverlaySample {
 
     public static class Request extends Direct.Request<Response> implements CCEvent {
-        public final UUID id;
-        public final byte[] overlayId;
+        public final Identifier id;
+        public final Identifier overlayId;
         
-        public Request(UUID id, byte[] overlayId) {
+        public Request(Identifier id, Identifier overlayId) {
             this.id = id;
             this.overlayId = overlayId;
         }
         
-        public Response answer(Set<DecoratedAddress> overlaySample) {
+        public Response answer(Set<KAddress> overlaySample) {
             return new Response(this, overlaySample);
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 
-    public static class Response implements Direct.Response {
+    public static class Response implements Direct.Response, CCEvent {
         public final Request req;
-        public final Set<DecoratedAddress> overlaySample;
+        public final Set<KAddress> overlaySample;
         
-        public Response(Request req, Set<DecoratedAddress> overlaySample) {
+        public Response(Request req, Set<KAddress> overlaySample) {
             this.req = req;
             this.overlaySample = overlaySample;
+        }
+
+        @Override
+        public Identifier getId() {
+            return req.getId();
         }
     }
 }

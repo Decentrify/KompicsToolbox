@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.gradient;
 
-import com.google.common.base.Optional;
 import se.sics.ktoolbox.gradient.util.GradientView;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -44,7 +43,6 @@ import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.gradient.event.GradientSample;
-import se.sics.ktoolbox.gradient.event.GradientUpdate;
 import se.sics.ktoolbox.gradient.msg.GradientShuffle;
 import se.sics.ktoolbox.gradient.temp.RankUpdate;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
@@ -54,16 +52,14 @@ import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.other.AgingContainer;
-import se.sics.ktoolbox.util.update.view.OverlayView;
+import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
-import se.sics.ktoolbox.util.update.view.ViewUpdate;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 
 /**
@@ -99,13 +95,13 @@ public class GradientComp extends ComponentDefinition {
     Positive addressUpdate = requires(AddressUpdatePort.class);
 
     public GradientComp(GradientInit init) {
-        this.config = new GradientKCWrapper(config(), init.seed, init.overlayId);
+        config = new GradientKCWrapper(config(), init.seed, init.overlayId);
         this.self = init.self;
-        this.logPrefix = "<oid:" + config.overlayId + ":nid:" + self.getId().toString() + "> ";
+        logPrefix = "<oid:" + config.overlayId + ":nid:" + self.getId().toString() + "> ";
         LOG.info("{} initializing with seed:{}", logPrefix, config.seed);
-        this.utilityComp = new WrapperComparator<GradientContainer>(init.utilityComparator);
-        this.view = new GradientView(config, logPrefix, init.utilityComparator, init.gradientFilter);
-        this.filter = init.gradientFilter;
+        utilityComp = new WrapperComparator<>(init.utilityComparator);
+        view = new GradientView(config, logPrefix, init.utilityComparator, init.gradientFilter);
+        filter = init.gradientFilter;
 
         subscribe(handleStart, control);
         subscribe(handleViewUpdate, viewUpdate);
@@ -134,20 +130,20 @@ public class GradientComp extends ComponentDefinition {
         }
     };
 
-    Handler handleViewUpdate = new Handler<GradientUpdate>() {
+    Handler handleViewUpdate = new Handler<OverlayViewUpdate.Indication<View>>() {
         @Override
-        public void handle(GradientUpdate update) {
-            LOG.info("{} updating self view:{}", new Object[]{logPrefix, update.view});
-            if (selfView != null && filter.cleanOldView(selfView.getContent(), update.view)) {
-                view.clean(update.view);
+        public void handle(OverlayViewUpdate.Indication<View> viewUpdate) {
+            LOG.info("{} updating self view:{}", new Object[]{logPrefix, viewUpdate.view});
+            if (selfView != null && filter.cleanOldView(selfView.getContent(), viewUpdate.view)) {
+                view.clean(viewUpdate.view);
             }
             int rank = (selfView == null ? Integer.MAX_VALUE : selfView.rank);
-            selfView = new GradientContainer(self, update.view, 0, rank);
+            selfView = new GradientContainer(self, viewUpdate.view, 0, rank);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
-            trigger(new ViewUpdate.Indication(UUIDIdentifier.randomId(), new OverlayView(false, Optional.of(
-                    (View) new GradientLocalView(update.view, selfView.rank)))), croupierViewUpdate);
+            trigger(new OverlayViewUpdate.Indication(UUIDIdentifier.randomId(), false,
+                    new GradientLocalView(viewUpdate.view, selfView.rank)), croupierViewUpdate);
         }
     };
 
@@ -198,8 +194,8 @@ public class GradientComp extends ComponentDefinition {
             if (view.checkIfTop(selfView) && selfView.rank != 0) {
                 selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), 0);
                 LOG.debug("{} am top", logPrefix, view.getAllCopy());
-                trigger(new ViewUpdate.Indication(UUIDIdentifier.randomId(), new OverlayView(false, Optional.of(
-                        (View) new GradientLocalView(selfView.getContent(), selfView.rank)))), croupierViewUpdate);
+                trigger(new OverlayViewUpdate.Indication(UUIDIdentifier.randomId(), false,
+                        new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
                 trigger(new RankUpdate(UUIDIdentifier.randomId(), selfView.rank), rankUpdate);
             }
             LOG.debug("{} rank:{}", logPrefix, selfView.rank);
@@ -306,8 +302,8 @@ public class GradientComp extends ComponentDefinition {
                     if (content.selfGC.rank != Integer.MAX_VALUE && selfView.rank != content.selfGC.rank + nodeDist) {
                         selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), content.selfGC.rank + nodeDist);
                         LOG.debug("{} new rank:{} partner:{} partner rank:{}", new Object[]{logPrefix, selfView.rank, content.selfGC.getSource(), content.selfGC.rank});
-                        trigger(new ViewUpdate.Indication(UUIDIdentifier.randomId(), new OverlayView(false, Optional.of(
-                                                        (View) new GradientLocalView(selfView.getContent(), selfView.rank)))), croupierViewUpdate);
+                        trigger(new OverlayViewUpdate.Indication(UUIDIdentifier.randomId(), false,
+                                        new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
                         trigger(new RankUpdate(UUIDIdentifier.randomId(), selfView.rank), rankUpdate);
                     }
                 }

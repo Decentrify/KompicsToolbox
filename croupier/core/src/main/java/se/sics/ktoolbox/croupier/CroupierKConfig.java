@@ -27,11 +27,11 @@ import se.sics.ktoolbox.util.config.KConfigOption;
  */
 public class CroupierKConfig {
 
-    private final static KConfigOption.Basic<String> policy = new KConfigOption.Basic("croupier.policy", String.class);
-    public final static CSelectionPolicyOption sPolicy = new CSelectionPolicyOption("croupier.sPolicy");
+    public final static CSelectionPolicyOption selectionPolicy = new CSelectionPolicyOption("croupier.selectionPolicy");
     public final static KConfigOption.Basic<Integer> viewSize = new KConfigOption.Basic("croupier.viewSize", Integer.class);
     public final static KConfigOption.Basic<Integer> shuffleSize = new KConfigOption.Basic("croupier.shuffleSize", Integer.class);
     public final static KConfigOption.Basic<Long> shufflePeriod = new KConfigOption.Basic("croupier.shufflePeriod", Long.class);
+    public final static KConfigOption.Basic<Integer> shuffleSpeedFactor = new KConfigOption.Basic("croupier.shuffleSpeedFactor", Integer.class);
     public final static KConfigOption.Basic<Long> shuffleTimeout = new KConfigOption.Basic("croupier.shuffleTimeout", Long.class);
     public final static KConfigOption.Basic<Boolean> softMax = new KConfigOption.Basic("croupier.softMax", Boolean.class);
     public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("croupier.softMaxTemperature", Double.class);
@@ -44,12 +44,16 @@ public class CroupierKConfig {
 
         @Override
         public Optional<CroupierSelectionPolicy> readValue(Config config) {
-            Optional<String> sPolicy = policy.readValue(config);
-            if (!sPolicy.isPresent()) {
-                return Optional.absent();
+            Optional sPolicy = config.readValue(name);
+            if (sPolicy.isPresent()) {
+                if (sPolicy.get() instanceof String) {
+                    CroupierSelectionPolicy parsedPolicy = CroupierSelectionPolicy.create((String)sPolicy.get());
+                    return Optional.fromNullable(parsedPolicy);
+                } else if(sPolicy.get() instanceof CroupierSelectionPolicy) {
+                    return sPolicy;
+                }
             }
-            CroupierSelectionPolicy parsedPolicy = CroupierSelectionPolicy.create(sPolicy.get());
-            return Optional.fromNullable(parsedPolicy);
+            return Optional.absent();
         }
     }
 }

@@ -20,15 +20,13 @@
 package se.sics.ktoolbox.croupier;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
-import se.sics.ktoolbox.croupier.event.CroupierJoin;
+import se.sics.ktoolbox.croupier.event.CroupierControl;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierControlPort extends PortType {
     {
-        request(CroupierJoin.class);
-        indication(CroupierDisconnected.class);
+        indication(CroupierControl.class);
     }
 }

@@ -21,16 +21,20 @@ package se.sics.ktoolbox.cc.operation.event;
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.operations.CaracalOp;
 import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCOpRequest extends Direct.Request<CCOperationIndication> implements CCOperationEvent {
 
+    public final Identifier id;
     public final CaracalOp opReq;
     public final Key forwardTo;
 
     public CCOpRequest(CaracalOp opReq, Key forwardTo) {
+        this.id = UUIDIdentifier.randomId();
         this.opReq = opReq;
         this.forwardTo = forwardTo;
     }
@@ -46,5 +50,10 @@ public class CCOpRequest extends Direct.Request<CCOperationIndication> implement
 
     public CCOpTimeout timeout() {
         return new CCOpTimeout(this);
+    }
+
+    @Override
+    public Identifier getId() {
+        return id;
     }
 }

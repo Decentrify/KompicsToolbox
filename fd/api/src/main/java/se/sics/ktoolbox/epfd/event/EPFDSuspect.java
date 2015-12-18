@@ -16,7 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.event;
+package se.sics.ktoolbox.epfd.event;
+
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -27,5 +29,10 @@ public class EPFDSuspect implements EPFDIndication {
 
     public EPFDSuspect(EPFDFollow req) {
         this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+        return req.getId();
     }
 }

@@ -16,12 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.event;
+package se.sics.ktoolbox.util.update.view;
 
-import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface EPFDEvent extends KompicsEvent {
+public class OverlayViewUpdate {
+
+    public static class Request extends ViewUpdate.Request {
+
+        public Request(Identifier id) {
+            super(id);
+        }
+
+        public Indication observer() {
+            return new Indication(id, true, null);
+        }
+
+        public Indication update(View view) {
+            return new Indication(id, false, view);
+        }
+    }
+
+    public static class Indication<V extends View> extends ViewUpdate.Indication<V> {
+
+        public final boolean observer;
+
+        public Indication(Identifier id, boolean observer, V view) {
+            super(id, view);
+            this.observer = observer;
+        }
+    }
 }

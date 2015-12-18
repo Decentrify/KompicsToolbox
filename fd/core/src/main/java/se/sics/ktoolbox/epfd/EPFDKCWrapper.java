@@ -16,22 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.epfd;
 
-import se.sics.p2ptoolbox.util.config.KConfigCore;
+import se.sics.kompics.config.Config;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class EPFDKCWrapper {
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final long minRto = 1;
     public final long livePingInterval = 500;
     public final long deadPingInterval = 5000;
     public final long pingTimeoutIncrement = 50;
     public final long stateCheckPeriod = 30000;
     
-    public EPFDKCWrapper(KConfigCore configCore) {
+    public EPFDKCWrapper(Config configCore) {
         this.configCore = configCore;
     }
 }

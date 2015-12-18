@@ -19,26 +19,20 @@
 package se.sics.ktoolbox.overlaymngr;
 
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
-import se.sics.p2ptoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlayMngrKCWrapper {
     
-    public final KConfigCore configCore;
-    public final SystemKCWrapper system;
-    public final List<DecoratedAddress> bootstrap;
+    public final Config configCore;
+    public final List<BasicAddress> bootstrap;
     
-    public OverlayMngrKCWrapper(KConfigCore configCore) {
+    public OverlayMngrKCWrapper(Config configCore) {
         this.configCore = configCore;
-        this.system = new SystemKCWrapper(configCore);
         this.bootstrap = KConfigHelper.read(configCore, OverlayMngrConfig.bootstrap);
     }
 }

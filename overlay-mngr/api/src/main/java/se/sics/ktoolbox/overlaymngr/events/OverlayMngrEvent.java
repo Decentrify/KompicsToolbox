@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.overlaymngr.events;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface OverlayMngrEvent extends KompicsEvent {
+public interface OverlayMngrEvent extends KompicsEvent, Identifiable {
 }

@@ -3,12 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>se.sics</groupId>
-        <artifactId>kompics-toolbox</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <artifactId>ktoolbox</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>overlay-mngr</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>Overlay Manager</name>
     <packaging>pom</packaging>
     <modules>
@@ -17,12 +16,6 @@
         <module>network</module>
         <module>example</module>
     </modules>
-    
-     <properties>
-         <util.version>${original.util.version}</util.version>
-         <croupier.version>${latest.croupier.version}</croupier.version>
-         <gradient.version>${latest.gradient.version}</gradient.version>
-     </properties>
     
     <dependencies>
          <dependency>
@@ -43,8 +36,8 @@
         
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>kompics-basic</artifactId>
-            <version>${util.version}</version>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

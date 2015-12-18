@@ -22,6 +22,7 @@ import com.google.common.base.Optional;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -29,7 +30,7 @@ import se.sics.ktoolbox.util.config.KConfigHelper;
 public class SystemKCWrapper {
     private final Config configCore;
     public final long seed;
-    public final int id;
+    public final Identifier id;
     public final Optional<BasicAddress> aggregator;
     
     public SystemKCWrapper(Config configCore) {

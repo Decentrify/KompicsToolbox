@@ -18,28 +18,29 @@
  */
 package se.sics.ktoolbox.overlaymngr.events;
 
-import java.util.UUID;
 import se.sics.kompics.Direct;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
-import se.sics.p2ptoolbox.croupier.CroupierControlPort;
-import se.sics.p2ptoolbox.croupier.CroupierPort;
-import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
+import se.sics.ktoolbox.croupier.CroupierPort;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OMngrCroupier {
+
     public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
-        public final UUID id;
-        public final byte[] parentId;
-        public final byte[] croupierId;
+
+        public final Identifier id;
+        public final Identifier parentId;
+        public final Identifier croupierId;
         public final Negative<CroupierPort> croupier;
-        public final Positive<SelfViewUpdatePort> viewUpdate;
+        public final Positive<ViewUpdatePort> viewUpdate;
         public final boolean observer;
-        
-        public ConnectRequest(UUID id, byte[] parentId, byte[] croupierId, Negative<CroupierPort> croupier, 
-                Positive<SelfViewUpdatePort> viewUpdate, boolean observer) {
+
+        public ConnectRequest(Identifier id, Identifier parentId, Identifier croupierId, 
+                Negative<CroupierPort> croupier, Positive<ViewUpdatePort> viewUpdate, boolean observer) {
             this.id = id;
             this.parentId = parentId;
             this.croupierId = croupierId;
@@ -47,65 +48,85 @@ public class OMngrCroupier {
             this.viewUpdate = viewUpdate;
             this.observer = observer;
         }
-        
+
         public ConnectResponse answer() {
             return new ConnectResponse(this);
         }
+
+        @Override
+        public Identifier getId() {
+            return id;
+        }
     }
-    
+
     public static class ConnectRequestBuilder {
-        public final UUID id;
-        private byte[] parentId;
-        private byte[] croupierId;
+
+        public final Identifier id;
+        private Identifier parentId;
+        private Identifier croupierId;
         private Negative<CroupierPort> croupier;
-        private Positive<SelfViewUpdatePort> viewUpdate;
+        private Positive<ViewUpdatePort> viewUpdate;
         private Boolean observer;
-        
-        public ConnectRequestBuilder(UUID id) {
+
+        public ConnectRequestBuilder(Identifier id) {
             this.id = id;
         }
-        
-        public void setIdentifiers(byte[] parentId, byte[] croupierId) {
+
+        public void setIdentifiers(Identifier parentId, Identifier croupierId) {
             this.parentId = parentId;
             this.croupierId = croupierId;
         }
 
-        public void connectTo(Negative<CroupierPort> croupier, Positive<SelfViewUpdatePort> viewUpdate) {
+        public void connectTo(Negative<CroupierPort> croupier, Positive<ViewUpdatePort> viewUpdate) {
             this.croupier = croupier;
             this.viewUpdate = viewUpdate;
         }
-        
+
         public void setupCroupier(boolean observer) {
             this.observer = observer;
         }
-        
+
         public ConnectRequest build() throws IllegalArgumentException {
-            if(parentId == null || croupierId == null) {
+            if (parentId == null || croupierId == null) {
                 throw new IllegalArgumentException("identifiers not set");
             }
-            if(croupier == null || viewUpdate == null) {
+            if (croupier == null || viewUpdate == null) {
                 throw new IllegalArgumentException("connection not set");
             }
-            if(observer == null) {
+            if (observer == null) {
                 throw new IllegalArgumentException("croupier not set");
             }
             return new ConnectRequest(id, parentId, croupierId, croupier, viewUpdate, observer);
-        } 
+        }
     }
-    
+
     public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
+
         public final ConnectRequest req;
-        
+
         public ConnectResponse(ConnectRequest req) {
             this.req = req;
         }
+
+        @Override
+        public Identifier getId() {
+            return req.id;
+        }
     }
-    
+
     public static class Disconnect implements OverlayMngrEvent {
-        public final byte[] croupierId;
-        
-        public Disconnect(byte[] croupierId) {
+
+        public final Identifier id;
+        public final Identifier croupierId;
+
+        public Disconnect(Identifier id, Identifier croupierId) {
+            this.id = id;
             this.croupierId = croupierId;
+        }
+
+        @Override
+        public Identifier getId() {
+            return id;
         }
     }
 }

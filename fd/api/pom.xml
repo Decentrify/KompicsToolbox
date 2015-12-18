@@ -4,7 +4,7 @@
     <parent>
         <groupId>se.sics.ktoolbox</groupId>
         <artifactId>fd</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox.fd</groupId>
     <artifactId>api</artifactId>
@@ -13,8 +13,8 @@
     <dependencies>
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>kompics-basic</artifactId>
-            <version>${util.version}</version>
+            <artifactId>kcore</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

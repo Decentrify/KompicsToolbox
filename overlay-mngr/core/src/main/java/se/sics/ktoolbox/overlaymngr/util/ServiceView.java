@@ -18,25 +18,25 @@
  */
 package se.sics.ktoolbox.overlaymngr.util;
 
-import com.google.common.io.BaseEncoding;
-import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.update.view.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView {
-    public final List<ByteBuffer> runningServices;
+public class ServiceView implements View {
+    public final Set<Identifier> runningServices;
     
-    public ServiceView(List<ByteBuffer> runningServices) {
+    public ServiceView(Set<Identifier> runningServices) {
         this.runningServices = runningServices;
     }
     
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("services:");
-        for(ByteBuffer serviceId : runningServices) {
-            sb.append(BaseEncoding.base16().encode(serviceId.array()));
+        for(Identifier serviceId : runningServices) {
+            sb.append(serviceId);
             sb.append(",");
         }
         return sb.toString();

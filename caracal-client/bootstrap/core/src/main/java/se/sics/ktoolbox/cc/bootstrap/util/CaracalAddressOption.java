@@ -20,49 +20,39 @@ package se.sics.ktoolbox.cc.bootstrap.util;
 
 import com.google.common.base.Optional;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.Address;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
-import se.sics.p2ptoolbox.util.config.KConfigOption.Basic;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigOption;
+import se.sics.ktoolbox.util.config.options.InetAddressOption;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CaracalAddressOption extends KConfigOption.Composite<Address> {
+public class CaracalAddressOption extends KConfigOption.Base<Address> {
 
     private static final Logger LOG = LoggerFactory.getLogger("KConfig");
 
-    public CaracalAddressOption(String optName, KConfigLevel optLvl) {
-        super(optName, Address.class, optLvl);
+    public CaracalAddressOption(String optName) {
+        super(optName, Address.class);
     }
 
     @Override
-    public Optional<Address> readValue(KConfigCore config) {
-        Basic<String> ipOpt = new Basic(name + ".ip", String.class, lvl);
-        Optional<String> ip = config.readValue(ipOpt);
+    public Optional<Address> readValue(Config config) {
+        InetAddressOption ipOpt = new InetAddressOption(name + ".ip");
+        Optional<InetAddress> ip = ipOpt.readValue(config);
         if (!ip.isPresent()) {
             LOG.debug("missing:{}", ipOpt.name);
             return Optional.absent();
         }
-        Basic<Integer> portOpt = new Basic(name + ".port", Integer.class, lvl);
-        Optional<Integer> port = config.readValue(portOpt);
+        KConfigOption.Basic<Integer> portOpt = new KConfigOption.Basic(name + ".port", Integer.class);
+        Optional<Integer> port = portOpt.readValue(config);
         if (!port.isPresent()) {
             LOG.debug("missing:{}", portOpt.name);
             return Optional.absent();
         }
-        Address adr;
-        try {
-            adr = new Address(InetAddress.getByName(ip.get()), port.get(), null);
-        } catch (UnknownHostException ex) {
-            LOG.error("ip error:{}", ex.getMessage());
-            throw new RuntimeException(ex);
-        }
+        Address adr = new Address(ip.get(), port.get(), null);
         return Optional.of(adr);
     }
 }

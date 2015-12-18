@@ -16,29 +16,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.msg;
+package se.sics.ktoolbox.epfd.event;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
-import se.sics.ktoolbox.fd.event.EPFDEvent;
+import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EPFDPing implements EPFDEvent {
-    public final UUID id;
-    public final long ts;
-    
-    public EPFDPing(UUID id, long ts) {
+public class EPFDFollow extends Direct.Request<EPFDIndication> implements EPFDEvent {
+
+    public final Identifier id;
+    public final KAddress target;
+    public final ByteBuffer service;
+    public final UUID followerId; //typically component id
+
+    public EPFDFollow(Identifier id, KAddress target, ByteBuffer service, UUID followerId) {
         this.id = id;
-        this.ts = ts;
+        this.target = target;
+        this.service = service;
+        this.followerId = followerId;
+    }
+
+    public EPFDSuspect suspect() {
+        return new EPFDSuspect(this);
     }
     
+    public EPFDRestore restore() {
+        return new EPFDRestore(this);
+    }
+
     @Override
-    public String toString() {
-        return "EPFDPing<" + id + ">";
-    }
-    
-    public EPFDPong pong() {
-        return new EPFDPong(this);
+    public Identifier getId() {
+        return id;
     }
 }

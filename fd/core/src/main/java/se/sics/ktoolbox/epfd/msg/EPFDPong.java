@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Croupier is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,31 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.croupier.event;
+package se.sics.ktoolbox.epfd.msg;
 
-import java.util.List;
+import se.sics.ktoolbox.epfd.event.EPFDEvent;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierJoin implements CroupierEvent {
-    public final Identifier id;
-    public final List<NatAwareAddress> peers;
-
-    public CroupierJoin(Identifier id, List<NatAwareAddress> peers) {
-        this.id = id;
-        this.peers = peers;
+public class EPFDPong implements EPFDEvent {
+    public final EPFDPing ping;
+    
+    public EPFDPong(EPFDPing ping) {
+        this.ping = ping;
     }
-
+    
     @Override
     public String toString() {
-        return "CROUPIER_JOIN<" +  id + ">";
+        return "EPFDPong<" + ping.getId() + ">";
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return ping.getId();
     }
 }

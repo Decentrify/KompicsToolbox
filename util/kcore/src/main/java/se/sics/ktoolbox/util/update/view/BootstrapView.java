@@ -16,15 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.event;
+package se.sics.ktoolbox.util.update.view;
+
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EPFDRestore implements EPFDIndication {
-    public final EPFDFollow req;
-
-    public EPFDRestore(EPFDFollow req) {
-        this.req = req;
-    }
+public interface BootstrapView extends View {
+    public boolean memberOf(Identifier overlay);
 }

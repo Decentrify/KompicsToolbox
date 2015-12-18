@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.gradient.event;
 
-import java.util.Collection;
+import java.util.List;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
@@ -31,9 +31,9 @@ import se.sics.ktoolbox.util.other.Container;
 public class GradientSample<C extends Object> implements GradientEvent {
     public final Identifier id;
     public final C selfView;
-    public final Collection<Container<KAddress, C>> gradientSample;
+    public final List<Container<KAddress, C>> gradientSample;
     
-    public GradientSample(Identifier id, C selfView, Collection<Container<KAddress, C>> gradientPeerViewSet) {
+    public GradientSample(Identifier id, C selfView, List<Container<KAddress, C>> gradientPeerViewSet) {
         this.id = id;
         this.selfView = selfView;
         this.gradientSample = gradientPeerViewSet;

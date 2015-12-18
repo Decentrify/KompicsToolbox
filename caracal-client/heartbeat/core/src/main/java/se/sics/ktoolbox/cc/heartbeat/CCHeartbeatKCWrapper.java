@@ -18,21 +18,21 @@
  */
 package se.sics.ktoolbox.cc.heartbeat;
 
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigHelper;
+
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCHeartbeatKCWrapper {
-    public final KConfigCore configCore;
+    public final Config configCore;
     public final String heartbeatSchema;
     public final long stateCheckPeriod = 30000;
     public final long heartbeatPeriod = 5000;
     public final int heartbeatSpace = 10;
     
-    public CCHeartbeatKCWrapper(KConfigCore configCore) {
+    public CCHeartbeatKCWrapper(Config configCore) {
         this.configCore = configCore;
         heartbeatSchema = KConfigHelper.read(configCore, CCHeartbeatKConfig.heartbeatSchema);
     }

@@ -16,34 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd.event;
+package se.sics.ktoolbox.util.config.options;
 
-import java.nio.ByteBuffer;
-import java.util.UUID;
-import se.sics.kompics.Direct;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import com.google.common.base.Optional;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigOption;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EPFDFollow extends Direct.Request<EPFDIndication> implements EPFDEvent {
+public class IntIdentifierOption extends KConfigOption.Base<IntIdentifier> {
 
-    public final UUID id = UUID.randomUUID();
-    public final DecoratedAddress target;
-    public final ByteBuffer service;
-    public final UUID followerId; //typically component id
-
-    public EPFDFollow(DecoratedAddress target, ByteBuffer service, UUID followerId) {
-        this.target = target;
-        this.service = service;
-        this.followerId = followerId;
-    }
-
-    public EPFDSuspect suspect() {
-        return new EPFDSuspect(this);
+    public IntIdentifierOption(String optionName) {
+        super(optionName, IntIdentifier.class);
     }
     
-    public EPFDRestore restore() {
-        return new EPFDRestore(this);
+    @Override
+    public Optional<IntIdentifier> readValue(Config config) {
+        Optional id = config.readValue(name);
+        if(id.isPresent()) {
+            if(id.get() instanceof IntIdentifier) {
+                return id;
+            } else if(id.get() instanceof Integer) {
+                return Optional.of(new IntIdentifier((Integer)id.get()));
+            }
+        }
+        return Optional.absent();
     }
 }

@@ -18,27 +18,12 @@
  */
 package se.sics.ktoolbox.cc.heartbeat;
 
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.KConfigOption;
+import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCHeartbeatKConfig implements KConfigLevel {
+public class CCHeartbeatKConfig {
 
-    public final static KConfigOption.Basic<String> heartbeatSchema = new KConfigOption.Basic("caracal.schemas.heartbeat", String.class, new CCHeartbeatKConfig());
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "CCHeartbeatKConfig";
-    }
+    public final static KConfigOption.Basic<String> heartbeatSchema = new KConfigOption.Basic("caracal.schemas.heartbeat", String.class);
 }

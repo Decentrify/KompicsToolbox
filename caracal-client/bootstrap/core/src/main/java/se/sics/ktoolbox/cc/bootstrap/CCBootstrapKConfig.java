@@ -21,25 +21,10 @@ package se.sics.ktoolbox.cc.bootstrap;
 import java.util.HashSet;
 import java.util.Set;
 import se.sics.ktoolbox.cc.bootstrap.util.CaracalAddressBootstrapOption;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CCBootstrapKConfig implements KConfigLevel {
-
-    public final static CaracalAddressBootstrapOption bootstrap = new CaracalAddressBootstrapOption("caracal.bootstrap", new CCBootstrapKConfig());
-
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
-    @Override
-    public String toString() {
-        return "CCBootstrapKConfig";
-    }
+public class CCBootstrapKConfig {
+    public final static CaracalAddressBootstrapOption bootstrap = new CaracalAddressBootstrapOption("caracal.bootstrap");
 }

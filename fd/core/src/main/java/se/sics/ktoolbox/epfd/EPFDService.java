@@ -16,23 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.fd;
+package se.sics.ktoolbox.epfd;
 
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.fd.event.EPFDFollow;
-import se.sics.ktoolbox.fd.event.EPFDRestore;
-import se.sics.ktoolbox.fd.event.EPFDSuspect;
-import se.sics.ktoolbox.fd.event.EPFDUnfollow;
+import se.sics.ktoolbox.epfd.event.EPFDFollow;
+import se.sics.ktoolbox.epfd.event.EPFDIndication;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EPFDPort extends PortType {
-
-    {
-        negative(EPFDFollow.class);
-        negative(EPFDUnfollow.class);
-        positive(EPFDSuspect.class);
-        positive(EPFDRestore.class);
-    }
+public interface EPFDService {
+    public void answerRequest(EPFDFollow request, EPFDIndication indication);
+    public Identifier nextPing(boolean suspected, KAddress probedHost);
+    public Identifier ping(long ts, KAddress probedHost, long expectedRtt);
+    public void stop(Identifier nextPingTid, Identifier pongTid);
 }
