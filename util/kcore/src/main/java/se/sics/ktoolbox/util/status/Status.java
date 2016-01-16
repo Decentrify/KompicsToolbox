@@ -27,7 +27,7 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class Status {
 
-    public static class Internal<S extends Object> implements PatternExtractor<Class<S>, S>, Identifiable {
+    public static class Internal<S extends Object> implements PatternExtractor<Class, S>, Identifiable {
         private final Identifier id; 
         public final S status;
 
