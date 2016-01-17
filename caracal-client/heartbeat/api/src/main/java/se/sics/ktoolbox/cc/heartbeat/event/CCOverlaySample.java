@@ -22,6 +22,7 @@ import java.util.Set;
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.cc.event.CCEvent;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -36,6 +37,10 @@ public class CCOverlaySample {
         public Request(Identifier id, Identifier overlayId) {
             this.id = id;
             this.overlayId = overlayId;
+        }
+        
+        public Request(Identifier overlayId) {
+            this(UUIDIdentifier.randomId(), overlayId);
         }
         
         public Response answer(Set<KAddress> overlaySample) {

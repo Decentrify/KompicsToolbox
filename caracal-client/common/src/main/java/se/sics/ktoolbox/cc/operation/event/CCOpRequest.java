@@ -29,12 +29,10 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
  */
 public class CCOpRequest extends Direct.Request<CCOperationIndication> implements CCOperationEvent {
 
-    public final Identifier id;
     public final CaracalOp opReq;
     public final Key forwardTo;
 
     public CCOpRequest(CaracalOp opReq, Key forwardTo) {
-        this.id = UUIDIdentifier.randomId();
         this.opReq = opReq;
         this.forwardTo = forwardTo;
     }
@@ -54,6 +52,6 @@ public class CCOpRequest extends Direct.Request<CCOperationIndication> implement
 
     @Override
     public Identifier getId() {
-        return id;
+        return new UUIDIdentifier(opReq.id);
     }
 }

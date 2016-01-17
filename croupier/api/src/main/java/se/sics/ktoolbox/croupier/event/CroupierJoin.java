@@ -16,30 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.ktoolbox.croupier.event;
 
-import se.sics.ktoolbox.croupier.util.CroupierSpeed;
+import java.util.List;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierControl implements CroupierEvent {
+public class CroupierJoin implements CroupierEvent {
     public final Identifier id;
-    public final Identifier overlayId;
-    public final CroupierSpeed speed;
+    public final List<NatAwareAddress> bootstrap;
     
-    public CroupierControl(Identifier overlayId, CroupierSpeed speed) {
+    public CroupierJoin(List bootstrap) {
         this.id = UUIDIdentifier.randomId();
-        this.overlayId = overlayId;
-        this.speed = speed;
-    }
-
-    @Override
-    public String toString() {
-        return "CROUPIER_DISCONNECTED<" + id + ">";
+        this.bootstrap = bootstrap;
     }
 
     @Override

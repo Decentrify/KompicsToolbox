@@ -16,30 +16,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package se.sics.ktoolbox.croupier.event;
 
-import se.sics.ktoolbox.croupier.util.CroupierSpeed;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierControl implements CroupierEvent {
+public class CroupierDisconnected implements CroupierEvent {
+
     public final Identifier id;
     public final Identifier overlayId;
-    public final CroupierSpeed speed;
-    
-    public CroupierControl(Identifier overlayId, CroupierSpeed speed) {
+
+    public CroupierDisconnected(Identifier overlayId) {
         this.id = UUIDIdentifier.randomId();
         this.overlayId = overlayId;
-        this.speed = speed;
     }
 
     @Override
     public String toString() {
-        return "CROUPIER_DISCONNECTED<" + id + ">";
+        return "Croupier<" +  overlayId + "> Disconnected";
     }
 
     @Override

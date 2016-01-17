@@ -50,7 +50,9 @@ import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
 import se.sics.ktoolbox.croupier.behaviour.CroupierBehaviour;
 import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
+import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
+import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.croupier.history.DeleteAndForgetHistory;
 import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.util.CroupierSpeed;
@@ -65,6 +67,7 @@ import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.network.nat.NatType;
 import se.sics.ktoolbox.util.other.Container;
 import se.sics.ktoolbox.util.update.view.BootstrapView;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
@@ -116,7 +119,8 @@ public class CroupierComp extends ComponentDefinition {
         privateView = Pair.with(privateLocalView, privateShuffleHistory);
 
         subscribe(handleStart, control);
-        subscribe(handleBootstrap, croupierControlPort);
+        subscribe(handleLegacyBootstrap, croupierControlPort);
+        subscribe(handleReBootstrap, bootstrapPort);
         subscribe(handleViewUpdate, viewUpdate);
         subscribe(handleAddressUpdate, addressUpdate);
         subscribe(handleShuffleRequest, network);
@@ -154,8 +158,16 @@ public class CroupierComp extends ComponentDefinition {
             behaviour = behaviour.processView(viewUpdate);
         }
     };
+    
+    Handler handleLegacyBootstrap = new Handler<CroupierJoin>() {
+        @Override
+        public void handle(CroupierJoin join) {
+            LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
+            bootstrapNodes.addAll(join.bootstrap);
+        }
+    };
 
-    Handler handleBootstrap = new Handler<CroupierSample<BootstrapView>>() {
+    Handler handleReBootstrap = new Handler<CroupierSample<BootstrapView>>() {
         @Override
         public void handle(CroupierSample<BootstrapView> sample) {
             while (bootstrapNodes.size() < croupierConfig.viewSize) {
@@ -185,7 +197,9 @@ public class CroupierComp extends ComponentDefinition {
                 scheduleShuffleTimeout(shufflePartner);
             } else {
                 LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
-                trigger(new CroupierControl(UUIDIdentifier.randomId(), overlayId, CroupierSpeed.FAST), croupierControlPort);
+                //TODO Alex Disconnected -  legacy code
+                trigger(new CroupierDisconnected(overlayId), croupierControlPort);
+                trigger(new CroupierControl(overlayId, CroupierSpeed.FAST), croupierControlPort);
             }
         }
     };
@@ -258,7 +272,17 @@ public class CroupierComp extends ComponentDefinition {
             }
             LOG.debug("{}node:{} timed out", logPrefix, timeout.dest);
             shuffleTid = null;
-
+            
+            //TODO Alex - maybe put in a dead box and try again later
+            if(NatType.isOpen(timeout.dest)) {
+                publicView.getValue0().timedOut(publicView.getValue1(), timeout.dest);
+            } else {
+                privateView.getValue0().timedOut(privateView.getValue1(), timeout.dest);
+            }
+            bootstrapNodes.remove(timeout.dest);
+            if(!connected()) {
+                trigger(new CroupierDisconnected(overlayId), croupierControlPort);
+            }
         }
     };
 
