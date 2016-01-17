@@ -23,6 +23,6 @@ package se.sics.ktoolbox.util.identifiable;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface Identifier {
+public interface Identifier extends Comparable<Identifier>{
     public int partition(int nrPartitions);
 }

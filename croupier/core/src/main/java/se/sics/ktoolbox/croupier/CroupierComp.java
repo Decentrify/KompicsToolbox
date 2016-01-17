@@ -334,9 +334,9 @@ public class CroupierComp extends ComponentDefinition {
         public final Identifier overlayId;
         public final NatAwareAddress selfAdr;
 
-        public CroupierInit(Identifier overlayId, NatAwareAddress selfAdr) {
+        public CroupierInit(Identifier overlayId, KAddress selfAdr) {
             this.overlayId = overlayId;
-            this.selfAdr = selfAdr;
+            this.selfAdr = (NatAwareAddress)selfAdr;
         }
     }
 

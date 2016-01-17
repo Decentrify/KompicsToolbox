@@ -3,6 +3,7 @@ package se.sics.ktoolbox.election.event;
 import java.util.UUID;
 import se.sics.ktoolbox.election.util.LCPeerView;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * Event from application in the system, indicating
@@ -20,6 +21,10 @@ public class ViewUpdate implements ElectionEvent {
         this.id = id;
         this.selfPv = pv;
         this.electionRoundId = electionRoundId;
+    }
+    
+    public ViewUpdate(UUID electionRoundId, LCPeerView pv) {
+        this(UUIDIdentifier.randomId(), electionRoundId, pv);
     }
 
     @Override

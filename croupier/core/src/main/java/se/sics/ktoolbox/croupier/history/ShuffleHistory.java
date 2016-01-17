@@ -20,6 +20,7 @@ package se.sics.ktoolbox.croupier.history;
 
 import java.util.Map;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
@@ -27,7 +28,7 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
  */
 public interface ShuffleHistory {
     public void sendTo(CroupierContainer container, NatAwareAddress shufflePartner);
-    public Map<NatAwareAddress, CroupierContainer> sentTo(NatAwareAddress shufflePartner);
+    public Map<Identifier, CroupierContainer> sentTo(NatAwareAddress shufflePartner);
     public boolean wasSentTo(NatAwareAddress containerOrigin, NatAwareAddress shufflePartner);
     public void remove(NatAwareAddress containerOrigin);
 }

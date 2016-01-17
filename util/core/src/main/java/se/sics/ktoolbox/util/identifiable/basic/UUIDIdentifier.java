@@ -74,4 +74,10 @@ public class UUIDIdentifier implements Identifier {
     public static UUIDIdentifier randomId() {
         return new UUIDIdentifier(UUID.randomUUID());
     }
+
+    @Override
+    public int compareTo(Identifier o) {
+        UUIDIdentifier that = (UUIDIdentifier)o;
+        return this.id.compareTo(that.id);
+    }
 }

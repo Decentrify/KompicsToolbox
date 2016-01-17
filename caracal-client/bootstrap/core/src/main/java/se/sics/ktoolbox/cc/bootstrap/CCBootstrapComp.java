@@ -53,6 +53,7 @@ import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapReady;
 import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
@@ -364,8 +365,8 @@ public class CCBootstrapComp extends ComponentDefinition {
 
         public final Address privateAdr;
 
-        public CCBootstrapInit(BasicAddress privateAdr) {
-            this.privateAdr = new Address(privateAdr.getIp(), privateAdr.getPort(), null);
+        public CCBootstrapInit(KAddress selfAdr) {
+            this.privateAdr = new Address(selfAdr.getIp(), selfAdr.getPort(), null);
         }
     }
 

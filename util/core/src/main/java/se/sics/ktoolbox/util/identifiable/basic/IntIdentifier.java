@@ -64,4 +64,10 @@ public class IntIdentifier implements Identifier {
     public String toString() {
         return "" + id;
     }
+
+    @Override
+    public int compareTo(Identifier o) {
+        IntIdentifier that = (IntIdentifier)o;
+        return this.id.compareTo(that.id);
+    }
 }

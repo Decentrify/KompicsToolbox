@@ -118,21 +118,21 @@ public class LocalView {
         return selectedEntry.getSource();
     }
 
-    public Map<NatAwareAddress, CroupierContainer> initiatorSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
+    public Map<Identifier, CroupierContainer> initiatorSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
         return shuffleSample(history, shufflePartner);
     }
 
-    public Map<NatAwareAddress, CroupierContainer> receiverSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
+    public Map<Identifier, CroupierContainer> receiverSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
         return shuffleSample(history, shufflePartner);
     }
 
-    private Map<NatAwareAddress, CroupierContainer> shuffleSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
+    private Map<Identifier, CroupierContainer> shuffleSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
         List<CroupierContainer> containerList = new ArrayList<>(containers.values());
         containerList = ProbabilisticHelper.generateRandomSample(rand, containerList, croupierConfig.shuffleSize);
-        Map<NatAwareAddress, CroupierContainer> descriptors = new HashMap<>();
+        Map<Identifier, CroupierContainer> descriptors = new HashMap<>();
         for (CroupierContainer container : containerList) {
             history.sendTo(container, shufflePartner);
-            descriptors.put(container.getSource(), container.copy());
+            descriptors.put(container.getSource().getId(), container.copy());
         }
         return descriptors;
     }
@@ -140,11 +140,11 @@ public class LocalView {
     public void selectToKeep(ShuffleHistory history, NatAwareAddress selfAdr, NatAwareAddress partnerAdr, 
             Optional<View> partnerView, Map<NatAwareAddress, CroupierContainer> partnerContainers) {
 
-        Map<NatAwareAddress, CroupierContainer> sentContainers = history.sentTo(partnerAdr);
-        Map<NatAwareAddress, CroupierContainer> newContainerSources = new HashMap<>();
-        Map<NatAwareAddress, Pair<CroupierContainer, CroupierContainer>> newContainerVersions = new HashMap<>();
-        Map<NatAwareAddress, CroupierContainer> sameContainer = new HashMap<>();
-        Map<NatAwareAddress, CroupierContainer> oldContainerVersions = new HashMap<>();
+        Map<Identifier, CroupierContainer> sentContainers = history.sentTo(partnerAdr);
+        Map<Identifier, CroupierContainer> newContainerSources = new HashMap<>();
+        Map<Identifier, Pair<CroupierContainer, CroupierContainer>> newContainerVersions = new HashMap<>();
+        Map<Identifier, CroupierContainer> sameContainer = new HashMap<>();
+        Map<Identifier, CroupierContainer> oldContainerVersions = new HashMap<>();
 
         int selfCounter = 0;
         for (Map.Entry<NatAwareAddress, CroupierContainer> remoteContainer : partnerContainers.entrySet()) {
@@ -154,13 +154,13 @@ public class LocalView {
             }
             CroupierContainer localContainer = containers.get(remoteContainer.getKey());
             if (localContainer == null) {
-                newContainerSources.put(remoteContainer.getKey(), remoteContainer.getValue());
+                newContainerSources.put(remoteContainer.getKey().getId(), remoteContainer.getValue());
             } else if (sameView(localContainer.getContent(), remoteContainer.getValue().getContent())) {
-                sameContainer.put(remoteContainer.getKey(), remoteContainer.getValue());
+                sameContainer.put(remoteContainer.getKey().getId(), remoteContainer.getValue());
             } else if (localContainer.getAge() < remoteContainer.getValue().getAge()) {
-                oldContainerVersions.put(remoteContainer.getKey(), remoteContainer.getValue());
+                oldContainerVersions.put(remoteContainer.getKey().getId(), remoteContainer.getValue());
             } else {
-                newContainerVersions.put(remoteContainer.getKey(), Pair.with(remoteContainer.getValue(), localContainer));
+                newContainerVersions.put(remoteContainer.getKey().getId(), Pair.with(remoteContainer.getValue(), localContainer));
             }
         }
         assert selfCounter + newContainerSources.size() + newContainerVersions.size() + sameContainer.size() 

@@ -21,6 +21,7 @@ package se.sics.ktoolbox.croupier.history;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
@@ -28,25 +29,25 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
  */
 public class DeleteAndForgetHistory implements ShuffleHistory {
 
-    private Map<NatAwareAddress, ShuffleHistoryContainer> history = new HashMap<>();
+    private Map<Identifier, ShuffleHistoryContainer> history = new HashMap<>();
 
     @Override
     public void sendTo(CroupierContainer container, NatAwareAddress peer) {
         ShuffleHistoryContainer containerHistory = history.get(container.getSource());
         if (containerHistory == null) {
             containerHistory = new ShuffleHistoryContainer(container);
-            history.put(container.getSource(), containerHistory);
+            history.put(container.getSource().getId(), containerHistory);
         }
         containerHistory.sendTo(peer);
     }
 
     @Override
-    public Map<NatAwareAddress, CroupierContainer> sentTo(NatAwareAddress shufflePartner) {
-        Map<NatAwareAddress, CroupierContainer> sentToPeer = new HashMap<>();
-        for(Map.Entry<NatAwareAddress, ShuffleHistoryContainer> historyContainer : history.entrySet()) {
+    public Map<Identifier, CroupierContainer> sentTo(NatAwareAddress shufflePartner) {
+        Map<Identifier, CroupierContainer> sentToPeer = new HashMap<>();
+        for(Map.Entry<Identifier, ShuffleHistoryContainer> historyContainer : history.entrySet()) {
             if(historyContainer.getValue().wasSentTo(shufflePartner)) {
                 CroupierContainer container = historyContainer.getValue().container;
-                sentToPeer.put(container.src, container);
+                sentToPeer.put(container.src.getId(), container);
             }
         }
         return sentToPeer;

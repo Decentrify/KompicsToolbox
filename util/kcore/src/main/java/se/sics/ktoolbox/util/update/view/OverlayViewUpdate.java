@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.util.update.view;
 
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -47,6 +48,10 @@ public class OverlayViewUpdate {
         public Indication(Identifier id, boolean observer, V view) {
             super(id, view);
             this.observer = observer;
+        }
+        
+        public Indication(V view) {
+            this(UUIDIdentifier.randomId(), false, view);
         }
     }
 }

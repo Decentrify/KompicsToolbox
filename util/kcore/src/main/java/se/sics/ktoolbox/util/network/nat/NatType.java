@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.util.network.nat;
 
 import java.util.Objects;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -87,7 +88,7 @@ public class NatType {
     @Override
     public String toString() {
         switch (type) {
-            case OPEN :
+            case OPEN:
             case FIREWALL:
             case UDP_BLOCKED:
             case UPNP:
@@ -97,9 +98,9 @@ public class NatType {
                 return type.code + "_" + mappingPolicy.code + "_" + allocationPolicy.code + "_" + filteringPolicy.code;
             default:
                 return "undefined";
-         }
-     }
-    
+        }
+    }
+
     public static NatType open() {
         return new NatType(Nat.Type.OPEN, null, null, 0, null, 0);
     }
@@ -124,20 +125,33 @@ public class NatType {
         assert bindingTimeout > 0;
         return new NatType(Nat.Type.NAT, mappingPolicy, allocationPolicy, delta, filteringPolicy, bindingTimeout);
     }
-    
+
     public static NatType unknown() {
         return new NatType(Nat.Type.UNKNOWN, null, null, 0, null, 0);
     }
-    
-    public static boolean isOpen(NatAwareAddress address) {
-        return Nat.Type.OPEN.equals(address.getNatType().type);
+
+    public static boolean isOpen(KAddress address) {
+        if (address instanceof NatAwareAddress) {
+            return Nat.Type.OPEN.equals(((NatAwareAddress) address).getNatType().type);
+        } else {
+            return true;
+        }
     }
-    
-    public static boolean isNated(NatAwareAddress address) {
-        return Nat.Type.NAT.equals(address.getNatType().type);
+
+    public static boolean isNated(KAddress address) {
+        if (address instanceof NatAwareAddress) {
+            return Nat.Type.NAT.equals(((NatAwareAddress) address).getNatType().type);
+        } else {
+            return false;
+        }
     }
-    
+
     public static boolean isUnknown(NatAwareAddress address) {
-        return Nat.Type.UNKNOWN.equals(address.getNatType().type);
+        if (address instanceof NatAwareAddress) {
+            return Nat.Type.UNKNOWN.equals(((NatAwareAddress) address).getNatType().type);
+        } else {
+            return false;
+        }
+
     }
 }
