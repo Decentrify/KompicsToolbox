@@ -112,4 +112,9 @@ public class NatAwareAddressImpl implements NatAwareAddress {
     public static NatAwareAddressImpl nated(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
         return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
     }
+    
+    @Override
+    public String toString() {
+        return publicAdr.toString();
+    }
 }

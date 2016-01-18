@@ -28,7 +28,7 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ViewUpdate {
-    public static abstract class Request extends Direct.Request<Indication> implements Identifiable {
+    public static abstract class Request extends Direct.Request<Response> implements Identifiable {
         public final Identifier id;
         
         public Request(Identifier id) {
@@ -41,7 +41,8 @@ public class ViewUpdate {
         }
     }
     
-    public static abstract class Indication<V extends View> implements Direct.Response, PatternExtractor<Class<V>, V>, Identifiable {
+    
+    public static abstract class Indication<V extends View> implements PatternExtractor<Class<V>, V>, Identifiable {
         public final Identifier id;
         public final V view;
         
@@ -64,5 +65,13 @@ public class ViewUpdate {
         public Identifier getId() {
             return id;
         }
+    }
+    
+    public static abstract class Response<V extends View> extends Indication<V> implements Direct.Response {
+
+        public Response(Identifier id, V view) {
+            super(id, view);
+        }
+        
     }
 }

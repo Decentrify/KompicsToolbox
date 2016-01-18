@@ -21,6 +21,7 @@ package se.sics.ktoolbox.croupier.msg;
 import com.google.common.base.Optional;
 import java.util.Map;
 import java.util.UUID;
+import org.javatuples.Pair;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
@@ -35,11 +36,11 @@ public class CroupierShuffle {
     public static abstract class Basic implements CroupierEvent {
         public final Identifier id;
         public final Optional<View> selfView;
-        public final Map<NatAwareAddress, CroupierContainer> publicNodes;
-        public final Map<NatAwareAddress, CroupierContainer> privateNodes;
+        public final Map<Identifier, CroupierContainer> publicNodes;
+        public final Map<Identifier, CroupierContainer> privateNodes;
 
-        Basic(Identifier id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
-                Map<NatAwareAddress, CroupierContainer> privateNodes) {
+        Basic(Identifier id, Optional<View>selfView, Map<Identifier, CroupierContainer> publicNodes, 
+                Map<Identifier, CroupierContainer> privateNodes) {
             this.id = id;
             this.selfView = selfView;
             this.publicNodes = publicNodes;
@@ -51,8 +52,8 @@ public class CroupierShuffle {
     }
     
     public static class Request extends Basic {
-        public Request(Identifier id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
-                Map<NatAwareAddress, CroupierContainer> privateNodes) {
+        public Request(Identifier id, Optional<View>selfView, Map<Identifier, CroupierContainer> publicNodes, 
+                Map<Identifier, CroupierContainer> privateNodes) {
             super(id, selfView, publicNodes, privateNodes);
         }
         
@@ -68,8 +69,8 @@ public class CroupierShuffle {
     }
     
     public static class Response extends Basic {
-        public Response(Identifier id, Optional<View>selfView, Map<NatAwareAddress, CroupierContainer> publicNodes, 
-                Map<NatAwareAddress, CroupierContainer> privateNodes) {
+        public Response(Identifier id, Optional<View>selfView, Map<Identifier, CroupierContainer> publicNodes, 
+                Map<Identifier, CroupierContainer> privateNodes) {
             super(id, selfView, publicNodes, privateNodes);
         }
         

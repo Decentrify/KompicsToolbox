@@ -23,11 +23,13 @@ import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.update.view.View;
 
 /**
@@ -83,14 +85,14 @@ public class CroupierShuffleSerializer {
             Map publicNodes = new HashMap();
             for (int i = 0; i < publicNodesSize; i++) {
                 CroupierContainer cc = (CroupierContainer) Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
-                publicNodes.put(cc.getSource(), cc);
+                publicNodes.put(cc.getSource().getId(), cc);
             }
 
             int privateNodesSize = buf.readByte();
             Map privateNodes = new HashMap();
             for (int i = 0; i < privateNodesSize; i++) {
                 CroupierContainer cc = (CroupierContainer) Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
-                privateNodes.put(cc.getSource(), cc);
+                privateNodes.put(cc.getSource().getId(), cc);
             }
 
             return Quartet.with(msgId, selfView, publicNodes, privateNodes);

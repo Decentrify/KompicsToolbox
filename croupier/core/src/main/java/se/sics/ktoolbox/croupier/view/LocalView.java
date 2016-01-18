@@ -138,7 +138,7 @@ public class LocalView {
     }
 
     public void selectToKeep(ShuffleHistory history, NatAwareAddress selfAdr, NatAwareAddress partnerAdr, 
-            Optional<View> partnerView, Map<NatAwareAddress, CroupierContainer> partnerContainers) {
+            Optional<View> partnerView, Map<Identifier, CroupierContainer> partnerContainers) {
 
         Map<Identifier, CroupierContainer> sentContainers = history.sentTo(partnerAdr);
         Map<Identifier, CroupierContainer> newContainerSources = new HashMap<>();
@@ -147,20 +147,20 @@ public class LocalView {
         Map<Identifier, CroupierContainer> oldContainerVersions = new HashMap<>();
 
         int selfCounter = 0;
-        for (Map.Entry<NatAwareAddress, CroupierContainer> remoteContainer : partnerContainers.entrySet()) {
-            if(remoteContainer.getKey().getId().equals(selfAdr.getId())) {
+        for (CroupierContainer remoteContainer : partnerContainers.values()) {
+            if(remoteContainer.getSource().getId().equals(selfAdr.getId())) {
                 selfCounter++;
                 continue;
             }
-            CroupierContainer localContainer = containers.get(remoteContainer.getKey());
+            CroupierContainer localContainer = containers.get(remoteContainer.getSource().getId());
             if (localContainer == null) {
-                newContainerSources.put(remoteContainer.getKey().getId(), remoteContainer.getValue());
-            } else if (sameView(localContainer.getContent(), remoteContainer.getValue().getContent())) {
-                sameContainer.put(remoteContainer.getKey().getId(), remoteContainer.getValue());
-            } else if (localContainer.getAge() < remoteContainer.getValue().getAge()) {
-                oldContainerVersions.put(remoteContainer.getKey().getId(), remoteContainer.getValue());
+                newContainerSources.put(remoteContainer.getSource().getId(), remoteContainer);
+            } else if (sameView(localContainer.getContent(), remoteContainer.getContent())) {
+                sameContainer.put(remoteContainer.getSource().getId(), remoteContainer);
+            } else if (localContainer.getAge() < remoteContainer.getAge()) {
+                oldContainerVersions.put(remoteContainer.getSource().getId(), remoteContainer);
             } else {
-                newContainerVersions.put(remoteContainer.getKey().getId(), Pair.with(remoteContainer.getValue(), localContainer));
+                newContainerVersions.put(remoteContainer.getSource().getId(), Pair.with(remoteContainer, localContainer));
             }
         }
         assert selfCounter + newContainerSources.size() + newContainerVersions.size() + sameContainer.size() 

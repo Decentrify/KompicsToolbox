@@ -31,7 +31,7 @@ import se.sics.ktoolbox.util.config.KConfigOption.Base;
 public class KConfigHelper {
     public static <O extends Object> O read(Config config, Base<O> opt) {
         Logger LOG = LoggerFactory.getLogger("KConfig");
-        Optional<O> optValue = config.readValue(opt.name, opt.type);
+        Optional<O> optValue = opt.readValue(config);
         if (!optValue.isPresent()) {
             LOG.error("missing:{}", opt.name);
             throw new RuntimeException("missing " + opt.name);

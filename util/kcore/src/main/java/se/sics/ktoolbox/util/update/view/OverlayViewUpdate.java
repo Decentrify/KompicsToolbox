@@ -54,4 +54,13 @@ public class OverlayViewUpdate {
             this(UUIDIdentifier.randomId(), false, view);
         }
     }
+    
+    public static class Response<V extends View> extends ViewUpdate.Response<V> {
+        public final boolean observer;
+        
+        public Response(Identifier id, boolean observer, V view) {
+            super(id, view);
+            this.observer = observer;
+        }
+    }
 }
