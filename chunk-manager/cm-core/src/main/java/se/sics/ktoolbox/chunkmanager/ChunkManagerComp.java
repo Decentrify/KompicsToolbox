@@ -107,6 +107,7 @@ public class ChunkManagerComp extends ComponentDefinition {
     Handler handleOutgoing = new Handler<BasicContentMsg>() {
         @Override
         public void handle(BasicContentMsg msg) {
+            log.info("{}CHECK SIZE:{}", logPrefix, incomingChunks.size());
             log.trace("{} received:{}", logPrefix, msg);
             if (!fragmentableTraffic.getValue(msg)) {
                 log.debug("{} forwarding outgoing non fragmentable message:{}", logPrefix, msg);

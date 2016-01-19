@@ -163,7 +163,11 @@ public class CroupierComp extends ComponentDefinition {
         @Override
         public void handle(CroupierJoin join) {
             LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
-            bootstrapNodes.addAll(join.bootstrap);
+            for(NatAwareAddress bootstrap : join.bootstrap) {
+                if(!behaviour.getSelf().getId().equals(bootstrap.getId())) {
+                    bootstrapNodes.add(bootstrap);
+                }
+            }
         }
     };
 
@@ -217,8 +221,8 @@ public class CroupierComp extends ComponentDefinition {
     public void sendShuffleResponse(NatAwareAddress to, Map publicSample, Map privateSample) {
         DecoratedHeader responseHeader
                 = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
-        CroupierShuffle.Request responseContent
-                = new CroupierShuffle.Request(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
+        CroupierShuffle.Response responseContent
+                = new CroupierShuffle.Response(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
         BasicContentMsg response = new BasicContentMsg(responseHeader, responseContent);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
         trigger(response, network);
