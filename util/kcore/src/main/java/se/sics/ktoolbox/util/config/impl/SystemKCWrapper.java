@@ -33,6 +33,7 @@ public class SystemKCWrapper {
     private final Config config;
     public final long seed;
     public final Identifier id;
+    public final int port;
     public final Optional<BasicAddress> aggregator;
     
     public SystemKCWrapper(Config config) {
@@ -45,6 +46,7 @@ public class SystemKCWrapper {
             Random rand = new Random(seed);
             id = new IntIdentifier(rand.nextInt());
         }
+        port = KConfigHelper.read(config, SystemKConfig.port);
         aggregator = SystemKConfig.aggregator.readValue(config);
     }
 }

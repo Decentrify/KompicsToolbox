@@ -70,11 +70,11 @@ public class IpHelper {
     }
 
     public static boolean isPrivate(InetAddress adr) {
-        return getTwoDotPrefix(adr).equals("192.168");
+        return !(isPublic(adr) || isLoopback(adr) || isTenDot(adr));
     }
 
-    public static boolean isPublic(InetAddress add) {
-        return !(isPrivate(add) || isLoopback(add) || isTenDot(add));
+    public static boolean isPublic(InetAddress adr) {
+        return getOneDotPrefix(adr).equals("193");
     }
 
     private static String getOneDotPrefix(InetAddress addr) {

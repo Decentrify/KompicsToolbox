@@ -220,7 +220,7 @@ public class GradientComp extends ComponentDefinition {
                     new BasicHeader(self, partner.getSource(), Transport.UDP), config.overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUIDIdentifier.randomId(), selfView, exchangeGC);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
-            LOG.debug("{} sending:{} to:{}", new Object[]{logPrefix, requestContent.exchangeNodes, partner.getSource()});
+            LOG.debug("{} sending:{}", new Object[]{logPrefix, request});
             trigger(request, network);
             scheduleShuffleTimeout(partner.getSource());
         }
@@ -253,7 +253,7 @@ public class GradientComp extends ComponentDefinition {
                         LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    LOG.debug("{} received:{} from:{}", new Object[]{logPrefix, content.exchangeNodes, reqSrc});
+                    LOG.debug("{} received:{}", new Object[]{logPrefix, container});
                     if (selfView == null) {
                         LOG.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
                                 logPrefix, reqSrc);
@@ -265,7 +265,7 @@ public class GradientComp extends ComponentDefinition {
                     Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, config.shuffleSize);
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.id, selfView, exchangeGC);
                     BasicContentMsg response = container.answer(responseContent);
-                    LOG.debug("{} sending:{} to:{}", new Object[]{logPrefix, responseContent.exchangeNodes, container.getHeader().getSource()});
+                    LOG.debug("{} sending:{}", new Object[]{logPrefix, response});
                     trigger(response, network);
 
                     view.merge(content.exchangeNodes, selfView);
@@ -284,7 +284,7 @@ public class GradientComp extends ComponentDefinition {
                         LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    LOG.debug("{} received:{} from:{}", new Object[]{logPrefix, content.exchangeNodes, respSrc});
+                    LOG.debug("{} received:{}", new Object[]{logPrefix, container});
 
                     if (shuffleTimeoutId == null) {
                         LOG.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.id, respSrc});

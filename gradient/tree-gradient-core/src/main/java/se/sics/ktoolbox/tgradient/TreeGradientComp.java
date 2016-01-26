@@ -271,7 +271,7 @@ public class TreeGradientComp extends ComponentDefinition {
             DecoratedHeader<KAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, partner.getSource(), Transport.UDP), gradientConfig.overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUIDIdentifier.randomId(), selfView, neighbours);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
-            log.debug("{} sending:{} to:{}", new Object[]{logPrefix, requestContent.exchangeNodes, partner.getSource()});
+            log.debug("{} sending:{}", new Object[]{logPrefix, request});
             trigger(request, network);
             scheduleShuffleTimeout(partner.getSource());
         }
@@ -303,7 +303,7 @@ public class TreeGradientComp extends ComponentDefinition {
                         log.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    log.debug("{} received:{} from:{}", new Object[]{logPrefix, content.exchangeNodes, reqSrc});
+                    log.debug("{} received:{}", new Object[]{logPrefix, container});
                     if (selfView == null) {
                         log.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
                                 logPrefix, reqSrc);
@@ -313,8 +313,8 @@ public class TreeGradientComp extends ComponentDefinition {
                     parents.incrementAges();
 
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.id, selfView, neighbours);
-                    BasicContentMsg response = container.answer(content);
-                    log.debug("{} sending:{} to:{}", new Object[]{logPrefix, responseContent.exchangeNodes, container.getHeader().getSource()});
+                    BasicContentMsg response = container.answer(responseContent);
+                    log.debug("{} sending:{}", new Object[]{logPrefix, response});
                     trigger(response, network);
 
                     parents.merge(content.exchangeNodes, selfView);
@@ -332,7 +332,7 @@ public class TreeGradientComp extends ComponentDefinition {
                         log.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    log.debug("{} received:{} from:{}", new Object[]{logPrefix, content.exchangeNodes, respSrc});
+                    log.debug("{} received:{}", new Object[]{logPrefix, container});
 
                     if (shuffleTimeoutId == null) {
                         log.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.id, respSrc});

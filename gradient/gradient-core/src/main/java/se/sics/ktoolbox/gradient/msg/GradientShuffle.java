@@ -33,7 +33,7 @@ public class GradientShuffle {
         
         @Override
         public String toString() {
-            return "ShuffleRequest";
+            return "ShuffleRequest<" + getId() + ">";
         }
 
         @Override
@@ -49,7 +49,7 @@ public class GradientShuffle {
         
         @Override
         public String toString() {
-            return "ShuffleResponse";
+            return "ShuffleResponse<" + getId() + ">";
         }
 
         @Override

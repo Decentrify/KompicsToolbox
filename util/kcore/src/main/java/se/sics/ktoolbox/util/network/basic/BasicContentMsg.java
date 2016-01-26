@@ -81,7 +81,7 @@ public class BasicContentMsg<A extends KAddress, H extends KHeader<A>, C extends
     }
 
     @Override
-    public <C2 extends Object> BasicContentMsg<A, H, C2> answer(C2 content) {
-        return new BasicContentMsg(header.answer(), content);
+    public <C2 extends Object> BasicContentMsg<A, H, C2> answer(C2 newContent) {
+        return new BasicContentMsg(header.answer(), newContent);
     }
 }
