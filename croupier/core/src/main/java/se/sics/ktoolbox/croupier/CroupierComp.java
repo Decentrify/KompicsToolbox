@@ -69,6 +69,9 @@ import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatType;
 import se.sics.ktoolbox.util.other.Container;
+import se.sics.ktoolbox.util.state.StateTrackedComp;
+import se.sics.ktoolbox.util.state.StateTracker;
+import se.sics.ktoolbox.util.state.StateTrackerImpl;
 import se.sics.ktoolbox.util.update.view.BootstrapView;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
@@ -76,7 +79,7 @@ import se.sics.ktoolbox.util.update.view.View;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierComp extends ComponentDefinition {
+public class CroupierComp extends ComponentDefinition implements StateTrackedComp {
 
     // INFO - status, memory statistics 
     // DEBUG - bootstraping, samples 
@@ -96,9 +99,11 @@ public class CroupierComp extends ComponentDefinition {
     private final CroupierKCWrapper croupierConfig;
     private final Identifier overlayId;
     private CroupierBehaviour behaviour;
+
     private final List<NatAwareAddress> bootstrapNodes = new ArrayList<>();
     private final Pair<LocalView, ShuffleHistory> publicView;
     private final Pair<LocalView, ShuffleHistory> privateView;
+    private StateTracker stateTracker;
 
     private Pair<UUID, Long> shuffleCycle = Pair.with(null, 0l);
     private UUID shuffleTid;
@@ -118,6 +123,8 @@ public class CroupierComp extends ComponentDefinition {
         ShuffleHistory privateShuffleHistory = new DeleteAndForgetHistory();
         privateView = Pair.with(privateLocalView, privateShuffleHistory);
 
+        setStateTracker();
+
         subscribe(handleStart, control);
         subscribe(handleLegacyBootstrap, croupierControlPort);
         subscribe(handleReBootstrap, bootstrapPort);
@@ -127,6 +134,45 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
+    }
+
+    //***************************STATE TRACKING*********************************
+    private void setStateTracker() {
+        switch (croupierConfig.croupierAggLevel) {
+            case NONE:
+                break;
+            case BASIC:
+                stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
+                break;
+            case CORE:
+                stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
+                stateTracker.registerPort(network);
+                stateTracker.registerPort(timer);
+                stateTracker.registerPort(croupierPort);
+                break;
+            case FULL:
+                stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
+                stateTracker.registerPort(network);
+                stateTracker.registerPort(timer);
+                stateTracker.registerPort(croupierPort);
+                
+                stateTracker.registerPort(control);
+                stateTracker.registerPort(loopback);
+                stateTracker.registerPort(onSelf);
+                stateTracker.registerPort(bootstrapPort);
+                stateTracker.registerPort(addressUpdate);
+                stateTracker.registerPort(viewUpdate);
+                stateTracker.registerPort(croupierControlPort);
+                break;
+            default:
+                throw new RuntimeException("Undefined:" + croupierConfig.croupierAggLevel);
+        }
+    }
+    
+    public void reportState() {
+        LOG.info("{}bootstrap nodes:{}", new Object[]{logPrefix, bootstrapNodes.size()});
+        LOG.info("{}public view:{} history:{}", new Object[]{logPrefix, publicView.getValue0().size(), publicView.getValue1().size()});
+        LOG.info("{}public view:{} history:{}", new Object[]{logPrefix, privateView.getValue0().size(), privateView.getValue1().size()});
     }
 
     //****************************CONTROL***************************************
@@ -158,13 +204,13 @@ public class CroupierComp extends ComponentDefinition {
             behaviour = behaviour.processView(viewUpdate);
         }
     };
-    
+
     Handler handleLegacyBootstrap = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
             LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
-            for(NatAwareAddress bootstrap : join.bootstrap) {
-                if(!behaviour.getSelf().getId().equals(bootstrap.getId())) {
+            for (NatAwareAddress bootstrap : join.bootstrap) {
+                if (!behaviour.getSelf().getId().equals(bootstrap.getId())) {
                     bootstrapNodes.add(bootstrap);
                 }
             }
@@ -276,15 +322,15 @@ public class CroupierComp extends ComponentDefinition {
             }
             LOG.debug("{}node:{} timed out", logPrefix, timeout.dest);
             shuffleTid = null;
-            
+
             //TODO Alex - maybe put in a dead box and try again later
-            if(NatType.isOpen(timeout.dest)) {
+            if (NatType.isOpen(timeout.dest)) {
                 publicView.getValue0().timedOut(publicView.getValue1(), timeout.dest);
             } else {
                 privateView.getValue0().timedOut(privateView.getValue1(), timeout.dest);
             }
             bootstrapNodes.remove(timeout.dest);
-            if(!connected()) {
+            if (!connected()) {
                 trigger(new CroupierDisconnected(overlayId), croupierControlPort);
             }
         }
@@ -340,7 +386,7 @@ public class CroupierComp extends ComponentDefinition {
 
         public CroupierInit(Identifier overlayId, KAddress selfAdr) {
             this.overlayId = overlayId;
-            this.selfAdr = (NatAwareAddress)selfAdr;
+            this.selfAdr = (NatAwareAddress) selfAdr;
         }
     }
 
@@ -353,7 +399,7 @@ public class CroupierComp extends ComponentDefinition {
         ShuffleCycle sc = new ShuffleCycle(spt);
         spt.setTimeoutEvent(sc);
         trigger(spt, timer);
-        
+
         shuffleCycle = shuffleCycle.setAt0(sc.getTimeoutId());
     }
 
@@ -364,20 +410,22 @@ public class CroupierComp extends ComponentDefinition {
         }
         CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycle.getValue0());
         trigger(cpt, timer);
-        
+
         shuffleCycle.setAt0(null);
     }
 
-    public static class ShuffleCycle extends Timeout implements CroupierEvent {
-        public final long period;
-        public ShuffleCycle(SchedulePeriodicTimeout request) {
+    private static class ShuffleCycle extends Timeout implements CroupierEvent {
+
+        final long period;
+
+        ShuffleCycle(SchedulePeriodicTimeout request) {
             super(request);
             period = request.getPeriod();
         }
 
         @Override
         public String toString() {
-            return "SHUFFLE_CYCLE";
+            return "SHUFFLE_CYCLE<" + getTimeoutId() + ">";
         }
 
         @Override
@@ -407,18 +455,18 @@ public class CroupierComp extends ComponentDefinition {
 
     }
 
-    public class ShuffleTimeout extends Timeout implements CroupierEvent {
+    private static class ShuffleTimeout extends Timeout implements CroupierEvent {
 
-        public final NatAwareAddress dest;
+        final NatAwareAddress dest;
 
-        public ShuffleTimeout(ScheduleTimeout request, NatAwareAddress dest) {
+        ShuffleTimeout(ScheduleTimeout request, NatAwareAddress dest) {
             super(request);
             this.dest = dest;
         }
 
         @Override
         public String toString() {
-            return "SHUFFLE_TIMEOUT";
+            return "SHUFFLE_TIMEOUT<" + getTimeoutId() + ">";
         }
 
         @Override

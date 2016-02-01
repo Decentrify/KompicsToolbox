@@ -20,6 +20,7 @@ package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
 import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.croupier.util.CroupierAggLevel;
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
@@ -35,6 +36,30 @@ public class CroupierKConfig {
     public final static KConfigOption.Basic<Long> shuffleTimeout = new KConfigOption.Basic("croupier.shuffleTimeout", Long.class);
     public final static KConfigOption.Basic<Boolean> softMax = new KConfigOption.Basic("croupier.softMax", Boolean.class);
     public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("croupier.softMaxTemperature", Double.class);
+    public final static CAggLevelOption aggLevel = new CAggLevelOption("croupier.aggLevel");
+    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic<Long>("croupier.aggPeriod", Long.class);
+    
+    public static class CAggLevelOption extends KConfigOption.Base<CroupierAggLevel> {
+
+        public CAggLevelOption(String name) {
+            super(name, CroupierAggLevel.class);
+        }
+
+        @Override
+        public Optional<CroupierAggLevel> readValue(Config config) {
+            Optional aggLevelOpt = config.readValue(name);
+            if(aggLevelOpt.isPresent()) {
+                if(aggLevelOpt.get() instanceof String) {
+                    CroupierAggLevel aggLevel = CroupierAggLevel.create((String)aggLevelOpt.get());
+                    return Optional.fromNullable(aggLevel);
+                } else if(aggLevelOpt.get() instanceof CroupierAggLevel) {
+                    return aggLevelOpt;
+                }
+            }
+            return Optional.absent();
+        }
+
+    }
 
     public static class CSelectionPolicyOption extends KConfigOption.Base<CroupierSelectionPolicy> {
 
@@ -47,9 +72,9 @@ public class CroupierKConfig {
             Optional sPolicy = config.readValue(name);
             if (sPolicy.isPresent()) {
                 if (sPolicy.get() instanceof String) {
-                    CroupierSelectionPolicy parsedPolicy = CroupierSelectionPolicy.create((String)sPolicy.get());
+                    CroupierSelectionPolicy parsedPolicy = CroupierSelectionPolicy.create((String) sPolicy.get());
                     return Optional.fromNullable(parsedPolicy);
-                } else if(sPolicy.get() instanceof CroupierSelectionPolicy) {
+                } else if (sPolicy.get() instanceof CroupierSelectionPolicy) {
                     return sPolicy;
                 }
             }

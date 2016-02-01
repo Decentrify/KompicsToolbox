@@ -66,6 +66,11 @@ public class DeleteAndForgetHistory implements ShuffleHistory {
 
     @Override
     public void remove(NatAwareAddress containerOrigin) {
-        history.remove(containerOrigin);
+        history.remove(containerOrigin.getId());
+    }
+    
+    @Override
+    public int size() {
+        return history.size();
     }
 }

@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Croupier is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,20 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.croupier.history;
+package se.sics.ktoolbox.util.state;
 
-import java.util.Map;
-import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
+import se.sics.kompics.Port;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ShuffleHistory {
-    public void sendTo(CroupierContainer container, NatAwareAddress shufflePartner);
-    public Map<Identifier, CroupierContainer> sentTo(NatAwareAddress shufflePartner);
-    public boolean wasSentTo(NatAwareAddress containerOrigin, NatAwareAddress shufflePartner);
-    public void remove(NatAwareAddress containerOrigin);
-    public int size();
+public interface StateTracker {
+    public void start();
+    public void registerPort(Port port);
 }
