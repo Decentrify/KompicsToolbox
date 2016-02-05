@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * 2009 Royal Institute of Technology (KTH)
+ * Copyright (C) 2009 Royal Institute of Technology (KTH)
  *
- * KompicsToolbox is free software; you can redistribute it and/or
+ * Croupier is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,16 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.state;
+package se.sics.ktoolbox.croupier.util;
 
-import se.sics.kompics.Port;
-import se.sics.kompics.PortType;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.croupier.CroupierControlPort;
+import se.sics.ktoolbox.croupier.CroupierPort;
+import se.sics.ktoolbox.croupier.event.CroupierControl;
+import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
+import se.sics.ktoolbox.croupier.event.CroupierJoin;
+import se.sics.ktoolbox.croupier.event.CroupierSample;
+import se.sics.ktoolbox.util.state.PortRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface StateTracker {
-    public void start();
-    public Identifier registerPort(final Port<? extends PortType> port);
+public class CroupierPortRegistry {
+    public static void register() {
+        PortRegistry.registerPositive(CroupierJoin.class, CroupierControlPort.class);
+    }
 }

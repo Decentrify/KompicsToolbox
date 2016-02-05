@@ -20,6 +20,7 @@
  */
 package se.sics.ktoolbox.croupier;
 
+import com.google.common.base.Optional;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -146,33 +148,34 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
                 break;
             case CORE:
                 stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
-                stateTracker.registerPort(network);
-                stateTracker.registerPort(timer);
+//                stateTracker.registerPort(network);
+//                stateTracker.registerPort(timer);
                 stateTracker.registerPort(croupierPort);
+                stateTracker.registerPort(croupierControlPort);
                 break;
             case FULL:
                 stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
-                stateTracker.registerPort(network);
-                stateTracker.registerPort(timer);
+//                stateTracker.registerPort(network);
+//                stateTracker.registerPort(timer);
                 stateTracker.registerPort(croupierPort);
-                
-                stateTracker.registerPort(control);
-                stateTracker.registerPort(loopback);
-                stateTracker.registerPort(onSelf);
-                stateTracker.registerPort(bootstrapPort);
-                stateTracker.registerPort(addressUpdate);
-                stateTracker.registerPort(viewUpdate);
                 stateTracker.registerPort(croupierControlPort);
+
+//                stateTracker.registerPort(control);
+//                stateTracker.registerPort(loopback);
+//                stateTracker.registerPort(onSelf);
+//                stateTracker.registerPort(bootstrapPort);
+//                stateTracker.registerPort(addressUpdate);
+//                stateTracker.registerPort(viewUpdate);
                 break;
             default:
                 throw new RuntimeException("Undefined:" + croupierConfig.croupierAggLevel);
         }
     }
-    
+
     public void reportState() {
         LOG.info("{}bootstrap nodes:{}", new Object[]{logPrefix, bootstrapNodes.size()});
         LOG.info("{}public view:{} history:{}", new Object[]{logPrefix, publicView.getValue0().size(), publicView.getValue1().size()});
-        LOG.info("{}public view:{} history:{}", new Object[]{logPrefix, privateView.getValue0().size(), privateView.getValue1().size()});
+        LOG.info("{}private view:{} history:{}", new Object[]{logPrefix, privateView.getValue0().size(), privateView.getValue1().size()});
     }
 
     //****************************CONTROL***************************************
@@ -183,6 +186,7 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
             schedulePeriodicShuffle(croupierConfig.shufflePeriod);
 //            trigger(new AddressUpdate.Request(UUIDIdentifier.randomId()), addressUpdate);
 //            trigger(new OverlayViewUpdate.Request(UUIDIdentifier.randomId()), viewUpdate);
+            stateTracker.start();
         }
     };
 
@@ -254,26 +258,6 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
         }
     };
 
-    private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
-        DecoratedHeader requestHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
-        CroupierShuffle.Request requestContent
-                = new CroupierShuffle.Request(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
-        BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
-        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, requestContent, request.getDestination()});
-        trigger(request, network);
-    }
-
-    public void sendShuffleResponse(NatAwareAddress to, Map publicSample, Map privateSample) {
-        DecoratedHeader responseHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
-        CroupierShuffle.Response responseContent
-                = new CroupierShuffle.Response(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
-        BasicContentMsg response = new BasicContentMsg(responseHeader, responseContent);
-        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
-        trigger(response, network);
-    }
-
     ClassMatchedHandler handleShuffleRequest
             = new ClassMatchedHandler<CroupierShuffle.Request, BasicContentMsg<NatAwareAddress, DecoratedHeader<NatAwareAddress>, CroupierShuffle.Request>>() {
 
@@ -281,15 +265,10 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
                 public void handle(CroupierShuffle.Request content, BasicContentMsg<NatAwareAddress, DecoratedHeader<NatAwareAddress>, CroupierShuffle.Request> container) {
                     NatAwareAddress shufflePartner = container.getSource();
                     LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, shufflePartner});
-
-                    Map publicSample = publicView.getValue0().initiatorSample(publicView.getValue1(), shufflePartner);
-                    Map privateSample = privateView.getValue0().initiatorSample(privateView.getValue1(), shufflePartner);
+                    Map publicSample = publicView.getValue0().receiverSample(publicView.getValue1(), shufflePartner);
+                    Map privateSample = privateView.getValue0().receiverSample(privateView.getValue1(), shufflePartner);
                     sendShuffleResponse(shufflePartner, publicSample, privateSample);
-
-                    publicView.getValue0().selectToKeep(publicView.getValue1(), behaviour.getSelf(),
-                            shufflePartner, content.selfView, content.publicNodes);
-                    privateView.getValue0().selectToKeep(privateView.getValue1(), behaviour.getSelf(),
-                            shufflePartner, content.selfView, content.privateNodes);
+                    retainSamples(shufflePartner, content.selfView, content.publicNodes, content.privateNodes);
                 }
             };
 
@@ -305,11 +284,7 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
                     }
                     LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, shufflePartner});
                     cancelShuffleTimeout();
-
-                    publicView.getValue0().selectToKeep(publicView.getValue1(), behaviour.getSelf(),
-                            shufflePartner, content.selfView, content.publicNodes);
-                    privateView.getValue0().selectToKeep(privateView.getValue1(), behaviour.getSelf(),
-                            shufflePartner, content.selfView, content.privateNodes);
+                    retainSamples(shufflePartner, content.selfView, content.publicNodes, content.privateNodes);
                 }
             };
 
@@ -336,7 +311,50 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
         }
     };
 
+    private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
+        DecoratedHeader requestHeader
+                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
+        CroupierShuffle.Request requestContent
+                = new CroupierShuffle.Request(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
+        BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
+        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, requestContent, request.getDestination()});
+        trigger(request, network);
+    }
+
+    private void sendShuffleResponse(NatAwareAddress to, Map publicSample, Map privateSample) {
+        DecoratedHeader responseHeader
+                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
+        CroupierShuffle.Response responseContent
+                = new CroupierShuffle.Response(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
+        BasicContentMsg response = new BasicContentMsg(responseHeader, responseContent);
+        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
+        trigger(response, network);
+    }
+
+    private void retainSamples(NatAwareAddress partnerAdr, Optional<View> partnerView, 
+            Map publicSample, Map privateSample) {
+        Triplet<NatAwareAddress, View, Boolean> retainPublic;
+        Triplet<NatAwareAddress, View, Boolean> retainPrivate;
+        if (!partnerView.isPresent()) {
+            retainPublic = Triplet.with(partnerAdr, null, false);
+            retainPrivate = Triplet.with(partnerAdr, null, false);
+        } else {
+            if (NatType.isOpen(partnerAdr)) {
+                retainPublic = Triplet.with(partnerAdr, partnerView.get(), true);
+                retainPrivate = Triplet.with(partnerAdr, null, false);
+            } else {
+                retainPublic = Triplet.with(partnerAdr, null, false);
+                retainPrivate = Triplet.with(partnerAdr, partnerView.get(), true);
+            }
+        }
+        publicView.getValue0().selectToKeep(publicView.getValue1(), behaviour.getSelf(),
+                retainPublic, publicSample);
+        privateView.getValue0().selectToKeep(privateView.getValue1(), behaviour.getSelf(),
+                retainPrivate, privateSample);
+    }
+
     //**************************************************************************
+
     private boolean connected() {
         return !bootstrapNodes.isEmpty() || !publicView.getValue0().isEmpty() || !privateView.getValue0().isEmpty();
     }
