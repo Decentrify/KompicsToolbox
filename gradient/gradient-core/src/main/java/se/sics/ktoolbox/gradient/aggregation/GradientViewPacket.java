@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Croupier is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,21 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.croupier.util;
+package se.sics.ktoolbox.gradient.aggregation;
 
-import se.sics.ktoolbox.croupier.CroupierControlPort;
-import se.sics.ktoolbox.croupier.CroupierPort;
-import se.sics.ktoolbox.croupier.event.CroupierControl;
-import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
-import se.sics.ktoolbox.croupier.event.CroupierJoin;
-import se.sics.ktoolbox.croupier.event.CroupierSample;
-import se.sics.ktoolbox.util.state.PortRegistry;
+import se.sics.ktoolbox.gradient.event.GradientSample;
+import se.sics.ktoolbox.util.aggregation.StatePacket;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierPortRegistry {
-    public static void register() {
-        PortRegistry.registerPositive(CroupierJoin.class, CroupierControlPort.class);
+public class GradientViewPacket implements StatePacket {
+    public final GradientSample sample;
+    
+    public GradientViewPacket(GradientSample sample) {
+        this.sample = sample;
+    }
+
+    @Override
+    public String shortPrint() {
+        return toString();
     }
 }

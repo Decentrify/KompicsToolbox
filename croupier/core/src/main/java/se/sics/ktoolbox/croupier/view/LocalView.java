@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.croupier.view;
 
-import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +29,6 @@ import java.util.Random;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import se.sics.ktoolbox.croupier.CroupierKCWrapper;
-import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.util.ProbabilisticHelper;
 import se.sics.ktoolbox.util.update.view.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
@@ -77,12 +75,11 @@ public class LocalView {
         containers.put(container.src.getId(), container.copy());
     }
 
-    private void removeContainer(ShuffleHistory history, CroupierContainer container) {
+    private void removeContainer(CroupierContainer container) {
         containers.remove(container.src.getId());
-        history.remove(container.getSource());
     }
 
-    public NatAwareAddress selectPeerToShuffleWith(ShuffleHistory history) {
+    public NatAwareAddress selectPeerToShuffleWith() {
         CroupierContainer selectedEntry;
         List<CroupierContainer> containerList = new ArrayList<>(containers.values());
         switch (croupierConfig.policy) {
@@ -114,35 +111,33 @@ public class LocalView {
          * to keep the graph connected.
          */
         if (containers.size() > croupierConfig.minViewSize) {
-            removeContainer(history, selectedEntry);
+            removeContainer(selectedEntry);
         }
         return selectedEntry.getSource();
     }
 
-    public Map<Identifier, CroupierContainer> initiatorSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
-        return shuffleSample(history, shufflePartner);
+    public Map<Identifier, CroupierContainer> initiatorSample(NatAwareAddress shufflePartner) {
+        return shuffleSample(shufflePartner);
     }
 
-    public Map<Identifier, CroupierContainer> receiverSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
-        return shuffleSample(history, shufflePartner);
+    public Map<Identifier, CroupierContainer> receiverSample(NatAwareAddress shufflePartner) {
+        return shuffleSample(shufflePartner);
     }
 
-    private Map<Identifier, CroupierContainer> shuffleSample(ShuffleHistory history, NatAwareAddress shufflePartner) {
+    private Map<Identifier, CroupierContainer> shuffleSample(NatAwareAddress shufflePartner) {
         List<CroupierContainer> containerList = new ArrayList<>(containers.values());
         containerList = ProbabilisticHelper.generateRandomSample(rand, containerList, croupierConfig.shuffleSize);
         Map<Identifier, CroupierContainer> descriptors = new HashMap<>();
         for (CroupierContainer container : containerList) {
-            history.sendTo(container, shufflePartner);
             descriptors.put(container.getSource().getId(), container.copy());
         }
         return descriptors;
     }
 
-    public void selectToKeep(ShuffleHistory history, NatAwareAddress selfAdr,
+    public void selectToKeep(NatAwareAddress selfAdr,
             Triplet<NatAwareAddress, View, Boolean> partner,
             Map<Identifier, CroupierContainer> partnerContainers) {
 
-        Map<Identifier, CroupierContainer> sentContainers = history.sentTo(partner.getValue0());
         Map<Identifier, CroupierContainer> newContainerSources = new HashMap<>();
         Map<Identifier, Pair<CroupierContainer, CroupierContainer>> newContainerVersions = new HashMap<>();
         Map<Identifier, CroupierContainer> sameContainer = new HashMap<>();
@@ -176,7 +171,7 @@ public class LocalView {
                 if (sameView(old.getContent(), partner.getValue1())) {
                     old.resetAge();
                 } else {
-                    removeContainer(history, old);
+                    removeContainer(old);
                     addContainer(new CroupierContainer(partner.getValue0(), partner.getValue1()));
                 }
             } else {
@@ -185,7 +180,7 @@ public class LocalView {
         }
         //2. update to new versions
         for (Pair<CroupierContainer, CroupierContainer> containerVersion : newContainerVersions.values()) {
-            removeContainer(history, containerVersion.getValue1());
+            removeContainer(containerVersion.getValue1());
             addContainer(containerVersion.getValue0());
         }
         //3. add new sources while keeping size
@@ -204,14 +199,14 @@ public class LocalView {
                     List<CroupierContainer> toRemove = new ArrayList<>(containers.values());
                     toRemove = ProbabilisticHelper.generateRandomSample(rand, toRemove, elementsToRemove);
                     for (CroupierContainer container : toRemove) {
-                        removeContainer(history, container);
+                        removeContainer(container);
                     }
                 }
                 break;
             default:
                 throw new IllegalArgumentException("Croupier policy:" + croupierConfig.policy + " not implemented");
         }
-        assert containers.size() == croupierConfig.viewSize;
+        
     }
 
     private boolean sameView(View v1, View v2) {
@@ -230,11 +225,11 @@ public class LocalView {
         return sample;
     }
 
-    public void timedOut(ShuffleHistory history, NatAwareAddress shufflePartner) {
+    public void timedOut(NatAwareAddress shufflePartner) {
         CroupierContainer container = containers.get(shufflePartner.getId());
         if (container == null) {
             return;
         }
-        removeContainer(history, container);
+        removeContainer(container);
     }
 }

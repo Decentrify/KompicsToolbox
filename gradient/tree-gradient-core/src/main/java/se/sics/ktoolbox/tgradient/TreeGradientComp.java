@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -65,6 +66,8 @@ import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.other.AgingContainer;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.tgradient.util.TGParentView;
+import se.sics.ktoolbox.util.aggregation.CompTracker;
+import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
 
@@ -77,7 +80,7 @@ import se.sics.ktoolbox.util.update.view.View;
  */
 public class TreeGradientComp extends ComponentDefinition {
 
-    private static final Logger log = LoggerFactory.getLogger(TreeGradientComp.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TreeGradientComp.class);
     private final String logPrefix;
 
     private final GradientKCWrapper gradientConfig;
@@ -103,16 +106,21 @@ public class TreeGradientComp extends ComponentDefinition {
     Positive croupier = requires(CroupierPort.class);
     Positive gradient = requires(GradientPort.class);
     Positive rankUpdate = requires(RankUpdatePort.class);
+    
+    private CompTracker compTracker;
+    
     public TreeGradientComp(TreeGradientInit init) {
         this.gradientConfig = new GradientKCWrapper(config(), init.seed, init.overlayId);
         this.tgradientConfig = new TGradientKCWrapper(config());
         this.self = init.self;
         this.logPrefix = "<oid:" + gradientConfig.overlayId + ":nid:" + self.getId().toString() + "> ";
-        log.info("{} initializing with seed:{}", logPrefix, gradientConfig.seed);
+        LOG.info("{} initializing with seed:{}", logPrefix, gradientConfig.seed);
         ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.softMaxTemp, gradientConfig.oldThreshold);
         this.parents = new TGParentView(gradientConfig, tgradientConfig, logPrefix, init.gradientFilter);
         this.filter = init.gradientFilter;
 
+        setCompTracker();
+        
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleSelfAddressUpdate, addressUpdate);
@@ -131,14 +139,15 @@ public class TreeGradientComp extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            log.info("{} starting...", logPrefix);
+            LOG.info("{} starting...", logPrefix);
+            compTracker.start();
         }
     };
 
     Handler handleStop = new Handler<Stop>() {
         @Override
         public void handle(Stop event) {
-            log.info("{} stopping...", logPrefix);
+            LOG.info("{} stopping...", logPrefix);
 
         }
     };
@@ -146,7 +155,7 @@ public class TreeGradientComp extends ComponentDefinition {
     Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
         public void handle(AddressUpdate.Indication update) {
-            log.info("{} update self address:{}", logPrefix, update.localAddress);
+            LOG.debug("{} update self address:{}", logPrefix, update.localAddress);
             self = update.localAddress;
         }
     };
@@ -154,7 +163,7 @@ public class TreeGradientComp extends ComponentDefinition {
     Handler handleViewUpdate = new Handler<OverlayViewUpdate.Indication<View>>() {
         @Override
         public void handle(OverlayViewUpdate.Indication<View> update) {
-            log.info("{} update self view:{}", logPrefix, update.view);
+            LOG.debug("{} update self view:{}", logPrefix, update.view);
             if (selfView != null && filter.cleanOldView(selfView.getContent(), update.view)) {
                 neighbours = new ArrayList<GradientContainer>();
                 parents.clean(update.view);
@@ -168,7 +177,7 @@ public class TreeGradientComp extends ComponentDefinition {
     Handler handleRankUpdate = new Handler<RankUpdate>() {
         @Override
         public void handle(RankUpdate update) {
-            log.trace("{} {}", logPrefix, update);
+            LOG.trace("{} {}", logPrefix, update);
             //TODO Alex - update mixup is possible
             if (selfView == null) {
                 throw new RuntimeException("update mixup");
@@ -188,6 +197,28 @@ public class TreeGradientComp extends ComponentDefinition {
         return shuffleCycleId != null;
     }
 
+    //***************************STATE TRACKING*********************************
+    private void setCompTracker() {
+        switch (tgradientConfig.tgradientAggLevel) {
+            case NONE:
+                break;
+            case BASIC:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), tgradientConfig.tgradientAggPeriod);
+                break;
+            case FULL:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), tgradientConfig.tgradientAggPeriod);
+                compTracker.registerPositivePort(network);
+                compTracker.registerPositivePort(timer);
+                compTracker.registerNegativePort(gradient);
+                compTracker.registerNegativePort(rankUpdate);
+                compTracker.registerPositivePort(croupier);
+                compTracker.registerPositivePort(addressUpdate);
+                compTracker.registerPositivePort(viewUpdate);
+                break;
+            default:
+                throw new RuntimeException("Undefined:" + tgradientConfig.tgradientAggLevel);
+        }
+    }
     //**************************************************************************
 
     /**
@@ -200,8 +231,8 @@ public class TreeGradientComp extends ComponentDefinition {
             if (selfView.rank == Integer.MAX_VALUE) {
                 return;
             }
-            log.debug("{} {}", logPrefix, sample);
-            log.debug("{} \nCroupier public sample:{} \nCroupier private sample:{}",
+            LOG.debug("{} {}", logPrefix, sample);
+            LOG.debug("{} \nCroupier public sample:{} \nCroupier private sample:{}",
                     new Object[]{logPrefix, sample.publicSample, sample.privateSample});
 
             Collection<GradientContainer> gradientCopy = new HashSet<GradientContainer>();
@@ -230,8 +261,8 @@ public class TreeGradientComp extends ComponentDefinition {
             if (selfView.rank == Integer.MAX_VALUE) {
                 return;
             }
-            log.trace("{} {}", logPrefix, sample);
-            log.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientSample});
+            LOG.trace("{} {}", logPrefix, sample);
+            LOG.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientSample});
 
             neighbours = (List)sample.gradientSample; //again java stupid generics
             parents.merge(neighbours, selfView);
@@ -251,16 +282,16 @@ public class TreeGradientComp extends ComponentDefinition {
                 return;
             }
 
-            log.trace("{} {}", logPrefix, event);
+            LOG.trace("{} {}", logPrefix, event);
 
             if (!haveShufflePartners()) {
-                log.warn("{} no shuffle partners - disconnected", logPrefix);
+                LOG.warn("{} no shuffle partners - disconnected", logPrefix);
                 cancelPeriodicShuffle();
                 return;
             }
 
             if (!parents.isEmpty()) {
-                log.info("{} view:{}", logPrefix, parents.getAllCopy());
+                LOG.debug("{} view:{}", logPrefix, parents.getAllCopy());
                 trigger(new GradientSample(UUIDIdentifier.randomId(), selfView.getContent(), parents.getAllCopy()), tGradient);
             }
 
@@ -271,7 +302,7 @@ public class TreeGradientComp extends ComponentDefinition {
             DecoratedHeader<KAddress> requestHeader = new DecoratedHeader(new BasicHeader(self, partner.getSource(), Transport.UDP), gradientConfig.overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUIDIdentifier.randomId(), selfView, neighbours);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
-            log.debug("{} sending:{}", new Object[]{logPrefix, request});
+            LOG.debug("{} sending:{}", new Object[]{logPrefix, request});
             trigger(request, network);
             scheduleShuffleTimeout(partner.getSource());
         }
@@ -281,12 +312,12 @@ public class TreeGradientComp extends ComponentDefinition {
 
         @Override
         public void handle(ShuffleTimeout event) {
-            log.trace("{} {}", logPrefix, event);
+            LOG.trace("{} {}", logPrefix, event);
             if (shuffleTimeoutId == null) {
-                log.debug("{} late timeout {}", logPrefix, event);
+                LOG.debug("{} late timeout {}", logPrefix, event);
                 return;
             } else {
-                log.debug("{} node:{} timed out", logPrefix, event.dest);
+                LOG.debug("{} node:{} timed out", logPrefix, event.dest);
                 shuffleTimeoutId = null;
                 parents.clean(event.dest);
             }
@@ -300,12 +331,12 @@ public class TreeGradientComp extends ComponentDefinition {
                 public void handle(GradientShuffle.Request content, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Request> container) {
                     KAddress reqSrc = container.getHeader().getSource();
                     if (self.getId().equals(reqSrc.getId())) {
-                        log.error("{} Tried to shuffle with myself", logPrefix);
+                        LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    log.debug("{} received:{}", new Object[]{logPrefix, container});
+                    LOG.debug("{} received:{}", new Object[]{logPrefix, container});
                     if (selfView == null) {
-                        log.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
+                        LOG.warn("{} not ready to shuffle - no self view available - {} tried to shuffle with me",
                                 logPrefix, reqSrc);
                         return;
                     }
@@ -314,7 +345,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.id, selfView, neighbours);
                     BasicContentMsg response = container.answer(responseContent);
-                    log.debug("{} sending:{}", new Object[]{logPrefix, response});
+                    LOG.debug("{} sending:{}", new Object[]{logPrefix, response});
                     trigger(response, network);
 
                     parents.merge(content.exchangeNodes, selfView);
@@ -329,13 +360,13 @@ public class TreeGradientComp extends ComponentDefinition {
                 public void handle(GradientShuffle.Response content, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Response> container) {
                     KAddress respSrc = container.getHeader().getSource();
                     if (self.getId().equals(respSrc.getId())) {
-                        log.error("{} Tried to shuffle with myself", logPrefix);
+                        LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
-                    log.debug("{} received:{}", new Object[]{logPrefix, container});
+                    LOG.debug("{} received:{}", new Object[]{logPrefix, container});
 
                     if (shuffleTimeoutId == null) {
-                        log.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.id, respSrc});
+                        LOG.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.id, respSrc});
                         return;
                     }
                     cancelShuffleTimeout();
@@ -346,9 +377,9 @@ public class TreeGradientComp extends ComponentDefinition {
             };
 
     private void schedulePeriodicShuffle() {
-        log.warn("{} period:{}", logPrefix, gradientConfig.shufflePeriod);
+        LOG.warn("{} period:{}", logPrefix, gradientConfig.shufflePeriod);
         if (shuffleCycleId != null) {
-            log.warn("{} double starting periodic shuffle", logPrefix);
+            LOG.warn("{} double starting periodic shuffle", logPrefix);
             return;
         }
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(gradientConfig.shufflePeriod, gradientConfig.shufflePeriod);
@@ -360,7 +391,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
     private void cancelPeriodicShuffle() {
         if (shuffleCycleId == null) {
-            log.warn("{} double stopping periodic shuffle", logPrefix);
+            LOG.warn("{} double stopping periodic shuffle", logPrefix);
             return;
         }
         CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(shuffleCycleId);
@@ -370,7 +401,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
     private void scheduleShuffleTimeout(KAddress dest) {
         if (shuffleTimeoutId != null) {
-            log.warn("{} double starting shuffle timeout", logPrefix);
+            LOG.warn("{} double starting shuffle timeout", logPrefix);
             return;
         }
         ScheduleTimeout spt = new ScheduleTimeout(gradientConfig.shufflePeriod / 2);
@@ -382,7 +413,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
     private void cancelShuffleTimeout() {
         if (shuffleTimeoutId == null) {
-            log.warn("{} double stopping shuffle timeout", logPrefix);
+            LOG.warn("{} double stopping shuffle timeout", logPrefix);
         }
         CancelTimeout cpt = new CancelTimeout(shuffleTimeoutId);
         shuffleTimeoutId = null;

@@ -20,7 +20,7 @@ package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
 import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.croupier.util.CroupierAggLevel;
+import se.sics.ktoolbox.util.aggregation.AggregationLevelOption;
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
@@ -36,31 +36,9 @@ public class CroupierKConfig {
     public final static KConfigOption.Basic<Long> shuffleTimeout = new KConfigOption.Basic("croupier.shuffleTimeout", Long.class);
     public final static KConfigOption.Basic<Boolean> softMax = new KConfigOption.Basic("croupier.softMax", Boolean.class);
     public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("croupier.softMaxTemperature", Double.class);
-    public final static CAggLevelOption aggLevel = new CAggLevelOption("croupier.aggLevel");
-    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic<Long>("croupier.aggPeriod", Long.class);
+    public final static AggregationLevelOption aggLevel = new AggregationLevelOption("croupier.aggLevel");
+    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic("croupier.aggPeriod", Long.class);
     
-    public static class CAggLevelOption extends KConfigOption.Base<CroupierAggLevel> {
-
-        public CAggLevelOption(String name) {
-            super(name, CroupierAggLevel.class);
-        }
-
-        @Override
-        public Optional<CroupierAggLevel> readValue(Config config) {
-            Optional aggLevelOpt = config.readValue(name);
-            if(aggLevelOpt.isPresent()) {
-                if(aggLevelOpt.get() instanceof String) {
-                    CroupierAggLevel aggLevel = CroupierAggLevel.create((String)aggLevelOpt.get());
-                    return Optional.fromNullable(aggLevel);
-                } else if(aggLevelOpt.get() instanceof CroupierAggLevel) {
-                    return aggLevelOpt;
-                }
-            }
-            return Optional.absent();
-        }
-
-    }
-
     public static class CSelectionPolicyOption extends KConfigOption.Base<CroupierSelectionPolicy> {
 
         public CSelectionPolicyOption(String name) {

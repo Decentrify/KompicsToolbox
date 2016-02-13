@@ -20,6 +20,7 @@
 package se.sics.ktoolbox.util.address;
 
 import se.sics.kompics.Direct;
+import se.sics.kompics.KompicsEvent;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -28,7 +29,7 @@ import se.sics.ktoolbox.util.network.KAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class AddressUpdate {
-    public static class Request extends Direct.Request<Indication> implements Identifiable {
+    public static class Request extends Direct.Request<Response> implements Identifiable {
         public final Identifier id;
         
         public Request(Identifier id) {
@@ -46,7 +47,7 @@ public class AddressUpdate {
         }
     }
     
-    public static class Indication implements Direct.Response, Identifiable {
+    public static class Indication implements KompicsEvent, Identifiable {
         public final Identifier id;
         public final KAddress localAddress;
         
@@ -58,6 +59,12 @@ public class AddressUpdate {
         @Override
         public Identifier getId() {
             return id;
+        }
+    }
+    
+    public static class Response extends Indication implements Direct.Response {
+        public Response(Identifier id, KAddress localAddress) {
+            super(id, localAddress);
         }
     }
 }

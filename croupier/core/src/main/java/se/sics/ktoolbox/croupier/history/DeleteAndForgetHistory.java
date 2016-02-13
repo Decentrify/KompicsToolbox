@@ -28,8 +28,7 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class DeleteAndForgetHistory implements ShuffleHistory {
-
-    private Map<Identifier, ShuffleHistoryContainer> history = new HashMap<>();
+    private final Map<Identifier, ShuffleHistoryContainer> history = new HashMap<>();
 
     @Override
     public void sendTo(CroupierContainer container, NatAwareAddress peer) {
@@ -64,7 +63,6 @@ public class DeleteAndForgetHistory implements ShuffleHistory {
         return containerHistory.wasSentTo(shufflePartner);
     }
 
-    @Override
     public void remove(NatAwareAddress containerOrigin) {
         history.remove(containerOrigin.getId());
     }

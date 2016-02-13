@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.tgradient;
+package se.sics.ktoolbox.election;
 
 import se.sics.ktoolbox.util.aggregation.AggregationLevelOption;
 import se.sics.ktoolbox.util.config.KConfigOption;
@@ -24,10 +24,7 @@ import se.sics.ktoolbox.util.config.KConfigOption;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TGradientKConfig {
-    public final static KConfigOption.Basic<Integer> centerNodes = new KConfigOption.Basic("tgradient.centerNodes", Integer.class);
-    public final static KConfigOption.Basic<Integer> branching = new KConfigOption.Basic("tgradient.branching", Integer.class);
-
-    public final static AggregationLevelOption aggLevel = new AggregationLevelOption("tgradient.aggLevel");
-    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic("tgradient.aggPeriod", Long.class);
+public class ElectionKConfig {
+    public final static AggregationLevelOption aggLevel = new AggregationLevelOption("election.aggLevel");
+    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic("election.aggPeriod", Long.class);
 }

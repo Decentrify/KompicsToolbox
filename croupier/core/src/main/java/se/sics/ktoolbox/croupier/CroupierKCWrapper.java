@@ -20,7 +20,7 @@ package se.sics.ktoolbox.croupier;
 
 import com.google.common.base.Optional;
 import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.croupier.util.CroupierAggLevel;
+import se.sics.ktoolbox.util.aggregation.AggregationLevel;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
@@ -39,7 +39,7 @@ public class CroupierKCWrapper {
     public final boolean softMax;
     public final Optional<Double> softMaxTemp;
     
-    public final CroupierAggLevel croupierAggLevel;
+    public final AggregationLevel croupierAggLevel;
     public final long croupierAggPeriod;
 
     public CroupierKCWrapper(Config configCore) {

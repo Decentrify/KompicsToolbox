@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * Copyright (C) 2009 Royal Institute of Technology (KTH)
  *
@@ -16,25 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.croupier.util;
+package se.sics.ktoolbox.util.aggregation;
 
 /**
  * BASIC - log memory usage of base data structures FULL - BASIC + event count
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public enum CroupierAggLevel {
+public enum AggregationLevel {
 
-    NONE, BASIC, CORE, FULL;
+    NONE, BASIC, FULL;
 
-    public static CroupierAggLevel create(String aggLevel) {
-        if (aggLevel.compareToIgnoreCase(CroupierAggLevel.NONE.name()) == 0) {
+    public static AggregationLevel create(String aggLevel) {
+        if (aggLevel.compareToIgnoreCase(AggregationLevel.NONE.name()) == 0) {
             return NONE;
-        } else if (aggLevel.compareToIgnoreCase(CroupierAggLevel.BASIC.name()) == 0) {
+        } else if (aggLevel.compareToIgnoreCase(AggregationLevel.BASIC.name()) == 0) {
             return BASIC;
-        } else if (aggLevel.compareToIgnoreCase(CroupierAggLevel.CORE.name()) == 0) {
-            return FULL;
-        } else if (aggLevel.compareToIgnoreCase(CroupierAggLevel.FULL.name()) == 0) {
+        } else if (aggLevel.compareToIgnoreCase(AggregationLevel.FULL.name()) == 0) {
             return FULL;
         }
 

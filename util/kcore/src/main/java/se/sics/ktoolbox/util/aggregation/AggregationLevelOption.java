@@ -16,18 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.tgradient;
+package se.sics.ktoolbox.util.aggregation;
 
-import se.sics.ktoolbox.util.aggregation.AggregationLevelOption;
+import com.google.common.base.Optional;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TGradientKConfig {
-    public final static KConfigOption.Basic<Integer> centerNodes = new KConfigOption.Basic("tgradient.centerNodes", Integer.class);
-    public final static KConfigOption.Basic<Integer> branching = new KConfigOption.Basic("tgradient.branching", Integer.class);
+public class AggregationLevelOption extends KConfigOption.Base<AggregationLevel> {
 
-    public final static AggregationLevelOption aggLevel = new AggregationLevelOption("tgradient.aggLevel");
-    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic("tgradient.aggPeriod", Long.class);
+    public AggregationLevelOption(String name) {
+        super(name, AggregationLevel.class);
+    }
+
+    @Override
+    public Optional<AggregationLevel> readValue(Config config) {
+        Optional aggLevelOpt = config.readValue(name);
+        if (aggLevelOpt.isPresent()) {
+            if (aggLevelOpt.get() instanceof String) {
+                AggregationLevel aggLevel = AggregationLevel.create((String) aggLevelOpt.get());
+                return Optional.fromNullable(aggLevel);
+            } else if (aggLevelOpt.get() instanceof AggregationLevel) {
+                return aggLevelOpt;
+            }
+        }
+        return Optional.absent();
+    }
+
 }

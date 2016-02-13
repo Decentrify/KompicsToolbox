@@ -16,11 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.state;
+package se.sics.ktoolbox.util.aggregation;
+
+import java.util.Set;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface StateTrackedComp {
-    public void reportState();
+public interface PacketReducer<S1 extends StatePacket, S2 extends StatePacket> {
+    public Set<Class> interestedInPackets();
+    
+    public StatePacket emptySP();
+    public S1 appendSP(S1 current, S2 append);
+    public S1 clearSP(S1 current);
 }

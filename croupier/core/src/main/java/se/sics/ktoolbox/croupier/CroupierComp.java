@@ -46,6 +46,9 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.croupier.aggregation.CroupierViewHistoryPacket;
+import se.sics.ktoolbox.croupier.aggregation.CroupierViewPacket;
+import se.sics.ktoolbox.croupier.aggregation.CroupierViewReducer;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.croupier.event.CroupierControl;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
@@ -55,8 +58,6 @@ import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
-import se.sics.ktoolbox.croupier.history.DeleteAndForgetHistory;
-import se.sics.ktoolbox.croupier.history.ShuffleHistory;
 import se.sics.ktoolbox.croupier.util.CroupierSpeed;
 import se.sics.ktoolbox.croupier.view.LocalView;
 import se.sics.ktoolbox.util.address.AddressUpdate;
@@ -71,9 +72,8 @@ import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatType;
 import se.sics.ktoolbox.util.other.Container;
-import se.sics.ktoolbox.util.state.StateTrackedComp;
-import se.sics.ktoolbox.util.state.StateTracker;
-import se.sics.ktoolbox.util.state.StateTrackerImpl;
+import se.sics.ktoolbox.util.aggregation.CompTracker;
+import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.update.view.BootstrapView;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
@@ -81,7 +81,7 @@ import se.sics.ktoolbox.util.update.view.View;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierComp extends ComponentDefinition implements StateTrackedComp {
+public class CroupierComp extends ComponentDefinition {
 
     // INFO - status, memory statistics 
     // DEBUG - bootstraping, samples 
@@ -103,9 +103,9 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
     private CroupierBehaviour behaviour;
 
     private final List<NatAwareAddress> bootstrapNodes = new ArrayList<>();
-    private final Pair<LocalView, ShuffleHistory> publicView;
-    private final Pair<LocalView, ShuffleHistory> privateView;
-    private StateTracker stateTracker;
+    private final LocalView publicView;
+    private final LocalView privateView;
+    private CompTracker compTracker;
 
     private Pair<UUID, Long> shuffleCycle = Pair.with(null, 0l);
     private UUID shuffleTid;
@@ -118,14 +118,10 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
         LOG.info("{}initiating...", logPrefix);
 
         behaviour = new CroupierObserver(init.selfAdr);
-        LocalView publicLocalView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
-        ShuffleHistory publicShuffleHistory = new DeleteAndForgetHistory();
-        publicView = Pair.with(publicLocalView, publicShuffleHistory);
-        LocalView privateLocalView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
-        ShuffleHistory privateShuffleHistory = new DeleteAndForgetHistory();
-        privateView = Pair.with(privateLocalView, privateShuffleHistory);
+        publicView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
+        privateView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
 
-        setStateTracker();
+        setCompTracker();
 
         subscribe(handleStart, control);
         subscribe(handleLegacyBootstrap, croupierControlPort);
@@ -139,45 +135,28 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
     }
 
     //***************************STATE TRACKING*********************************
-    private void setStateTracker() {
+    private void setCompTracker() {
         switch (croupierConfig.croupierAggLevel) {
             case NONE:
                 break;
             case BASIC:
-                stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
-                break;
-            case CORE:
-                stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
-//                stateTracker.registerPort(network);
-//                stateTracker.registerPort(timer);
-                stateTracker.registerPort(croupierPort);
-                stateTracker.registerPort(croupierControlPort);
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod);
                 break;
             case FULL:
-                stateTracker = new StateTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod, this);
-//                stateTracker.registerPort(network);
-//                stateTracker.registerPort(timer);
-                stateTracker.registerPort(croupierPort);
-                stateTracker.registerPort(croupierControlPort);
-
-//                stateTracker.registerPort(control);
-//                stateTracker.registerPort(loopback);
-//                stateTracker.registerPort(onSelf);
-//                stateTracker.registerPort(bootstrapPort);
-//                stateTracker.registerPort(addressUpdate);
-//                stateTracker.registerPort(viewUpdate);
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod);
+                compTracker.registerPositivePort(network);
+                compTracker.registerPositivePort(timer);
+                compTracker.registerNegativePort(croupierPort);
+                compTracker.registerNegativePort(croupierControlPort);
+                compTracker.registerPositivePort(bootstrapPort);
+                compTracker.registerPositivePort(addressUpdate);
+                compTracker.registerPositivePort(viewUpdate);
                 break;
             default:
                 throw new RuntimeException("Undefined:" + croupierConfig.croupierAggLevel);
         }
+        compTracker.registerReducer(new CroupierViewReducer());
     }
-
-    public void reportState() {
-        LOG.info("{}bootstrap nodes:{}", new Object[]{logPrefix, bootstrapNodes.size()});
-        LOG.info("{}public view:{} history:{}", new Object[]{logPrefix, publicView.getValue0().size(), publicView.getValue1().size()});
-        LOG.info("{}private view:{} history:{}", new Object[]{logPrefix, privateView.getValue0().size(), privateView.getValue1().size()});
-    }
-
     //****************************CONTROL***************************************
     Handler handleStart = new Handler<Start>() {
         @Override
@@ -186,14 +165,14 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
             schedulePeriodicShuffle(croupierConfig.shufflePeriod);
 //            trigger(new AddressUpdate.Request(UUIDIdentifier.randomId()), addressUpdate);
 //            trigger(new OverlayViewUpdate.Request(UUIDIdentifier.randomId()), viewUpdate);
-            stateTracker.start();
+            compTracker.start();
         }
     };
 
     Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
         public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update self address:{}", new Object[]{logPrefix, update.localAddress});
+            LOG.debug("{}update self address:{}", new Object[]{logPrefix, update.localAddress});
             behaviour = behaviour.processAddress(update);
             if (shuffleCycle == null) {
                 schedulePeriodicShuffle(croupierConfig.shufflePeriod);
@@ -204,7 +183,7 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
     Handler handleViewUpdate = new Handler<OverlayViewUpdate.Indication<View>>() {
         @Override
         public void handle(OverlayViewUpdate.Indication<View> viewUpdate) {
-            LOG.info("{}update observer:{} view:{}", new Object[]{logPrefix, viewUpdate.observer, viewUpdate.view});
+            LOG.debug("{}update observer:{} view:{}", new Object[]{logPrefix, viewUpdate.observer, viewUpdate.view});
             behaviour = behaviour.processView(viewUpdate);
         }
     };
@@ -212,7 +191,7 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
     Handler handleLegacyBootstrap = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
-            LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
+            LOG.debug("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
             for (NatAwareAddress bootstrap : join.bootstrap) {
                 if (!behaviour.getSelf().getId().equals(bootstrap.getId())) {
                     bootstrapNodes.add(bootstrap);
@@ -245,8 +224,8 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
             if (connected()) {
                 incrementAges();
                 NatAwareAddress shufflePartner = selectPeerToShuffleWith();
-                Map publicSample = publicView.getValue0().initiatorSample(publicView.getValue1(), shufflePartner);
-                Map privateSample = privateView.getValue0().initiatorSample(privateView.getValue1(), shufflePartner);
+                Map publicSample = publicView.initiatorSample(shufflePartner);
+                Map privateSample = privateView.initiatorSample(shufflePartner);
                 sendShuffleRequest(shufflePartner, publicSample, privateSample);
                 scheduleShuffleTimeout(shufflePartner);
             } else {
@@ -265,8 +244,8 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
                 public void handle(CroupierShuffle.Request content, BasicContentMsg<NatAwareAddress, DecoratedHeader<NatAwareAddress>, CroupierShuffle.Request> container) {
                     NatAwareAddress shufflePartner = container.getSource();
                     LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, shufflePartner});
-                    Map publicSample = publicView.getValue0().receiverSample(publicView.getValue1(), shufflePartner);
-                    Map privateSample = privateView.getValue0().receiverSample(privateView.getValue1(), shufflePartner);
+                    Map publicSample = publicView.receiverSample(shufflePartner);
+                    Map privateSample = privateView.receiverSample(shufflePartner);
                     sendShuffleResponse(shufflePartner, publicSample, privateSample);
                     retainSamples(shufflePartner, content.selfView, content.publicNodes, content.privateNodes);
                 }
@@ -300,9 +279,9 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
 
             //TODO Alex - maybe put in a dead box and try again later
             if (NatType.isOpen(timeout.dest)) {
-                publicView.getValue0().timedOut(publicView.getValue1(), timeout.dest);
+                publicView.timedOut(timeout.dest);
             } else {
-                privateView.getValue0().timedOut(privateView.getValue1(), timeout.dest);
+                privateView.timedOut(timeout.dest);
             }
             bootstrapNodes.remove(timeout.dest);
             if (!connected()) {
@@ -347,16 +326,13 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
                 retainPrivate = Triplet.with(partnerAdr, partnerView.get(), true);
             }
         }
-        publicView.getValue0().selectToKeep(publicView.getValue1(), behaviour.getSelf(),
-                retainPublic, publicSample);
-        privateView.getValue0().selectToKeep(privateView.getValue1(), behaviour.getSelf(),
-                retainPrivate, privateSample);
+        publicView.selectToKeep(behaviour.getSelf(), retainPublic, publicSample);
+        privateView.selectToKeep(behaviour.getSelf(), retainPrivate, privateSample);
     }
 
     //**************************************************************************
-
     private boolean connected() {
-        return !bootstrapNodes.isEmpty() || !publicView.getValue0().isEmpty() || !privateView.getValue0().isEmpty();
+        return !bootstrapNodes.isEmpty() || !publicView.isEmpty() || !privateView.isEmpty();
     }
 
     private List<NatAwareAddress> copyCleanSelf(List<NatAwareAddress> addresses) {
@@ -376,25 +352,26 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
             return bootstrapNodes.remove(0);
         }
         NatAwareAddress node = null;
-        if (!publicView.getValue0().isEmpty()) {
-            node = publicView.getValue0().selectPeerToShuffleWith(publicView.getValue1());
-        } else if (!privateView.getValue0().isEmpty()) {
-            node = privateView.getValue0().selectPeerToShuffleWith(privateView.getValue1());
+        if (!publicView.isEmpty()) {
+            node = publicView.selectPeerToShuffleWith();
+        } else if (!privateView.isEmpty()) {
+            node = privateView.selectPeerToShuffleWith();
         }
         return node;
     }
 
     private void incrementAges() {
-        publicView.getValue0().incrementAges();
-        privateView.getValue0().incrementAges();
+        publicView.incrementAges();
+        privateView.incrementAges();
     }
 
     private void publishSample() {
-        CroupierSample cs = new CroupierSample(UUIDIdentifier.randomId(), overlayId,
-                publicView.getValue0().publish(), privateView.getValue0().publish());
-        LOG.debug("{}publishing public nodes:{}", new Object[]{logPrefix, cs.publicSample});
-        LOG.debug("{}publishing private nodes:{}", new Object[]{logPrefix, cs.privateSample});
-        trigger(cs, croupierPort);
+        CroupierSample publishedSample = new CroupierSample(UUIDIdentifier.randomId(), overlayId,
+                publicView.publish(), privateView.publish());
+        LOG.debug("{}publishing public nodes:{}", new Object[]{logPrefix, publishedSample.publicSample});
+        LOG.debug("{}publishing private nodes:{}", new Object[]{logPrefix, publishedSample.privateSample});
+        trigger(publishedSample, croupierPort);
+        compTracker.updateState(new CroupierViewPacket(publishedSample));
     }
 
     public static class CroupierInit extends Init<CroupierComp> {
@@ -407,7 +384,8 @@ public class CroupierComp extends ComponentDefinition implements StateTrackedCom
             this.selfAdr = (NatAwareAddress) selfAdr;
         }
     }
-
+    
+    //********************CROUPIER_TIMEOUTS*************************************
     private void schedulePeriodicShuffle(long period) {
         if (shuffleCycle.getValue0() != null) {
             LOG.warn("{} double starting periodic shuffle", logPrefix);

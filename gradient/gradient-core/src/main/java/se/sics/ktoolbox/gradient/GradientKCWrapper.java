@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.gradient;
 
 import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.aggregation.AggregationLevel;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
@@ -37,16 +38,22 @@ public class GradientKCWrapper {
     
     public final long seed;
     public final Identifier overlayId;
+    
+    public final AggregationLevel gradientAggLevel;
+    public final long gradientAggPeriod;
 
     public GradientKCWrapper(Config configCore, long seed, Identifier overlayId) {
         this.configCore = configCore;
-        this.viewSize = KConfigHelper.read(this.configCore, GradientKConfig.viewSize);
-        this.shuffleSize = KConfigHelper.read(this.configCore, GradientKConfig.shuffleSize);
-        this.shufflePeriod = KConfigHelper.read(this.configCore, GradientKConfig.shufflePeriod);
-        this.shuffleTimeout = KConfigHelper.read(this.configCore, GradientKConfig.shuffleTimeout);
-        this.softMaxTemp = KConfigHelper.read(this.configCore, GradientKConfig.softMaxTemp);
-        this.oldThreshold = KConfigHelper.read(this.configCore, GradientKConfig.oldThreshold);
+        viewSize = KConfigHelper.read(this.configCore, GradientKConfig.viewSize);
+        shuffleSize = KConfigHelper.read(this.configCore, GradientKConfig.shuffleSize);
+        shufflePeriod = KConfigHelper.read(this.configCore, GradientKConfig.shufflePeriod);
+        shuffleTimeout = KConfigHelper.read(this.configCore, GradientKConfig.shuffleTimeout);
+        softMaxTemp = KConfigHelper.read(this.configCore, GradientKConfig.softMaxTemp);
+        oldThreshold = KConfigHelper.read(this.configCore, GradientKConfig.oldThreshold);
         this.seed = seed;
         this.overlayId = overlayId;
+        
+        gradientAggLevel = KConfigHelper.read(configCore, GradientKConfig.aggLevel);
+        gradientAggPeriod = KConfigHelper.read(configCore, GradientKConfig.aggPeriod);
     }
 }

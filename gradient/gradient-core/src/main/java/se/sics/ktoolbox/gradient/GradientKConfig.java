@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.gradient;
 
+import se.sics.ktoolbox.util.aggregation.AggregationLevelOption;
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
@@ -31,4 +32,7 @@ public class GradientKConfig {
     public final static KConfigOption.Basic<Long> shuffleTimeout = new KConfigOption.Basic("gradient.shuffleTimeout", Long.class);
     public final static KConfigOption.Basic<Double> softMaxTemp = new KConfigOption.Basic("gradient.softMaxTemperature", Double.class);
     public final static KConfigOption.Basic<Integer> oldThreshold = new KConfigOption.Basic("gradient.oldThreshold", Integer.class);
+
+    public final static AggregationLevelOption aggLevel = new AggregationLevelOption("gradient.aggLevel");
+    public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic("gradient.aggPeriod", Long.class);
 }

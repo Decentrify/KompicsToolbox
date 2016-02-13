@@ -12,10 +12,12 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.election.aggregation.LeaderHistoryReducer;
+import se.sics.ktoolbox.election.aggregation.LeaderGroupHistoryReducer;
+import se.sics.ktoolbox.election.aggregation.LeaderGroupUpdatePacket;
 import se.sics.ktoolbox.election.util.LCPeerView;
 import se.sics.ktoolbox.election.util.LEContainer;
 import se.sics.ktoolbox.election.event.ElectionState;
@@ -33,6 +35,8 @@ import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.GradientSample;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
+import se.sics.ktoolbox.util.aggregation.CompTracker;
+import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -79,13 +83,17 @@ public class ElectionFollower extends ComponentDefinition {
     Negative<LeaderElectionPort> election = provides(LeaderElectionPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);
 
+    private final ElectionKCWrapper electionConfig;
+    private CompTracker compTracker;
+
     public ElectionFollower(ElectionInit<ElectionFollower> init) {
         config = init.electionConfig;
+        electionConfig = new ElectionKCWrapper(config());
         self = init.selfAddress;
         logPrefix = "<nid:" + self.getId() + "> ";
         LOG.info("{}initiating..", logPrefix);
         cohortsRuleSet = init.cohortsRuleSet;
-        
+
         selfLCView = init.initialView;
         selfContainer = new LEContainer(self, selfLCView);
 
@@ -108,6 +116,8 @@ public class ElectionFollower extends ComponentDefinition {
         lowerUtilityNodes = new TreeSet<LEContainer>(leContainerComparator);
         higherUtilityNodes = new TreeSet<LEContainer>(leContainerComparator);
 
+        setCompTracker();
+
         subscribe(handleStart, control);
         subscribe(handleSelfAddressUpdate, addressUpdate);
 
@@ -129,19 +139,55 @@ public class ElectionFollower extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting", logPrefix);
+            compTracker.start();
         }
     };
 
     Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
         public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update self address:{}", logPrefix, update.localAddress);
+            LOG.debug("{}update self address:{}", logPrefix, update.localAddress);
             self = update.localAddress;
         }
     };
 
-    //**************************************************************************
+    //***************************STATE TRACKING*********************************
+    private void setCompTracker() {
+        switch (electionConfig.electionAggLevel) {
+            case NONE:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
+                break;
+            case BASIC:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
+                registerState();
+                break;
+            case FULL:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
+                registerState();
+                registerEvents();
+                break;
+            default:
+                throw new RuntimeException("Undefined:" + electionConfig.electionAggLevel);
+        }
+    }
     
+    private void registerState() {
+        compTracker.registerReducer(new LeaderGroupHistoryReducer());
+    }
+
+    private void registerEvents() {
+        compTracker.registerPositivePort(network);
+        compTracker.registerPositivePort(timer);
+        compTracker.registerNegativePort(gradient);
+        compTracker.registerPositivePort(addressUpdate);
+        compTracker.registerNegativePort(election);
+        //TODO Alex - what is all this testing code doing here? - cleanup when time
+        compTracker.registerNegativePort(testPortNegative);
+        //TODO Alex - shouldn't I have a view update here as well
+//        compTracker.registerPositivePort(viewUpdate);
+    }
+    //**************************************************************************
+
     Handler mockedUpdateHandler = new Handler<MockedGradientUpdate>() {
         @Override
         public void handle(MockedGradientUpdate event) {
@@ -335,9 +381,9 @@ public class ElectionFollower extends ComponentDefinition {
 
                 LOG.info("{}My new leader: {}", logPrefix, request.leaderAddress);
                 leaderAddress = request.leaderAddress;
-
                 trigger(new ElectionState.EnableLGMembership(UUIDIdentifier.randomId(), electionRoundId), election);
                 trigger(new LeaderUpdate(UUIDIdentifier.randomId(), request.leaderPublicKey, request.leaderAddress), election);
+                compTracker.updateState(new LeaderGroupUpdatePacket(request.leaderAddress.getId()));
 
                 ScheduleTimeout st = new ScheduleTimeout(config.getFollowerLeaseTime());
                 st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
@@ -383,6 +429,7 @@ public class ElectionFollower extends ComponentDefinition {
         leaderAddress = null;
         resetElectionMetaData();
         trigger(new ElectionState.DisableLGMembership(UUIDIdentifier.randomId(), null), election); // round is doesnt matter at this moment.
+        compTracker.updateState(new LeaderGroupUpdatePacket(null));
     }
 
     /**
@@ -414,6 +461,8 @@ public class ElectionFollower extends ComponentDefinition {
 
             // Inform the component listening about the leader and schedule a new lease.
             trigger(new LeaderUpdate(UUIDIdentifier.randomId(), leaseExtensionRequest.leaderPublicKey, leaseExtensionRequest.leaderAddress), election);
+
+            compTracker.updateState(new LeaderGroupUpdatePacket(leaseExtensionRequest.leaderAddress.getId()));
 
             ScheduleTimeout st = new ScheduleTimeout(config.getFollowerLeaseTime());
             st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));

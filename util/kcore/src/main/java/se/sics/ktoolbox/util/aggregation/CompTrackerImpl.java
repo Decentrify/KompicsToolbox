@@ -16,13 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.state;
+package se.sics.ktoolbox.util.aggregation;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -32,7 +34,6 @@ import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
-import se.sics.kompics.Positive;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
@@ -44,7 +45,7 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class StateTrackerImpl implements StateTracker {
+public class CompTrackerImpl implements CompTracker {
 
     private final Logger log;
     private final String logPrefix;
@@ -53,16 +54,23 @@ public class StateTrackerImpl implements StateTracker {
     private final long checkPeriod;
     private UUID checkTid;
 
+    //EVENT TRACKING
     public final Table<Class<? extends KompicsEvent>, Class<? extends PortType>, Integer> currentEvents = HashBasedTable.create();
+    //<handlerId, handler>
     public final Multimap<Identifier, Handler> handlers = ArrayListMultimap.create();
-    public final StateTrackedComp stateKeeper;
 
-    public StateTrackerImpl(ComponentProxy cp, Pair<Logger, String> log, long checkPeriod, StateTrackedComp stateKeeper) {
+    //STATE TRACKING
+    //<packetClass, reducerClass>
+    public final Multimap<Class, Class> interestedReducers = ArrayListMultimap.create();
+    //<stateClassId, currentState>
+    public final Map<Class, Pair<PacketReducer, StatePacket>> registeredReducers
+            = new HashMap<>();
+
+    public CompTrackerImpl(ComponentProxy cp, Pair<Logger, String> log, long checkPeriod) {
         this.log = log.getValue0();
         this.logPrefix = log.getValue1();
         this.cp = cp;
         this.checkPeriod = checkPeriod;
-        this.stateKeeper = stateKeeper;
     }
 
     @Override
@@ -73,35 +81,56 @@ public class StateTrackerImpl implements StateTracker {
     }
 
     @Override
-    public Identifier registerPort(final Port<? extends PortType> port) {
+    public Identifier registerNegativePort(final Port<? extends PortType> port) {
         Identifier portId = UUIDIdentifier.randomId();
-        if (port instanceof Negative) {
-            for (final Class<? extends KompicsEvent> eventType : PortRegistry.getPositive(port.getPortType().getClass())) {
-                Handler handleEvent = new Handler(eventType) {
-                    @Override
-                    public void handle(KompicsEvent event) {
-                        countEvent(port.getPortType().getClass(), eventType);
-                    }
-                };
-                cp.subscribe(handleEvent, port);
-                handlers.put(portId, handleEvent);
-            }
-        } else {
-            for (final Class<? extends KompicsEvent> eventType : PortRegistry.getNegative(port.getPortType().getClass())) {
-                Handler handleEvent = new Handler(eventType) {
-                    @Override
-                    public void handle(KompicsEvent event) {
-                        countEvent(port.getPortType().getClass(), eventType);
-                    }
-                };
-                cp.subscribe(handleEvent, port);
-                handlers.put(portId, handleEvent);
-            }
+        for (final Class<? extends KompicsEvent> eventType : AggregationRegistry.getNegative(port.getPortType().getClass())) {
+            Handler handleEvent = new Handler(eventType) {
+                @Override
+                public void handle(KompicsEvent event) {
+                    countEvent(port.getPortType().getClass(), eventType);
+                }
+            };
+            cp.subscribe(handleEvent, port);
+            handlers.put(portId, handleEvent);
         }
-            return portId;
-        }
+        return portId;
+    }
 
-    
+    @Override
+    public Identifier registerPositivePort(final Port<? extends PortType> port) {
+        Identifier portId = UUIDIdentifier.randomId();
+        for (final Class<? extends KompicsEvent> eventType : AggregationRegistry.getPositive(port.getPortType().getClass())) {
+            Handler handleEvent = new Handler(eventType) {
+                @Override
+                public void handle(KompicsEvent event) {
+                    countEvent(port.getPortType().getClass(), eventType);
+                }
+            };
+            cp.subscribe(handleEvent, port);
+            handlers.put(portId, handleEvent);
+        }
+        return portId;
+    }
+
+    @Override
+    public void registerReducer(PacketReducer<? extends StatePacket, ? extends StatePacket> reducer) {
+        if (registeredReducers.containsKey(reducer.getClass())) {
+            throw new RuntimeException("registering a second reducer with same id within the same component");
+        }
+        registeredReducers.put(reducer.getClass(), Pair.with((PacketReducer) reducer, reducer.emptySP()));
+        for (Class packetClass : reducer.interestedInPackets()) {
+            interestedReducers.put(packetClass, reducer.getClass());
+        }
+    }
+
+    @Override
+    public void updateState(StatePacket packet) {
+        for (Class reducerClass : interestedReducers.get(packet.getClass())) {
+            Pair<PacketReducer, StatePacket> reducer = registeredReducers.get(reducerClass);
+            StatePacket newState = reducer.getValue0().appendSP(reducer.getValue1(), packet);
+            registeredReducers.put(reducerClass, reducer.setAt1(newState));
+        }
+    }
 
     private void countEvent(Class<? extends PortType> portClass, Class<? extends KompicsEvent> eventClass) {
         Integer counter = currentEvents.get(eventClass, portClass);
@@ -120,7 +149,12 @@ public class StateTrackerImpl implements StateTracker {
                     eventCounter.getRowKey(), eventCounter.getValue()});
             }
             currentEvents.clear();
-            stateKeeper.reportState();
+
+            for (Pair<PacketReducer, StatePacket> reducer : registeredReducers.values()) {
+                log.info("{} {}: {}", new Object[]{logPrefix, reducer.getValue0(), reducer.getValue1().shortPrint()});
+                StatePacket clearedState = reducer.getValue0().clearSP(reducer.getValue1());
+                registeredReducers.put(reducer.getValue0().getClass(), reducer.setAt1(clearedState));
+            }
         }
     };
 
@@ -133,7 +167,9 @@ public class StateTrackerImpl implements StateTracker {
         PeriodicCheck sc = new PeriodicCheck(spt);
         spt.setTimeoutEvent(sc);
         checkTid = sc.getTimeoutId();
-        cp.trigger(spt, cp.getNegative(Timer.class).getPair());
+        cp
+                .trigger(spt, cp.getNegative(Timer.class
+                        ).getPair());
     }
 
     private void cancelPeriodicCheck() {
@@ -142,7 +178,9 @@ public class StateTrackerImpl implements StateTracker {
         }
         CancelTimeout cpt = new CancelTimeout(checkTid);
         checkTid = null;
-        cp.trigger(cpt, cp.getNegative(Timer.class).getPair());
+        cp
+                .trigger(cpt, cp.getNegative(Timer.class
+                        ).getPair());
     }
 
     private static class PeriodicCheck extends Timeout implements Identifiable {

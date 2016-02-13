@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -42,6 +43,8 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
+import se.sics.ktoolbox.gradient.aggregation.GradientViewPacket;
+import se.sics.ktoolbox.gradient.aggregation.GradientViewReducer;
 import se.sics.ktoolbox.gradient.event.GradientSample;
 import se.sics.ktoolbox.gradient.msg.GradientShuffle;
 import se.sics.ktoolbox.gradient.temp.RankUpdate;
@@ -50,6 +53,8 @@ import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.gradient.util.GradientLocalView;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
+import se.sics.ktoolbox.util.aggregation.CompTracker;
+import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
@@ -93,6 +98,8 @@ public class GradientComp extends ComponentDefinition {
     Positive croupier = requires(CroupierPort.class);
     Positive viewUpdate = requires(ViewUpdatePort.class);
     Positive addressUpdate = requires(AddressUpdatePort.class);
+    
+    private CompTracker compTracker;
 
     public GradientComp(GradientInit init) {
         config = new GradientKCWrapper(config(), init.seed, init.overlayId);
@@ -102,6 +109,8 @@ public class GradientComp extends ComponentDefinition {
         utilityComp = new WrapperComparator<>(init.utilityComparator);
         view = new GradientView(config, logPrefix, init.utilityComparator, init.gradientFilter);
         filter = init.gradientFilter;
+        
+        setCompTracker();
 
         subscribe(handleStart, control);
         subscribe(handleViewUpdate, viewUpdate);
@@ -119,13 +128,14 @@ public class GradientComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{} starting...", logPrefix);
+            compTracker.start();
         }
     };
 
     Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
         public void handle(AddressUpdate.Indication update) {
-            LOG.info("{} updating self address:{}", new Object[]{logPrefix, update.localAddress});
+            LOG.debug("{} updating self address:{}", new Object[]{logPrefix, update.localAddress});
             self = update.localAddress;
         }
     };
@@ -133,7 +143,7 @@ public class GradientComp extends ComponentDefinition {
     Handler handleViewUpdate = new Handler<OverlayViewUpdate.Indication<View>>() {
         @Override
         public void handle(OverlayViewUpdate.Indication<View> viewUpdate) {
-            LOG.info("{} updating self view:{}", new Object[]{logPrefix, viewUpdate.view});
+            LOG.debug("{} updating self view:{}", new Object[]{logPrefix, viewUpdate.view});
             if (selfView != null && filter.cleanOldView(selfView.getContent(), viewUpdate.view)) {
                 view.clean(viewUpdate.view);
             }
@@ -155,6 +165,29 @@ public class GradientComp extends ComponentDefinition {
         return shuffleCycleId != null;
     }
 
+    //***************************STATE TRACKING*********************************
+    private void setCompTracker() {
+        switch (config.gradientAggLevel) {
+            case NONE:
+                break;
+            case BASIC:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
+                break;
+            case FULL:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
+                compTracker.registerPositivePort(network);
+                compTracker.registerPositivePort(timer);
+                compTracker.registerNegativePort(gradient);
+                compTracker.registerNegativePort(rankUpdate);
+                compTracker.registerPositivePort(croupier);
+                compTracker.registerPositivePort(addressUpdate);
+                compTracker.registerPositivePort(viewUpdate);
+                break;
+            default:
+                throw new RuntimeException("Undefined:" + config.gradientAggLevel);
+        }
+        compTracker.registerReducer(new GradientViewReducer());
+    }
     //**************************************************************************
     /**
      * Samples from Croupier used for bootstrapping gradient as well as faster
@@ -207,8 +240,10 @@ public class GradientComp extends ComponentDefinition {
             }
 
             if (!view.isEmpty()) {
-                LOG.info("{} view:{}", logPrefix, view.getAllCopy());
-                trigger(new GradientSample(UUIDIdentifier.randomId(), selfView.getContent(), view.getAllCopy()), gradient);
+                LOG.debug("{} view:{}", logPrefix, view.getAllCopy());
+                GradientSample publishedSample = new GradientSample(UUIDIdentifier.randomId(), selfView.getContent(), view.getAllCopy());
+                trigger(publishedSample, gradient);
+                compTracker.updateState(new GradientViewPacket(publishedSample));
             }
 
             // NOTE:

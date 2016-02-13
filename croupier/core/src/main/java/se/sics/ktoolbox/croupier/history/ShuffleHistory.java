@@ -30,6 +30,5 @@ public interface ShuffleHistory {
     public void sendTo(CroupierContainer container, NatAwareAddress shufflePartner);
     public Map<Identifier, CroupierContainer> sentTo(NatAwareAddress shufflePartner);
     public boolean wasSentTo(NatAwareAddress containerOrigin, NatAwareAddress shufflePartner);
-    public void remove(NatAwareAddress containerOrigin);
     public int size();
 }

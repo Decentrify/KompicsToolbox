@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.tgradient;
 
 import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.aggregation.AggregationLevel;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
@@ -29,9 +30,15 @@ public class TGradientKCWrapper {
     public final int centerNodes;
     public final int branching;
 
+    public final AggregationLevel tgradientAggLevel;
+    public final long tgradientAggPeriod;
+    
     public TGradientKCWrapper(Config configCore) {
         this.configCore = configCore;
-        this.centerNodes = KConfigHelper.read(this.configCore, TGradientKConfig.centerNodes);
-        this.branching = KConfigHelper.read(this.configCore, TGradientKConfig.branching);
+        centerNodes = KConfigHelper.read(this.configCore, TGradientKConfig.centerNodes);
+        branching = KConfigHelper.read(this.configCore, TGradientKConfig.branching);
+        
+        tgradientAggLevel = KConfigHelper.read(configCore, TGradientKConfig.aggLevel);
+        tgradientAggPeriod = KConfigHelper.read(configCore, TGradientKConfig.aggPeriod);
     }
 }

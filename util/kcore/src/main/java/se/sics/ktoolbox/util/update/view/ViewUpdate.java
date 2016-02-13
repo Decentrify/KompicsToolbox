@@ -20,6 +20,7 @@
 package se.sics.ktoolbox.util.update.view;
 
 import se.sics.kompics.Direct;
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.PatternExtractor;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -41,8 +42,7 @@ public class ViewUpdate {
         }
     }
     
-    
-    public static abstract class Indication<V extends View> implements PatternExtractor<Class<V>, V>, Identifiable {
+    public static abstract class Indication<V extends View> implements KompicsEvent, PatternExtractor<Class<V>, V>, Identifiable {
         public final Identifier id;
         public final V view;
         

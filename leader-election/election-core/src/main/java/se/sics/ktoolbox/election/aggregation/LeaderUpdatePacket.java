@@ -16,16 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.state;
+package se.sics.ktoolbox.election.aggregation;
 
-import se.sics.kompics.Port;
-import se.sics.kompics.PortType;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import se.sics.ktoolbox.util.aggregation.StatePacket;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface StateTracker {
-    public void start();
-    public Identifier registerPort(final Port<? extends PortType> port);
+public class LeaderUpdatePacket implements StatePacket {
+    public final Identifier leaderId;
+    public final Set<Identifier> leaderGroup;
+    
+    public LeaderUpdatePacket(Identifier leaderId, Set<Identifier> leaderGroup) {
+        this.leaderId = leaderId;
+        this.leaderGroup = leaderGroup;
+    }
+    
+    public static LeaderUpdatePacket update(Identifier leaderId, ArrayList<KAddress> leaderGroup) {
+        Set<Identifier> lG = new HashSet<>(); 
+        for(KAddress lgMember : leaderGroup) {
+            lG.add(lgMember.getId());
+        }
+        return new LeaderUpdatePacket(leaderId, lG);
+    }
+
+    @Override
+    public String shortPrint() {
+        return toString();
+    }
 }
