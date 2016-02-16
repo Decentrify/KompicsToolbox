@@ -159,23 +159,19 @@ public class ElectionFollower extends ComponentDefinition {
                 break;
             case BASIC:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
-                registerState();
+                setEventTracking();
                 break;
             case FULL:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
-                registerState();
-                registerEvents();
+                setStateTracking();
+                setEventTracking();
                 break;
             default:
                 throw new RuntimeException("Undefined:" + electionConfig.electionAggLevel);
         }
     }
     
-    private void registerState() {
-        compTracker.registerReducer(new LeaderGroupHistoryReducer());
-    }
-
-    private void registerEvents() {
+    private void setEventTracking() {
         compTracker.registerPositivePort(network);
         compTracker.registerPositivePort(timer);
         compTracker.registerNegativePort(gradient);
@@ -185,6 +181,10 @@ public class ElectionFollower extends ComponentDefinition {
         compTracker.registerNegativePort(testPortNegative);
         //TODO Alex - shouldn't I have a view update here as well
 //        compTracker.registerPositivePort(viewUpdate);
+    }
+    
+    private void setStateTracking() {
+        compTracker.registerReducer(new LeaderGroupHistoryReducer());
     }
     //**************************************************************************
 

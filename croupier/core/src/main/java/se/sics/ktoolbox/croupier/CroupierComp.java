@@ -138,23 +138,33 @@ public class CroupierComp extends ComponentDefinition {
     private void setCompTracker() {
         switch (croupierConfig.croupierAggLevel) {
             case NONE:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod);
                 break;
             case BASIC:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod);
+                setEventTracking();
                 break;
             case FULL:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), croupierConfig.croupierAggPeriod);
-                compTracker.registerPositivePort(network);
-                compTracker.registerPositivePort(timer);
-                compTracker.registerNegativePort(croupierPort);
-                compTracker.registerNegativePort(croupierControlPort);
-                compTracker.registerPositivePort(bootstrapPort);
-                compTracker.registerPositivePort(addressUpdate);
-                compTracker.registerPositivePort(viewUpdate);
+                setEventTracking();
+                setStateTracking();
                 break;
             default:
                 throw new RuntimeException("Undefined:" + croupierConfig.croupierAggLevel);
         }
+    }
+
+    private void setEventTracking() {
+        compTracker.registerPositivePort(network);
+        compTracker.registerPositivePort(timer);
+        compTracker.registerNegativePort(croupierPort);
+        compTracker.registerNegativePort(croupierControlPort);
+        compTracker.registerPositivePort(bootstrapPort);
+        compTracker.registerPositivePort(addressUpdate);
+        compTracker.registerPositivePort(viewUpdate);
+    }
+
+    private void setStateTracking() {
         compTracker.registerReducer(new CroupierViewReducer());
     }
     //****************************CONTROL***************************************
@@ -310,7 +320,7 @@ public class CroupierComp extends ComponentDefinition {
         trigger(response, network);
     }
 
-    private void retainSamples(NatAwareAddress partnerAdr, Optional<View> partnerView, 
+    private void retainSamples(NatAwareAddress partnerAdr, Optional<View> partnerView,
             Map publicSample, Map privateSample) {
         Triplet<NatAwareAddress, View, Boolean> retainPublic;
         Triplet<NatAwareAddress, View, Boolean> retainPrivate;
@@ -384,7 +394,7 @@ public class CroupierComp extends ComponentDefinition {
             this.selfAdr = (NatAwareAddress) selfAdr;
         }
     }
-    
+
     //********************CROUPIER_TIMEOUTS*************************************
     private void schedulePeriodicShuffle(long period) {
         if (shuffleCycle.getValue0() != null) {

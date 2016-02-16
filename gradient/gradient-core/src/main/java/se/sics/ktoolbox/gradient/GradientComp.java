@@ -98,7 +98,7 @@ public class GradientComp extends ComponentDefinition {
     Positive croupier = requires(CroupierPort.class);
     Positive viewUpdate = requires(ViewUpdatePort.class);
     Positive addressUpdate = requires(AddressUpdatePort.class);
-    
+
     private CompTracker compTracker;
 
     public GradientComp(GradientInit init) {
@@ -109,7 +109,7 @@ public class GradientComp extends ComponentDefinition {
         utilityComp = new WrapperComparator<>(init.utilityComparator);
         view = new GradientView(config, logPrefix, init.utilityComparator, init.gradientFilter);
         filter = init.gradientFilter;
-        
+
         setCompTracker();
 
         subscribe(handleStart, control);
@@ -167,25 +167,36 @@ public class GradientComp extends ComponentDefinition {
 
     //***************************STATE TRACKING*********************************
     private void setCompTracker() {
+        
         switch (config.gradientAggLevel) {
             case NONE:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
                 break;
             case BASIC:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
+                setEventTracking();
                 break;
             case FULL:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
-                compTracker.registerPositivePort(network);
-                compTracker.registerPositivePort(timer);
-                compTracker.registerNegativePort(gradient);
-                compTracker.registerNegativePort(rankUpdate);
-                compTracker.registerPositivePort(croupier);
-                compTracker.registerPositivePort(addressUpdate);
-                compTracker.registerPositivePort(viewUpdate);
+                setEventTracking();
+                setStateTracking();
                 break;
             default:
                 throw new RuntimeException("Undefined:" + config.gradientAggLevel);
         }
+    }
+
+    private void setEventTracking() {
+        compTracker.registerPositivePort(network);
+        compTracker.registerPositivePort(timer);
+        compTracker.registerNegativePort(gradient);
+        compTracker.registerNegativePort(rankUpdate);
+        compTracker.registerPositivePort(croupier);
+        compTracker.registerPositivePort(addressUpdate);
+        compTracker.registerPositivePort(viewUpdate);
+    }
+
+    private void setStateTracking() {
         compTracker.registerReducer(new GradientViewReducer());
     }
     //**************************************************************************

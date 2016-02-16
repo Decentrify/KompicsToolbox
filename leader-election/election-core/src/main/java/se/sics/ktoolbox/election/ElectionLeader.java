@@ -208,23 +208,23 @@ public class ElectionLeader extends ComponentDefinition {
                 break;
             case BASIC:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
-                registerState();
+                setEventTracking();
                 break;
             case FULL:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), electionConfig.electionAggPeriod);
-                registerState();
-                registerEvents();
+                setStateTracking();
+                setEventTracking();
                 break;
             default:
                 throw new RuntimeException("Undefined:" + electionConfig.electionAggLevel);
         }
     }
 
-    private void registerState() {
+    private void setStateTracking() {
         compTracker.registerReducer(new LeaderHistoryReducer());
     }
 
-    private void registerEvents() {
+    private void setEventTracking() {
         compTracker.registerPositivePort(network);
         compTracker.registerPositivePort(timer);
         compTracker.registerNegativePort(gradient);

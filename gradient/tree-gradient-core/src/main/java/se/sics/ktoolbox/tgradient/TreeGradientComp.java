@@ -106,9 +106,9 @@ public class TreeGradientComp extends ComponentDefinition {
     Positive croupier = requires(CroupierPort.class);
     Positive gradient = requires(GradientPort.class);
     Positive rankUpdate = requires(RankUpdatePort.class);
-    
+
     private CompTracker compTracker;
-    
+
     public TreeGradientComp(TreeGradientInit init) {
         this.gradientConfig = new GradientKCWrapper(config(), init.seed, init.overlayId);
         this.tgradientConfig = new TGradientKCWrapper(config());
@@ -120,7 +120,7 @@ public class TreeGradientComp extends ComponentDefinition {
         this.filter = init.gradientFilter;
 
         setCompTracker();
-        
+
         subscribe(handleStart, control);
         subscribe(handleStop, control);
         subscribe(handleSelfAddressUpdate, addressUpdate);
@@ -151,7 +151,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
         }
     };
-    
+
     Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
         @Override
         public void handle(AddressUpdate.Indication update) {
@@ -159,7 +159,7 @@ public class TreeGradientComp extends ComponentDefinition {
             self = update.localAddress;
         }
     };
-    
+
     Handler handleViewUpdate = new Handler<OverlayViewUpdate.Indication<View>>() {
         @Override
         public void handle(OverlayViewUpdate.Indication<View> update) {
@@ -188,7 +188,7 @@ public class TreeGradientComp extends ComponentDefinition {
             }
         }
     };
-    
+
     private boolean haveShufflePartners() {
         return !parents.isEmpty();
     }
@@ -201,23 +201,33 @@ public class TreeGradientComp extends ComponentDefinition {
     private void setCompTracker() {
         switch (tgradientConfig.tgradientAggLevel) {
             case NONE:
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), tgradientConfig.tgradientAggPeriod);
                 break;
             case BASIC:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), tgradientConfig.tgradientAggPeriod);
+                setEventTracking();
                 break;
             case FULL:
                 compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), tgradientConfig.tgradientAggPeriod);
-                compTracker.registerPositivePort(network);
-                compTracker.registerPositivePort(timer);
-                compTracker.registerNegativePort(gradient);
-                compTracker.registerNegativePort(rankUpdate);
-                compTracker.registerPositivePort(croupier);
-                compTracker.registerPositivePort(addressUpdate);
-                compTracker.registerPositivePort(viewUpdate);
+                setEventTracking();
+                setStateTracking();
                 break;
             default:
                 throw new RuntimeException("Undefined:" + tgradientConfig.tgradientAggLevel);
         }
+    }
+
+    private void setEventTracking() {
+        compTracker.registerPositivePort(network);
+        compTracker.registerPositivePort(timer);
+        compTracker.registerNegativePort(gradient);
+        compTracker.registerNegativePort(rankUpdate);
+        compTracker.registerPositivePort(croupier);
+        compTracker.registerPositivePort(addressUpdate);
+        compTracker.registerPositivePort(viewUpdate);
+    }
+
+    private void setStateTracking() {
     }
     //**************************************************************************
 
@@ -237,7 +247,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
             Collection<GradientContainer> gradientCopy = new HashSet<GradientContainer>();
             for (AgingContainer<KAddress, GradientLocalView> container : sample.publicSample.values()) {
-                int age= container.getAge();
+                int age = container.getAge();
                 gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
             }
             for (AgingContainer<KAddress, GradientLocalView> container : sample.privateSample.values()) {
@@ -264,7 +274,7 @@ public class TreeGradientComp extends ComponentDefinition {
             LOG.trace("{} {}", logPrefix, sample);
             LOG.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientSample});
 
-            neighbours = (List)sample.gradientSample; //again java stupid generics
+            neighbours = (List) sample.gradientSample; //again java stupid generics
             parents.merge(neighbours, selfView);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
@@ -453,6 +463,7 @@ public class TreeGradientComp extends ComponentDefinition {
     }
 
     public static class TreeGradientInit extends Init<TreeGradientComp> {
+
         public final KAddress self;
         public final GradientFilter gradientFilter;
         public final long seed;
