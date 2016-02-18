@@ -20,10 +20,8 @@ package se.sics.ktoolbox.croupier.aggregation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.other.AgingContainer;
 
 /**

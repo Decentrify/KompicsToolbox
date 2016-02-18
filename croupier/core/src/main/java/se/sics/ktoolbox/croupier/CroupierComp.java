@@ -49,6 +49,8 @@ import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewHistoryPacket;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewPacket;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewReducer;
+import se.sics.ktoolbox.croupier.aggregation.SelfViewReducer;
+import se.sics.ktoolbox.croupier.aggregation.SelfViewPacket;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.croupier.event.CroupierControl;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
@@ -74,6 +76,7 @@ import se.sics.ktoolbox.util.network.nat.NatType;
 import se.sics.ktoolbox.util.other.Container;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.update.view.BootstrapView;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
@@ -166,6 +169,7 @@ public class CroupierComp extends ComponentDefinition {
 
     private void setStateTracking() {
         compTracker.registerReducer(new CroupierViewReducer());
+        compTracker.registerReducer(new SelfViewReducer());
     }
     //****************************CONTROL***************************************
     Handler handleStart = new Handler<Start>() {
@@ -195,6 +199,7 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(OverlayViewUpdate.Indication<View> viewUpdate) {
             LOG.debug("{}update observer:{} view:{}", new Object[]{logPrefix, viewUpdate.observer, viewUpdate.view});
             behaviour = behaviour.processView(viewUpdate);
+            compTracker.updateState(new SelfViewPacket(viewUpdate.view));
         }
     };
 
@@ -335,6 +340,9 @@ public class CroupierComp extends ComponentDefinition {
                 retainPublic = Triplet.with(partnerAdr, null, false);
                 retainPrivate = Triplet.with(partnerAdr, partnerView.get(), true);
             }
+        }
+        if(overlayId.equals(new IntIdentifier(48833153))) {
+            System.out.println(1);
         }
         publicView.selectToKeep(behaviour.getSelf(), retainPublic, publicSample);
         privateView.selectToKeep(behaviour.getSelf(), retainPrivate, privateSample);

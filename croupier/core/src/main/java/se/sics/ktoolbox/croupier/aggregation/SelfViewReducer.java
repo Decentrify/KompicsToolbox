@@ -26,33 +26,33 @@ import se.sics.ktoolbox.util.aggregation.StatePacket;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CroupierViewReducer implements PacketReducer<CroupierViewHistoryPacket, CroupierViewPacket> {
+public class SelfViewReducer implements PacketReducer<SelfViewHistoryPacket, SelfViewPacket> {
 
     @Override
-    public Set<Class> interestedInPackets() {
+    public Set interestedInPackets() {
         Set<Class> packets = new HashSet<>();
-        packets.add(CroupierViewPacket.class);
+        packets.add(SelfViewPacket.class);
         return packets;
     }
 
     @Override
     public StatePacket emptySP() {
-        return new CroupierViewHistoryPacket();
-    }
-    
-    @Override
-    public CroupierViewHistoryPacket appendSP(CroupierViewHistoryPacket current, CroupierViewPacket append) {
-        current.append(append.publishedSample);
-        return current;
+        return new SelfViewHistoryPacket();
     }
 
     @Override
-    public CroupierViewHistoryPacket clearSP(CroupierViewHistoryPacket current) {
-        return new CroupierViewHistoryPacket();
+    public SelfViewHistoryPacket appendSP(SelfViewHistoryPacket current, SelfViewPacket append) {
+         current.append(append.view);
+         return current;
+    }
+
+    @Override
+    public SelfViewHistoryPacket clearSP(SelfViewHistoryPacket current) {
+        return new SelfViewHistoryPacket();
     }
     
     @Override
     public String toString() {
-        return "CroupierViewReducer";
+        return "SelfViewReducer";
     }
 }

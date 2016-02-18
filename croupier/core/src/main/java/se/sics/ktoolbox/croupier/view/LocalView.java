@@ -187,6 +187,13 @@ public class LocalView {
         for (CroupierContainer container : newContainerSources.values()) {
             addContainer(container);
         }
+        //4 add source
+        if (partner.getValue2()) {
+            if (containers.containsKey(partner.getValue0().getId())) {
+                removeContainer(containers.get(partner.getValue0().getId()));
+            }
+            addContainer(new CroupierContainer(partner.getValue0(), partner.getValue1()));
+        }
         //TODO Alex - update policies
         //depending on policy I should save/delete accordingly
         //custom order to shrink back the list - random
@@ -206,7 +213,7 @@ public class LocalView {
             default:
                 throw new IllegalArgumentException("Croupier policy:" + croupierConfig.policy + " not implemented");
         }
-        
+
     }
 
     private boolean sameView(View v1, View v2) {
