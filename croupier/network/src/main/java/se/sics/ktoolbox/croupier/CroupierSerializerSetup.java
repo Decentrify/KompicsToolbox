@@ -47,13 +47,16 @@ public class CroupierSerializerSetup {
         }
     }
     
-    public static void checkSetup() {
+    public static boolean checkSetup() {
         for (CroupierSerializers cs : CroupierSerializers.values()) {
             if (Serializers.lookupSerializer(cs.serializedClass) == null) {
-                throw new RuntimeException("No serializer for " + cs.serializedClass);
+                return false;
             }
         }
-        BasicSerializerSetup.checkSetup();
+        if(!BasicSerializerSetup.checkSetup()) {
+            return false;
+        }
+        return true;
     }
     
     public static int registerSerializers(int startingId) {

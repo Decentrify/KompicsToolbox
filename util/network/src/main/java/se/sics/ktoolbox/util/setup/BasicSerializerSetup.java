@@ -63,12 +63,13 @@ public class BasicSerializerSetup {
         }
     }
 
-    public static void checkSetup() {
+    public static boolean checkSetup() {
         for (BasicSerializers bs : BasicSerializers.values()) {
             if (Serializers.lookupSerializer(bs.serializedClass) == null) {
-                throw new RuntimeException("No serializer for " + bs.serializedClass);
+                return false;
             }
         }
+        return true;
     }
 
     public static int registerBasicSerializers(int startingId) {

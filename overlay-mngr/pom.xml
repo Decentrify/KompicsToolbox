@@ -13,8 +13,8 @@
     <modules>
         <module>api</module>
         <module>core</module>
-        <module>network</module>
-        <module>example</module>
+<!--        <module>network</module>
+        <module>example</module>-->
     </modules>
     
     <dependencies>
