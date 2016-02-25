@@ -3,6 +3,7 @@ package se.sics.ktoolbox.election.util;
 import java.util.*;
 import org.javatuples.Pair;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 
 /**
@@ -21,7 +22,7 @@ public class ElectionHelper {
     public static Map<Identifier, LEContainer> addGradientSample(Collection<Container> sample){
 
         Map<Identifier, LEContainer> containerMap = new HashMap<>();
-        for(Container container : sample){
+        for(Container<KAddress,?> container : sample){
             containerMap.put(container.getSource().getId(), new LEContainer(container.getSource(), (LCPeerView)container.getContent()) );
         }
 

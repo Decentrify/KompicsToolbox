@@ -63,7 +63,7 @@ import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
-import se.sics.ktoolbox.util.other.AgingContainer;
+import se.sics.ktoolbox.util.other.AgingAdrContainer;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.tgradient.util.TGParentView;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
@@ -246,11 +246,11 @@ public class TreeGradientComp extends ComponentDefinition {
                     new Object[]{logPrefix, sample.publicSample, sample.privateSample});
 
             Collection<GradientContainer> gradientCopy = new HashSet<GradientContainer>();
-            for (AgingContainer<KAddress, GradientLocalView> container : sample.publicSample.values()) {
+            for (AgingAdrContainer<KAddress, GradientLocalView> container : sample.publicSample.values()) {
                 int age = container.getAge();
                 gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
             }
-            for (AgingContainer<KAddress, GradientLocalView> container : sample.privateSample.values()) {
+            for (AgingAdrContainer<KAddress, GradientLocalView> container : sample.privateSample.values()) {
                 int age = container.getAge();
                 gradientCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
             }

@@ -20,8 +20,6 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.ktoolbox.election.aggregation.LeaderHistoryReducer;
 import se.sics.ktoolbox.election.aggregation.LeaderUpdatePacket;
-import se.sics.ktoolbox.election.aggregation.LeaderGroupHistoryPacket;
-import se.sics.ktoolbox.election.aggregation.LeaderGroupHistoryReducer;
 import se.sics.ktoolbox.election.util.LCPeerView;
 import se.sics.ktoolbox.election.util.LEContainer;
 import se.sics.ktoolbox.election.event.ExtensionUpdate;
@@ -42,6 +40,7 @@ import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -342,7 +341,7 @@ public class ElectionLeader extends ComponentDefinition {
         public void handle(GradientSample event) {
             StringBuilder sb = new StringBuilder();
             Set<Identifier> ids = new TreeSet<>();
-            for (Container c : (List<Container>) event.gradientSample) {
+            for (Container<Identifiable, ?> c : (List<Container>) event.gradientSample) {
                 sb.append("\nlec: gradient:" + c);
                 ids.add(c.getSource().getId());
             }

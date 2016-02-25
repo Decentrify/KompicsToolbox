@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.other.AgingContainer;
+import se.sics.ktoolbox.util.other.AgingAdrContainer;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -39,15 +39,15 @@ public class CroupierViewHistoryPacket implements StatePacket {
     public String shortPrint() {
         StringBuilder sb = new StringBuilder();
         sb.append("\ncroupier view print:");
-        for (CroupierSample<AgingContainer> slice : viewHistory) {
+        for (CroupierSample<AgingAdrContainer> slice : viewHistory) {
             sb.append("\ncroupier view slice public:");
-            for (AgingContainer neighbour : slice.publicSample.values()) {
+            for (AgingAdrContainer<?, ?> neighbour : slice.publicSample.values()) {
                 sb.append(neighbour.getSource().getId()).append("<");
                 sb.append("a:").append(neighbour.getAge());
                 sb.append(">");
             }
             sb.append("\ncroupier view slice private:");
-            for (AgingContainer neighbour : slice.privateSample.values()) {
+            for (AgingAdrContainer<?, ?> neighbour : slice.privateSample.values()) {
                 sb.append(neighbour.getSource().getId()).append("<");
                 sb.append("a:").append(neighbour.getAge());
                 sb.append(">");

@@ -64,7 +64,7 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.other.Container;
+import se.sics.ktoolbox.util.other.AdrContainer;
 import se.sics.ktoolbox.util.selectors.OverlaySelector;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
@@ -203,7 +203,7 @@ public class OverlayMngrComp extends ComponentDefinition {
                 }
                 Component croupier = croupierLayers.get(serviceId).getValue0();
                 List<KAddress> bootstrap = new ArrayList<>();
-                for (Container<KAddress, ServiceView> cc : sample.publicSample.values()) {
+                for (AdrContainer<KAddress, ServiceView> cc : sample.publicSample.values()) {
                     LOG.trace("{}target:{} services:{}", new Object[]{logPrefix, cc.getSource().getId(), cc.getContent().runningServices});
                     if (cc.getContent().runningServices.contains(serviceId)) {
                         bootstrap.add(cc.getSource());

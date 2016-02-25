@@ -73,7 +73,7 @@ import se.sics.ktoolbox.util.network.basic.BasicHeader;
 import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatType;
-import se.sics.ktoolbox.util.other.Container;
+import se.sics.ktoolbox.util.other.AdrContainer;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
@@ -219,7 +219,7 @@ public class CroupierComp extends ComponentDefinition {
         @Override
         public void handle(CroupierSample<BootstrapView> sample) {
             while (bootstrapNodes.size() < croupierConfig.viewSize) {
-                for (Container<KAddress, BootstrapView> container : sample.publicSample.values()) {
+                for (AdrContainer<KAddress, BootstrapView> container : sample.publicSample.values()) {
                     if (container.getContent().memberOf(overlayId)
                             && !container.getSource().getId().equals(behaviour.getSelf().getId())) {
                         LOG.debug("{}rebootstrap node:{}", logPrefix, container.getSource());

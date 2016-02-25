@@ -19,13 +19,13 @@
 package se.sics.ktoolbox.croupier.util;
 
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.other.AgingContainer;
+import se.sics.ktoolbox.util.other.AgingAdrContainer;
 import se.sics.ktoolbox.util.update.view.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CroupierContainer implements AgingContainer<NatAwareAddress, View> {
+public class CroupierContainer implements AgingAdrContainer<NatAwareAddress, View> {
     
     public final NatAwareAddress src;
     public final View content;
