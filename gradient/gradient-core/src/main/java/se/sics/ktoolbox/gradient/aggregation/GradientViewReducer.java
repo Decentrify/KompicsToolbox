@@ -42,7 +42,7 @@ public class GradientViewReducer implements PacketReducer<GradientViewHistoryPac
 
     @Override
     public GradientViewHistoryPacket appendSP(GradientViewHistoryPacket current, GradientViewPacket append) {
-        current.append(append.sample.gradientSample);
+        current.append(append.sample.gradientNeighbours);
         return current;
     }
 

@@ -226,7 +226,7 @@ public class ElectionFollower extends ComponentDefinition {
 
             // Incorporate the new sample.
             Map<Identifier, LEContainer> oldContainerMap = addressContainerMap;
-            addressContainerMap = ElectionHelper.addGradientSample(event.gradientSample);
+            addressContainerMap = ElectionHelper.addGradientSample(event.gradientNeighbours);
 
             // Check how much the sample changed.
             if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), electionConfig.convergenceTest)) {
@@ -299,7 +299,7 @@ public class ElectionFollower extends ComponentDefinition {
                 }
             }
 
-            // Update the election round id only if I decide to accept the candidate.
+            // Update the election round eventId only if I decide to accept the candidate.
             if (acceptCandidate) {
 
                 electionRoundId = container.getContent().electionRoundId;
@@ -351,7 +351,7 @@ public class ElectionFollower extends ComponentDefinition {
 
     /**
      * Received the lease commit request from the node trying to assert itself
-     * as leader. Accept the request in case it is from the same round id.
+     * as leader. Accept the request in case it is from the same round eventId.
      */
     ClassMatchedHandler commitRequestHandler = new ClassMatchedHandler<LeaseCommitUpdated.Request, BasicContentMsg<KAddress, BasicHeader<KAddress>, LeaseCommitUpdated.Request>>() {
         @Override

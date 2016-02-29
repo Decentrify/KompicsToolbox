@@ -49,6 +49,7 @@ import se.sics.ktoolbox.gradient.GradientKCWrapper;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.event.GradientSample;
+import se.sics.ktoolbox.gradient.event.TGradientSample;
 import se.sics.ktoolbox.gradient.msg.GradientShuffle;
 import se.sics.ktoolbox.gradient.temp.RankUpdate;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
@@ -274,9 +275,9 @@ public class TreeGradientComp extends ComponentDefinition {
                 return;
             }
             LOG.trace("{} {}", logPrefix, sample);
-            LOG.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientSample});
+            LOG.debug("{} \n gradient sample:{}", new Object[]{logPrefix, sample.gradientNeighbours});
 
-            neighbours = (List) sample.gradientSample; //again java stupid generics
+            neighbours = (List) sample.gradientNeighbours; //again java stupid generics
             parents.merge(neighbours, selfView);
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
@@ -304,7 +305,8 @@ public class TreeGradientComp extends ComponentDefinition {
 
             if (!parents.isEmpty()) {
                 LOG.debug("{} view:{}", logPrefix, parents.getAllCopy());
-                trigger(new GradientSample(UUIDIdentifier.randomId(), selfView.getContent(), parents.getAllCopy()), tGradient);
+                trigger(new TGradientSample(selfView.getContent(), neighbours, 
+                        parents.getAllCopy()), tGradient);
             }
 
             // NOTE:

@@ -296,7 +296,7 @@ public class ElectionLeader extends ComponentDefinition {
 
             // This part of tricky to understand. The follower component works independent of the leader component.
             // In order to prevent the leader from successive tries while waiting on the update from the application regarding being in the group membership or not, currently
-            // the node starts an election round with a unique id and in case it reaches the lease commit phase the outcome is not deterministic as the responses might be late or something.
+            // the node starts an election round with a unique eventId and in case it reaches the lease commit phase the outcome is not deterministic as the responses might be late or something.
             // So we reset the election round only when we receive an update from the application with the same roundid.
             //
             // ElectionLeader -> ElectionFollower -> Application : broadcast (ElectionFollower || ElectionLeader).
@@ -339,7 +339,7 @@ public class ElectionLeader extends ComponentDefinition {
         public void handle(GradientSample event) {
             StringBuilder sb = new StringBuilder();
             Set<Identifier> ids = new TreeSet<>();
-            for (Container<Identifiable, ?> c : (List<Container>) event.gradientSample) {
+            for (Container<Identifiable, ?> c : (List<Container>) event.gradientNeighbours) {
                 sb.append("\nlec: gradient:" + c);
                 ids.add(c.getSource().getId());
             }
@@ -348,7 +348,7 @@ public class ElectionLeader extends ComponentDefinition {
 
             // Incorporate the new sample.
             Map<Identifier, LEContainer> oldContainerMap = addressContainerMap;
-            addressContainerMap = ElectionHelper.addGradientSample(event.gradientSample);
+            addressContainerMap = ElectionHelper.addGradientSample(event.gradientNeighbours);
 
             // Check how much the sample changed.
             if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), electionConfig.convergenceTest)) {

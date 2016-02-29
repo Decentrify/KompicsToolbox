@@ -62,7 +62,7 @@ public class TestGradientComp extends ComponentDefinition {
     Handler handleGradientSample = new Handler<GradientSample>() {
         @Override
         public void handle(GradientSample event) {
-            LOG.info("{}- {}gradient sample:{}", new Object[]{logPrefix, event.id, event.gradientSample});
+            LOG.info("{}- {}gradient sample:{}", new Object[]{logPrefix, event.eventId, event.gradientNeighbours});
         }
     };
     

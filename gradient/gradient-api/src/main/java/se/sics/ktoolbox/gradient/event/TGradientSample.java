@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -25,31 +25,24 @@ import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 
 /**
- * Set of peer views published by the gradient periodically.
  *
- * Created by babbarshaer on 2015-02-26.
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class GradientSample<C extends Object> implements GradientEvent {
-    public final Identifier eventId;
-    public final C selfView;
-    public final List<Container<KAddress, C>> gradientNeighbours;
+public class TGradientSample<C extends Object> extends GradientSample<C>{
+    public final List<Container<KAddress, C>> gradientFingers;
     
-    public GradientSample(Identifier eventId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this.eventId = eventId;
-        this.selfView = selfView;
-        this.gradientNeighbours = gradientNeighbours;
+    public TGradientSample(Identifier eventId, C selfView, 
+            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
+        super(eventId, selfView, gradientNeighbours);
+        this.gradientFingers = gradientFingers;
     }
     
-    public GradientSample(C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this(UUIDIdentifier.randomId(), selfView, gradientNeighbours);
-    }
-    
-    public List<Container<KAddress, C>> getGradientNeighbours() {
-        return gradientNeighbours;
+    public TGradientSample(C selfView, 
+            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
+        this(UUIDIdentifier.randomId(), selfView, gradientNeighbours, gradientFingers);
     }
 
-    @Override
-    public Identifier getId() {
-        return eventId;
+    public List<Container<KAddress, C>> getGradientFingers() {
+        return gradientFingers;
     }
 }
