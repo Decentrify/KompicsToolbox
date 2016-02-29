@@ -44,26 +44,10 @@ public class ServiceViewSerializer implements Serializer {
     @Override
     public void toBinary(Object o, ByteBuf buf) {
         ServiceView obj = (ServiceView) o;
-
-        //more than 255 services means you are doing it wrong
-        assert obj.runningServices.size() < 256;
-        buf.writeByte(obj.runningServices.size()); 
-        for (ByteBuffer serviceId : obj.runningServices) {
-            assert serviceId.array().length == 4; //only using Integer for overlayId - 4 byte
-            buf.writeBytes(serviceId.array());
-        }
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        List<ByteBuffer> services = new ArrayList<>();
-        
-        int serviceSize = buf.readByte();
-        for(int i = 0; i < serviceSize; i++) {
-            byte[] service = new byte[4];
-            buf.readBytes(service);
-            services.add(ByteBuffer.wrap(service));
-        }
-        return new ServiceView(services); 
+        return new ServiceView(); 
     }
 }

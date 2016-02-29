@@ -16,34 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.util;
+package se.sics.ktoolbox.overlaymngr.core.network;
 
-import se.sics.ktoolbox.util.update.view.View;
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.ktoolbox.overlaymngr.core.IdView;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView implements View {
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ServiceView other = (ServiceView) obj;
-        return true;
+public class IdViewSerializer implements Serializer {
+    public final int id;
+    
+    public IdViewSerializer(int id) {
+        this.id = id;
     }
     
     @Override
-    public String toString() {
-        return "ServiceView";
+    public int identifier() {
+        return id;
+    }
+
+    @Override
+    public void toBinary(Object o, ByteBuf buf) {
+        IdView obj = (IdView)o;
+        buf.writeInt(obj.id);
+    }
+
+    @Override
+    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
+        int oId = buf.readInt();
+        return new IdView(oId);
     }
 }

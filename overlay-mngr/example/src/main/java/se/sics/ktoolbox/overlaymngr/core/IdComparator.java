@@ -16,34 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.util;
+package se.sics.ktoolbox.overlaymngr.core;
 
-import se.sics.ktoolbox.util.update.view.View;
+import com.google.common.primitives.Ints;
+import java.util.Comparator;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView implements View {
+public class IdComparator implements Comparator<IdView> {
     @Override
-    public int hashCode() {
-        int hash = 7;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ServiceView other = (ServiceView) obj;
-        return true;
-    }
-    
-    @Override
-    public String toString() {
-        return "ServiceView";
+    public int compare(IdView o1, IdView o2) {
+        return Ints.compare(o1.id, o2.id);
     }
 }

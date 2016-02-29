@@ -52,13 +52,13 @@ public class GradientSerializerSetup {
         }
     }
 
-    public static void checkSetup() {
+    public static boolean checkSetup() {
         for (GradientSerializers gs : GradientSerializers.values()) {
             if (Serializers.lookupSerializer(gs.serializedClass) == null) {
-                throw new RuntimeException("No serializer for " + gs.serializedClass);
+                return false;
             }
         }
-        BasicSerializerSetup.checkSetup();
+        return BasicSerializerSetup.checkSetup();
     }
 
     public static int registerSerializers(int startingId) {

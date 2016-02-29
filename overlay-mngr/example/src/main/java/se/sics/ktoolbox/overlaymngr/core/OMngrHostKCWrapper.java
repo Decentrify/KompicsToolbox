@@ -18,35 +18,23 @@
  */
 package se.sics.ktoolbox.overlaymngr.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.config.KConfigHelper;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import java.util.List;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OMngrHostKCWrapper {
-    private final static Logger LOG = LoggerFactory.getLogger("KConfig");
-    private String logPrefix = "";
+    public final Config configCore;
     
-    private final KConfigCache config;
-    public final DecoratedAddress self;
+    public final BasicAddress self;
+    public final List<BasicAddress> bootstrap;
     
-    public OMngrHostKCWrapper(KConfigCore configCore) {
-        this.config = new KConfigCache(configCore);
-        this.logPrefix = config.getNodeId() + " ";
-        this.self = KConfigHelper.read(config, OMngrHostKConfig.self, LOG, logPrefix);
-    }
-    
-    public KConfigCore getKConfigCore() {
-        return config.configCore;
-    }
-    
-    public int getNodeId() {
-        return config.getNodeId();
+    public OMngrHostKCWrapper(Config configCore) {
+        this.configCore = configCore;
+        this.self = KConfigHelper.read(configCore, OMngrHostKConfig.self);
+        this.bootstrap = KConfigHelper.read(configCore, OMngrHostKConfig.bootstrap);
     }
 }

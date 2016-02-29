@@ -37,6 +37,7 @@ import se.sics.ktoolbox.util.InvertedComparator;
 import se.sics.ktoolbox.util.ProbabilitiesHelper;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -53,19 +54,22 @@ public class GradientView {
     private final Comparator<GradientContainer> utilityComp;
     private final GradientFilter filter;
 
-    private final GradientKCWrapper config;
+    private final SystemKCWrapper systemConfig;
+    private final GradientKCWrapper gradientConfig;
     private final Random rand;
 
     private final Map<Identifier, GradientContainer> view;
 
-    public GradientView(GradientKCWrapper config, String logPrefix, Comparator utilityComparator, GradientFilter filter) {
-        this.config = config;
+    public GradientView(SystemKCWrapper systemConfig, GradientKCWrapper gradientConfig, 
+            String logPrefix, Comparator utilityComparator, GradientFilter filter) {
+        this.systemConfig = systemConfig;
+        this.gradientConfig = gradientConfig;
         this.logPrefix = logPrefix;
         this.utilityComp = new WrapperComparator<>(utilityComparator);
         this.ageComparator = new InvertedComparator<>(new GradientContainerAgeComparator()); //we want old ages in the begining
         this.filter = filter;
         this.view = new HashMap<>();
-        this.rand = new Random(config.seed);
+        this.rand = new Random(systemConfig.seed + gradientConfig.overlayId.partition(Integer.MAX_VALUE));
     }
 
     public boolean isEmpty() {
@@ -121,15 +125,15 @@ public class GradientView {
         //We should only remove descriptors older than a defined threshold so we don't disconnect
 //        if (view.size() > configCore.viewSize) {
         for (GradientContainer toRemove : reduceSize(ageComparator, 1)) {
-            if (toRemove.getAge() >= config.oldThreshold) {
+            if (toRemove.getAge() >= gradientConfig.oldThreshold) {
                 log.debug("{} remove - old:{}", new Object[]{logPrefix, toRemove});
                 view.remove(toRemove.getSource().getId());
             }
         }
 //        }
-        if (view.size() > config.viewSize) {
+        if (view.size() > gradientConfig.viewSize) {
             GradientPreferenceComparator<GradientContainer> preferenceComparator = new GradientPreferenceComparator<GradientContainer>(selfView, utilityComp);
-            int reduceSize = view.size() - config.viewSize;
+            int reduceSize = view.size() - gradientConfig.viewSize;
             for (GradientContainer toRemove : reduceSize(preferenceComparator, reduceSize)) {
                 log.debug("{} remove - self:{} preference bad:{}", new Object[]{logPrefix, selfView, toRemove});
                 view.remove(toRemove.getSource().getId());
@@ -143,7 +147,7 @@ public class GradientView {
             return null;
         }
 
-        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, config.softMaxTemp);
+        int shuffleNodeIndex = ProbabilitiesHelper.getSoftMaxVal(view.size(), rand, gradientConfig.softMaxTemp);
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
         Comparator<GradientContainer> selfPrefferenceComparator = new InvertedComparator<GradientContainer>(new GradientPreferenceComparator<GradientContainer>(selfCPV, utilityComp));
         Collections.sort(sortedList, selfPrefferenceComparator);
@@ -177,9 +181,13 @@ public class GradientView {
     }
 
     public boolean checkIfTop(GradientContainer selfView) {
-        if (view.size() < config.viewSize) {
+        if(view.size() == 0) {
             return false;
         }
+        //TODO Alex - do I really need this?
+//        if (view.size() < gradientConfig.viewSize) {
+//            return false;
+//        }
         List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
         Collections.sort(sortedList, utilityComp);
         return utilityComp.compare(selfView, sortedList.get(sortedList.size() - 1)) > 0;

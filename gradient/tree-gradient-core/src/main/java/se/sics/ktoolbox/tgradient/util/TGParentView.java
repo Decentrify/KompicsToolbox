@@ -41,6 +41,7 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.tgradient.TGradientKCWrapper;
 import se.sics.ktoolbox.tgradient.TreeGradientComp;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -51,6 +52,7 @@ public class TGParentView {
     private final Comparator<GradientContainer> ageComparator;
     private final GradientFilter filter;
 
+    private final SystemKCWrapper systemConfig;
     private final GradientKCWrapper gradientConfig;
     private final TGradientKCWrapper tgradientConfig;
     private final Random rand;
@@ -58,15 +60,16 @@ public class TGParentView {
 
     private final Map<Identifier, GradientContainer> view;
 
-    public TGParentView(GradientKCWrapper gradientConfig, TGradientKCWrapper tgradienfConfig, String logPrefix, 
-            GradientFilter filter) {
+    public TGParentView(SystemKCWrapper systemConfig, GradientKCWrapper gradientConfig, TGradientKCWrapper tgradienfConfig, 
+            String logPrefix, GradientFilter filter) {
+        this.systemConfig = systemConfig;
         this.gradientConfig = gradientConfig;
         this.tgradientConfig = tgradienfConfig;
         this.logPrefix = logPrefix;
         this.ageComparator = new InvertedComparator<>(new GradientContainerAgeComparator()); //we want old ages in the begining
         this.filter = filter;
         this.view = new HashMap<>();
-        this.rand = new Random(gradientConfig.seed);
+        this.rand = new Random(systemConfig.seed + gradientConfig.overlayId.partition(Integer.MAX_VALUE));
     }
 
     public boolean isEmpty() {

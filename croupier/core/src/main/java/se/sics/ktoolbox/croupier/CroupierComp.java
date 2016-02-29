@@ -206,7 +206,7 @@ public class CroupierComp extends ComponentDefinition {
     Handler handleLegacyBootstrap = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
-            LOG.debug("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
+            LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
             for (NatAwareAddress bootstrap : join.bootstrap) {
                 if (!behaviour.getSelf().getId().equals(bootstrap.getId())) {
                     bootstrapNodes.add(bootstrap);
@@ -261,7 +261,7 @@ public class CroupierComp extends ComponentDefinition {
                     LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, shufflePartner});
                     Map publicSample = publicView.receiverSample(shufflePartner);
                     Map privateSample = privateView.receiverSample(shufflePartner);
-                    sendShuffleResponse(shufflePartner, publicSample, privateSample);
+                    sendShuffleResponse(container, publicSample, privateSample);
                     retainSamples(shufflePartner, content.selfView, content.publicNodes, content.privateNodes);
                 }
             };
@@ -315,12 +315,10 @@ public class CroupierComp extends ComponentDefinition {
         trigger(request, network);
     }
 
-    private void sendShuffleResponse(NatAwareAddress to, Map publicSample, Map privateSample) {
-        DecoratedHeader responseHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
+    private void sendShuffleResponse(BasicContentMsg<?, ?, CroupierShuffle.Request> req, Map publicSample, Map privateSample) {
         CroupierShuffle.Response responseContent
-                = new CroupierShuffle.Response(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
-        BasicContentMsg response = new BasicContentMsg(responseHeader, responseContent);
+                = new CroupierShuffle.Response(req.getContent().id, behaviour.getView(), publicSample, privateSample);
+        BasicContentMsg response = req.answer(responseContent);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
         trigger(response, network);
     }

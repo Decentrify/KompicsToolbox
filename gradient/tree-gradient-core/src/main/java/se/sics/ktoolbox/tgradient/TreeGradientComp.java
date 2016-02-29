@@ -68,6 +68,7 @@ import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 import se.sics.ktoolbox.tgradient.util.TGParentView;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.view.View;
 
@@ -110,13 +111,14 @@ public class TreeGradientComp extends ComponentDefinition {
     private CompTracker compTracker;
 
     public TreeGradientComp(TreeGradientInit init) {
-        this.gradientConfig = new GradientKCWrapper(config(), init.seed, init.overlayId);
+        this.gradientConfig = new GradientKCWrapper(config(), init.overlayId);
         this.tgradientConfig = new TGradientKCWrapper(config());
         this.self = init.self;
         this.logPrefix = "<oid:" + gradientConfig.overlayId + ":nid:" + self.getId().toString() + "> ";
-        LOG.info("{} initializing with seed:{}", logPrefix, gradientConfig.seed);
+        LOG.info("{} initializing...", logPrefix);
         ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.softMaxTemp, gradientConfig.oldThreshold);
-        this.parents = new TGParentView(gradientConfig, tgradientConfig, logPrefix, init.gradientFilter);
+        this.parents = new TGParentView(new SystemKCWrapper(config()), gradientConfig, tgradientConfig, logPrefix, 
+                init.gradientFilter);
         this.filter = init.gradientFilter;
 
         setCompTracker();
@@ -464,16 +466,14 @@ public class TreeGradientComp extends ComponentDefinition {
 
     public static class TreeGradientInit extends Init<TreeGradientComp> {
 
+        public final Identifier overlayId;
         public final KAddress self;
         public final GradientFilter gradientFilter;
-        public final long seed;
-        public final Identifier overlayId;
 
-        public TreeGradientInit(KAddress self, GradientFilter gradientFilter, long seed, Identifier overlayId) {
+        public TreeGradientInit(Identifier overlayId, KAddress self, GradientFilter gradientFilter) {
+            this.overlayId = overlayId;
             this.self = self;
             this.gradientFilter = gradientFilter;
-            this.seed = seed;
-            this.overlayId = overlayId;
         }
     }
 }

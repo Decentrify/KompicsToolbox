@@ -19,11 +19,10 @@
 package se.sics.ktoolbox.overlaymngr;
 
 import se.sics.ktoolbox.overlaymngr.core.OMngrHostComp;
-import com.google.common.collect.ImmutableMap;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.caracaldb.MessageRegistrator;
+import se.sics.kompics.Channel;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Init;
@@ -33,15 +32,11 @@ import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
+import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
+import se.sics.ktoolbox.gradient.GradientSerializerSetup;
 import se.sics.ktoolbox.overlaymngr.core.OMngrHostKCWrapper;
-import se.sics.p2ptoolbox.croupier.CroupierSerializerSetup;
-import se.sics.p2ptoolbox.util.config.KConfigCache;
-import se.sics.p2ptoolbox.util.config.KConfigCore;
-import se.sics.p2ptoolbox.util.nat.NatedTrait;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
-import se.sics.p2ptoolbox.util.proxy.SystemHookSetup;
-import se.sics.p2ptoolbox.util.serializer.BasicSerializerSetup;
-import se.sics.p2ptoolbox.util.traits.AcceptedTraits;
+import se.sics.ktoolbox.overlaymngr.core.network.TestSerializerSetup;
+import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -56,32 +51,25 @@ public class OMngrLauncher extends ComponentDefinition {
     private Component host;
 
     public OMngrLauncher() {
-        Config config = ConfigFactory.load();
-        KConfigCore configCore = new KConfigCore(config);
-        SystemHookSetup systemHooks = new SystemHookSetup();
-        systemSetup(configCore, systemHooks);
-        OMngrHostKCWrapper hostConfig = new OMngrHostKCWrapper(configCore);
-
-        logPrefix = hostConfig.getNodeId() + " ";
-        LOG.info("{}initiating...", logPrefix);
+        LOG.info("initiating...");
 
         timer = create(JavaTimer.class, Init.NONE);
-        network = create(NettyNetwork.class, new NettyInit(hostConfig.self));
-        host = create(OMngrHostComp.class, new OMngrHostComp.OMngrHostInit(hostConfig));
-        connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
-        connect(host.getNegative(Network.class), network.getPositive(Network.class));
+        OMngrHostKCWrapper omngrConfig = new OMngrHostKCWrapper(config());
+        network = create(NettyNetwork.class, new NettyInit(omngrConfig.self));
+        host = create(OMngrHostComp.class, new OMngrHostComp.OMngrHostInit());
+        connect(host.getNegative(Timer.class), timer.getPositive(Timer.class), Channel.TWO_WAY);
+        connect(host.getNegative(Network.class), network.getPositive(Network.class), Channel.TWO_WAY);
     }
 
-    private void systemSetup(KConfigCore config, SystemHookSetup systemHooks) {
-        //address setup
-        ImmutableMap acceptedTraits = ImmutableMap.of(NatedTrait.class, 0);
-        DecoratedAddress.setAcceptedTraits(new AcceptedTraits(acceptedTraits));
-
+    private static void systemSetup() {
         //serializers setup
         int serializerId = 128;
+        MessageRegistrator.register();
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
+        serializerId = GradientSerializerSetup.registerSerializers(serializerId);
         serializerId = OMngrSerializerSetup.registerSerializers(serializerId);
+        serializerId = TestSerializerSetup.registerSerializers(serializerId);
 
         if (serializerId > 255) {
             throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
@@ -92,6 +80,7 @@ public class OMngrLauncher extends ComponentDefinition {
     }
 
     public static void main(String[] args) {
+        systemSetup();
         start();
         try {
             Kompics.waitForTermination();

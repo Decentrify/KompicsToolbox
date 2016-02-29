@@ -30,15 +30,15 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class ViewUpdate {
     public static abstract class Request extends Direct.Request<Response> implements Identifiable {
-        public final Identifier id;
+        public final Identifier eventId;
         
         public Request(Identifier id) {
-            this.id = id;
+            this.eventId = id;
         }
         
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
     
@@ -72,6 +72,5 @@ public class ViewUpdate {
         public Response(Identifier id, V view) {
             super(id, view);
         }
-        
     }
 }

@@ -18,7 +18,7 @@
         <module>leader-election</module> 
         <module>fd</module>
         <module>caracal-client</module>
-        <!--<module>overlay-mngr</module>-->
+        <module>overlay-mngr</module>
         <!--<module>nat-echo</module>-->
     </modules>
 

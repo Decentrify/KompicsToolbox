@@ -56,6 +56,7 @@ import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -78,7 +79,7 @@ public class GradientComp extends ComponentDefinition {
     private static final Logger LOG = LoggerFactory.getLogger(GradientComp.class);
     private final String logPrefix;
 
-    private final GradientKCWrapper config;
+    private final GradientKCWrapper gradientConfig;
     private KAddress self;
 
     private GradientFilter filter;
@@ -92,7 +93,7 @@ public class GradientComp extends ComponentDefinition {
     // == Identify Ports.
     Negative gradient = provides(GradientPort.class);
     Negative rankUpdate = provides(RankUpdatePort.class);
-    Negative<ViewUpdatePort> croupierViewUpdate = provides(ViewUpdatePort.class);
+    Negative croupierViewUpdate = provides(ViewUpdatePort.class);
     Positive network = requires(Network.class);
     Positive timer = requires(Timer.class);
     Positive croupier = requires(CroupierPort.class);
@@ -102,12 +103,13 @@ public class GradientComp extends ComponentDefinition {
     private CompTracker compTracker;
 
     public GradientComp(GradientInit init) {
-        config = new GradientKCWrapper(config(), init.seed, init.overlayId);
+        gradientConfig = new GradientKCWrapper(config(), init.overlayId);
         this.self = init.self;
-        logPrefix = "<oid:" + config.overlayId + ":nid:" + self.getId().toString() + "> ";
-        LOG.info("{} initializing with seed:{}", logPrefix, config.seed);
+        logPrefix = "<oid:" + gradientConfig.overlayId + ":nid:" + self.getId().toString() + "> ";
+        LOG.info("{} initializing..." , logPrefix);
         utilityComp = new WrapperComparator<>(init.utilityComparator);
-        view = new GradientView(config, logPrefix, init.utilityComparator, init.gradientFilter);
+        view = new GradientView(new SystemKCWrapper(config()), gradientConfig, logPrefix, 
+                init.utilityComparator, init.gradientFilter);
         filter = init.gradientFilter;
 
         setCompTracker();
@@ -152,8 +154,8 @@ public class GradientComp extends ComponentDefinition {
             if (!connected() && haveShufflePartners()) {
                 schedulePeriodicShuffle();
             }
-            trigger(new OverlayViewUpdate.Indication(UUIDIdentifier.randomId(), false,
-                    new GradientLocalView(viewUpdate.view, selfView.rank)), croupierViewUpdate);
+            trigger(new OverlayViewUpdate.Indication(false, new GradientLocalView(viewUpdate.view, selfView.rank)), 
+                    croupierViewUpdate);
         }
     };
 
@@ -168,21 +170,21 @@ public class GradientComp extends ComponentDefinition {
     //***************************STATE TRACKING*********************************
     private void setCompTracker() {
         
-        switch (config.gradientAggLevel) {
+        switch (gradientConfig.gradientAggLevel) {
             case NONE:
-                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), gradientConfig.gradientAggPeriod);
                 break;
             case BASIC:
-                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), gradientConfig.gradientAggPeriod);
                 setEventTracking();
                 break;
             case FULL:
-                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), config.gradientAggPeriod);
+                compTracker = new CompTrackerImpl(proxy, Pair.with(LOG, logPrefix), gradientConfig.gradientAggPeriod);
                 setEventTracking();
                 setStateTracking();
                 break;
             default:
-                throw new RuntimeException("Undefined:" + config.gradientAggLevel);
+                throw new RuntimeException("Undefined:" + gradientConfig.gradientAggLevel);
         }
     }
 
@@ -238,8 +240,8 @@ public class GradientComp extends ComponentDefinition {
             if (view.checkIfTop(selfView) && selfView.rank != 0) {
                 selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), 0);
                 LOG.debug("{} am top", logPrefix, view.getAllCopy());
-                trigger(new OverlayViewUpdate.Indication(UUIDIdentifier.randomId(), false,
-                        new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
+                trigger(new OverlayViewUpdate.Indication(false, new GradientLocalView(selfView.getContent(), selfView.rank)),
+                        croupierViewUpdate);
                 trigger(new RankUpdate(UUIDIdentifier.randomId(), selfView.rank), rankUpdate);
             }
             LOG.debug("{} rank:{}", logPrefix, selfView.rank);
@@ -261,9 +263,9 @@ public class GradientComp extends ComponentDefinition {
             GradientContainer partner = view.getShuffleNode(selfView);
             view.incrementAges();
 
-            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, config.shuffleSize);
+            Set<GradientContainer> exchangeGC = view.getExchangeCopy(partner, gradientConfig.shuffleSize);
             DecoratedHeader<KAddress> requestHeader = new DecoratedHeader(
-                    new BasicHeader(self, partner.getSource(), Transport.UDP), config.overlayId);
+                    new BasicHeader(self, partner.getSource(), Transport.UDP), gradientConfig.overlayId);
             GradientShuffle.Request requestContent = new GradientShuffle.Request(UUIDIdentifier.randomId(), selfView, exchangeGC);
             BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
             LOG.debug("{} sending:{}", new Object[]{logPrefix, request});
@@ -308,7 +310,7 @@ public class GradientComp extends ComponentDefinition {
 
                     view.incrementAges();
 
-                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, config.shuffleSize);
+                    Set<GradientContainer> exchangeGC = view.getExchangeCopy(content.selfGC, gradientConfig.shuffleSize);
                     GradientShuffle.Response responseContent = new GradientShuffle.Response(content.id, selfView, exchangeGC);
                     BasicContentMsg response = container.answer(responseContent);
                     LOG.debug("{} sending:{}", new Object[]{logPrefix, response});
@@ -348,7 +350,7 @@ public class GradientComp extends ComponentDefinition {
                     if (content.selfGC.rank != Integer.MAX_VALUE && selfView.rank != content.selfGC.rank + nodeDist) {
                         selfView = new GradientContainer(selfView.getSource(), selfView.getContent(), selfView.getAge(), content.selfGC.rank + nodeDist);
                         LOG.debug("{} new rank:{} partner:{} partner rank:{}", new Object[]{logPrefix, selfView.rank, content.selfGC.getSource(), content.selfGC.rank});
-                        trigger(new OverlayViewUpdate.Indication(UUIDIdentifier.randomId(), false,
+                        trigger(new OverlayViewUpdate.Indication(false,
                                         new GradientLocalView(selfView.getContent(), selfView.rank)), croupierViewUpdate);
                         trigger(new RankUpdate(UUIDIdentifier.randomId(), selfView.rank), rankUpdate);
                     }
@@ -360,7 +362,7 @@ public class GradientComp extends ComponentDefinition {
             LOG.warn("{} double starting periodic shuffle", logPrefix);
             return;
         }
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(config.shufflePeriod, config.shufflePeriod);
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(gradientConfig.shufflePeriod, gradientConfig.shufflePeriod);
         ShuffleCycle sc = new ShuffleCycle(spt);
         spt.setTimeoutEvent(sc);
         shuffleCycleId = sc.getTimeoutId();
@@ -382,7 +384,7 @@ public class GradientComp extends ComponentDefinition {
             LOG.warn("{} double starting shuffle timeout", logPrefix);
             return;
         }
-        ScheduleTimeout spt = new ScheduleTimeout(config.shufflePeriod / 2);
+        ScheduleTimeout spt = new ScheduleTimeout(gradientConfig.shufflePeriod / 2);
         ShuffleTimeout sc = new ShuffleTimeout(spt, dest);
         spt.setTimeoutEvent(sc);
         shuffleTimeoutId = sc.getTimeoutId();
@@ -427,18 +429,16 @@ public class GradientComp extends ComponentDefinition {
 
     public static class GradientInit extends Init<GradientComp> {
 
+        public final Identifier overlayId;
         public final KAddress self;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
-        public final long seed;
-        public final Identifier overlayId;
 
-        public GradientInit(KAddress self, Comparator utilityComparator, GradientFilter gradientFilter, long seed, Identifier overlayId) {
+        public GradientInit(Identifier overlayId, KAddress self, Comparator utilityComparator, GradientFilter gradientFilter) {
+            this.overlayId = overlayId;
             this.self = self;
             this.utilityComparator = utilityComparator;
             this.gradientFilter = gradientFilter;
-            this.seed = seed;
-            this.overlayId = overlayId;
         }
     }
 }

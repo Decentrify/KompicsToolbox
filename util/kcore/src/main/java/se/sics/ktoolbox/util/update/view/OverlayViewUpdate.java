@@ -28,16 +28,16 @@ public class OverlayViewUpdate {
 
     public static class Request extends ViewUpdate.Request {
 
-        public Request(Identifier id) {
-            super(id);
+        public Request(Identifier eventId) {
+            super(eventId);
         }
 
-        public Indication observer() {
-            return new Indication(id, true, null);
+        public Response observer() {
+            return new Response(eventId, true, null);
         }
 
-        public Indication update(View view) {
-            return new Indication(id, false, view);
+        public Response update(View view) {
+            return new Response(eventId, false, view);
         }
     }
 
@@ -50,8 +50,8 @@ public class OverlayViewUpdate {
             this.observer = observer;
         }
         
-        public Indication(V view) {
-            this(UUIDIdentifier.randomId(), false, view);
+        public Indication(boolean observer, V view) {
+            this(UUIDIdentifier.randomId(), observer, view);
         }
     }
     

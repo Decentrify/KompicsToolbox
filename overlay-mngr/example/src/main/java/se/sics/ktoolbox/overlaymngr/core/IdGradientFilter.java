@@ -16,34 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.util;
+package se.sics.ktoolbox.overlaymngr.core;
 
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.gradient.GradientFilter;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView implements View {
+public class IdGradientFilter implements GradientFilter<IdView>{
+
     @Override
-    public int hashCode() {
-        int hash = 7;
-        return hash;
+    public boolean retainOther(IdView selfPV, IdView otherPV) {
+        return true;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ServiceView other = (ServiceView) obj;
-        return true;
+    public boolean cleanOldView(IdView newSelfPV, IdView oldSelfPV) {
+        return false;
     }
     
-    @Override
-    public String toString() {
-        return "ServiceView";
-    }
 }

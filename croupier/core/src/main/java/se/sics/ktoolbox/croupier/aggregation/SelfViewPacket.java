@@ -34,6 +34,6 @@ public class SelfViewPacket implements StatePacket {
     
     @Override
     public String shortPrint() {
-        return toString();
+        return "SelfView:" + view.toString();
     }
 }

@@ -18,25 +18,16 @@
  */
 package se.sics.ktoolbox.overlaymngr.core;
 
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.p2ptoolbox.util.config.KConfigLevel;
-import se.sics.p2ptoolbox.util.config.options.OpenAddressOption;
+import se.sics.ktoolbox.util.config.options.BasicAddressBootstrapOption;
+import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OMngrHostKConfig implements KConfigLevel {
-    public final static OpenAddressOption self = new OpenAddressOption("self", new OMngrHostKConfig());
+public class OMngrHostKConfig {
+    public final static BasicAddressOption self = new BasicAddressOption("self");
+    public final static BasicAddressBootstrapOption bootstrap = new BasicAddressBootstrapOption("bootstrap");
     
-    @Override
-    public Set<String> canWrite() {
-        Set<String> canWrite = new HashSet<>();
-        canWrite.add(toString());
-        return canWrite;
-    }
-
     @Override
     public String toString() {
         return "OMngrHostConfig";

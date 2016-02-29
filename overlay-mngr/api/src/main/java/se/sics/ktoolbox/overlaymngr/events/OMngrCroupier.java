@@ -23,6 +23,7 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 
 /**
@@ -32,48 +33,53 @@ public class OMngrCroupier {
 
     public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
-        public final Identifier id;
-        public final Identifier parentId;
+        public final Identifier eventId;
         public final Identifier croupierId;
-        public final Negative<CroupierPort> croupier;
-        public final Positive<ViewUpdatePort> viewUpdate;
+        public final Negative<CroupierPort> croupierPort;
+        public final Positive<ViewUpdatePort> viewUpdatePort;
         public final boolean observer;
 
-        public ConnectRequest(Identifier id, Identifier parentId, Identifier croupierId, 
-                Negative<CroupierPort> croupier, Positive<ViewUpdatePort> viewUpdate, boolean observer) {
-            this.id = id;
-            this.parentId = parentId;
+        public ConnectRequest(Identifier eventId, Identifier croupierId, 
+                Negative<CroupierPort> croupierPort, Positive<ViewUpdatePort> viewUpdatePort, boolean observer) {
+            this.eventId = eventId;
             this.croupierId = croupierId;
-            this.croupier = croupier;
-            this.viewUpdate = viewUpdate;
+            this.croupierPort = croupierPort;
+            this.viewUpdatePort = viewUpdatePort;
             this.observer = observer;
         }
-
+        
         public ConnectResponse answer() {
             return new ConnectResponse(this);
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
+        }
+        
+        @Override
+        public String toString() {
+            return "OMngr_Croupier_ConnectRequest<" + getId() + ">"; 
         }
     }
 
     public static class ConnectRequestBuilder {
 
-        public final Identifier id;
-        private Identifier parentId;
+        public final Identifier eventId;
         private Identifier croupierId;
         private Negative<CroupierPort> croupier;
         private Positive<ViewUpdatePort> viewUpdate;
         private Boolean observer;
 
         public ConnectRequestBuilder(Identifier id) {
-            this.id = id;
+            this.eventId = id;
+        }
+        
+        public ConnectRequestBuilder() {
+            this(UUIDIdentifier.randomId());
         }
 
-        public void setIdentifiers(Identifier parentId, Identifier croupierId) {
-            this.parentId = parentId;
+        public void setIdentifiers(Identifier croupierId) {
             this.croupierId = croupierId;
         }
 
@@ -87,7 +93,7 @@ public class OMngrCroupier {
         }
 
         public ConnectRequest build() throws IllegalArgumentException {
-            if (parentId == null || croupierId == null) {
+            if (croupierId == null) {
                 throw new IllegalArgumentException("identifiers not set");
             }
             if (croupier == null || viewUpdate == null) {
@@ -96,7 +102,7 @@ public class OMngrCroupier {
             if (observer == null) {
                 throw new IllegalArgumentException("croupier not set");
             }
-            return new ConnectRequest(id, parentId, croupierId, croupier, viewUpdate, observer);
+            return new ConnectRequest(eventId, croupierId, croupier, viewUpdate, observer);
         }
     }
 
@@ -110,7 +116,12 @@ public class OMngrCroupier {
 
         @Override
         public Identifier getId() {
-            return req.id;
+            return req.getId();
+        }
+        
+        @Override
+        public String toString() {
+            return "OMngr_Croupier_ConnectResponse<" + getId() + ">"; 
         }
     }
 

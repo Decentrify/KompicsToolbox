@@ -16,34 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.util;
+package se.sics.ktoolbox.overlaymngr.core;
 
 import se.sics.ktoolbox.util.update.view.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServiceView implements View {
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ServiceView other = (ServiceView) obj;
-        return true;
-    }
+public class IdView implements View {
+    public final int id;
     
-    @Override
-    public String toString() {
-        return "ServiceView";
+    public IdView(int id) {
+        this.id = id;
     }
 }

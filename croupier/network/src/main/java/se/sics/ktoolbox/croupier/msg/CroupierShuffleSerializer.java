@@ -22,14 +22,11 @@ import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.update.view.View;
 
 /**

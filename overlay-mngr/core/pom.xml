@@ -38,5 +38,10 @@
             <artifactId>tree-gradient-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>se.sics.ktoolbox.cc.heartbeat</groupId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

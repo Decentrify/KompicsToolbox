@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,53 +16,50 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr;
+package se.sics.ktoolbox.overlaymngr.core.network;
 
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
-import se.sics.ktoolbox.gradient.GradientSerializerSetup;
-import se.sics.ktoolbox.overlaymngr.util.ServiceView;
-import se.sics.ktoolbox.overlaymngr.util.ServiceViewSerializer;
+import se.sics.ktoolbox.overlaymngr.OMngrSerializerSetup;
+import se.sics.ktoolbox.overlaymngr.core.IdView;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ *
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OMngrSerializerSetup {
-
+public class TestSerializerSetup {
     public static int serializerIds = 1;
 
-    public static enum OMngrSerializers {
+    public static enum TestSerializers {
 
-        ServiceView(ServiceView.class, "serviceViewSerializer");
+        IdView(IdView.class, "idViewSerializer");
 
         public final Class serializedClass;
         public final String serializerName;
 
-        private OMngrSerializers(Class serializedClass, String serializerName) {
+        private TestSerializers(Class serializedClass, String serializerName) {
             this.serializedClass = serializedClass;
             this.serializerName = serializerName;
         }
     }
 
     public static boolean checkSetup() {
-        for (OMngrSerializers cs : OMngrSerializers.values()) {
+        for (TestSerializers cs : TestSerializers.values()) {
             if (Serializers.lookupSerializer(cs.serializedClass) == null) {
                 return false;
             }
         }
-        return BasicSerializerSetup.checkSetup()
-                && CroupierSerializerSetup.checkSetup()
-                && GradientSerializerSetup.checkSetup();
+        return true;
     }
 
     public static int registerSerializers(int startingId) {
         int currentId = startingId;
 
-        ServiceViewSerializer serviceViewSerializer = new ServiceViewSerializer(currentId++);
-        Serializers.register(serviceViewSerializer, OMngrSerializers.ServiceView.serializerName);
-        Serializers.register(OMngrSerializers.ServiceView.serializedClass, OMngrSerializers.ServiceView.serializerName);
+        IdViewSerializer idViewSerializer = new IdViewSerializer(currentId++);
+        Serializers.register(idViewSerializer, TestSerializers.IdView.serializerName);
+        Serializers.register(TestSerializers.IdView.serializedClass, TestSerializers.IdView.serializerName);
 
         Assert.assertEquals(serializerIds, currentId - startingId);
         return currentId;
