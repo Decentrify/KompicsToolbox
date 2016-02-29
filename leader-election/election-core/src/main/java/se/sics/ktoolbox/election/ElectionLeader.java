@@ -75,11 +75,12 @@ public class ElectionLeader extends ComponentDefinition {
     Logger LOG = LoggerFactory.getLogger(ElectionLeader.class);
     String logPrefix = "";
 
+    private final ElectionKCWrapper electionConfig;
+    private KAddress self;
+    
     private LCPeerView selfLCView;
     private LEContainer selfLEContainer;
-    private ElectionConfig config;
     private LCRuleSet lcRuleSet;
-    private KAddress self;
     private Map<Identifier, LEContainer> addressContainerMap = new HashMap<>();
     private int leaderGroupSize;
 
@@ -113,12 +114,9 @@ public class ElectionLeader extends ComponentDefinition {
     Negative<LeaderElectionPort> election = provides(LeaderElectionPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);
 
-    private final ElectionKCWrapper electionConfig;
     private CompTracker compTracker;
 
     public ElectionLeader(ElectionInit<ElectionLeader> init) {
-
-        config = init.electionConfig;
         electionConfig = new ElectionKCWrapper(config());
         lcRuleSet = init.lcRuleSet;
         self = init.selfAddress;
@@ -126,13 +124,13 @@ public class ElectionLeader extends ComponentDefinition {
         logPrefix = "<nid:" + self.getId() + "> ";
 
         LOG.info("{}Election Leader component initialized", logPrefix);
-        LOG.info("{}Election Config: {}", logPrefix, config);
+        LOG.info("{}Election Config: {}", logPrefix, electionConfig);
 
         // voting protocol.
         isConverged = false;
         electionRoundTracker = new PromiseResponseTracker();
 
-        leaderGroupSize = Math.min(config.getViewSize() / 2 + 1, config.getMaxLeaderGroupSize());
+        leaderGroupSize = Math.min(electionConfig.viewSize / 2 + 1, electionConfig.maxLeaderGroupSize);
         selfLCView = init.initialView;
         selfLEContainer = new LEContainer(self, selfLCView);
 
@@ -259,11 +257,11 @@ public class ElectionLeader extends ComponentDefinition {
             addressContainerMap = ElectionHelper.addGradientSample(event.collection);
 
             // Check how much the sample changed.
-            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), config.getConvergenceTest())) {
+            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), electionConfig.convergenceTest)) {
                 if (!isConverged) {
 
                     convergenceCounter++;
-                    if (convergenceCounter >= config.getConvergenceRounds()) {
+                    if (convergenceCounter >= electionConfig.convergenceRounds) {
                         isConverged = true;
                     }
                 }
@@ -353,12 +351,12 @@ public class ElectionLeader extends ComponentDefinition {
             addressContainerMap = ElectionHelper.addGradientSample(event.gradientSample);
 
             // Check how much the sample changed.
-            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), config.getConvergenceTest())) {
+            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), electionConfig.convergenceTest)) {
 
                 if (!isConverged) {
 
                     convergenceCounter++;
-                    if (convergenceCounter >= config.getConvergenceRounds()) {
+                    if (convergenceCounter >= electionConfig.convergenceRounds) {
                         isConverged = true;
                     }
                 }
@@ -387,7 +385,7 @@ public class ElectionLeader extends ComponentDefinition {
         // Addition lease check is required because for the nodes which are in the node group will be acting under
         // lease of the leader, with special variable check.
         if (isConverged && higherUtilityNodes.size() == 0 && !inElection && !selfLCView.isLeaderGroupMember()) {
-            if (addressContainerMap.size() < config.getViewSize()) {
+            if (addressContainerMap.size() < electionConfig.viewSize) {
                 LOG.info("{}: I think I am leader but the view:{} less than the minimum requirement, so returning.", logPrefix, addressContainerMap.size());
                 return;
             }
@@ -506,7 +504,7 @@ public class ElectionLeader extends ComponentDefinition {
                             trigger(new LeaderState.ElectedAsLeader(UUIDIdentifier.randomId(), electionRoundTracker.getLeaderGroupInformation()), election);
                             compTracker.updateState(LeaderUpdatePacket.update(self.getId(), new ArrayList<>(electionRoundTracker.getLeaderGroupInformation())));
 
-                            ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
+                            ScheduleTimeout st = new ScheduleTimeout(electionConfig.leaderLeaseTime);
                             st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
 
                             leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
@@ -629,7 +627,7 @@ public class ElectionLeader extends ComponentDefinition {
                     compTracker.updateState(LeaderUpdatePacket.update(self.getId(), new ArrayList<>(lgNodes)));
 
                     // Extend the lease.
-                    ScheduleTimeout st = new ScheduleTimeout(config.getLeaderLeaseTime());
+                    ScheduleTimeout st = new ScheduleTimeout(electionConfig.leaderLeaseTime);
                     st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
                     leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
                     trigger(st, timer);

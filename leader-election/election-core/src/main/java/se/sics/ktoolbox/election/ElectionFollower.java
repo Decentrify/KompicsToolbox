@@ -15,7 +15,6 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.election.aggregation.LeaderHistoryReducer;
 import se.sics.ktoolbox.election.aggregation.LeaderGroupHistoryReducer;
 import se.sics.ktoolbox.election.aggregation.LeaderGroupUpdatePacket;
 import se.sics.ktoolbox.election.util.LCPeerView;
@@ -51,11 +50,11 @@ public class ElectionFollower extends ComponentDefinition {
     Logger LOG = LoggerFactory.getLogger(ElectionFollower.class);
     private String logPrefix;
 
+    private final ElectionKCWrapper electionConfig;
     KAddress self;
     LCPeerView selfLCView;
     LEContainer selfContainer;
     private CohortsRuleSet cohortsRuleSet;
-    private ElectionConfig config;
     private SortedSet<LEContainer> higherUtilityNodes;
     private SortedSet<LEContainer> lowerUtilityNodes;
 
@@ -83,11 +82,9 @@ public class ElectionFollower extends ComponentDefinition {
     Negative<LeaderElectionPort> election = provides(LeaderElectionPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);
 
-    private final ElectionKCWrapper electionConfig;
     private CompTracker compTracker;
 
     public ElectionFollower(ElectionInit<ElectionFollower> init) {
-        config = init.electionConfig;
         electionConfig = new ElectionKCWrapper(config());
         self = init.selfAddress;
         logPrefix = "<nid:" + self.getId() + "> ";
@@ -198,11 +195,11 @@ public class ElectionFollower extends ComponentDefinition {
             addressContainerMap = ElectionHelper.addGradientSample(event.collection);
 
             // Check how much the sample changed.
-            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), config.getConvergenceTest())) {
+            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), electionConfig.convergenceTest)) {
                 if (!isConverged) {
 
                     convergenceCounter++;
-                    if (convergenceCounter >= config.getConvergenceRounds()) {
+                    if (convergenceCounter >= electionConfig.convergenceRounds) {
                         isConverged = true;
                     }
                 }
@@ -232,12 +229,12 @@ public class ElectionFollower extends ComponentDefinition {
             addressContainerMap = ElectionHelper.addGradientSample(event.gradientSample);
 
             // Check how much the sample changed.
-            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), config.getConvergenceTest())) {
+            if (ElectionHelper.isRoundConverged(oldContainerMap.keySet(), addressContainerMap.keySet(), electionConfig.convergenceTest)) {
 
                 if (!isConverged) {
 
                     convergenceCounter++;
-                    if (convergenceCounter >= config.getConvergenceRounds()) {
+                    if (convergenceCounter >= electionConfig.convergenceRounds) {
                         isConverged = true;
                     }
                 }
@@ -385,7 +382,7 @@ public class ElectionFollower extends ComponentDefinition {
                 trigger(new LeaderUpdate(UUIDIdentifier.randomId(), request.leaderPublicKey, request.leaderAddress), election);
                 compTracker.updateState(new LeaderGroupUpdatePacket(request.leaderAddress.getId()));
 
-                ScheduleTimeout st = new ScheduleTimeout(config.getFollowerLeaseTime());
+                ScheduleTimeout st = new ScheduleTimeout(electionConfig.followerLeaseTime);
                 st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
 
                 leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
@@ -464,7 +461,7 @@ public class ElectionFollower extends ComponentDefinition {
 
             compTracker.updateState(new LeaderGroupUpdatePacket(leaseExtensionRequest.leaderAddress.getId()));
 
-            ScheduleTimeout st = new ScheduleTimeout(config.getFollowerLeaseTime());
+            ScheduleTimeout st = new ScheduleTimeout(electionConfig.followerLeaseTime);
             st.setTimeoutEvent(new TimeoutCollection.LeaseTimeout(st));
             leaseTimeoutId = st.getTimeoutEvent().getTimeoutId();
 

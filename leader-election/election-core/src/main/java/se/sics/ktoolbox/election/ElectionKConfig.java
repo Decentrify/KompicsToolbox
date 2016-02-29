@@ -25,6 +25,12 @@ import se.sics.ktoolbox.util.config.KConfigOption;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ElectionKConfig {
+    public final static KConfigOption.Basic<Long> leaderLeaseTime = new KConfigOption.Basic("election.leaderLeaseTime", Long.class);
+    public final static KConfigOption.Basic<Long> followerLeaseTime = new KConfigOption.Basic("election.followerLeaseTime", Long.class);
+    public final static KConfigOption.Basic<Integer> viewSize = new KConfigOption.Basic("election.viewSize", Integer.class);
+    public final static KConfigOption.Basic<Integer> convergenceRounds = new KConfigOption.Basic("election.convergenceRounds", Integer.class);
+    public final static KConfigOption.Basic<Double> convergenceTest = new KConfigOption.Basic("election.convergenceTest", Double.class);
+    public final static KConfigOption.Basic<Integer> maxLeaderGroupSize = new KConfigOption.Basic("election.maxLeaderGroupSize", Integer.class);
     public final static AggregationLevelOption aggLevel = new AggregationLevelOption("election.aggLevel");
     public final static KConfigOption.Basic<Long> aggPeriod = new KConfigOption.Basic("election.aggPeriod", Long.class);
 }

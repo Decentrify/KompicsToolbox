@@ -27,13 +27,45 @@ import se.sics.ktoolbox.util.config.KConfigHelper;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ElectionKCWrapper {
+
     public final Config configCore;
+
+    public final long leaderLeaseTime;
+    public final long followerLeaseTime;
+    public final int viewSize;
+    public final int convergenceRounds;
+    public final double convergenceTest;
+    public final int maxLeaderGroupSize;
+
     public final AggregationLevel electionAggLevel;
     public final long electionAggPeriod;
-    
+
     public ElectionKCWrapper(Config configCore) {
         this.configCore = configCore;
+        viewSize = KConfigHelper.read(configCore, ElectionKConfig.viewSize);
+        maxLeaderGroupSize = KConfigHelper.read(configCore, ElectionKConfig.maxLeaderGroupSize);
+        leaderLeaseTime = KConfigHelper.read(configCore, ElectionKConfig.leaderLeaseTime);
+        followerLeaseTime = KConfigHelper.read(configCore, ElectionKConfig.followerLeaseTime);
+        convergenceRounds = KConfigHelper.read(configCore, ElectionKConfig.convergenceRounds);
+        convergenceTest = KConfigHelper.read(configCore, ElectionKConfig.convergenceTest);
+
+        if (leaderLeaseTime >= followerLeaseTime) {
+            throw new RuntimeException("Leader Lease should always be less than follower lease");
+        }
+
         electionAggLevel = KConfigHelper.read(configCore, ElectionKConfig.aggLevel);
         electionAggPeriod = KConfigHelper.read(configCore, ElectionKConfig.aggPeriod);
+    }
+    
+    @Override
+    public String toString() {
+        return "ElectionConfig{" +
+                "leaderLeaseTime=" + leaderLeaseTime +
+                ", followerLeaseTime=" + followerLeaseTime +
+                ", viewSize=" + viewSize +
+                ", convergenceRounds=" + convergenceRounds +
+                ", convergenceTest=" + convergenceTest +
+                ", maxLeaderGroupSize=" + maxLeaderGroupSize +
+                '}';
     }
 }
