@@ -21,8 +21,8 @@ package se.sics.ktoolbox.croupier.behaviour;
 import com.google.common.base.Optional;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

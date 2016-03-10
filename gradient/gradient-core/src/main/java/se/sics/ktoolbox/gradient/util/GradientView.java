@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.gradient.GradientComp;
@@ -38,7 +39,6 @@ import se.sics.ktoolbox.util.ProbabilitiesHelper;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -49,7 +49,7 @@ public class GradientView {
 
     private static final Logger log = LoggerFactory.getLogger(GradientComp.class);
     private final String logPrefix;
-    
+
     private final Comparator<GradientContainer> ageComparator;
     private final Comparator<GradientContainer> utilityComp;
     private final GradientFilter filter;
@@ -58,9 +58,10 @@ public class GradientView {
     private final GradientKCWrapper gradientConfig;
     private final Random rand;
 
+    //TODO Alex - maybe tree map - with utility comparator?
     private final Map<Identifier, GradientContainer> view;
 
-    public GradientView(SystemKCWrapper systemConfig, GradientKCWrapper gradientConfig, 
+    public GradientView(SystemKCWrapper systemConfig, GradientKCWrapper gradientConfig, Identifier overlayId,
             String logPrefix, Comparator utilityComparator, GradientFilter filter) {
         this.systemConfig = systemConfig;
         this.gradientConfig = gradientConfig;
@@ -69,7 +70,7 @@ public class GradientView {
         this.ageComparator = new InvertedComparator<>(new GradientContainerAgeComparator()); //we want old ages in the begining
         this.filter = filter;
         this.view = new HashMap<>();
-        this.rand = new Random(systemConfig.seed + gradientConfig.overlayId.partition(Integer.MAX_VALUE));
+        this.rand = new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE));
     }
 
     public boolean isEmpty() {
@@ -91,6 +92,56 @@ public class GradientView {
                 iterator.remove();
             }
         }
+    }
+
+    public List<GradientContainer> getAllCopy() {
+        List<GradientContainer> sortedList = new ArrayList<>(view.values());
+        Collections.sort(sortedList, utilityComp);
+        List<GradientContainer> copyList = new ArrayList<>();
+        for (GradientContainer gc : sortedList) {
+            copyList.add(gc.getCopy());
+        }
+        return copyList;
+    }
+
+    public boolean isTop(GradientContainer node) {
+        if (view.isEmpty()) {
+            return false;
+        }
+        List<GradientContainer> sortedList = new ArrayList<>(view.values());
+        Collections.sort(sortedList, utilityComp);
+        return utilityComp.compare(node, sortedList.get(sortedList.size() - 1)) > 0;
+    }
+
+    public int rank(GradientContainer node) {
+        if (view.isEmpty()) {
+            return Integer.MAX_VALUE;
+        }
+        
+        if(isTop(node)) {
+            return 0;
+        }
+
+        int undefNodes = 0;
+        int defNodes = 0;
+        int maxRank = Integer.MAX_VALUE;
+        for (GradientContainer gc : view.values()) {
+            if (utilityComp.compare(node, gc) < 0) {
+                if (gc.rank < Integer.MAX_VALUE) {
+                    if(maxRank > gc.rank) {
+                        maxRank = gc.rank;
+                    }
+                    defNodes++;
+                } else {
+                    undefNodes++;
+                }
+            }
+        }
+        //TODO Alex - proper heuristic... if i assume a rank too small... i might become a useless finger for TGradient
+        if (defNodes < undefNodes) {
+            return Integer.MAX_VALUE;
+        }
+        return maxRank + 1;
     }
 
     public void merge(GradientContainer newSample, GradientContainer selfView) {
@@ -155,42 +206,19 @@ public class GradientView {
         return sortedList.get(shuffleNodeIndex);
     }
 
-    public Set<GradientContainer> getExchangeCopy(GradientContainer partnerCPV, int n) {
+    public List<GradientContainer> getExchangeCopy(GradientContainer partnerCPV, int n) {
         Comparator<GradientContainer> partnerPrefferenceComparator = new InvertedComparator<GradientContainer>(new GradientPreferenceComparator<GradientContainer>(partnerCPV, utilityComp));
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
+        List<GradientContainer> sortedList = new ArrayList<>(view.values());
         Collections.sort(sortedList, partnerPrefferenceComparator);
-        Set<GradientContainer> copySet = new HashSet<GradientContainer>();
+        List<GradientContainer> copyList = new ArrayList<>();
         for (int i = 0; i < n && i < sortedList.size(); i++) {
-            copySet.add(sortedList.get(i).getCopy());
-        }
-        return copySet;
-    }
-
-    public List<GradientContainer> getAllCopy() {
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Collections.sort(sortedList, utilityComp);
-        List<GradientContainer> copyList = new ArrayList<GradientContainer>();
-        for (GradientContainer gc : sortedList) {
-            copyList.add(gc.getCopy());
+            copyList.add(sortedList.get(i).getCopy());
         }
         return copyList;
     }
 
     public void clean(KAddress node) {
         view.remove(node.getId());
-    }
-
-    public boolean checkIfTop(GradientContainer selfView) {
-        if(view.size() == 0) {
-            return false;
-        }
-        //TODO Alex - do I really need this?
-//        if (view.size() < gradientConfig.viewSize) {
-//            return false;
-//        }
-        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
-        Collections.sort(sortedList, utilityComp);
-        return utilityComp.compare(selfView, sortedList.get(sortedList.size() - 1)) > 0;
     }
 
     public int getDistTo(GradientContainer selfView, GradientContainer targetView) {

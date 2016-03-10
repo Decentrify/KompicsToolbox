@@ -30,7 +30,7 @@ import org.javatuples.Pair;
 import org.javatuples.Triplet;
 import se.sics.ktoolbox.croupier.CroupierKCWrapper;
 import se.sics.ktoolbox.croupier.util.ProbabilisticHelper;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;

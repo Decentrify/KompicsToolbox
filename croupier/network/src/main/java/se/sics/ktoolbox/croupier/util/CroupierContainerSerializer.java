@@ -24,7 +24,7 @@ import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

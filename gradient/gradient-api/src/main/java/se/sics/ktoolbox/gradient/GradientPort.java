@@ -19,6 +19,8 @@
 package se.sics.ktoolbox.gradient;
 
 import se.sics.kompics.PortType;
+import se.sics.ktoolbox.croupier.event.CroupierEvent;
+import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.event.GradientSample;
 
 /**
@@ -29,5 +31,9 @@ import se.sics.ktoolbox.gradient.event.GradientSample;
 public class GradientPort extends PortType {
     {
         indication(GradientSample.class);
+        //temporary placeholder for requests
+        //due to correct selector placement when doing connections
+        //one place of importance - overlay-manager module
+        request(GradientEvent.class);
     }
 }

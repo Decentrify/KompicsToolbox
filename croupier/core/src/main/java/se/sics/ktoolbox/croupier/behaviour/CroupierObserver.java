@@ -22,8 +22,8 @@ import com.google.common.base.Optional;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatType;
-import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -34,13 +34,14 @@ public class CroupierObserver implements CroupierBehaviour {
     private boolean observer;
     private View view;
 
+    public CroupierObserver() {
+        this(null);
+    }
+    
     public CroupierObserver(NatAwareAddress self) {
         this.self = self;
         this.view = null;
         this.observer = true;
-    }
-    public CroupierObserver() {
-        this(null);
     }
 
     @Override

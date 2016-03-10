@@ -21,7 +21,7 @@ package se.sics.ktoolbox.croupier.aggregation;
 import java.util.ArrayList;
 import java.util.List;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  *

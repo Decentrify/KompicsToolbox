@@ -22,12 +22,13 @@ import se.sics.ktoolbox.util.Wrapper;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 import se.sics.ktoolbox.util.traits.Ageing;
+import se.sics.ktoolbox.util.update.View;
 
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class GradientContainer<C extends Object> implements Container<KAddress, C>, Ageing, Wrapper<C> {
+public class GradientContainer<C extends View> implements Container<KAddress, C>, Ageing, Wrapper<C> {
 
     private int age;
     private KAddress src;
@@ -80,6 +81,19 @@ public class GradientContainer<C extends Object> implements Container<KAddress, 
 
     @Override
     public Container copy() {
+        return new GradientContainer(src, content, age, rank);
+    }
+    
+    //**************************************************************************
+    public GradientContainer changeAdr(KAddress src) {
+        return new GradientContainer(src, content, age, rank);
+    }
+    
+    public GradientContainer changeView(View view) {
+        return new GradientContainer(src, view, age, rank);
+    }
+    
+    public GradientContainer changeRank(int rank) {
         return new GradientContainer(src, content, age, rank);
     }
 }

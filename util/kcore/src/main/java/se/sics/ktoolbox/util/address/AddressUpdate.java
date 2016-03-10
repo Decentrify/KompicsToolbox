@@ -23,6 +23,7 @@ import se.sics.kompics.Direct;
 import se.sics.kompics.KompicsEvent;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -30,35 +31,39 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class AddressUpdate {
     public static class Request extends Direct.Request<Response> implements Identifiable {
-        public final Identifier id;
+        public final Identifier eventId;
         
-        public Request(Identifier id) {
+        public Request(Identifier eventId) {
             super();
-            this.id = id;
+            this.eventId = eventId;
         }
         
-        public Indication answer(KAddress localAddress) {
-            return new Indication(id, localAddress);
+        public Request() {
+            this(UUIDIdentifier.randomId());
         }
-
+        
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
+        }
+        
+        public Response answer(KAddress localAddress) {
+            return new Response(eventId, localAddress);
         }
     }
     
     public static class Indication implements KompicsEvent, Identifiable {
-        public final Identifier id;
+        public final Identifier eventId;
         public final KAddress localAddress;
         
-        private Indication(Identifier id, KAddress localAddress) {
-            this.id = id;
+        private Indication(Identifier eventId, KAddress localAddress) {
+            this.eventId = eventId;
             this.localAddress = localAddress;
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
     

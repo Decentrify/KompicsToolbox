@@ -56,7 +56,7 @@ public class OMngrLauncher extends ComponentDefinition {
         timer = create(JavaTimer.class, Init.NONE);
         OMngrHostKCWrapper omngrConfig = new OMngrHostKCWrapper(config());
         network = create(NettyNetwork.class, new NettyInit(omngrConfig.self));
-        host = create(OMngrHostComp.class, new OMngrHostComp.OMngrHostInit());
+        host = create(OMngrHostComp.class, new OMngrHostComp.Init());
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class), Channel.TWO_WAY);
         connect(host.getNegative(Network.class), network.getPositive(Network.class), Channel.TWO_WAY);
     }

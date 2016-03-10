@@ -29,8 +29,9 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
-import se.sics.ktoolbox.util.update.view.ViewUpdate;
-import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.update.ViewUpdate;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
  *
@@ -53,7 +54,7 @@ public class BasicAggregation {
         AggregationRegistry.registerNegative(AddressUpdate.Request.class, AddressUpdatePort.class);
         AggregationRegistry.registerPositive(AddressUpdate.Indication.class, AddressUpdatePort.class);
         //view update
-        AggregationRegistry.registerNegative(ViewUpdate.Request.class, ViewUpdatePort.class);
-        AggregationRegistry.registerPositive(ViewUpdate.Indication.class, ViewUpdatePort.class);
+        AggregationRegistry.registerNegative(OverlayViewUpdate.Request.class, OverlayViewUpdatePort.class);
+        AggregationRegistry.registerPositive(OverlayViewUpdate.Indication.class, OverlayViewUpdatePort.class);
     }
 }

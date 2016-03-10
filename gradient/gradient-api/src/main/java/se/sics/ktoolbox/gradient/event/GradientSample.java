@@ -30,20 +30,24 @@ import se.sics.ktoolbox.util.other.Container;
  * Created by babbarshaer on 2015-02-26.
  */
 public class GradientSample<C extends Object> implements GradientEvent {
+
     public final Identifier eventId;
+    public final Identifier overlayId;
     public final C selfView;
     public final List<Container<KAddress, C>> gradientNeighbours;
-    
-    public GradientSample(Identifier eventId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
+
+    public GradientSample(Identifier eventId, Identifier overlayId,
+            C selfView, List<Container<KAddress, C>> gradientNeighbours) {
         this.eventId = eventId;
+        this.overlayId = overlayId;
         this.selfView = selfView;
         this.gradientNeighbours = gradientNeighbours;
     }
-    
-    public GradientSample(C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this(UUIDIdentifier.randomId(), selfView, gradientNeighbours);
+
+    public GradientSample(Identifier overlayId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
+        this(UUIDIdentifier.randomId(), overlayId, selfView, gradientNeighbours);
     }
-    
+
     public List<Container<KAddress, C>> getGradientNeighbours() {
         return gradientNeighbours;
     }
@@ -51,5 +55,15 @@ public class GradientSample<C extends Object> implements GradientEvent {
     @Override
     public Identifier getId() {
         return eventId;
+    }
+
+    @Override
+    public Identifier overlayId() {
+        return overlayId;
+    }
+
+    @Override
+    public String toString() {
+        return "Gradient<" + overlayId() + ">Sample<" + getId() + ">";
     }
 }

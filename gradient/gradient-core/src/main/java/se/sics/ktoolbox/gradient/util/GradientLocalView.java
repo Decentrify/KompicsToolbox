@@ -19,17 +19,17 @@
 
 package se.sics.ktoolbox.gradient.util;
 
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class GradientLocalView implements View {
-    public final Object appView;
+    public final View appView;
     public final int rank;
     
-    public GradientLocalView(Object appView, int rank) {
+    public GradientLocalView(View appView, int rank) {
         this.appView = appView;
         this.rank = rank;
     }

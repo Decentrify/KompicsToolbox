@@ -19,12 +19,8 @@
 package se.sics.ktoolbox.overlaymngr.events;
 
 import se.sics.kompics.Direct;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
-import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
-import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,17 +31,16 @@ public class OMngrCroupier {
 
         public final Identifier eventId;
         public final Identifier croupierId;
-        public final Negative<CroupierPort> croupierPort;
-        public final Positive<ViewUpdatePort> viewUpdatePort;
         public final boolean observer;
 
-        public ConnectRequest(Identifier eventId, Identifier croupierId, 
-                Negative<CroupierPort> croupierPort, Positive<ViewUpdatePort> viewUpdatePort, boolean observer) {
+        public ConnectRequest(Identifier eventId, Identifier croupierId, boolean observer) {
             this.eventId = eventId;
             this.croupierId = croupierId;
-            this.croupierPort = croupierPort;
-            this.viewUpdatePort = viewUpdatePort;
             this.observer = observer;
+        }
+        
+        public ConnectRequest(Identifier croupierId, boolean observer) {
+            this(UUIDIdentifier.randomId(), croupierId, observer);
         }
         
         public ConnectResponse answer() {
@@ -59,50 +54,7 @@ public class OMngrCroupier {
         
         @Override
         public String toString() {
-            return "OMngr_Croupier_ConnectRequest<" + getId() + ">"; 
-        }
-    }
-
-    public static class ConnectRequestBuilder {
-
-        public final Identifier eventId;
-        private Identifier croupierId;
-        private Negative<CroupierPort> croupier;
-        private Positive<ViewUpdatePort> viewUpdate;
-        private Boolean observer;
-
-        public ConnectRequestBuilder(Identifier id) {
-            this.eventId = id;
-        }
-        
-        public ConnectRequestBuilder() {
-            this(UUIDIdentifier.randomId());
-        }
-
-        public void setIdentifiers(Identifier croupierId) {
-            this.croupierId = croupierId;
-        }
-
-        public void connectTo(Negative<CroupierPort> croupier, Positive<ViewUpdatePort> viewUpdate) {
-            this.croupier = croupier;
-            this.viewUpdate = viewUpdate;
-        }
-
-        public void setupCroupier(boolean observer) {
-            this.observer = observer;
-        }
-
-        public ConnectRequest build() throws IllegalArgumentException {
-            if (croupierId == null) {
-                throw new IllegalArgumentException("identifiers not set");
-            }
-            if (croupier == null || viewUpdate == null) {
-                throw new IllegalArgumentException("connection not set");
-            }
-            if (observer == null) {
-                throw new IllegalArgumentException("croupier not set");
-            }
-            return new ConnectRequest(eventId, croupierId, croupier, viewUpdate, observer);
+            return "OM_Croupier<" + croupierId + ">ConnectRequest<" + getId() + ">"; 
         }
     }
 
@@ -121,23 +73,28 @@ public class OMngrCroupier {
         
         @Override
         public String toString() {
-            return "OMngr_Croupier_ConnectResponse<" + getId() + ">"; 
+            return "OM_Croupier<" + req.croupierId + ">ConnectResponse<" + getId() + ">"; 
         }
     }
 
     public static class Disconnect implements OverlayMngrEvent {
 
-        public final Identifier id;
+        public final Identifier eventId;
         public final Identifier croupierId;
 
         public Disconnect(Identifier id, Identifier croupierId) {
-            this.id = id;
+            this.eventId = id;
             this.croupierId = croupierId;
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
+        }
+        
+        @Override
+        public String toString() {
+            return "OM_Croupier<" + croupierId + ">ConnectResponse<" + getId() + ">"; 
         }
     }
 }

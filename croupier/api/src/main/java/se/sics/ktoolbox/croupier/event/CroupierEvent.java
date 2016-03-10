@@ -18,11 +18,10 @@
  */
 package se.sics.ktoolbox.croupier.event;
 
-import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface CroupierEvent extends KompicsEvent, Identifiable {
+public interface CroupierEvent extends OverlayEvent {
 }

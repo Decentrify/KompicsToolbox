@@ -29,13 +29,13 @@ import se.sics.ktoolbox.util.other.AgingAdrContainer;
  */
 public class CroupierSample<C extends Object> implements CroupierEvent {
 
-    public final Identifier id;
+    public final Identifier eventId;
     public final Identifier overlayId;
     public final Map<Identifier, AgingAdrContainer<KAddress, C>> publicSample;
     public final Map<Identifier, AgingAdrContainer<KAddress, C>> privateSample;
     
-    public CroupierSample(Identifier id, Identifier overlayId, Map publicSample, Map privateSample) {
-        this.id = id;
+    public CroupierSample(Identifier eventId, Identifier overlayId, Map publicSample, Map privateSample) {
+        this.eventId = eventId;
         this.overlayId = overlayId;
         this.publicSample = publicSample;
         this.privateSample = privateSample;
@@ -46,12 +46,17 @@ public class CroupierSample<C extends Object> implements CroupierEvent {
     }
 
     @Override
-    public String toString() {
-        return "CROUPIER_SAMPLE<" + id + ">";
+    public Identifier getId() {
+        return eventId;
     }
 
     @Override
-    public Identifier getId() {
-        return id;
+    public Identifier overlayId() {
+        return overlayId;
+    }
+    
+    @Override
+    public String toString() {
+        return "CROUPIER<"+ overlayId + ">SAMPLE<" + eventId + ">";
     }
 }

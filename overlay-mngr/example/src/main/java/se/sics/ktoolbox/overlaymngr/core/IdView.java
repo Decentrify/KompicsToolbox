@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.overlaymngr.core;
 
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

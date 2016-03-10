@@ -18,11 +18,10 @@
  */
 package se.sics.ktoolbox.gradient.event;
 
-import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface GradientEvent extends KompicsEvent, Identifiable {
+public interface GradientEvent extends OverlayEvent {
 }

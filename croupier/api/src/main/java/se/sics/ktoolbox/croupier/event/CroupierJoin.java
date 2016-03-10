@@ -27,16 +27,28 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CroupierJoin implements CroupierEvent {
-    public final Identifier id;
+    public final Identifier eventId;
+    public final Identifier overlayId;
     public final List<NatAwareAddress> bootstrap;
     
-    public CroupierJoin(List bootstrap) {
-        this.id = UUIDIdentifier.randomId();
+    public CroupierJoin(Identifier overlayId, List bootstrap) {
+        this.eventId = UUIDIdentifier.randomId();
+        this.overlayId = overlayId;
         this.bootstrap = bootstrap;
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
+    }
+
+    @Override
+    public Identifier overlayId() {
+        return overlayId;
+    }
+    
+    @Override
+    public String toString() {
+        return "Croupier<" + overlayId + ">Join<" + eventId + ">";
     }
 }

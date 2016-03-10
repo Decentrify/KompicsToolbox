@@ -20,13 +20,9 @@ package se.sics.ktoolbox.overlaymngr.events;
 
 import java.util.Comparator;
 import se.sics.kompics.Direct;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
 import se.sics.ktoolbox.gradient.GradientFilter;
-import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
-import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,26 +31,21 @@ public class OMngrTGradient {
 
     public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
-        public final Identifier id;
-        public final Identifier croupierId;
-        public final Identifier gradientId;
+        public final Identifier eventId;
         public final Identifier tgradientId;
-        public final Negative<GradientPort> tgradientPort;
-        public final Positive<ViewUpdatePort> viewUpdatePort;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
 
-        public ConnectRequest(Identifier id, Identifier croupierId, Identifier gradientId, 
-                Identifier tgradientId, Negative<GradientPort> tgradientPort, Positive<ViewUpdatePort> viewUpdatePort,
+        public ConnectRequest(Identifier eventId, Identifier tgradientId,
                 Comparator utilityComparator, GradientFilter gradientFilter) {
-            this.id = id;
-            this.croupierId = croupierId;
-            this.gradientId = gradientId;
+            this.eventId = eventId;
             this.tgradientId = tgradientId;
-            this.tgradientPort = tgradientPort;
-            this.viewUpdatePort = viewUpdatePort;
             this.utilityComparator = utilityComparator;
             this.gradientFilter = gradientFilter;
+        }
+        
+        public ConnectRequest(Identifier tgradientId, Comparator utilityComparator, GradientFilter gradientFilter) {
+            this(UUIDIdentifier.randomId(), tgradientId, utilityComparator, gradientFilter);
         }
 
         public ConnectResponse answer() {
@@ -63,58 +54,13 @@ public class OMngrTGradient {
 
         @Override
         public Identifier getId() {
-            return id;
-        }
-    }
-
-    public static class ConnectRequestBuilder {
-
-        public final Identifier id;
-        private Identifier croupierId;
-        private Identifier gradientId;
-        private Identifier tgradientId;
-        private Negative<GradientPort> tgradient;
-        private Positive<ViewUpdatePort> viewUpdate;
-        private Comparator utilityComparator;
-        private GradientFilter gradientFilter;
-
-        public ConnectRequestBuilder(Identifier id) {
-            this.id = id;
+            return eventId;
         }
         
-        public ConnectRequestBuilder() {
-            this(UUIDIdentifier.randomId());
+        @Override
+        public String toString() {
+            return "OM_Gradient<" + tgradientId + ">ConnectRequest<" + getId() + ">"; 
         }
-
-        public void setIdentifiers(Identifier croupierId, Identifier gradientId, Identifier tgradientId) {
-            this.croupierId = croupierId;
-            this.gradientId = gradientId;
-            this.tgradientId = tgradientId;
-        }
-
-        public void connectTo(Negative<GradientPort> tgradient, Positive<ViewUpdatePort> viewUpdate) {
-            this.tgradient = tgradient;
-            this.viewUpdate = viewUpdate;
-        }
-        
-        public void setupGradient(Comparator utilityComparator, GradientFilter gradientFilter) {
-            this.utilityComparator = utilityComparator;
-            this.gradientFilter = gradientFilter;
-        }
-        
-        public ConnectRequest build() throws IllegalArgumentException {
-            if(croupierId == null || gradientId == null || tgradientId == null) {
-                throw new IllegalArgumentException("identifiers not set");
-            }
-            if(tgradient == null || viewUpdate == null) {
-                throw new IllegalArgumentException("connection not set");
-            }
-            if(utilityComparator == null || gradientFilter == null) {
-                throw new IllegalArgumentException("gradient not set");
-            }
-            return new ConnectRequest(id, croupierId, gradientId, tgradientId, tgradient, 
-                    viewUpdate, utilityComparator, gradientFilter);
-        } 
     }
 
     public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
@@ -129,20 +75,30 @@ public class OMngrTGradient {
         public Identifier getId() {
             return req.getId();
         }
+        
+        @Override
+        public String toString() {
+            return "OM_Gradient<" + req.tgradientId + ">ConnectResponse<" + getId() + ">"; 
+        }
     }
 
     public static class Disconnect implements OverlayMngrEvent {
-        public final Identifier id;
-        public final Identifier croupierId;
+        public final Identifier eventId;
+        public final Identifier gradientId;
 
         public Disconnect(Identifier id, Identifier croupierId) {
-            this.id = id;
-            this.croupierId = croupierId;
+            this.eventId = id;
+            this.gradientId = croupierId;
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
+        }
+        
+        @Override
+        public String toString() {
+            return "OM_Gradient<" + gradientId + ">Disconnect<" + getId() + ">"; 
         }
     }
 }

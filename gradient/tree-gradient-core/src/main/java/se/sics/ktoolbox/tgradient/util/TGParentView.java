@@ -60,7 +60,7 @@ public class TGParentView {
 
     private final Map<Identifier, GradientContainer> view;
 
-    public TGParentView(SystemKCWrapper systemConfig, GradientKCWrapper gradientConfig, TGradientKCWrapper tgradienfConfig, 
+    public TGParentView(Identifier overlayId, SystemKCWrapper systemConfig, GradientKCWrapper gradientConfig, TGradientKCWrapper tgradienfConfig, 
             String logPrefix, GradientFilter filter) {
         this.systemConfig = systemConfig;
         this.gradientConfig = gradientConfig;
@@ -69,7 +69,7 @@ public class TGParentView {
         this.ageComparator = new InvertedComparator<>(new GradientContainerAgeComparator()); //we want old ages in the begining
         this.filter = filter;
         this.view = new HashMap<>();
-        this.rand = new Random(systemConfig.seed + gradientConfig.overlayId.partition(Integer.MAX_VALUE));
+        this.rand = new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE));
     }
 
     public boolean isEmpty() {

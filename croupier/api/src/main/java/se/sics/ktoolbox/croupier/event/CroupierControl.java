@@ -27,23 +27,28 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierControl implements CroupierEvent {
-    public final Identifier id;
+    public final Identifier eventId;
     public final Identifier overlayId;
     public final CroupierSpeed speed;
     
     public CroupierControl(Identifier overlayId, CroupierSpeed speed) {
-        this.id = UUIDIdentifier.randomId();
+        this.eventId = UUIDIdentifier.randomId();
         this.overlayId = overlayId;
         this.speed = speed;
     }
 
     @Override
-    public String toString() {
-        return "CROUPIER_DISCONNECTED<" + id + ">";
+    public Identifier getId() {
+        return eventId;
     }
 
     @Override
-    public Identifier getId() {
-        return id;
+    public Identifier overlayId() {
+        return overlayId;
+    }
+    
+    @Override
+    public String toString() {
+        return "CROUPIER<"+ overlayId + ">DISCONNECTED<" + eventId + ">";
     }
 }

@@ -31,18 +31,23 @@ import se.sics.ktoolbox.util.other.Container;
 public class TGradientSample<C extends Object> extends GradientSample<C>{
     public final List<Container<KAddress, C>> gradientFingers;
     
-    public TGradientSample(Identifier eventId, C selfView, 
+    public TGradientSample(Identifier eventId, Identifier overlayId, C selfView, 
             List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        super(eventId, selfView, gradientNeighbours);
+        super(eventId, overlayId, selfView, gradientNeighbours);
         this.gradientFingers = gradientFingers;
     }
     
-    public TGradientSample(C selfView, 
+    public TGradientSample(Identifier overlayId, C selfView, 
             List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        this(UUIDIdentifier.randomId(), selfView, gradientNeighbours, gradientFingers);
+        this(UUIDIdentifier.randomId(), overlayId, selfView, gradientNeighbours, gradientFingers);
     }
 
     public List<Container<KAddress, C>> getGradientFingers() {
         return gradientFingers;
+    }
+    
+    @Override
+    public String toString() {
+        return "TGradient<" + overlayId() + ">Sample<" + getId() + ">";
     }
 }

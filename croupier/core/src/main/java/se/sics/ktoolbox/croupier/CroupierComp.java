@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
-import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
@@ -46,13 +45,11 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.croupier.aggregation.CroupierViewHistoryPacket;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewPacket;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewReducer;
 import se.sics.ktoolbox.croupier.aggregation.SelfViewReducer;
 import se.sics.ktoolbox.croupier.aggregation.SelfViewPacket;
-import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
-import se.sics.ktoolbox.croupier.event.CroupierControl;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
 import se.sics.ktoolbox.croupier.behaviour.CroupierBehaviour;
@@ -60,7 +57,6 @@ import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
-import se.sics.ktoolbox.croupier.util.CroupierSpeed;
 import se.sics.ktoolbox.croupier.view.LocalView;
 import se.sics.ktoolbox.util.address.AddressUpdate;
 import se.sics.ktoolbox.util.address.AddressUpdatePort;
@@ -77,50 +73,51 @@ import se.sics.ktoolbox.util.other.AdrContainer;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.update.view.BootstrapView;
-import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.overlays.view.archive.BootstrapView;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierComp extends ComponentDefinition {
-
     // INFO - status, memory statistics 
     // DEBUG - bootstraping, samples 
     // TRACE - protocol messages
     private final static Logger LOG = LoggerFactory.getLogger(CroupierComp.class);
     private String logPrefix = "";
 
+    //****************************CONNECTIONS***********************************
     Negative<CroupierControlPort> croupierControlPort = negative(CroupierControlPort.class);
     Negative<CroupierPort> croupierPort = negative(CroupierPort.class);
     Positive<CroupierPort> bootstrapPort = positive(CroupierPort.class);
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
     Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
-    Positive<ViewUpdatePort> viewUpdate = requires(ViewUpdatePort.class);
-
+    Positive<OverlayViewUpdatePort> viewUpdate = requires(OverlayViewUpdatePort.class);
+    //******************************CONFIG**************************************
     private final SystemKCWrapper systemConfig;
     private final CroupierKCWrapper croupierConfig;
     private final Identifier overlayId;
+    //******************************SELF****************************************
     private CroupierBehaviour behaviour;
-
+    //******************************STATE***************************************
     private final List<NatAwareAddress> bootstrapNodes = new ArrayList<>();
     private final LocalView publicView;
     private final LocalView privateView;
-    private CompTracker compTracker;
-
+    //*******************************AUX****************************************
     private Pair<UUID, Long> shuffleCycle = Pair.with(null, 0l);
     private UUID shuffleTid;
+    //*****************************TRACKING*************************************
+    private CompTracker compTracker;
 
-    public CroupierComp(CroupierInit init) {
+    public CroupierComp(Init init) {
         systemConfig = new SystemKCWrapper(config());
         croupierConfig = new CroupierKCWrapper(config());
         overlayId = init.overlayId;
-        logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initiating...", logPrefix);
 
-        behaviour = new CroupierObserver(init.selfAdr);
+        behaviour = new CroupierObserver();
         publicView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
         privateView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
 
@@ -135,6 +132,35 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
         subscribe(handleShuffleTimeout, timer);
+    }
+
+    private boolean connected() {
+        if (bootstrapNodes.isEmpty() && publicView.isEmpty() && privateView.isEmpty())  {
+            LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
+            //TODO Alex Disconnected -  legacy code
+            trigger(new CroupierDisconnected(overlayId), croupierControlPort);
+            return false;
+        }
+        return true;
+    }
+    
+    private boolean ready() {
+        if (!behaviour.getView().isPresent()) {
+            LOG.info("{}no self view", logPrefix);
+            return false;
+        }
+        if (behaviour.getSelf() == null) {
+            LOG.warn("{}no self address", logPrefix);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean canShuffle() {
+        if (!ready() || !connected()) {
+            return false;
+        }
+        return true;
     }
 
     //***************************STATE TRACKING*********************************
@@ -177,8 +203,7 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
             schedulePeriodicShuffle(croupierConfig.shufflePeriod);
-//            trigger(new AddressUpdate.Request(UUIDIdentifier.randomId()), addressUpdate);
-//            trigger(new OverlayViewUpdate.Request(UUIDIdentifier.randomId()), viewUpdate);
+            trigger(new AddressUpdate.Request(), addressUpdate);
             compTracker.start();
         }
     };
@@ -188,9 +213,7 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(AddressUpdate.Indication update) {
             LOG.debug("{}update self address:{}", new Object[]{logPrefix, update.localAddress});
             behaviour = behaviour.processAddress(update);
-            if (shuffleCycle == null) {
-                schedulePeriodicShuffle(croupierConfig.shufflePeriod);
-            }
+            logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         }
     };
 
@@ -229,26 +252,39 @@ public class CroupierComp extends ComponentDefinition {
             }
         }
     };
+
     //**************************************************************************
+
+    private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
+        DecoratedHeader requestHeader
+                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
+        CroupierShuffle.Request requestContent
+                = new CroupierShuffle.Request(overlayId, behaviour.getView(), publicSample, privateSample);
+        BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
+        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, requestContent, request.getDestination()});
+        trigger(request, network);
+    }
+
+    private void sendShuffleResponse(BasicContentMsg<?, ?, CroupierShuffle.Request> req, Map publicSample, Map privateSample) {
+        CroupierShuffle.Response responseContent = req.getContent().answer(behaviour.getView(), publicSample, privateSample);
+        BasicContentMsg response = req.answer(responseContent);
+        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
+        trigger(response, network);
+    }
     Handler<ShuffleCycle> handleShuffleCycle = new Handler<ShuffleCycle>() {
         @Override
         public void handle(ShuffleCycle event) {
             LOG.trace("{}{}", logPrefix, event);
-
-            publishSample();
-            if (connected()) {
-                incrementAges();
-                NatAwareAddress shufflePartner = selectPeerToShuffleWith();
-                Map publicSample = publicView.initiatorSample(shufflePartner);
-                Map privateSample = privateView.initiatorSample(shufflePartner);
-                sendShuffleRequest(shufflePartner, publicSample, privateSample);
-                scheduleShuffleTimeout(shufflePartner);
-            } else {
-                LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
-                //TODO Alex Disconnected -  legacy code
-                trigger(new CroupierDisconnected(overlayId), croupierControlPort);
-                trigger(new CroupierControl(overlayId, CroupierSpeed.FAST), croupierControlPort);
+            if (!canShuffle()) {
+                return;
             }
+            publishSample();
+            incrementAges();
+            NatAwareAddress shufflePartner = selectPeerToShuffleWith();
+            Map publicSample = publicView.initiatorSample(shufflePartner);
+            Map privateSample = privateView.initiatorSample(shufflePartner);
+            sendShuffleRequest(shufflePartner, publicSample, privateSample);
+            scheduleShuffleTimeout(shufflePartner);
         }
     };
 
@@ -259,6 +295,13 @@ public class CroupierComp extends ComponentDefinition {
                 public void handle(CroupierShuffle.Request content, BasicContentMsg<NatAwareAddress, DecoratedHeader<NatAwareAddress>, CroupierShuffle.Request> container) {
                     NatAwareAddress shufflePartner = container.getSource();
                     LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, shufflePartner});
+                    if (!ready()) {
+                        return;
+                    }
+                    if (behaviour.getSelf().getId().equals(shufflePartner.getId())) {
+                        LOG.error("{} Tried to shuffle with myself", logPrefix);
+                        throw new RuntimeException("tried to shuffle with myself");
+                    }
                     Map publicSample = publicView.receiverSample(shufflePartner);
                     Map privateSample = privateView.receiverSample(shufflePartner);
                     sendShuffleResponse(container, publicSample, privateSample);
@@ -305,24 +348,6 @@ public class CroupierComp extends ComponentDefinition {
         }
     };
 
-    private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
-        DecoratedHeader requestHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
-        CroupierShuffle.Request requestContent
-                = new CroupierShuffle.Request(UUIDIdentifier.randomId(), behaviour.getView(), publicSample, privateSample);
-        BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
-        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, requestContent, request.getDestination()});
-        trigger(request, network);
-    }
-
-    private void sendShuffleResponse(BasicContentMsg<?, ?, CroupierShuffle.Request> req, Map publicSample, Map privateSample) {
-        CroupierShuffle.Response responseContent
-                = new CroupierShuffle.Response(req.getContent().id, behaviour.getView(), publicSample, privateSample);
-        BasicContentMsg response = req.answer(responseContent);
-        LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, responseContent, response.getDestination()});
-        trigger(response, network);
-    }
-
     private void retainSamples(NatAwareAddress partnerAdr, Optional<View> partnerView,
             Map publicSample, Map privateSample) {
         Triplet<NatAwareAddress, View, Boolean> retainPublic;
@@ -339,7 +364,7 @@ public class CroupierComp extends ComponentDefinition {
                 retainPrivate = Triplet.with(partnerAdr, partnerView.get(), true);
             }
         }
-        if(overlayId.equals(new IntIdentifier(48833153))) {
+        if (overlayId.equals(new IntIdentifier(48833153))) {
             System.out.println(1);
         }
         publicView.selectToKeep(behaviour.getSelf(), retainPublic, publicSample);
@@ -347,10 +372,6 @@ public class CroupierComp extends ComponentDefinition {
     }
 
     //**************************************************************************
-    private boolean connected() {
-        return !bootstrapNodes.isEmpty() || !publicView.isEmpty() || !privateView.isEmpty();
-    }
-
     private List<NatAwareAddress> copyCleanSelf(List<NatAwareAddress> addresses) {
         List<NatAwareAddress> result = new ArrayList<>();
         Iterator<NatAwareAddress> it = addresses.iterator();
@@ -382,7 +403,7 @@ public class CroupierComp extends ComponentDefinition {
     }
 
     private void publishSample() {
-        CroupierSample publishedSample = new CroupierSample(UUIDIdentifier.randomId(), overlayId,
+        CroupierSample publishedSample = new CroupierSample(overlayId,
                 publicView.publish(), privateView.publish());
         LOG.debug("{}publishing public nodes:{}", new Object[]{logPrefix, publishedSample.publicSample});
         LOG.debug("{}publishing private nodes:{}", new Object[]{logPrefix, publishedSample.privateSample});
@@ -390,14 +411,12 @@ public class CroupierComp extends ComponentDefinition {
         compTracker.updateState(new CroupierViewPacket(publishedSample));
     }
 
-    public static class CroupierInit extends Init<CroupierComp> {
+    public static class Init extends se.sics.kompics.Init<CroupierComp> {
 
         public final Identifier overlayId;
-        public final NatAwareAddress selfAdr;
 
-        public CroupierInit(Identifier overlayId, KAddress selfAdr) {
+        public Init(Identifier overlayId) {
             this.overlayId = overlayId;
-            this.selfAdr = (NatAwareAddress) selfAdr;
         }
     }
 
@@ -426,7 +445,7 @@ public class CroupierComp extends ComponentDefinition {
         shuffleCycle.setAt0(null);
     }
 
-    private static class ShuffleCycle extends Timeout implements CroupierEvent {
+    private class ShuffleCycle extends Timeout implements CroupierEvent {
 
         final long period;
 
@@ -437,12 +456,17 @@ public class CroupierComp extends ComponentDefinition {
 
         @Override
         public String toString() {
-            return "SHUFFLE_CYCLE<" + getTimeoutId() + ">";
+            return "Croupier<" + overlayId() + ">ShuffleCycle<" + getId() + ">";
         }
 
         @Override
         public Identifier getId() {
             return new UUIDIdentifier(getTimeoutId());
+        }
+
+        @Override
+        public Identifier overlayId() {
+            return overlayId;
         }
     }
 
@@ -467,7 +491,7 @@ public class CroupierComp extends ComponentDefinition {
 
     }
 
-    private static class ShuffleTimeout extends Timeout implements CroupierEvent {
+    private class ShuffleTimeout extends Timeout implements CroupierEvent {
 
         final NatAwareAddress dest;
 
@@ -478,12 +502,17 @@ public class CroupierComp extends ComponentDefinition {
 
         @Override
         public String toString() {
-            return "SHUFFLE_TIMEOUT<" + getTimeoutId() + ">";
+            return "Croupier<" + overlayId() + ">ShuffleTimeout<" + getId() + ">";
         }
 
         @Override
         public Identifier getId() {
             return new UUIDIdentifier(getTimeoutId());
+        }
+
+        @Override
+        public Identifier overlayId() {
+            return overlayId;
         }
     }
 }

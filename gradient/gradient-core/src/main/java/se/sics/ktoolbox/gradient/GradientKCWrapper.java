@@ -36,12 +36,10 @@ public class GradientKCWrapper {
     public final double softMaxTemp;
     public final int oldThreshold;
     
-    public final Identifier overlayId;
-    
     public final AggregationLevel gradientAggLevel;
     public final long gradientAggPeriod;
 
-    public GradientKCWrapper(Config configCore, Identifier overlayId) {
+    public GradientKCWrapper(Config configCore) {
         this.configCore = configCore;
         viewSize = KConfigHelper.read(this.configCore, GradientKConfig.viewSize);
         shuffleSize = KConfigHelper.read(this.configCore, GradientKConfig.shuffleSize);
@@ -49,7 +47,6 @@ public class GradientKCWrapper {
         shuffleTimeout = KConfigHelper.read(this.configCore, GradientKConfig.shuffleTimeout);
         softMaxTemp = KConfigHelper.read(this.configCore, GradientKConfig.softMaxTemp);
         oldThreshold = KConfigHelper.read(this.configCore, GradientKConfig.oldThreshold);
-        this.overlayId = overlayId;
         
         gradientAggLevel = KConfigHelper.read(configCore, GradientKConfig.aggLevel);
         gradientAggPeriod = KConfigHelper.read(configCore, GradientKConfig.aggPeriod);

@@ -23,11 +23,13 @@ import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.Map;
 import org.javatuples.Quartet;
+import org.javatuples.Quintet;
+import org.javatuples.Sextet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -50,7 +52,8 @@ public class CroupierShuffleSerializer {
         @Override
         public void toBinary(Object o, ByteBuf buf) {
             CroupierShuffle.Basic obj = (CroupierShuffle.Basic) o;
-            Serializers.toBinary(obj.id, buf);
+            Serializers.toBinary(obj.eventId, buf);
+            Serializers.toBinary(obj.overlayId, buf);
 
             if(obj.selfView.isPresent()) {
                 buf.writeBoolean(true);
@@ -69,8 +72,9 @@ public class CroupierShuffleSerializer {
             }
         }
 
-        public Quartet<Identifier, Optional<View>, Map, Map> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
-            Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
+        public Quintet<Identifier, Identifier, Optional<View>, Map, Map> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
+            Identifier eventId = (Identifier)Serializers.fromBinary(buf, hint);
+            Identifier overlayId = (Identifier)Serializers.fromBinary(buf, hint);
             
             Optional<View> selfView;
             if(buf.readBoolean()) {
@@ -91,8 +95,7 @@ public class CroupierShuffleSerializer {
                 CroupierContainer cc = (CroupierContainer) Serializers.lookupSerializer(CroupierContainer.class).fromBinary(buf, hint);
                 privateNodes.put(cc.getSource().getId(), cc);
             }
-
-            return Quartet.with(msgId, selfView, publicNodes, privateNodes);
+            return Quintet.with(eventId, overlayId, selfView, publicNodes, privateNodes);
         }
     }
 
@@ -104,8 +107,9 @@ public class CroupierShuffleSerializer {
 
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Quartet<Identifier, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
-            return new CroupierShuffle.Request(contents.getValue0(), contents.getValue1(), contents.getValue2(), contents.getValue3());
+            Quintet<Identifier, Identifier, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
+            return new CroupierShuffle.Request(contents.getValue0(), contents.getValue1(), 
+                    contents.getValue2(), contents.getValue3(), contents.getValue4());
         }
     }
 
@@ -117,8 +121,9 @@ public class CroupierShuffleSerializer {
 
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Quartet<Identifier, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
-            return new CroupierShuffle.Response(contents.getValue0(), contents.getValue1(), contents.getValue2(), contents.getValue3());
+            Quintet<Identifier, Identifier, Optional<View>, Map, Map> contents = fromBinaryBase(buf, hint);
+            return new CroupierShuffle.Response(contents.getValue0(), contents.getValue1(), 
+                    contents.getValue2(), contents.getValue3(), contents.getValue4());
         }
     }
 }

@@ -20,6 +20,7 @@
 package se.sics.ktoolbox.croupier;
 
 import se.sics.kompics.PortType;
+import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 
 /**
@@ -28,5 +29,9 @@ import se.sics.ktoolbox.croupier.event.CroupierSample;
 public class CroupierPort extends PortType {
     {
         indication(CroupierSample.class);
+        //temporary placeholder for requests
+        //due to correct selector placement when doing connections
+        //one place of importance - overlay-manager module
+        request(CroupierEvent.class);
     }
 }

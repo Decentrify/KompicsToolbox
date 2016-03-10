@@ -20,7 +20,7 @@ package se.sics.ktoolbox.croupier.util;
 
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.other.AgingAdrContainer;
-import se.sics.ktoolbox.util.update.view.View;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

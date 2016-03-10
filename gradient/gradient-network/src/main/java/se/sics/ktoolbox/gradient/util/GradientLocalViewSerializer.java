@@ -23,6 +23,7 @@ import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -49,7 +50,7 @@ public class GradientLocalViewSerializer implements Serializer {
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
         int rank = buf.readInt();
-        Object appView = Serializers.fromBinary(buf, hint);
+        View appView = (View)Serializers.fromBinary(buf, hint);
         return new GradientLocalView(appView, rank);
     }
 }

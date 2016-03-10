@@ -28,12 +28,10 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
-import se.sics.ktoolbox.gradient.GradientPort;
-import se.sics.ktoolbox.gradient.event.GradientSample;
 import se.sics.ktoolbox.overlaymngr.util.ServiceView;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.update.view.OverlayViewUpdate;
-import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
  *
@@ -45,10 +43,12 @@ public class TestCroupierComp extends ComponentDefinition {
     private String logPrefix = " ";
 
     private final Positive croupierPort = requires(CroupierPort.class);
-    private final Negative viewUpdatePort = provides(ViewUpdatePort.class);
+    private final Negative viewUpdatePort = provides(OverlayViewUpdatePort.class);
     
-
+    private final Identifier croupierId;
+    
     public TestCroupierComp(TestCroupierInit init) {
+        croupierId = init.croupierId;
         
         subscribe(handleStart, control);
         subscribe(handleCroupierSample, croupierPort);
@@ -57,21 +57,27 @@ public class TestCroupierComp extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            trigger(new OverlayViewUpdate.Indication(false, new ServiceView()), viewUpdatePort);
+            OverlayViewUpdate.Indication ovu = new OverlayViewUpdate.Indication(croupierId, false, new ServiceView());
+            LOG.info("{}sending:{}", new Object[]{logPrefix, ovu});
+            trigger(ovu, viewUpdatePort);
         }
     };
 
-    Handler handleCroupierSample = new Handler<CroupierSample>() {
+   Handler handleCroupierSample = new Handler<CroupierSample>() {
         @Override
-        public void handle(CroupierSample event) {
-            LOG.info("{}- {}public sample:{}", new Object[]{logPrefix, event.id, event.publicSample.keySet()});
-            LOG.info("{}- {}private sample:{}", new Object[]{logPrefix, event.id, event.privateSample.keySet()});
+        public void handle(CroupierSample sample) {
+            LOG.info("{}{}", new Object[]{logPrefix, sample});
+            LOG.info("{}public sample size:{}, private sample size:{}", 
+                    new Object[]{logPrefix, sample.publicSample.size(), sample.privateSample.size()});
         }
     };
     
     
     public static class TestCroupierInit extends Init<TestCroupierComp> {
-        public TestCroupierInit() {
+        public final Identifier croupierId;
+        
+        public TestCroupierInit(Identifier croupierId) {
+            this.croupierId = croupierId;
         }
     }
 }

@@ -21,9 +21,11 @@ package se.sics.ktoolbox.gradient.msg;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import org.javatuples.Triplet;
+import org.javatuples.Quartet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
@@ -48,29 +50,30 @@ public class GradientShuffleSerializer {
         @Override
         public void toBinary(Object o, ByteBuf buf) {
             GradientShuffle.Basic obj = (GradientShuffle.Basic)o;
-            Serializers.toBinary(obj.id, buf);
-            Serializers.lookupSerializer(GradientContainer.class).toBinary(obj.selfGC, buf);
+            Serializers.toBinary(obj.getId(), buf);
+            Serializers.toBinary(obj.overlayId(), buf);
             
-            buf.writeByte(obj.exchangeNodes.size());
-            for(GradientContainer cc : obj.exchangeNodes) {
+            Serializers.lookupSerializer(GradientContainer.class).toBinary(obj.selfGC, buf);
+            buf.writeByte(obj.exchangeGC.size());
+            for(GradientContainer cc : obj.exchangeGC) {
                 Serializers.lookupSerializer(GradientContainer.class).toBinary(cc, buf);
             }
         }
 
-        public Triplet<Identifier, GradientContainer, Set<GradientContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
-            Identifier msgId = (Identifier)Serializers.fromBinary(buf, hint);
+        public Quartet<Identifier, Identifier, GradientContainer, List<GradientContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
+            Identifier eventId = (Identifier)Serializers.fromBinary(buf, hint);
+            Identifier overlayId = (Identifier)Serializers.fromBinary(buf, hint);
             
             GradientContainer selfGC = (GradientContainer)Serializers.lookupSerializer(GradientContainer.class).fromBinary(buf, hint);
-            
             int exchangedNodesSize = buf.readByte();
-            Set<GradientContainer> exchangedNodes = new HashSet<GradientContainer>(); 
+            List<GradientContainer> exchangedNodes = new ArrayList<>(); 
             while(exchangedNodesSize > 0) {
                 GradientContainer cc = (GradientContainer)Serializers.lookupSerializer(GradientContainer.class).fromBinary(buf, hint);
                 exchangedNodes.add(cc);
                 exchangedNodesSize--;
             }
             
-            return Triplet.with(msgId, selfGC, exchangedNodes);
+            return Quartet.with(eventId, overlayId, selfGC, exchangedNodes);
         }
     }
     
@@ -82,8 +85,9 @@ public class GradientShuffleSerializer {
         
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Triplet<Identifier, GradientContainer, Set<GradientContainer>> contents = fromBinaryBase(buf, hint);
-            return new GradientShuffle.Request(contents.getValue0(), contents.getValue1(), contents.getValue2());
+            Quartet<Identifier, Identifier, GradientContainer, List<GradientContainer>> contents = fromBinaryBase(buf, hint);
+            return new GradientShuffle.Request(contents.getValue0(), contents.getValue1(), 
+                    contents.getValue2(), contents.getValue3());
         }
     }
     
@@ -95,8 +99,9 @@ public class GradientShuffleSerializer {
         
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Triplet<Identifier, GradientContainer, Set<GradientContainer>> contents = fromBinaryBase(buf, hint);
-            return new GradientShuffle.Response(contents.getValue0(), contents.getValue1(), contents.getValue2());
+            Quartet<Identifier, Identifier, GradientContainer, List<GradientContainer>> contents = fromBinaryBase(buf, hint);
+            return new GradientShuffle.Response(contents.getValue0(), contents.getValue1(), 
+                    contents.getValue2(), contents.getValue3());
         }
     }
 }

@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.util.other;
 
 import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

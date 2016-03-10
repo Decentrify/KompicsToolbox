@@ -16,13 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.update.view;
+package se.sics.ktoolbox.overlaymngr;
 
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface BootstrapView extends View {
-    public boolean memberOf(Identifier overlay);
+public class OverlayRegistry {
+    public static final Set<ByteBuffer> reservedOverlayPrefixes = new HashSet<>();
+
+    public static boolean registerPrefix(byte prefix) {
+        if (reservedOverlayPrefixes.contains(ByteBuffer.wrap(new byte[]{prefix}))) {
+            return false;
+        }
+        reservedOverlayPrefixes.add(ByteBuffer.wrap(new byte[]{prefix}));
+        return true;
+    }
 }

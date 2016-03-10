@@ -19,9 +19,8 @@
 package se.sics.ktoolbox.overlaymngr.core;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Channel;
@@ -29,7 +28,7 @@ import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
-import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
@@ -44,20 +43,24 @@ import se.sics.ktoolbox.cc.heartbeat.event.status.CCHeartbeatReady;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrComp;
-import se.sics.ktoolbox.overlaymngr.OverlayMngrComp.OverlayMngrInit;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrPort;
 import se.sics.ktoolbox.overlaymngr.core.TestCroupierComp.TestCroupierInit;
 import se.sics.ktoolbox.overlaymngr.core.TestGradientComp.TestGradientInit;
 import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
 import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
+import se.sics.ktoolbox.util.address.AddressUpdate;
+import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.identifier.OverlayIdHelper;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
+import se.sics.ktoolbox.util.network.ports.One2NChannel;
+import se.sics.ktoolbox.util.overlays.OverlayEventSelector;
+import se.sics.ktoolbox.util.overlays.OverlayIdExtractor;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
-import se.sics.ktoolbox.util.update.view.ViewUpdatePort;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -67,30 +70,43 @@ public class OMngrHostComp extends ComponentDefinition {
     private static final Logger LOG = LoggerFactory.getLogger(OMngrHostComp.class);
     private String logPrefix = " ";
 
-    private final Positive timerPort = requires(Timer.class);
-    private final Positive networkPort = requires(Network.class);
-    private final Positive inStatusPort = requires(StatusPort.class);
-    private final Positive omngrPort = requires(OverlayMngrPort.class);
-
+    //***************************CONNECTIONS************************************
+    //provided external connections - CONNECT to
+    private final Positive<Timer> timerPort = requires(Timer.class);
+    private final Positive<Network> networkPort = requires(Network.class);
+    private final Positive<StatusPort> inStatusPort = requires(StatusPort.class);
+    //providing external connections - CONNECT to
+    private final Negative<AddressUpdatePort> addressUpdatePort = provides(AddressUpdatePort.class);
+    //for internal use - DO NOT connect to
+    private final Positive<OverlayMngrPort> omngrPort = requires(OverlayMngrPort.class);
+    private One2NChannel<CroupierPort> croupierEnd;
+    private One2NChannel<GradientPort> gradientEnd;
+    private One2NChannel<OverlayViewUpdatePort> viewUpdateEnd;
+    //***********************************CONFIG*********************************
     private final OMngrHostKCWrapper hostConfig;
-    private NatAwareAddress self;
+    private NatAwareAddress selfAdr;
+    private final byte owner = 0x10;
+    //*******************************CLEANUP************************************
+    private Pair<Component, Channel[]> caracalClient;
+    private Pair<Component, Channel[]> ccHeartbeat;
+    private Pair<Component, Channel[]> overlayMngr;
+    private Pair<Component, Channel[]> testCroupier1, testCroupier2;
+    private Pair<Component, Channel[]> testGradient1, testGradient2;
+    //*********************************AUX**************************************
+    private OMngrCroupier.ConnectRequest cReq1, cReq2;
+    private OMngrTGradient.ConnectRequest gReq1, gReq2;
 
-    private Component caracalClientComp;
-    private Component ccHeartbeatComp;
-    private Component overlayMngrComp;
-    private Component testCroupierComp;
-    private Component testGradientComp;
-
-    public OMngrHostComp(OMngrHostInit init) {
+    public OMngrHostComp(Init init) {
         this.hostConfig = new OMngrHostKCWrapper(config());
-        this.self = NatAwareAddressImpl.open(hostConfig.self);
-        this.logPrefix = "<id:" + self.getId().toString() + "> ";
+        this.selfAdr = NatAwareAddressImpl.open(hostConfig.self);
+        this.logPrefix = "<id:" + selfAdr.getId().toString() + "> ";
         LOG.info("{}initiating...", logPrefix);
 
         connectCaracalClient();
         connectCCHeartbeat();
 
         subscribe(handleStart, control);
+        subscribe(handleAddressUpdateReq, addressUpdatePort);
         subscribe(handleCaracalReady, inStatusPort);
         subscribe(handleCaracalDisconnect, inStatusPort);
         subscribe(handleHeartbeatReady, inStatusPort);
@@ -99,55 +115,89 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectCaracalClient() {
-        caracalClientComp = create(CCBootstrapComp.class, new CCBootstrapComp.CCBootstrapInit(self));
-        connect(caracalClientComp.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
-        connect(caracalClientComp.getNegative(Network.class), networkPort, Channel.TWO_WAY);
-        connect(caracalClientComp.getPositive(StatusPort.class), inStatusPort.getPair(), Channel.TWO_WAY);
+        Component ccComp = create(CCBootstrapComp.class, new CCBootstrapComp.CCBootstrapInit(selfAdr));
+        Channel[] ccChannels = new Channel[3];
+        ccChannels[0] = connect(ccComp.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
+        ccChannels[1] = connect(ccComp.getNegative(Network.class), networkPort, Channel.TWO_WAY);
+        ccChannels[2] = connect(ccComp.getPositive(StatusPort.class), inStatusPort.getPair(), Channel.TWO_WAY);
+        caracalClient = Pair.with(ccComp, ccChannels);
     }
 
     private void connectCCHeartbeat() {
-        ccHeartbeatComp = create(CCHeartbeatComp.class, new CCHeartbeatComp.CCHeartbeatInit(self));
-        connect(ccHeartbeatComp.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
-        connect(ccHeartbeatComp.getNegative(CCOperationPort.class), caracalClientComp.getPositive(CCOperationPort.class), Channel.TWO_WAY);
-        connect(ccHeartbeatComp.getNegative(StatusPort.class), caracalClientComp.getPositive(StatusPort.class), Channel.TWO_WAY);
-        connect(ccHeartbeatComp.getPositive(StatusPort.class), inStatusPort.getPair(), Channel.TWO_WAY);
+        Component ccHComp = create(CCHeartbeatComp.class, new CCHeartbeatComp.CCHeartbeatInit(selfAdr));
+        Channel[] ccHChannels = new Channel[4];
+        ccHChannels[0] = connect(ccHComp.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
+        ccHChannels[1] = connect(ccHComp.getNegative(CCOperationPort.class), caracalClient.getValue0().getPositive(CCOperationPort.class), Channel.TWO_WAY);
+        ccHChannels[2] = connect(ccHComp.getNegative(StatusPort.class), caracalClient.getValue0().getPositive(StatusPort.class), Channel.TWO_WAY);
+        ccHChannels[3] = connect(ccHComp.getPositive(StatusPort.class), inStatusPort.getPair(), Channel.TWO_WAY);
+        ccHeartbeat = Pair.with(ccHComp, ccHChannels);
     }
 
     private void connectOverlayMngr() {
-        List<NatAwareAddress> bootstrap = new ArrayList<>();
-        for (BasicAddress adr : hostConfig.bootstrap) {
-            bootstrap.add(NatAwareAddressImpl.open(adr));
-        }
-        overlayMngrComp = create(OverlayMngrComp.class, new OverlayMngrInit(self, bootstrap));
-        connect(overlayMngrComp.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
-        connect(overlayMngrComp.getNegative(Network.class), networkPort, Channel.TWO_WAY);
-        connect(overlayMngrComp.getNegative(CCHeartbeatPort.class), ccHeartbeatComp.getPositive(CCHeartbeatPort.class), Channel.TWO_WAY);
-        connect(overlayMngrComp.getPositive(OverlayMngrPort.class), omngrPort.getPair(), Channel.TWO_WAY);
-    }
-    
-    private void connectTestCroupierComp() {
-        Identifier croupierId = new IntIdentifier(1);
-        testCroupierComp = create(TestCroupierComp.class, new TestCroupierInit());
-        OMngrCroupier.ConnectRequestBuilder reqBuilder = new OMngrCroupier.ConnectRequestBuilder();
-        reqBuilder.setIdentifiers(croupierId);
-        reqBuilder.setupCroupier(false);
-        reqBuilder.connectTo(testCroupierComp.getNegative(CroupierPort.class), testCroupierComp.getPositive(ViewUpdatePort.class));
-        trigger(reqBuilder.build(), omngrPort);
-    }
-    
-    private void connectTestGradientComp() {
-        Identifier croupierId = new IntIdentifier(2);
-        Identifier gradientId = new IntIdentifier(3);
-        Identifier tgradientId = new IntIdentifier(4);
-        Random rand = new SecureRandom();
-        testGradientComp = create(TestGradientComp.class, new TestGradientInit(rand.nextInt()));
-        OMngrTGradient.ConnectRequestBuilder reqBuilder = new OMngrTGradient.ConnectRequestBuilder();
-        reqBuilder.setIdentifiers(croupierId, gradientId, tgradientId);
-        reqBuilder.setupGradient(new IdComparator(), new IdGradientFilter());
-        reqBuilder.connectTo(testGradientComp.getNegative(GradientPort.class), testGradientComp.getPositive(ViewUpdatePort.class));
-        trigger(reqBuilder.build(), omngrPort);
+        Component oMngrComp = create(OverlayMngrComp.class, new OverlayMngrComp.Init(
+                new OverlayMngrComp.ExtPort(timerPort, networkPort, addressUpdatePort.getPair(),
+                        ccHeartbeat.getValue0().getPositive(CCHeartbeatPort.class))));
+        Channel[] oMngrChannels = new Channel[1];
+        oMngrChannels[0] = connect(oMngrComp.getPositive(OverlayMngrPort.class), omngrPort.getPair(), Channel.TWO_WAY);
+        croupierEnd = One2NChannel.getChannel(oMngrComp.getPositive(CroupierPort.class), new OverlayIdExtractor());
+        gradientEnd = One2NChannel.getChannel(oMngrComp.getPositive(GradientPort.class), new OverlayIdExtractor());
+        viewUpdateEnd = One2NChannel.getChannel(oMngrComp.getNegative(OverlayViewUpdatePort.class), new OverlayIdExtractor());
+        overlayMngr = Pair.with(oMngrComp, oMngrChannels);
     }
 
+    private void connectTestCroupier1Comp() {
+        Identifier croupierId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.CROUPIER, new byte[]{0, 0, 1});
+        Component tc1Comp = create(TestCroupierComp.class, new TestCroupierInit(croupierId));
+        Channel[] tc1Channels = new Channel[0];
+        croupierEnd.addChannel(croupierId, tc1Comp.getNegative(CroupierPort.class));
+        viewUpdateEnd.addChannel(croupierId, tc1Comp.getPositive(OverlayViewUpdatePort.class));
+        testCroupier1 = Pair.with(tc1Comp, tc1Channels);
+        cReq1 = new OMngrCroupier.ConnectRequest(croupierId, false);
+        trigger(cReq1, omngrPort);
+    }
+
+    private void connectTestCroupier2Comp() {
+        Identifier croupierId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.CROUPIER, new byte[]{0, 0, 2});
+        Component tc2Comp = create(TestCroupierComp.class, new TestCroupierInit(croupierId));
+        Channel[] tc2Channels = new Channel[0];
+        croupierEnd.addChannel(croupierId, tc2Comp.getNegative(CroupierPort.class));
+        viewUpdateEnd.addChannel(croupierId, tc2Comp.getPositive(OverlayViewUpdatePort.class));
+        testCroupier2 = Pair.with(tc2Comp, tc2Channels);
+        cReq2 = new OMngrCroupier.ConnectRequest(croupierId, false);
+        trigger(cReq2, omngrPort);
+    }
+
+    private void connectTestGradient1Comp() {
+        Identifier tgradientId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.TGRADIENT, new byte[]{0, 0, 3});
+        Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) tgradientId, OverlayIdHelper.Type.CROUPIER);
+
+        Random rand = new SecureRandom();
+        Component tg1Comp = create(TestGradientComp.class, new TestGradientInit(rand.nextInt(), tgradientId));
+        Channel[] tg1Channels = new Channel[0];
+        croupierEnd.addChannel(croupierId, tg1Comp.getNegative(CroupierPort.class));
+        gradientEnd.addChannel(tgradientId, tg1Comp.getNegative(GradientPort.class));
+        viewUpdateEnd.addChannel(tgradientId, tg1Comp.getPositive(OverlayViewUpdatePort.class));
+        testGradient1 = Pair.with(tg1Comp, tg1Channels);
+        gReq1 = new OMngrTGradient.ConnectRequest(tgradientId, new IdComparator(), new IdGradientFilter());
+        trigger(gReq1, omngrPort);
+    }
+
+    private void connectTestGradient2Comp() {
+        Identifier tgradientId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.TGRADIENT, new byte[]{0, 0, 4});
+        Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) tgradientId, OverlayIdHelper.Type.CROUPIER);
+
+        Random rand = new SecureRandom();
+        Component tg2Comp = create(TestGradientComp.class, new TestGradientInit(rand.nextInt(), tgradientId));
+        Channel[] tg2Channels = new Channel[0];
+        croupierEnd.addChannel(croupierId, tg2Comp.getNegative(CroupierPort.class));
+        gradientEnd.addChannel(tgradientId, tg2Comp.getNegative(GradientPort.class));
+        viewUpdateEnd.addChannel(tgradientId, tg2Comp.getPositive(OverlayViewUpdatePort.class));
+        testGradient2 = Pair.with(tg2Comp, tg2Channels);
+        gReq2 = new OMngrTGradient.ConnectRequest(tgradientId, new IdComparator(), new IdGradientFilter());
+        trigger(gReq2, omngrPort);
+    }
+
+    //********************************CONTROL***********************************
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
@@ -155,6 +205,15 @@ public class OMngrHostComp extends ComponentDefinition {
         }
     };
 
+    Handler handleAddressUpdateReq = new Handler<AddressUpdate.Request>() {
+        @Override
+        public void handle(AddressUpdate.Request req) {
+            LOG.info("{}adr req", logPrefix);
+            answer(req, req.answer(selfAdr));
+        }
+    };
+
+    //**************************************************************************
     ClassMatchedHandler handleCaracalReady
             = new ClassMatchedHandler<CCBootstrapReady, Status.Internal<CCBootstrapReady>>() {
 
@@ -170,9 +229,11 @@ public class OMngrHostComp extends ComponentDefinition {
                 public void handle(CCHeartbeatReady content, Status.Internal<CCHeartbeatReady> container) {
                     LOG.info("{}heartbeating ready", logPrefix);
                     connectOverlayMngr();
-                    trigger(Start.event, overlayMngrComp.control());
-                    connectTestCroupierComp();
-                    connectTestGradientComp();
+                    trigger(Start.event, overlayMngr.getValue0().control());
+                    connectTestCroupier1Comp();
+                    connectTestCroupier2Comp();
+                    connectTestGradient1Comp();
+                    connectTestGradient2Comp();
                 }
             };
 
@@ -187,23 +248,33 @@ public class OMngrHostComp extends ComponentDefinition {
                     LOG.warn("{}caracal client disconnected", logPrefix);
                 }
             };
-    
+
     Handler handleCroupierConnected = new Handler<OMngrCroupier.ConnectResponse>() {
         @Override
-        public void handle(OMngrCroupier.ConnectResponse event) {
-            LOG.info("{}croupier:{} connected", new Object[]{logPrefix, event.req.croupierId});
-            trigger(Start.event, testCroupierComp.control());
-        }
-    };
-    
-    Handler handleGradientConnected = new Handler<OMngrTGradient.ConnectResponse>() {
-        @Override
-        public void handle(OMngrTGradient.ConnectResponse event) {
-            LOG.info("{}gradient:{} connected", new Object[]{logPrefix, event.req.tgradientId});
-            trigger(Start.event, testGradientComp.control());
+        public void handle(OMngrCroupier.ConnectResponse resp) {
+            LOG.info("{}croupier:{} connected", new Object[]{logPrefix, resp.req.croupierId});
+            if (resp.getId().equals(cReq1.getId())) {
+                trigger(Start.event, testCroupier1.getValue0().control());
+            }
+            if (resp.getId().equals(cReq2.getId())) {
+                trigger(Start.event, testCroupier2.getValue0().control());
+            }
         }
     };
 
-    public static class OMngrHostInit extends Init<OMngrHostComp> {
+    Handler handleGradientConnected = new Handler<OMngrTGradient.ConnectResponse>() {
+        @Override
+        public void handle(OMngrTGradient.ConnectResponse resp) {
+            LOG.info("{}gradient:{} connected", new Object[]{logPrefix, resp.req.tgradientId});
+            if (resp.getId().equals(gReq1.getId())) {
+                trigger(Start.event, testGradient1.getValue0().control());
+            }
+            if (resp.getId().equals(gReq2.getId())) {
+                trigger(Start.event, testGradient2.getValue0().control());
+            }
+        }
+    };
+
+    public static class Init extends se.sics.kompics.Init<OMngrHostComp> {
     }
 }
