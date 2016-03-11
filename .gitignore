@@ -185,3 +185,7 @@ netty-test/target/
 /croupier/core/target/
 /croupier/network/target/
 /croupier/example/target/
+/chunk-manager/api/target/
+/net-mngr/api/target/
+/net-mngr/core/target/
+/net-mngr/network/target/

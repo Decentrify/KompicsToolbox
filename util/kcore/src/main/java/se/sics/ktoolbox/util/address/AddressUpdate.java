@@ -56,9 +56,13 @@ public class AddressUpdate {
         public final Identifier eventId;
         public final KAddress localAddress;
         
-        private Indication(Identifier eventId, KAddress localAddress) {
+        public Indication(Identifier eventId, KAddress localAddress) {
             this.eventId = eventId;
             this.localAddress = localAddress;
+        }
+        
+        public Indication(KAddress localAddress) {
+            this(UUIDIdentifier.randomId(), localAddress);
         }
 
         @Override
