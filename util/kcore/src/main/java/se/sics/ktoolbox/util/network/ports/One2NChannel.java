@@ -104,7 +104,13 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
 
     private void forwardTo(KompicsEvent event, int wid, boolean positive) {
-        Identifier overlayId = channelSelector.getValue(event);
+        Identifier overlayId;
+        if(channelSelector.getEventType().isAssignableFrom(event.getClass())) {
+            overlayId = channelSelector.getValue(event);
+        } else {
+            LOG.info("{}no overlay dropping:{}", new Object[]{logPrefix, event});
+            return;
+        }
 
         rwlock.readLock().lock();
         try {

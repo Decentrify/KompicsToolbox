@@ -28,39 +28,40 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Init;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.network.netty.NettyInit;
-import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
 import se.sics.ktoolbox.gradient.GradientSerializerSetup;
-import se.sics.ktoolbox.overlaymngr.core.OMngrHostKCWrapper;
+import se.sics.ktoolbox.netmngr.NetworkMngrComp;
+import se.sics.ktoolbox.netmngr.NetworkMngrSerializerSetup;
 import se.sics.ktoolbox.overlaymngr.core.network.TestSerializerSetup;
+import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OMngrLauncher extends ComponentDefinition {
-
+    
     private static final Logger LOG = LoggerFactory.getLogger(OMngrLauncher.class);
     private String logPrefix = " ";
-
-    private Component timer;
-    private Component network;
-    private Component host;
-
+    
+    private Component timerComp;
+    private Component networkComp;
+    private Component hostComp;
+    
     public OMngrLauncher() {
         LOG.info("initiating...");
-
-        timer = create(JavaTimer.class, Init.NONE);
-        OMngrHostKCWrapper omngrConfig = new OMngrHostKCWrapper(config());
-        network = create(NettyNetwork.class, new NettyInit(omngrConfig.self));
-        host = create(OMngrHostComp.class, new OMngrHostComp.Init());
-        connect(host.getNegative(Timer.class), timer.getPositive(Timer.class), Channel.TWO_WAY);
-        connect(host.getNegative(Network.class), network.getPositive(Network.class), Channel.TWO_WAY);
+        
+        timerComp = create(JavaTimer.class, Init.NONE);
+        NetworkMngrComp.ExtPort netExtPorts = new NetworkMngrComp.ExtPort(timerComp.getPositive(Timer.class));
+        networkComp = create(NetworkMngrComp.class, new NetworkMngrComp.Init(netExtPorts));
+        OMngrHostComp.ExtPort omngrExtPorts = new OMngrHostComp.ExtPort(timerComp.getPositive(Timer.class),
+                networkComp.getPositive(Network.class), networkComp.getPositive(AddressUpdatePort.class)); 
+        hostComp = create(OMngrHostComp.class, new OMngrHostComp.Init(omngrExtPorts));
+        connect(hostComp.getNegative(AddressUpdatePort.class), networkComp.getPositive(AddressUpdatePort.class), Channel.TWO_WAY);
     }
-
+    
     private static void systemSetup() {
         //serializers setup
         int serializerId = 128;
@@ -69,8 +70,9 @@ public class OMngrLauncher extends ComponentDefinition {
         serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
         serializerId = GradientSerializerSetup.registerSerializers(serializerId);
         serializerId = OMngrSerializerSetup.registerSerializers(serializerId);
+        serializerId = NetworkMngrSerializerSetup.registerSerializers(serializerId);
         serializerId = TestSerializerSetup.registerSerializers(serializerId);
-
+        
         if (serializerId > 255) {
             throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
         }
@@ -78,7 +80,7 @@ public class OMngrLauncher extends ComponentDefinition {
         //hooks setup
         //no hooks needed
     }
-
+    
     public static void main(String[] args) {
         systemSetup();
         start();
@@ -88,14 +90,14 @@ public class OMngrLauncher extends ComponentDefinition {
             throw new RuntimeException(ex.getMessage());
         }
     }
-
+    
     public static void start() {
         if (Kompics.isOn()) {
             Kompics.shutdown();
         }
         Kompics.createAndStart(OMngrLauncher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
     }
-
+    
     public static void stop() {
         Kompics.shutdown();
     }

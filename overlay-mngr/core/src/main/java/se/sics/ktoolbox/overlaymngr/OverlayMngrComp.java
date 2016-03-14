@@ -53,7 +53,7 @@ import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifier.OverlayIdHelper;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
-import se.sics.ktoolbox.util.overlays.OverlayMsgSelector;
+import se.sics.ktoolbox.util.overlays.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
@@ -73,8 +73,9 @@ public class OverlayMngrComp extends ComponentDefinition {
             = One2NChannel.getChannel(provides(GradientPort.class), new EventOverlayIdExtractor());
     private final One2NChannel<OverlayViewUpdatePort> viewUpdateEnd
             = One2NChannel.getChannel(requires(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
-    //externally provided ports - NO connecting - we don't like chaining ports
+     //externally provided ports - NO connecting - we don't like chaining ports
     private final ExtPort extPorts;
+    private final One2NChannel<Network> networkEnd;
     //internal connection helper
     private One2NChannel<CroupierControlPort> bootstrapEnd;
     //***************************CLEANUP PURPOSES*******************************
@@ -96,6 +97,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         LOG.info("{}initiating with seed:{}", logPrefix, systemConfig.seed);
 
         extPorts = init.extPorts;
+        networkEnd = One2NChannel.getChannel(extPorts.networkPort, new MsgOverlayIdExtractor());
 
         connectCroupierBootstrap();
 
@@ -142,12 +144,11 @@ public class OverlayMngrComp extends ComponentDefinition {
             }
 
             Component croupierComp = create(CroupierComp.class, new CroupierComp.Init(req.croupierId));
-            Channel[] croupierChannels = new Channel[3];
+            Channel[] croupierChannels = new Channel[2];
             //provided external ports
-            croupierChannels[0] = connect(croupierComp.getNegative(Network.class), extPorts.networkPort,
-                    new OverlayMsgSelector(req.croupierId, true), Channel.TWO_WAY);
-            croupierChannels[1] = connect(croupierComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-            croupierChannels[2] = connect(croupierComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
+            networkEnd.addChannel(req.croupierId, croupierComp.getNegative(Network.class));
+            croupierChannels[0] = connect(croupierComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
+            croupierChannels[1] = connect(croupierComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
             //providing external ports
             viewUpdateEnd.addChannel(req.croupierId, croupierComp.getNegative(OverlayViewUpdatePort.class));
             croupierEnd.addChannel(req.croupierId, croupierComp.getPositive(CroupierPort.class));
@@ -181,12 +182,11 @@ public class OverlayMngrComp extends ComponentDefinition {
 
             //croupier
             Component croupierComp = create(CroupierComp.class, new CroupierComp.Init(croupierId));
-            Channel[] croupierChannels = new Channel[3];
+            Channel[] croupierChannels = new Channel[2];
             //provided external ports
-            croupierChannels[0] = connect(croupierComp.getNegative(Network.class), extPorts.networkPort,
-                    new OverlayMsgSelector(croupierId, true), Channel.TWO_WAY);
-            croupierChannels[1] = connect(croupierComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-            croupierChannels[2] = connect(croupierComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
+            networkEnd.addChannel(croupierId, croupierComp.getNegative(Network.class));
+            croupierChannels[0] = connect(croupierComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
+            croupierChannels[1] = connect(croupierComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
             //providing external ports
             croupierEnd.addChannel(croupierId, croupierComp.getPositive(CroupierPort.class));
             //control
@@ -199,16 +199,15 @@ public class OverlayMngrComp extends ComponentDefinition {
             //gradient
             Component gradientComp = create(GradientComp.class, new GradientComp.Init(gradientId,
                     req.utilityComparator, req.gradientFilter));
-            Channel[] gradientChannels = new Channel[5];
+            Channel[] gradientChannels = new Channel[4];
             //provided external ports
-            gradientChannels[0] = connect(gradientComp.getNegative(Network.class), extPorts.networkPort,
-                    new OverlayMsgSelector(gradientId, true), Channel.TWO_WAY);
-            gradientChannels[1] = connect(gradientComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-            gradientChannels[2] = connect(gradientComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
+            networkEnd.addChannel(gradientId, gradientComp.getNegative(Network.class));
+            gradientChannels[0] = connect(gradientComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
+            gradientChannels[1] = connect(gradientComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
             //internal
-            gradientChannels[3] = connect(gradientComp.getPositive(OverlayViewUpdatePort.class),
+            gradientChannels[2] = connect(gradientComp.getPositive(OverlayViewUpdatePort.class),
                     croupierComp.getNegative(OverlayViewUpdatePort.class), Channel.TWO_WAY);
-            gradientChannels[4] = connect(gradientComp.getNegative(CroupierPort.class),
+            gradientChannels[3] = connect(gradientComp.getNegative(CroupierPort.class),
                     croupierComp.getPositive(CroupierPort.class), Channel.TWO_WAY);
             //viewUpdate, gradient, rankUpdate connected by tgradinet
             gradientLayers.put(gradientId, Pair.with(gradientComp, gradientChannels));
@@ -216,20 +215,19 @@ public class OverlayMngrComp extends ComponentDefinition {
             //tgradient
             Component tgradientComp = create(TreeGradientComp.class, new TreeGradientComp.Init(
                     req.tgradientId, req.gradientFilter));
-            Channel[] tgradientChannels = new Channel[7];
+            Channel[] tgradientChannels = new Channel[6];
             //provided external ports
-            tgradientChannels[0] = connect(tgradientComp.getNegative(Network.class), extPorts.networkPort,
-                    new OverlayMsgSelector(req.tgradientId, true), Channel.TWO_WAY);
-            tgradientChannels[1] = connect(tgradientComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-            tgradientChannels[2] = connect(tgradientComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
+            networkEnd.addChannel(req.tgradientId, tgradientComp.getNegative(Network.class));
+            tgradientChannels[0] = connect(tgradientComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
+            tgradientChannels[1] = connect(tgradientComp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
             //internal
-            tgradientChannels[3] = connect(tgradientComp.getNegative(CroupierPort.class),
+            tgradientChannels[2] = connect(tgradientComp.getNegative(CroupierPort.class),
                     croupierComp.getPositive(CroupierPort.class), Channel.TWO_WAY);
-            tgradientChannels[4] = connect(tgradientComp.getNegative(GradientPort.class),
+            tgradientChannels[3] = connect(tgradientComp.getNegative(GradientPort.class),
                     gradientComp.getPositive(GradientPort.class), Channel.TWO_WAY);
-            tgradientChannels[5] = connect(tgradientComp.getPositive(OverlayViewUpdatePort.class),
+            tgradientChannels[4] = connect(tgradientComp.getPositive(OverlayViewUpdatePort.class),
                     gradientComp.getNegative(OverlayViewUpdatePort.class), Channel.TWO_WAY);
-            tgradientChannels[6] = connect(tgradientComp.getNegative(RankUpdatePort.class),
+            tgradientChannels[5] = connect(tgradientComp.getNegative(RankUpdatePort.class),
                     gradientComp.getPositive(RankUpdatePort.class), Channel.TWO_WAY);
             //providing external port
             viewUpdateEnd.addChannel(req.tgradientId, tgradientComp.getNegative(OverlayViewUpdatePort.class));

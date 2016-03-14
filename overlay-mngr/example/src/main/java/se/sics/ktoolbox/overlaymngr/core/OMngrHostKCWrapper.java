@@ -29,12 +29,10 @@ import se.sics.ktoolbox.util.network.basic.BasicAddress;
 public class OMngrHostKCWrapper {
     public final Config configCore;
     
-    public final BasicAddress self;
     public final List<BasicAddress> bootstrap;
     
     public OMngrHostKCWrapper(Config configCore) {
         this.configCore = configCore;
-        this.self = KConfigHelper.read(configCore, OMngrHostKConfig.self);
         this.bootstrap = KConfigHelper.read(configCore, OMngrHostKConfig.bootstrap);
     }
 }

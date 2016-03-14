@@ -25,11 +25,5 @@ import se.sics.ktoolbox.util.config.options.BasicAddressOption;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OMngrHostKConfig {
-    public final static BasicAddressOption self = new BasicAddressOption("self");
     public final static BasicAddressBootstrapOption bootstrap = new BasicAddressBootstrapOption("bootstrap");
-    
-    @Override
-    public String toString() {
-        return "OMngrHostConfig";
-    }
 }
