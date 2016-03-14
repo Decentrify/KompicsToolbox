@@ -16,10 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.netmngr.chunk;
+package se.sics.ktoolbox.netmngr;
+
+import java.util.EnumSet;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.netmngr.ipsolver.IpSolve;
+import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface Chunkable {
+public class NetMngrKCWrapper {
+    public final Config configCore;
+    
+    public final EnumSet<IpSolve.NetworkInterfacesMask> ipTypes;
+    
+    public NetMngrKCWrapper(Config configCore) {
+        this.configCore = configCore;
+        String sType = KConfigHelper.read(configCore, NetMngrKConfig.ipType);
+        ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.valueOf(sType));
+    }
 }

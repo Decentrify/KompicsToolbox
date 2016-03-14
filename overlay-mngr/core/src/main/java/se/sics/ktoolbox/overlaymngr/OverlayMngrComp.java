@@ -52,8 +52,7 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifier.OverlayIdHelper;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
-import se.sics.ktoolbox.util.overlays.OverlayEventSelector;
-import se.sics.ktoolbox.util.overlays.OverlayIdExtractor;
+import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.overlays.OverlayMsgSelector;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
@@ -69,11 +68,11 @@ public class OverlayMngrComp extends ComponentDefinition {
     //externally providing ports - CONNECT(externally) to these
     private final Negative overlayMngr = provides(OverlayMngrPort.class);
     private final One2NChannel<CroupierPort> croupierEnd
-            = One2NChannel.getChannel(provides(CroupierPort.class), new OverlayIdExtractor());
+            = One2NChannel.getChannel(provides(CroupierPort.class), new EventOverlayIdExtractor());
     private final One2NChannel<GradientPort> tgradientEnd
-            = One2NChannel.getChannel(provides(GradientPort.class), new OverlayIdExtractor());
+            = One2NChannel.getChannel(provides(GradientPort.class), new EventOverlayIdExtractor());
     private final One2NChannel<OverlayViewUpdatePort> viewUpdateEnd
-            = One2NChannel.getChannel(requires(OverlayViewUpdatePort.class), new OverlayIdExtractor());
+            = One2NChannel.getChannel(requires(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
     //externally provided ports - NO connecting - we don't like chaining ports
     private final ExtPort extPorts;
     //internal connection helper
@@ -127,7 +126,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         cBootChannels[0] = connect(cBootComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
         cBootChannels[1] = connect(cBootComp.getNegative(CCHeartbeatPort.class), extPorts.heartbeatPort, Channel.TWO_WAY);
         //croupierControlPort - connect to croupiers
-        bootstrapEnd = One2NChannel.getChannel(cBootComp.getNegative(CroupierControlPort.class), new OverlayIdExtractor());
+        bootstrapEnd = One2NChannel.getChannel(cBootComp.getNegative(CroupierControlPort.class), new EventOverlayIdExtractor());
         //bootstrapPort - used by parent;
         bootstrapComp = Pair.with(cBootComp, cBootChannels);
     }

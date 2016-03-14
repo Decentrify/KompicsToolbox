@@ -20,6 +20,8 @@ package se.sics.ktoolbox.util.network.ports;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ChannelCore;
@@ -33,15 +35,14 @@ import se.sics.kompics.Positive;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
- * Using synchronized blocks instead of ReentrantReadWrite locks - doing low
- * amount of work in the blocks and RRWLocks are slow to obtain(talk to Lars)
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class One2NChannel<P extends PortType> implements ChannelCore<P> {
 
     private final static Logger LOG = LoggerFactory.getLogger(One2NChannel.class);
     private String logPrefix = " ";
+
+    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
     private volatile boolean destroyed = false;
 
@@ -54,7 +55,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         this.sourcePort = sourcePort;
         this.channelSelector = (ChannelIdExtractor<KompicsEvent, Identifier>) channelSelector;
     }
-    
+
     @Override
     public boolean isDestroyed() {
         return destroyed;
@@ -76,7 +77,8 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
 
     private boolean hasPort(Port<P> port, boolean positive) {
-        synchronized (this) {
+        rwlock.readLock().lock();
+        try {
             if (destroyed) {
                 return false;
             }
@@ -86,6 +88,8 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
             } else {
                 return sourcePort == port;
             }
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
@@ -100,13 +104,10 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
 
     private void forwardTo(KompicsEvent event, int wid, boolean positive) {
-        if (!channelSelector.getEventType().isAssignableFrom(event.getClass())) {
-            throw new RuntimeException("selector event type:" + channelSelector.getEventType()
-                    + "should be a supertype of event type:" + event.getClass());
-        }
         Identifier overlayId = channelSelector.getValue(event);
-        
-        synchronized (this) {
+
+        rwlock.readLock().lock();
+        try {
             if (destroyed) {
                 return;
             }
@@ -122,16 +123,21 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
             } else {
                 sourcePort.doTrigger(event, wid, this);
             }
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
     @Override
     public void disconnect() {
-        synchronized (this) {
+        rwlock.writeLock().lock();
+        try {
             if (destroyed) {
                 return;
             }
             destroyed = true;
+        } finally {
+            rwlock.writeLock().unlock();
         }
 
         sourcePort.removeChannel(this);
@@ -140,48 +146,54 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         }
         nPorts.clear();
     }
-    
+
     public void addChannel(Identifier overlayId, Negative<P> endPoint) {
-        add(overlayId, (PortCore)endPoint);
+        add(overlayId, (PortCore) endPoint);
     }
-    
+
     public void addChannel(Identifier overlayId, Positive<P> endPoint) {
-        add(overlayId, (PortCore)endPoint);
+        add(overlayId, (PortCore) endPoint);
     }
 
     private void add(Identifier overlayId, PortCore<P> endPoint) {
-        synchronized (this) {
+        rwlock.writeLock().lock();
+        try {
             if (destroyed) {
                 return;
             }
             //TODO Alex java XOR
-            if(!(PortCoreHelper.isPositive(endPoint) ^ PortCoreHelper.isPositive(sourcePort))) {
+            if (!(PortCoreHelper.isPositive(endPoint) ^ PortCoreHelper.isPositive(sourcePort))) {
                 throw new RuntimeException("connecting the wrong end");
             }
             nPorts.put(overlayId, endPoint);
             endPoint.addChannel(this);
+        } finally {
+            rwlock.writeLock().unlock();
         }
 
     }
 
     public void removeChannel(Identifier overlayId, PortCore<P> endPoint) {
-        synchronized (this) {
+        rwlock.writeLock().lock();
+        try {
             if (destroyed) {
                 return;
             }
             nPorts.remove(overlayId, endPoint);
             endPoint.removeChannel(this);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
-    
+
     public static <P extends PortType> One2NChannel<P> getChannel(Negative<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
-        One2NChannel<P> one2NC = new One2NChannel((PortCore)sourcePort, channelSelector);
+        One2NChannel<P> one2NC = new One2NChannel((PortCore) sourcePort, channelSelector);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }
-    
+
     public static <P extends PortType> One2NChannel<P> getChannel(Positive<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
-        One2NChannel<P> one2NC = new One2NChannel((PortCore)sourcePort, channelSelector);
+        One2NChannel<P> one2NC = new One2NChannel((PortCore) sourcePort, channelSelector);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }

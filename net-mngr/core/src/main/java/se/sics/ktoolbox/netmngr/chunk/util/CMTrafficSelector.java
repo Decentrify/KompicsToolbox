@@ -20,7 +20,7 @@ package se.sics.ktoolbox.netmngr.chunk.util;
 
 import se.sics.kompics.KompicsEvent;
 import se.sics.ktoolbox.netmngr.chunk.Chunk;
-import se.sics.ktoolbox.netmngr.chunk.Chunkable;
+import se.sics.ktoolbox.util.network.other.Chunkable;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.ports.TrafficSelector;
 
@@ -29,7 +29,7 @@ import se.sics.ktoolbox.util.network.ports.TrafficSelector;
  */
 public class CMTrafficSelector {
 
-    public static class Incoming extends TrafficSelector {
+    public static class Outgoing extends TrafficSelector {
 
         @Override
         public boolean pass(KompicsEvent event) {
@@ -41,8 +41,8 @@ public class CMTrafficSelector {
             return false;
         }
     }
-
-    public static class Outgoing extends TrafficSelector {
+    
+     public static class Incoming extends TrafficSelector {
 
         @Override
         public boolean pass(KompicsEvent event) {

@@ -25,8 +25,6 @@ import java.util.List;
 import se.sics.ktoolbox.netmngr.ipsolver.util.IpAddressStatus;
 
 /**
- * implements Direct.Request/Response - use with answer and not trigger
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class IpSolve {

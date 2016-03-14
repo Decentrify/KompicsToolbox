@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.util.network.ports;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import se.sics.kompics.ChannelCore;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
@@ -29,6 +31,8 @@ import se.sics.kompics.Positive;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ShortCircuitChannel<P extends PortType> implements ChannelCore<P> {
+
+    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
     private volatile boolean destroyed = false;
 
@@ -61,58 +65,71 @@ public class ShortCircuitChannel<P extends PortType> implements ChannelCore<P> {
 
     @Override
     public boolean hasPositivePort(Port<P> port) {
-        synchronized (this) {
+        rwlock.readLock().lock();
+        try {
             if (destroyed) {
                 return false;
             }
             return port == positivePort || port == posMidPort;
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
     @Override
     public boolean hasNegativePort(Port<P> port) {
-        synchronized (this) {
+        rwlock.readLock().lock();
+        try {
             if (destroyed) {
                 return false;
             }
             return port == negativePort || port == negMidPort;
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
     @Override
     public void forwardToPositive(KompicsEvent event, int wid) {
         boolean pass = posSelector.pass(event);
-        synchronized (this) {
+        rwlock.readLock().lock();
+        try {
             if (destroyed) {
                 return;
             }
-            if(pass) {
+            if (pass) {
                 posMidPort.doTrigger(event, wid, this);
             } else {
                 positivePort.doTrigger(event, wid, this);
             }
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
     @Override
     public void forwardToNegative(KompicsEvent event, int wid) {
         boolean pass = negSelector.pass(event);
-        synchronized (this) {
+        rwlock.readLock().lock();
+        try {
             if (destroyed) {
                 return;
             }
-            if(pass) {
+            if (pass) {
                 negMidPort.doTrigger(event, wid, this);
             } else {
                 negativePort.doTrigger(event, wid, this);
             }
+        } finally {
+            rwlock.readLock().unlock();
         }
     }
 
     @Override
     public void disconnect() {
-        synchronized(this) {
-            if(destroyed) {
+        rwlock.writeLock().lock();
+        try {
+            if (destroyed) {
                 return;
             }
             destroyed = true;
@@ -120,13 +137,16 @@ public class ShortCircuitChannel<P extends PortType> implements ChannelCore<P> {
             posMidPort.removeChannel(this);
             negativePort.removeChannel(this);
             negMidPort.removeChannel(this);
+        } finally {
+            rwlock.writeLock().unlock();
         }
     }
-    
+
     public static <P extends PortType> ShortCircuitChannel<P> getChannel(
             Positive<P> positivePort, Positive<P> posMidPort, TrafficSelector posSelector,
             Negative<P> negativePort, Negative<P> negMidPort, TrafficSelector negSelector) {
-        ShortCircuitChannel<P> channel = new ShortCircuitChannel(positivePort, posMidPort, posSelector, negativePort, negMidPort, negSelector);
+        ShortCircuitChannel<P> channel = new ShortCircuitChannel(positivePort, posMidPort, posSelector, 
+                negativePort, negMidPort, negSelector);
         positivePort.addChannel(channel);
         posMidPort.addChannel(channel);
         negativePort.addChannel(channel);

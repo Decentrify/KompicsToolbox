@@ -16,21 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.overlays;
+package se.sics.ktoolbox.netmngr.core;
 
-import se.sics.kompics.ChannelSelector;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayEventSelector extends ChannelSelector<OverlayEvent, Identifier> {
-    public OverlayEventSelector(Identifier overlayId, boolean positive) {
-        super(OverlayEvent.class, overlayId, positive);
-    }
-
-    @Override
-    public Identifier getValue(OverlayEvent event) {
-        return event.overlayId();
-    }
+public class TestHostKCWrapper {
+    public final Config configCore;
+    
+    public final BasicAddress partner;
+    
+    public TestHostKCWrapper(Config configCore) {
+        this.configCore = configCore;
+        partner = KConfigHelper.read(configCore, TestHostKConfig.partnerAdr);
+    } 
 }

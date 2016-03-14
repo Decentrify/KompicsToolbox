@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.netmngr;
 
-import java.util.EnumSet;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,6 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.ports.ShortCircuitChannel;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NetworkMngrComp extends ComponentDefinition {
@@ -65,6 +63,7 @@ public class NetworkMngrComp extends ComponentDefinition {
     private final Positive<IpSolverPort> ipSolverPort = requires(IpSolverPort.class);
     //****************************CONFIGURATION*********************************
     private final SystemKCWrapper systemConfig;
+    private final NetMngrKCWrapper netMngrConfig;
     //*******************************SELF***************************************
     private KAddress selfAdr;
     //*****************************CLEANUP**************************************
@@ -76,6 +75,8 @@ public class NetworkMngrComp extends ComponentDefinition {
         systemConfig = new SystemKCWrapper(config());
         logPrefix = "<nid:" + systemConfig.id + "> ";
         LOG.info("{}initializing...", logPrefix);
+        
+        netMngrConfig = new NetMngrKCWrapper(config());
         
         extPorts = init.extPorts;
 
@@ -98,7 +99,7 @@ public class NetworkMngrComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
-            trigger(new IpSolve.Request(EnumSet.of(IpSolve.NetworkInterfacesMask.PUBLIC)), ipSolverPort);
+            trigger(new IpSolve.Request(netMngrConfig.ipTypes), ipSolverPort);
         }
     };
     

@@ -16,21 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.overlays;
+package se.sics.ktoolbox.netmngr;
 
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
+import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayIdExtractor extends ChannelIdExtractor<OverlayEvent, Identifier> {
-    public OverlayIdExtractor() {
-        super(OverlayEvent.class);
-    }
-    
-    @Override
-    public Identifier getValue(OverlayEvent event) {
-        return event.overlayId();
-    }
+public class NetMngrKConfig {
+    public final static KConfigOption.Basic<String> ipType = new KConfigOption.Basic("netMngr.ipType", String.class);
 }

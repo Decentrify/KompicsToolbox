@@ -26,15 +26,16 @@ import se.sics.ktoolbox.util.network.KHeader;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class BasicContentMsg<A extends KAddress, H extends KHeader<A>, C extends Object> implements KContentMsg<A, H, C>{
+public class BasicContentMsg<A extends KAddress, H extends KHeader<A>, C extends Object> implements KContentMsg<A, H, C> {
+
     private final H header;
     private final C content;
-    
+
     public BasicContentMsg(H header, C content) {
         this.header = header;
         this.content = content;
     }
-    
+
     @Override
     public C getContent() {
         return content;
@@ -62,7 +63,11 @@ public class BasicContentMsg<A extends KAddress, H extends KHeader<A>, C extends
 
     @Override
     public Class<C> extractPattern() {
-        return (Class<C>)content.getClass();
+        if (content instanceof ContentPattern) {
+            return ((ContentPattern<C>) content).extractPattern();
+        } else {
+            return (Class<C>) content.getClass();
+        }
     }
 
     @Override

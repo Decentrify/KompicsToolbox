@@ -20,7 +20,7 @@
  */
 package se.sics.ktoolbox.netmngr.chunk;
 
-import se.sics.ktoolbox.netmngr.chunk.Chunkable;
+import se.sics.ktoolbox.util.network.other.Chunkable;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -83,6 +83,7 @@ public class ChunkMngrComp extends ComponentDefinition {
 
         subscribe(handleStart, control);
         subscribe(handleOutgoing, providedNetwork);
+        subscribe(handleOutgoing, requiredNetwork);
         subscribe(handleIncoming, requiredNetwork);
         subscribe(handleCleanupTimeout, timer);
     }
@@ -96,10 +97,10 @@ public class ChunkMngrComp extends ComponentDefinition {
     };
     //**************************************************************************
     ClassMatchedHandler handleOutgoing
-            = new ClassMatchedHandler<Chunkable, KContentMsg<KAddress, KHeader<KAddress>, Chunkable>>() {
+            = new ClassMatchedHandler<Chunkable, BasicContentMsg<?, ?, Chunkable>>() {
 
                 @Override
-                public void handle(Chunkable content, KContentMsg<KAddress, KHeader<KAddress>, Chunkable> container) {
+                public void handle(Chunkable content, BasicContentMsg<?, ?, Chunkable> container) {
                     LOG.trace("{}received outgoing:{}", logPrefix, container);
 
                     ByteBuf contentBytes = Unpooled.buffer();
@@ -144,18 +145,19 @@ public class ChunkMngrComp extends ComponentDefinition {
                 @Override
                 public void handle(Chunk chunk, KContentMsg<KAddress, KHeader<KAddress>, Chunk> container) {
                     LOG.trace("{}received incoming:{}", logPrefix, container);
-                    IncompleteChunkTracker chunkTracker = incomingChunks.get(chunk.originId).getValue0();
-                    if (chunkTracker == null) {
-                        chunkTracker = new IncompleteChunkTracker(chunk.lastChunk);
+                    Pair<IncompleteChunkTracker, UUID> chunkTrackerPair = incomingChunks.get(chunk.originId);
+                    if (chunkTrackerPair == null) {
+                        IncompleteChunkTracker chunkTracker = new IncompleteChunkTracker(chunk.lastChunk);
                         UUID cleanupTimeout = scheduleCleanupTimeout(chunk.originId);
-                        incomingChunks.put(chunk.originId, Pair.with(chunkTracker, cleanupTimeout));
+                        chunkTrackerPair = Pair.with(chunkTracker, cleanupTimeout);
+                        incomingChunks.put(chunk.originId, chunkTrackerPair);
                     }
                     
-                    chunkTracker.add(chunk);
-                    if (chunkTracker.isComplete()) {
+                    chunkTrackerPair.getValue0().add(chunk);
+                    if (chunkTrackerPair.getValue0().isComplete()) {
                         cancelCleanupTimeout(incomingChunks.get(chunk.originId).getValue1());
                         incomingChunks.remove(chunk.originId);
-                        byte[] msgBytes = chunkTracker.getMsg();
+                        byte[] msgBytes = chunkTrackerPair.getValue0().getMsg();
 
                         KHeader header = container.getHeader();
                         Object content = Serializers.fromBinary(Unpooled.wrappedBuffer(msgBytes), Optional.absent());

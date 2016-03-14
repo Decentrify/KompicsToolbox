@@ -56,8 +56,7 @@ import se.sics.ktoolbox.util.identifier.OverlayIdHelper;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
-import se.sics.ktoolbox.util.overlays.OverlayEventSelector;
-import se.sics.ktoolbox.util.overlays.OverlayIdExtractor;
+import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
@@ -139,9 +138,9 @@ public class OMngrHostComp extends ComponentDefinition {
                         ccHeartbeat.getValue0().getPositive(CCHeartbeatPort.class))));
         Channel[] oMngrChannels = new Channel[1];
         oMngrChannels[0] = connect(oMngrComp.getPositive(OverlayMngrPort.class), omngrPort.getPair(), Channel.TWO_WAY);
-        croupierEnd = One2NChannel.getChannel(oMngrComp.getPositive(CroupierPort.class), new OverlayIdExtractor());
-        gradientEnd = One2NChannel.getChannel(oMngrComp.getPositive(GradientPort.class), new OverlayIdExtractor());
-        viewUpdateEnd = One2NChannel.getChannel(oMngrComp.getNegative(OverlayViewUpdatePort.class), new OverlayIdExtractor());
+        croupierEnd = One2NChannel.getChannel(oMngrComp.getPositive(CroupierPort.class), new EventOverlayIdExtractor());
+        gradientEnd = One2NChannel.getChannel(oMngrComp.getPositive(GradientPort.class), new EventOverlayIdExtractor());
+        viewUpdateEnd = One2NChannel.getChannel(oMngrComp.getNegative(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
         overlayMngr = Pair.with(oMngrComp, oMngrChannels);
     }
 
