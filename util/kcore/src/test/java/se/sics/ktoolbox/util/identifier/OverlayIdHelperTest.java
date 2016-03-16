@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.identifier;
 
+import se.sics.ktoolbox.util.overlays.id.OverlayIdHelper;
 import org.junit.Assert;
 import org.junit.Test;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;

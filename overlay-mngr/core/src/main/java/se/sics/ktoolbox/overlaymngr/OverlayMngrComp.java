@@ -50,10 +50,11 @@ import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.identifier.OverlayIdHelper;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.overlays.MsgOverlayIdExtractor;
+import se.sics.ktoolbox.util.overlays.id.OverlayIdHelper;
+import se.sics.ktoolbox.util.overlays.id.OverlayIdRegistry;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
@@ -138,6 +139,10 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(OMngrCroupier.ConnectRequest req) {
             LOG.info("{}{}", new Object[]{logPrefix, req});
 
+            if(!OverlayIdRegistry.isRegistered(req.croupierId)) {
+                throw new RuntimeException("unregisterd id:" + req.croupierId);
+            }
+            
             if (croupierLayers.containsKey(req.croupierId) || OverlayMngrConfig.isGlobalCroupier(req.croupierId)) {
                 LOG.error("{}double start of croupier", logPrefix);
                 throw new RuntimeException("double start of croupier");
@@ -170,7 +175,10 @@ public class OverlayMngrComp extends ComponentDefinition {
         @Override
         public void handle(OMngrTGradient.ConnectRequest req) {
             LOG.info("{}{}", new Object[]{logPrefix, req});
-
+            
+            if(!OverlayIdRegistry.isRegistered(req.tgradientId)) {
+                throw new RuntimeException("unregisterd id:" + req.tgradientId);
+            }
             Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) req.tgradientId, OverlayIdHelper.Type.CROUPIER);
             Identifier gradientId = OverlayIdHelper.changeOverlayType((IntIdentifier) req.tgradientId, OverlayIdHelper.Type.GRADIENT);
             if (tgradientLayers.containsKey(req.tgradientId)

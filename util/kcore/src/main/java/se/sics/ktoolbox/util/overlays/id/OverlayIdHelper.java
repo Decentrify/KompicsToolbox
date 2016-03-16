@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.identifier;
+package se.sics.ktoolbox.util.overlays.id;
 
 import com.google.common.primitives.Ints;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -68,7 +68,7 @@ public class OverlayIdHelper {
         byte firstByte = (byte) (owner + type.code);
         return new IntIdentifier(Ints.fromBytes(firstByte, id[0], id[1], id[2]));
     }
-
+    
     public static byte getOwner(IntIdentifier id) {
         byte firstByte = Ints.toByteArray(id.id)[0];
         byte owner = (byte)(firstByte & 0xF0);
