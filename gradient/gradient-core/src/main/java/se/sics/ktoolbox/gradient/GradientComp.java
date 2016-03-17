@@ -60,13 +60,13 @@ import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.other.AgingAdrContainer;
-import se.sics.ktoolbox.util.overlays.id.OverlayIdHelper;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.View;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
@@ -107,13 +107,15 @@ public class GradientComp extends ComponentDefinition {
     private CompTracker compTracker;
 
     public GradientComp(Init init) {
+        SystemKCWrapper systemConfig = new SystemKCWrapper(config());
         gradientConfig = new GradientKCWrapper(config());
         overlayId = init.overlayId;
+        logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
+        LOG.info("{}initializing...", logPrefix);
+
         utilityComp = new WrapperComparator<>(init.utilityComparator);
         filter = init.gradientFilter;
-        
-        LOG.info("{} initializing...", logPrefix);
-        
+
         gradientNeighbours = new GradientView(new SystemKCWrapper(config()), gradientConfig,
                 overlayId, logPrefix, init.utilityComparator, init.gradientFilter);
 
@@ -131,13 +133,13 @@ public class GradientComp extends ComponentDefinition {
     }
 
     private boolean connected() {
-        if(gradientNeighbours.isEmpty()) {
+        if (gradientNeighbours.isEmpty()) {
             LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
             return false;
         }
         return true;
     }
-    
+
     private boolean ready() {
         if (selfView.getContent() == null) {
             LOG.info("{}no self view", logPrefix);
@@ -151,7 +153,7 @@ public class GradientComp extends ComponentDefinition {
     }
 
     private boolean canShuffle() {
-        if(!ready() || !connected()) {
+        if (!ready() || !connected()) {
             return false;
         }
         return true;
@@ -172,7 +174,6 @@ public class GradientComp extends ComponentDefinition {
         public void handle(AddressUpdate.Indication update) {
             LOG.debug("{} updating self address:{}", new Object[]{logPrefix, update.localAddress});
             selfView = selfView.changeAdr(update.localAddress);
-            logPrefix = "<nid:" + selfView.getSource().getId().toString() + ",oid:" + overlayId + "> ";
         }
     };
 
@@ -184,7 +185,7 @@ public class GradientComp extends ComponentDefinition {
                 gradientNeighbours.clean(viewUpdate.view);
             }
             selfView = selfView.changeView(viewUpdate.view);
-            Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) overlayId, OverlayIdHelper.Type.CROUPIER);
+            Identifier croupierId = OverlayIdFactory.changeType(overlayId, OverlayIdFactory.Type.CROUPIER);
             trigger(new OverlayViewUpdate.Indication(croupierId, false, new GradientLocalView(viewUpdate.view, selfView.rank)),
                     croupierViewUpdate);
         }
@@ -299,7 +300,7 @@ public class GradientComp extends ComponentDefinition {
         if (rank != selfView.rank) {
             LOG.trace("{}updated rank from:{} to:{}", new Object[]{logPrefix, selfView.rank, rank});
             selfView = selfView.changeRank(rank);
-            Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) overlayId, OverlayIdHelper.Type.CROUPIER);
+            Identifier croupierId = OverlayIdFactory.changeType(overlayId, OverlayIdFactory.Type.CROUPIER);
             trigger(new OverlayViewUpdate.Indication(croupierId, false,
                     new GradientLocalView(selfView.getContent(), selfView.rank)),
                     croupierViewUpdate);

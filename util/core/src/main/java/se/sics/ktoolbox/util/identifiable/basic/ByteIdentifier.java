@@ -1,10 +1,8 @@
 /*
- * This file is part of the Kompics Simulator.
+ * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) 
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
- *
- * This program is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -21,30 +19,34 @@
 package se.sics.ktoolbox.util.identifiable.basic;
 
 import com.google.common.io.BaseEncoding;
-import com.google.common.primitives.Ints;
-import java.util.Objects;
+import com.google.common.primitives.SignedBytes;
+import java.util.Arrays;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class IntIdentifier implements Identifier {
-    public final Integer id;
-    
-    public IntIdentifier(Integer id) {
+public class ByteIdentifier implements Identifier {
+    public final byte[] id;
+
+    public ByteIdentifier(byte[] id) {
         this.id = id;
     }
-    
+
     @Override
     public int partition(int nrPartitions) {
-        return id % nrPartitions;
+        return hashCode() % nrPartitions;
+    }
+
+    @Override
+    public int compareTo(Identifier o) {
+        ByteIdentifier that = (ByteIdentifier)o;
+        return SignedBytes.lexicographicalComparator().compare(this.id, that.id);
     }
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 53 * hash + Objects.hashCode(this.id);
-        return hash;
+        return Arrays.hashCode(this.id);
     }
 
     @Override
@@ -55,8 +57,8 @@ public class IntIdentifier implements Identifier {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final IntIdentifier other = (IntIdentifier) obj;
-        if (!Objects.equals(this.id, other.id)) {
+        final ByteIdentifier other = (ByteIdentifier) obj;
+        if (!Arrays.equals(this.id, other.id)) {
             return false;
         }
         return true;
@@ -64,12 +66,6 @@ public class IntIdentifier implements Identifier {
     
     @Override
     public String toString() {
-        return "" + id;
-    }
-
-    @Override
-    public int compareTo(Identifier o) {
-        IntIdentifier that = (IntIdentifier)o;
-        return this.id.compareTo(that.id);
+        return BaseEncoding.base16().encode(id);
     }
 }

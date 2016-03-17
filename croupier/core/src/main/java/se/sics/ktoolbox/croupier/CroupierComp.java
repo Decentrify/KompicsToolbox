@@ -115,6 +115,7 @@ public class CroupierComp extends ComponentDefinition {
         systemConfig = new SystemKCWrapper(config());
         croupierConfig = new CroupierKCWrapper(config());
         overlayId = init.overlayId;
+        logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initiating...", logPrefix);
 
         behaviour = new CroupierObserver();
@@ -213,7 +214,6 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(AddressUpdate.Indication update) {
             LOG.debug("{}update self address:{}", new Object[]{logPrefix, update.localAddress});
             behaviour = behaviour.processAddress(update);
-            logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         }
     };
 

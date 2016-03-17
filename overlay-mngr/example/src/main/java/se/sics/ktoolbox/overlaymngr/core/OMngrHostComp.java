@@ -28,7 +28,6 @@ import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
-import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
@@ -53,9 +52,8 @@ import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.overlays.id.OverlayIdHelper;
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.status.Status;
@@ -139,7 +137,7 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestCroupier1Comp() {
-        Identifier croupierId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.CROUPIER, new byte[]{0, 0, 1});
+        Identifier croupierId = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.CROUPIER, new byte[]{0, 0, 1});
         Component tc1Comp = create(TestCroupierComp.class, new TestCroupierInit(croupierId));
         Channel[] tc1Channels = new Channel[0];
         croupierEnd.addChannel(croupierId, tc1Comp.getNegative(CroupierPort.class));
@@ -150,7 +148,7 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestCroupier2Comp() {
-        Identifier croupierId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.CROUPIER, new byte[]{0, 0, 2});
+        Identifier croupierId = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.CROUPIER, new byte[]{0, 0, 2});
         Component tc2Comp = create(TestCroupierComp.class, new TestCroupierInit(croupierId));
         Channel[] tc2Channels = new Channel[0];
         croupierEnd.addChannel(croupierId, tc2Comp.getNegative(CroupierPort.class));
@@ -161,8 +159,8 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestGradient1Comp() {
-        Identifier tgradientId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.TGRADIENT, new byte[]{0, 0, 3});
-        Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) tgradientId, OverlayIdHelper.Type.CROUPIER);
+        Identifier tgradientId = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.TGRADIENT, new byte[]{0, 0, 3});
+        Identifier croupierId = OverlayIdFactory.changeType(tgradientId, OverlayIdFactory.Type.CROUPIER);
 
         Random rand = new SecureRandom();
         Component tg1Comp = create(TestGradientComp.class, new TestGradientInit(rand.nextInt(), tgradientId));
@@ -176,8 +174,8 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestGradient2Comp() {
-        Identifier tgradientId = OverlayIdHelper.getIntIdentifier(owner, OverlayIdHelper.Type.TGRADIENT, new byte[]{0, 0, 4});
-        Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) tgradientId, OverlayIdHelper.Type.CROUPIER);
+        Identifier tgradientId = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.TGRADIENT, new byte[]{0, 0, 4});
+        Identifier croupierId = OverlayIdFactory.changeType(tgradientId, OverlayIdFactory.Type.CROUPIER);
 
         Random rand = new SecureRandom();
         Component tg2Comp = create(TestGradientComp.class, new TestGradientInit(rand.nextInt(), tgradientId));

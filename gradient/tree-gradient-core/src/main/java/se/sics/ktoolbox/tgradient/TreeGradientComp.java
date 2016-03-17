@@ -69,7 +69,7 @@ import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.overlays.id.OverlayIdHelper;
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.View;
 
@@ -112,9 +112,11 @@ public class TreeGradientComp extends ComponentDefinition {
     private CompTracker compTracker;
 
     public TreeGradientComp(Init init) {
+        SystemKCWrapper systemConfig = new SystemKCWrapper(config());
         gradientConfig = new GradientKCWrapper(config());
         tgradientConfig = new TGradientKCWrapper(config());
         overlayId = init.overlayId;
+        logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         filter = init.gradientFilter;
         LOG.info("{}initializing...", logPrefix);
         
@@ -183,7 +185,6 @@ public class TreeGradientComp extends ComponentDefinition {
         public void handle(AddressUpdate.Indication update) {
             LOG.debug("{} update self address:{}", logPrefix, update.localAddress);
             selfView = selfView.changeAdr(update.localAddress);
-            logPrefix = "<nid:" + update.localAddress.getId() + ",oid:" + overlayId + "> ";
         }
     };
 
@@ -197,7 +198,7 @@ public class TreeGradientComp extends ComponentDefinition {
             }
             selfView = selfView.changeView(update.view);
             
-            Identifier gradientId = OverlayIdHelper.changeOverlayType((IntIdentifier) overlayId, OverlayIdHelper.Type.GRADIENT);
+            Identifier gradientId = OverlayIdFactory.changeType(overlayId, OverlayIdFactory.Type.GRADIENT);
             trigger(update.changeOverlay(gradientId), gradientViewUpdate);
         }
     };

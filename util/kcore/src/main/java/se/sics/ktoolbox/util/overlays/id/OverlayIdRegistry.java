@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.overlays.id;
 
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import com.google.common.io.BaseEncoding;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -49,14 +50,15 @@ public class OverlayIdRegistry {
     }
     
     public static synchronized boolean isRegistered(Identifier id) {
-        byte owner = OverlayIdHelper.getOwner((IntIdentifier)id);
+        byte owner = OverlayIdFactory.getOwner((IntIdentifier)id);
         return reservedOverlayPrefixes.values().contains(ByteBuffer.wrap(new byte[]{owner}));
     }
     
     public static synchronized String print() {
         StringBuilder sb = new StringBuilder();
         for(Map.Entry<String, ByteBuffer> e : reservedOverlayPrefixes.entrySet()) {
-            sb.append(e.getKey()).append(BaseEncoding.base16().encode(e.getValue().array()));
+            String ownerId = BaseEncoding.base16().encode(e.getValue().array()).substring(0,1);
+            sb.append(e.getKey()).append(":").append(ownerId).append("\n");
         }
         return sb.toString();
     }

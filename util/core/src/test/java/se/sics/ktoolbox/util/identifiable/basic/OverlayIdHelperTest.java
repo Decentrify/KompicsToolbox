@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,43 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.p2ptoolbox.util;
+package se.sics.ktoolbox.util.identifiable.basic;
 
 import org.junit.Assert;
 import org.junit.Test;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UtilTests {
-
+public class OverlayIdHelperTest {
     @Test
-    public void testInnerEnums() {
-        A a1 = new A();
-        A a2 = new A();
-        Assert.assertEquals(0, a1.enumA.E.phase);
-        Assert.assertEquals(0, a2.enumA.E.phase);
-        a1.enumA.setPhase(1);
-        Assert.assertEquals(1, a1.enumA.E.phase);
-        Assert.assertEquals(1, a2.enumA.E.phase);
-    }
-
-    public static class A {
-        public EnumA enumA = EnumA.E;
-
-        public enum EnumA {
-
-            E(0);
-
-            int phase;
-
-            EnumA(int phase) {
-                this.phase = phase;
-            }
-
-            public void setPhase(int phase) {
-                this.phase = phase;
-            }
-        }
+    public void test1() {
+        byte owner = 0x10;
+        byte[] bId1 = new byte[]{1,2,3};
+        Identifier id1 = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.CROUPIER, bId1);
+        Identifier id2 = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.GRADIENT, bId1);
+        Identifier id3 = OverlayIdFactory.getId(owner, OverlayIdFactory.Type.TGRADIENT, bId1);
+        Assert.assertEquals(id2, OverlayIdFactory.changeType(id1, OverlayIdFactory.Type.GRADIENT));
+        Assert.assertEquals(id3, OverlayIdFactory.changeType(id2, OverlayIdFactory.Type.TGRADIENT));
+        Assert.assertEquals(id1, OverlayIdFactory.changeType(id3, OverlayIdFactory.Type.CROUPIER));
     }
 }

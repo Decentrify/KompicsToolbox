@@ -50,10 +50,10 @@ import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.overlays.MsgOverlayIdExtractor;
-import se.sics.ktoolbox.util.overlays.id.OverlayIdHelper;
 import se.sics.ktoolbox.util.overlays.id.OverlayIdRegistry;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
@@ -179,8 +179,8 @@ public class OverlayMngrComp extends ComponentDefinition {
             if(!OverlayIdRegistry.isRegistered(req.tgradientId)) {
                 throw new RuntimeException("unregisterd id:" + req.tgradientId);
             }
-            Identifier croupierId = OverlayIdHelper.changeOverlayType((IntIdentifier) req.tgradientId, OverlayIdHelper.Type.CROUPIER);
-            Identifier gradientId = OverlayIdHelper.changeOverlayType((IntIdentifier) req.tgradientId, OverlayIdHelper.Type.GRADIENT);
+            Identifier croupierId = OverlayIdFactory.changeType(req.tgradientId, OverlayIdFactory.Type.CROUPIER);
+            Identifier gradientId = OverlayIdFactory.changeType(req.tgradientId, OverlayIdFactory.Type.GRADIENT);
             if (tgradientLayers.containsKey(req.tgradientId)
                     || croupierLayers.containsKey(croupierId)
                     || tgradientLayers.containsKey(gradientId)) {

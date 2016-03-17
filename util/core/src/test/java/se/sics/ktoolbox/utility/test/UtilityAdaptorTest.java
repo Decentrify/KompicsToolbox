@@ -1,4 +1,4 @@
-package se.sics.p2ptoolbox.utility.test;
+package se.sics.ktoolbox.utility.test;
 
 import se.sics.ktoolbox.util.ProbabilitiesHelper;
 
