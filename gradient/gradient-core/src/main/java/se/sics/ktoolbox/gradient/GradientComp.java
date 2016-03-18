@@ -142,7 +142,7 @@ public class GradientComp extends ComponentDefinition {
 
     private boolean ready() {
         if (selfView.getContent() == null) {
-            LOG.info("{}no self view", logPrefix);
+            LOG.warn("{}no self view", logPrefix);
             return false;
         }
         if (selfView.getSource() == null) {
@@ -281,11 +281,7 @@ public class GradientComp extends ComponentDefinition {
             }
 
             updateRank();
-
-            LOG.debug("{}view:{}", logPrefix, gradientNeighbours.getAllCopy());
-            GradientSample publishedSample = new GradientSample(overlayId, selfView.getContent(), gradientNeighbours.getAllCopy());
-            trigger(publishedSample, gradient);
-            compTracker.updateState(new GradientViewPacket(publishedSample));
+            publishSample();
 
             gradientNeighbours.incrementAges();
             GradientContainer partner = gradientNeighbours.getShuffleNode(selfView);
@@ -306,6 +302,16 @@ public class GradientComp extends ComponentDefinition {
                     croupierViewUpdate);
             trigger(new RankUpdate(overlayId, selfView.rank), rankUpdate);
         }
+    }
+
+    private void publishSample() {
+        GradientSample publishedSample = new GradientSample(overlayId, selfView.getContent(), gradientNeighbours.getAllCopy());
+        if(publishedSample.gradientNeighbours.isEmpty()) {
+            LOG.warn("{}no neighbours", logPrefix);
+        }
+        LOG.info("{}view:{}", logPrefix, publishedSample.gradientNeighbours);
+        trigger(publishedSample, gradient);
+        compTracker.updateState(new GradientViewPacket(publishedSample));
     }
 
     Handler<ShuffleTimeout> handleShuffleTimeout = new Handler<ShuffleTimeout>() {

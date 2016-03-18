@@ -33,7 +33,6 @@ import se.sics.kompics.PortCoreHelper;
 import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.overlays.id.OverlayIdRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

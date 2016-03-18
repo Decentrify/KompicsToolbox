@@ -81,9 +81,11 @@ import se.sics.ktoolbox.util.update.View;
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierComp extends ComponentDefinition {
+
     // INFO - status, memory statistics 
     // DEBUG - bootstraping, samples 
     // TRACE - protocol messages
+
     private final static Logger LOG = LoggerFactory.getLogger(CroupierComp.class);
     private String logPrefix = "";
 
@@ -136,7 +138,7 @@ public class CroupierComp extends ComponentDefinition {
     }
 
     private boolean connected() {
-        if (bootstrapNodes.isEmpty() && publicView.isEmpty() && privateView.isEmpty())  {
+        if (bootstrapNodes.isEmpty() && publicView.isEmpty() && privateView.isEmpty()) {
             LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
             //TODO Alex Disconnected -  legacy code
             trigger(new CroupierDisconnected(overlayId), croupierControlPort);
@@ -144,10 +146,10 @@ public class CroupierComp extends ComponentDefinition {
         }
         return true;
     }
-    
+
     private boolean ready() {
         if (!behaviour.getView().isPresent()) {
-            LOG.info("{}no self view", logPrefix);
+            LOG.warn("{}no self view", logPrefix);
             return false;
         }
         if (behaviour.getSelf() == null) {
@@ -254,7 +256,6 @@ public class CroupierComp extends ComponentDefinition {
     };
 
     //**************************************************************************
-
     private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
         DecoratedHeader requestHeader
                 = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
@@ -405,8 +406,15 @@ public class CroupierComp extends ComponentDefinition {
     private void publishSample() {
         CroupierSample publishedSample = new CroupierSample(overlayId,
                 publicView.publish(), privateView.publish());
-        LOG.debug("{}publishing public nodes:{}", new Object[]{logPrefix, publishedSample.publicSample});
-        LOG.debug("{}publishing private nodes:{}", new Object[]{logPrefix, publishedSample.privateSample});
+        if (publishedSample.publicSample.isEmpty()) {
+            if (publishedSample.privateSample.isEmpty()) {
+                LOG.warn("{}no neighbours", logPrefix);
+            } else {
+                LOG.warn("{}no public neighbours", logPrefix);
+            }
+        }
+        LOG.info("{}publishing public nodes:{}", new Object[]{logPrefix, publishedSample.publicSample});
+        LOG.info("{}publishing private nodes:{}", new Object[]{logPrefix, publishedSample.privateSample});
         trigger(publishedSample, croupierPort);
         compTracker.updateState(new CroupierViewPacket(publishedSample));
     }

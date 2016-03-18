@@ -24,6 +24,8 @@ import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifierSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifierSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifierSerializer;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
@@ -41,12 +43,13 @@ import se.sics.ktoolbox.util.network.nat.NatTypeSerializer;
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 8;
+    public static final int serializerIds = 9;
 
     public static enum BasicSerializers {
 
         IntIdentifier(IntIdentifier.class, "intIdentifierSerializer"),
         UUIDIdentifier(UUIDIdentifier.class, "uuidIdentifierSerializer"),
+        OverlayIdentifier(OverlayIdentifier.class, "overlayIdentifierSerializer"),
         BasicAddress(BasicAddress.class, "basicAddressSerializer"),
         NatAwareAddressImpl(NatAwareAddressImpl.class, "strippedNAAddressSerializer"),
         BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
@@ -85,6 +88,10 @@ public class BasicSerializerSetup {
         UUIDIdentifierSerializer uuidIdentifierSerializer = new UUIDIdentifierSerializer(currentId++);
         Serializers.register(uuidIdentifierSerializer, BasicSerializers.UUIDIdentifier.serializerName);
         Serializers.register(BasicSerializers.UUIDIdentifier.serializedClass, BasicSerializers.UUIDIdentifier.serializerName);
+
+        OverlayIdentifierSerializer overlayIdentifierSerializer = new OverlayIdentifierSerializer(currentId++);
+        Serializers.register(overlayIdentifierSerializer, BasicSerializers.OverlayIdentifier.serializerName);
+        Serializers.register(BasicSerializers.OverlayIdentifier.serializedClass, BasicSerializers.OverlayIdentifier.serializerName);
 
         BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(currentId++);
         Serializers.register(basicAddressSerializer, BasicSerializers.BasicAddress.serializerName);

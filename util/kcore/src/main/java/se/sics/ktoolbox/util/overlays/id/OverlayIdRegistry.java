@@ -50,7 +50,7 @@ public class OverlayIdRegistry {
     }
     
     public static synchronized boolean isRegistered(Identifier id) {
-        byte owner = OverlayIdFactory.getOwner((IntIdentifier)id);
+        byte owner = OverlayIdFactory.getOwner(id);
         return reservedOverlayPrefixes.values().contains(ByteBuffer.wrap(new byte[]{owner}));
     }
     
