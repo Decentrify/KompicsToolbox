@@ -33,6 +33,7 @@ import se.sics.kompics.PortCoreHelper;
 import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -40,7 +41,10 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class One2NChannel<P extends PortType> implements ChannelCore<P> {
 
     private final static Logger LOG = LoggerFactory.getLogger(One2NChannel.class);
-    private String logPrefix = " ";
+    private String logPrefix = "";
+    private String details = "";
+    
+    private final Identifier id;
 
     private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
@@ -54,6 +58,13 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     private One2NChannel(PortCore<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
         this.sourcePort = sourcePort;
         this.channelSelector = (ChannelIdExtractor<KompicsEvent, Identifier>) channelSelector;
+        id = UUIDIdentifier.randomId();
+        StringBuilder detailsSB = new StringBuilder();
+        detailsSB.append("<").append(id).append("> ");
+        detailsSB.append("type:").append(sourcePort.getPortType().getClass().getName()).append(" ");
+        detailsSB.append("owner:").append(sourcePort.getOwner().getComponent().getClass().getName()).append(" ");
+        details = detailsSB.toString();
+        LOG.info("{}created:{}", logPrefix, details);
     }
 
     @Override
@@ -105,10 +116,11 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
 
     private void forwardTo(KompicsEvent event, int wid, boolean positive) {
         Identifier overlayId;
-        if(channelSelector.getEventType().isAssignableFrom(event.getClass())) {
+        if (channelSelector.getEventType().isAssignableFrom(event.getClass())) {
             overlayId = channelSelector.getValue(event);
         } else {
-            LOG.info("{}no overlay dropping:{}", new Object[]{logPrefix, event});
+            LOG.info("{}cannot extract overlay for:{} from:{} in:{}", 
+                    new Object[]{logPrefix, channelSelector.getEventType().getName(), event.getClass().getName(), details});
             return;
         }
 
@@ -120,8 +132,10 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
             //TODO Alex - check if you can use bitwise XOR as there is no boolean XOR in java(aka ^^)
             if (PortCoreHelper.isPositive(sourcePort) ^ positive) {
                 if (!nPorts.containsKey(overlayId)) {
-                    LOG.warn("{}no {} connection available for overlay:{}",
-                            new Object[]{logPrefix, (positive ? "positive" : "negative"), overlayId});
+                    LOG.warn("{}no {} connection available for overlay:{} event:{} in:{}",
+                            new Object[]{logPrefix, (positive ? "positive" : "negative"), overlayId,
+                                event, details});
+                    return;
                 }
                 for (PortCore<P> port : nPorts.get(overlayId)) {
                     port.doTrigger(event, wid, this);
@@ -162,15 +176,20 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
 
     private void add(Identifier overlayId, PortCore<P> endPoint) {
+        boolean endPointType = PortCoreHelper.isPositive(endPoint);
+        boolean sourcePortType = PortCoreHelper.isPositive(sourcePort);
         rwlock.writeLock().lock();
         try {
             if (destroyed) {
                 return;
             }
             //TODO Alex java XOR
-            if (!(PortCoreHelper.isPositive(endPoint) ^ PortCoreHelper.isPositive(sourcePort))) {
+            if (!(endPointType ^ sourcePortType)) {
                 throw new RuntimeException("connecting the wrong end");
             }
+            LOG.info("{}adding {} connection overlay:{} to:{} in:{}",
+                    new Object[]{logPrefix, (endPointType ? "positive" : "negative"), overlayId,
+                        endPoint.getOwner().getComponent().getClass().getName(), details});
             nPorts.put(overlayId, endPoint);
             endPoint.addChannel(this);
         } finally {
