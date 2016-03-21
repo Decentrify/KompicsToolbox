@@ -19,15 +19,15 @@
 
 package se.sics.ktoolbox.cc.heartbeat.util;
 
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HeartbeatContainer {
-    public final DecoratedAddress src;
+    public final KAddress src;
     
-    public HeartbeatContainer(DecoratedAddress src) {
+    public HeartbeatContainer(KAddress src) {
         this.src = src;
     }
 }

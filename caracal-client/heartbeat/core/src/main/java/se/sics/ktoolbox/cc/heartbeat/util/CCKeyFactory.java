@@ -18,37 +18,50 @@
  */
 package se.sics.ktoolbox.cc.heartbeat.util;
 
+import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.KeyRange;
+import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCKeyFactory {
 
-    public static Key getHeartbeatKey(byte[] schemaPrefix, byte[] overlayId, int slot) {
+    public static Key getHeartbeatKey(byte[] schemaPrefix, Identifier overlayId, int slot) {
         Key.KeyBuilder key = new Key.KeyBuilder(schemaPrefix);
-        key.append(new byte[]{(byte) overlayId.length});
-        key.append(overlayId);
+        ByteBuf buf = Unpooled.buffer();
+        Serializers.toBinary(overlayId, buf);
+        byte[] oId = Arrays.copyOfRange(buf.array(), 0, buf.readableBytes());
+        key.append(new byte[]{(byte) oId.length});
+        key.append(oId);
         key.append(Ints.toByteArray(slot));
         return key.get();
     }
 
-    public static KeyRange getHeartbeatRange(byte[] schemaPrefix, byte[] overlayId) {
+    public static KeyRange getHeartbeatRange(byte[] schemaPrefix, Identifier overlayId) {
         Key.KeyBuilder prefix = new Key.KeyBuilder(schemaPrefix);
-        prefix.append(new byte[]{(byte) overlayId.length});
-        prefix.append(overlayId);
+        ByteBuf buf = Unpooled.buffer();
+        Serializers.toBinary(overlayId, buf);
+        byte[] oId = Arrays.copyOfRange(buf.array(), 0, buf.readableBytes());
+        prefix.append(new byte[]{(byte) oId.length});
+        prefix.append(oId);
         return KeyRange.prefix(prefix.get());
     }
 
-    public static byte[] extractOverlay(byte[] schemaPrefix, Key key) {
+    public static Identifier extractOverlay(byte[] schemaPrefix, Key key) {
         ByteBuffer bbKey = key.getWrapper();
         bbKey.position(schemaPrefix.length);
         int overlaySize = bbKey.get();
         byte[] overlayId = new byte[overlaySize];
         bbKey.get(overlayId);
-        return overlayId;
+        ByteBuf buf = Unpooled.wrappedBuffer(overlayId);
+        return (Identifier)Serializers.fromBinary(buf, Optional.absent());
     }
 }

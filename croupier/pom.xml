@@ -3,36 +3,31 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>se.sics</groupId>
-        <artifactId>kompics-toolbox</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <artifactId>ktoolbox</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>croupier</artifactId>
     <name>Croupier</name>
-    <version>1.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <modules>
-        <module>croupier-api</module>
-        <module>croupier-core</module>
-        <module>croupier-network</module>
-        <module>croupier-example</module>
+        <module>api</module>
+        <module>core</module>
+        <module>network</module>
+        <!--<module>example</module>-->
     </modules>
-    
-    <properties>
-        <util.version>${original.util.version}</util.version>
-    </properties>
     
     <dependencies>
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>basic</artifactId>
-            <version>${util.version}</version>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>kompics-basic</artifactId>
-            <version>${util.version}</version>
+            <artifactId>kcore</artifactId>
+            <version>${project.version}</version>
         </dependency>
         
         <dependency>

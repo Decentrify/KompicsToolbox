@@ -18,149 +18,126 @@
  */
 package se.sics.ktoolbox.aggregator.server;
 
+import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.*;
-import se.sics.ktoolbox.aggregator.util.PacketInfo;
-import se.sics.ktoolbox.aggregator.server.event.AggregatedInfo;
-import se.sics.ktoolbox.aggregator.server.event.WindowProcessing;
-import se.sics.ktoolbox.aggregator.server.GlobalAggregatorPort;
-import se.sics.ktoolbox.aggregator.server.VisualizerPort;
-import se.sics.ktoolbox.aggregator.server.util.DesignInfoContainer;
-import se.sics.ktoolbox.aggregator.server.util.DesignProcessor;
-import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
-
+import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
+import se.sics.ktoolbox.aggregator.server.event.VisualizerWindow;
 import java.util.*;
+import org.javatuples.Pair;
+import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
+import se.sics.ktoolbox.aggregator.server.util.VisualizerProcessor;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
- * Visualizer component used for providing the visualizations
- * to the end user.
+ * Visualizer component used for providing the visualizations to the end user.
  *
  * Created by babbar on 2015-09-02.
  */
 public class Visualizer extends ComponentDefinition {
 
-    private Logger logger = LoggerFactory.getLogger(Visualizer.class);
-    private int maxSnapshots;
-    private Map<String, DesignProcessor> designerNameMap;
+    private static final Logger LOG = LoggerFactory.getLogger(Visualizer.class);
+    private String logPrefix;
 
-    Negative<VisualizerPort> visualizerPort = provides(VisualizerPort.class);
-    Positive<GlobalAggregatorPort> aggregatorPort = requires(GlobalAggregatorPort.class);
-    LinkedList<Map<Integer, List<PacketInfo>>> snapshotList;
+    Negative visualizerPort = provides(VisualizerPort.class);
+    Positive aggregatorPort = requires(GlobalAggregatorPort.class);
 
-    public Visualizer(VisualizerInit init){
+    private final SystemKCWrapper systemConfig;
+    private final VisualizerKCWrapper visualizerConfig;
 
-        doInit(init);
-        subscribe(startHandler, control);
-        subscribe(aggregatedInfoHandler, aggregatorPort);
-        subscribe(windowProcessRequestHandler, visualizerPort);
+    private final Map<Class, VisualizerProcessor> visualizerProcessors;
+    private final Map<Integer, Table<Identifier, Class, AggregatorPacket>> snapshots = new HashMap<>();
+    private Pair<Integer, Integer> snapshotInterval;
+
+    public Visualizer(VisualizerInit init) {
+        systemConfig = new SystemKCWrapper(config());
+        visualizerConfig = new VisualizerKCWrapper(config());
+        logPrefix = "<nid:" + systemConfig.id + ">";
+        LOG.info("{}initiating...", logPrefix);
+
+        visualizerProcessors = init.visualizerProcessors;
+        snapshotInterval = Pair.with(0, 0);
+
+        subscribe(handleStart, control);
+        subscribe(handleSystemWindow, aggregatorPort);
+        subscribe(handleVisualizationRequest, visualizerPort);
     }
 
-    /**
-     * Perform the initialization tasks.
-     * @param init init
-     */
-    private void doInit(VisualizerInit init) {
-
-        logger.debug("Performing the initialization tasks.");
-        this.maxSnapshots = init.maxSnapshots;
-        this.designerNameMap = init.designerNameMap;
-        this.snapshotList = new LinkedList<Map<Integer, List<PacketInfo>>>();
-
-    }
-
-    /**
-     * Handler to be invoked when the component is booted up.
-     * All the component creation and other trigger tasks need to be performed here.
-     */
-    Handler<Start> startHandler = new Handler<Start>() {
+    Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            logger.debug("Component booted up.");
+            LOG.info("{}starting...", logPrefix);
         }
     };
 
-
     /**
-     * Handler invoked when the visualizer receives the
-     * aggregated information from the global aggregator.
-     *
+     * Handler invoked when the visualizer receives the aggregated information
+     * from the global aggregator.
      */
-    Handler<AggregatedInfo> aggregatedInfoHandler = new Handler<AggregatedInfo>() {
+    Handler handleSystemWindow = new Handler<SystemWindow>() {
         @Override
-        public void handle(AggregatedInfo event) {
+        public void handle(SystemWindow event) {
+            LOG.trace("{}received:{}", logPrefix, event);
 
-            logger.debug("Received aggregated information from the global aggregator");
-
-            while(snapshotList.size() >= maxSnapshots){
-                snapshotList.removeLast();
+            while (snapshotInterval.getValue1() - snapshotInterval.getValue0() >= visualizerConfig.snapshotMaxSize) {
+                snapshots.remove(snapshotInterval.getValue0());
+                snapshotInterval = snapshotInterval.setAt0(snapshotInterval.getValue0() + 1);
             }
-            
-            Map<Integer, List<PacketInfo>> nodePacketMap = event.getNodePacketMap();
-            
-            if(nodePacketMap.isEmpty()){
-                
-                logger.warn("Empty map containing no information from the system. Returning.");
+
+            if (event.systemWindow.isEmpty()) {
+                LOG.debug("{}empty window", logPrefix);
                 return;
             }
-            
-            logger.debug("{}", nodePacketMap);
-            snapshotList.addFirst(event.getNodePacketMap());
+            snapshotInterval = snapshotInterval.setAt1(snapshotInterval.getValue1() + 1);
+            snapshots.put(snapshotInterval.getValue1(), event.systemWindow);
         }
     };
 
-
-    /**
-     * Handler for processing window request from the application.
-     */
-    Handler<WindowProcessing.Request> windowProcessRequestHandler = new Handler<WindowProcessing.Request>() {
+    Handler handleVisualizationRequest = new Handler<VisualizerWindow.Request>() {
         @Override
-        public void handle(WindowProcessing.Request event) {
+        public void handle(VisualizerWindow.Request request) {
+            LOG.trace("{}received:{}", logPrefix, request);
 
-            logger.debug("Received a request to handle the window processing.");
-            logger.debug("Processing Request {}:", event);
-            
-            DesignProcessor processor = designerNameMap.get(event.getDesigner());
+            VisualizerProcessor processor = visualizerProcessors.get(request.processor);
 
-            if(processor == null) {
-                logger.error("Unable to locate the designer for the requested one.");
-                throw new RuntimeException("Unable to locate the design processor map.");
+            if (processor == null) {
+                LOG.error("{}unable to locate designer:{}", logPrefix, request.processor);
+                throw new RuntimeException("unable to locate designer:" + request.processor);
             }
 
-            logger.debug("Located the design processor, going ahead with processing.");
-            Collection<Map<Integer, List<PacketInfo>>> windows = getWindows(event.getStartLoc(), event.getEndLoc());
-            DesignInfoContainer container = processor.process(windows);
-            
-            logger.debug("Processed Container {}: ", container);
-//          We now should have the processed information.
-            WindowProcessing.Response response = new WindowProcessing.Response(event.getRequestId(), container);
-            trigger(response, visualizerPort);
+            LOG.debug("{}processor:{} window start:{} end:{}",
+                    new Object[]{logPrefix, request.processor, request.startLoc, request.endLoc});
+            VisualizerPacket window = processor.getFirst();
+            int startLoc;
+            int endLoc;
+            if (request.endLoc < snapshotInterval.getValue0()
+                    || request.startLoc > snapshotInterval.getValue1()) {
+                LOG.info("{}no aggregated windows within the requested visualizer window");
+                answer(request, request.answer(window));
+            } else {
+                startLoc = (request.startLoc < snapshotInterval.getValue0() ? snapshotInterval.getValue0() : request.startLoc);
+                endLoc = (request.endLoc > snapshotInterval.getValue1() ? snapshotInterval.getValue1() : request.endLoc);
+
+                for (int i = startLoc; i <= endLoc; i++) {
+                    window = processor.process(window, snapshots.get(i));
+                }
+                
+                LOG.debug("{}answering processor:{} window start:{} end:{}",
+                    new Object[]{logPrefix, request.processor, startLoc, endLoc});
+                answer(request, request.answer(window));
+            }
         }
     };
 
+    public static class VisualizerInit extends Init<Visualizer> {
 
-    /**
-     * Based on the parameters for the method, arrange the windows in a list.
-     *
-     * @param start start point.
-     * @param end end point
-     * @return Window Collection.
-     */
-    private Collection<Map<Integer, List<PacketInfo>>> getWindows(int start, int end){
+        public final Map<Class, VisualizerProcessor> visualizerProcessors;
 
-        List<Map<Integer, List<PacketInfo>>> result = new ArrayList<Map<Integer, List<PacketInfo>>>();
-
-        if(start > snapshotList.size()){
-            return result;
+        public VisualizerInit(Map<Class, VisualizerProcessor> visualizerProcessors) {
+            this.visualizerProcessors = visualizerProcessors;
         }
-
-        if(end > snapshotList.size()){
-            end = snapshotList.size();
-        }
-
-        result.addAll(snapshotList.subList(start, end));
-        return result;
     }
-
-
 }

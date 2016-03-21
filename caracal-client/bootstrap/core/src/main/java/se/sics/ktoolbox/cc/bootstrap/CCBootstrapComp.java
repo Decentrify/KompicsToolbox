@@ -20,11 +20,13 @@ package se.sics.ktoolbox.cc.bootstrap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
-import org.javatuples.Triplet;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.global.Sample;
@@ -35,7 +37,6 @@ import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.Stop;
 import se.sics.caracaldb.Address;
 import se.sics.caracaldb.global.ForwardMessage;
 import se.sics.caracaldb.global.SchemaData;
@@ -47,13 +48,15 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.cc.bootstrap.msg.CCDisconnected;
-import se.sics.ktoolbox.cc.bootstrap.msg.CCGetNodes;
-import se.sics.ktoolbox.cc.bootstrap.msg.CCReady;
-import se.sics.ktoolbox.cc.bootstrap.msg.CCUpdate;
-import se.sics.ktoolbox.cc.common.config.CCBootstrapConfig;
-import se.sics.ktoolbox.cc.common.op.CCOpEvent;
-import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapDisconnected;
+import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapReady;
+import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.status.Status;
+import se.sics.ktoolbox.util.status.StatusPort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -63,48 +66,35 @@ public class CCBootstrapComp extends ComponentDefinition {
     private final static Logger LOG = LoggerFactory.getLogger(CCBootstrapComp.class);
     private final String logPrefix;
 
-    Negative<CCBootstrapPort> ccbootstrap = provides(CCBootstrapPort.class);
+    Negative<CCOperationPort> ccop = provides(CCOperationPort.class);
+    Negative<StatusPort> status = provides(StatusPort.class);
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
 
-    private final Random rand;
-    private final SystemConfig systemConfig;
-    private final CCBootstrapConfig ccBootstrapConfig;
+    private final SystemKCWrapper systemConfig;
+    private final CCBootstrapKCWrapper bootstrapConfig;
+    private final Address privateAdr;
 
-    private final Address ccSelf;
-    private SchemaData schemas = null;
-
-    private final List<Address> activeNodes;
-    private final List<Address> deadNodes;
-
-    private Map<UUID, Triplet<CCOpEvent.Request, Address, UUID>> activeRequests; //<messageId, <request, caracalNode, timeoutId>>
+    private final CaracalTracker caracalTracker;
+    private final OperationTracker operationTracker;
 
     private UUID sanityCheckTId = null;
 
     public CCBootstrapComp(CCBootstrapInit init) {
-        this.systemConfig = init.systemConfig;
-        this.rand = new Random(systemConfig.seed);
-        this.ccSelf = new se.sics.caracaldb.Address(systemConfig.self.getIp(), systemConfig.self.getPort(), null);
-        this.ccBootstrapConfig = init.ccBootstrapConfig;
-        this.logPrefix = systemConfig.self.getBase().toString();
-        if (init.caracalNodes.isEmpty()) {
-            LOG.error("{} no bootstrap caracal nodes provided - cannot boot", logPrefix);
-            throw new RuntimeException("no bootstrap caracal nodes provided - cannot boot");
-        }
-        this.activeNodes = new ArrayList<Address>();
-        this.deadNodes = new ArrayList<Address>(init.caracalNodes);
-        this.activeRequests = new HashMap<UUID, Triplet<CCOpEvent.Request, Address, UUID>>();
-        LOG.info("{} initiating with bootstrap nodes:{}", logPrefix, activeNodes);
+        systemConfig = new SystemKCWrapper(config());
+        bootstrapConfig = new CCBootstrapKCWrapper(config());
+        privateAdr = init.privateAdr;
+        caracalTracker = new CaracalTracker();
+        operationTracker = new OperationTracker();
+        logPrefix = "<nid:" + systemConfig.id + "> ";
+        LOG.info("{}initiating...", logPrefix);
 
         subscribe(handleStart, control);
-        subscribe(handleStop, control);
-        subscribe(handleSanityCheck, timer);
-        subscribe(handleSample, network);
-        subscribe(handleCCOpRequest, ccbootstrap);
-        subscribe(handleCCOpResponse, network);
-        subscribe(handleCCOpTimeout, timer);
-        subscribe(handleCCGetNodes, ccbootstrap);
-        subscribe(handleCCUpdate, ccbootstrap);
+        subscribe(handlePeriodicStateCheck, timer);
+        subscribe(caracalTracker.handleSample, network);
+        subscribe(caracalTracker.handleSampleTimeout, timer);
+        subscribe(operationTracker.handleCCOpTimeout, timer);
+        subscribe(operationTracker.handleCCOpRequestDisconnected, ccop);
     }
 
     //**************************************************************************
@@ -112,165 +102,280 @@ public class CCBootstrapComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{} starting...", logPrefix);
-            scheduleSanityCheck();
-            SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(deadNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
-            LOG.trace("{} sending:{}", logPrefix, req);
-            trigger(req, network);
-        }
-    };
-    Handler handleStop = new Handler<Stop>() {
-        @Override
-        public void handle(Stop event) {
-            LOG.info("{} stopping...", logPrefix);
+            schedulePeriodicStateCheck();
+            caracalTracker.start();
         }
     };
 
-    Handler handleCCUpdate = new Handler<CCUpdate>() {
-
-        @Override
-        public void handle(CCUpdate e) {
-            LOG.trace("{} received:{}", logPrefix, e);
-            if (!activeNodes.isEmpty()) {
-                SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(activeNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
-                LOG.trace("{} sending:{}", logPrefix, req);
-                trigger(req, network);
-            } else if(!deadNodes.isEmpty()){
-                SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(deadNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
-                LOG.trace("{} sending:{}", logPrefix, req);
-                trigger(req, network);
-            } else {
-                LOG.warn("{} no active/dead nodes - no way to contact caracal");
-            }
-        }
-
-    };
-
-    Handler handleSanityCheck = new Handler<SanityCheckTimeout>() {
+    Handler handlePeriodicStateCheck = new Handler<SanityCheckTimeout>() {
         @Override
         public void handle(SanityCheckTimeout event) {
-            LOG.trace("{} internal state check", logPrefix);
-
-            LOG.info("{} memory usage - activeNodes:{} deadNodes:{} activeRequests:{}",
-                    new Object[]{logPrefix, activeNodes.size(), deadNodes.size(), activeRequests.size()});
-
-            if (activeNodes.isEmpty()) {
-                LOG.warn("{} disconnected from caracal - possible network partition", logPrefix);
-                SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(deadNodes), ccBootstrapConfig.bootstrapSize(), true, false, 0);
-                LOG.trace("{} sending:{}", logPrefix, req);
-                trigger(req, network);
-                return;
-            }
-            if (activeNodes.size() < ccBootstrapConfig.bootstrapSize()) {
-                SampleRequest req = new SampleRequest(ccSelf, randomCaracalNode(activeNodes), ccBootstrapConfig.bootstrapSize(), false, false, 0);
-                LOG.trace("{} sending:{}", logPrefix, req);
-                trigger(req, network);
-            }
+            caracalTracker.stateCheck();
+            operationTracker.stateCheck();
         }
     };
+
+    private void ready() {
+        subscribe(operationTracker.handleCCOpResponse, network);
+        unsubscribe(operationTracker.handleCCOpRequestDisconnected, ccop);
+        subscribe(operationTracker.handleCCOpRequest, ccop);
+
+        LOG.info("{}caracal ready", logPrefix);
+        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCBootstrapReady(caracalTracker.schemas)), status);
+    }
+
+    private void disconnected() {
+        subscribe(operationTracker.handleCCOpRequestDisconnected, ccop);
+        unsubscribe(operationTracker.handleCCOpRequest, ccop);
+        unsubscribe(operationTracker.handleCCOpResponse, network);
+
+        LOG.info("{}caracal disconnected", logPrefix);
+        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCBootstrapDisconnected()), status);
+    }
+
     //**************************************************************************
-    Handler handleSample = new Handler<Sample>() {
-        @Override
-        public void handle(Sample msg) {
-            LOG.trace("{} received:{}", logPrefix, msg);
-            boolean triggerReady = false;
-            if (msg.schemaData != null) {
-                triggerReady = true;
-                schemas = SchemaData.deserialise(msg.schemaData);
-                LOG.debug("{} received schemas:{}", logPrefix, schemas.schemas());
+    public class CaracalTracker {
+
+        protected SchemaData schemas = null;
+        protected boolean caracalConnected = false;
+
+        private final Random rand;
+        private final List<Address> activeNodes = new ArrayList<>();
+        private final List<Address> deadNodes = new ArrayList<>();
+
+        private UUID sampleTid = null;
+
+        public CaracalTracker() {
+            rand = new Random(systemConfig.seed);
+            if (bootstrapConfig.caracalBootstrap.isEmpty()) {
+                LOG.error("{}no bootstrap caracal nodes provided - cannot boot", logPrefix);
+                throw new RuntimeException("no bootstrap caracal nodes provided - cannot boot");
             }
-            for (Address node : msg.nodes) {
-                if (activeNodes.isEmpty()) {
-                    LOG.info("{} connected to caracal", logPrefix);
-                    triggerReady = true;
-                }
+            deadNodes.addAll(bootstrapConfig.caracalBootstrap);
+        }
+
+        protected void start() {
+            requestSample(true);
+        }
+
+        protected void stateCheck() {
+            LOG.info("{}caracal connected:{}", logPrefix, caracalTracker.caracalConnected);
+            LOG.info("{}activeNodes:{} deadNodes:{}",
+                    new Object[]{logPrefix, activeNodes.size(), deadNodes.size()});
+
+            if (sampleTid == null && activeNodes.size() < bootstrapConfig.bootstrapSize) {
+                requestSample(schemas == null);
+            }
+        }
+
+        private void requestSample(boolean schemaRequest) {
+            Address caracalNode = null;
+            if (!activeNodes.isEmpty()) {
+                caracalNode = randomCaracalNode(activeNodes);
+            }
+            if (caracalNode == null) {
+                caracalNode = randomCaracalNode(deadNodes);
+            }
+            //should always have at least one dead node since I will not start with 0 bootstraps;
+            SampleRequest req = new SampleRequest(privateAdr, caracalNode, bootstrapConfig.bootstrapSize, schemaRequest, false, 0);
+            LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, req, req.getHeader().getDestination()});
+            trigger(req, network);
+            scheduleCaracalSampleTimeout(caracalNode);
+        }
+
+        private void registerSample(Sample sample) {
+            if (sample.schemaData != null) {
+                schemas = SchemaData.deserialise(sample.schemaData);
+                LOG.debug("{}received schemas:{}", logPrefix, schemas.schemas());
+            }
+            for (Address node : sample.nodes) {
                 if (!activeNodes.contains(node)) {
                     activeNodes.add(node);
                 }
             }
-            trigger(new CCReady(schemas), ccbootstrap);
-            LOG.info("{} caracal nodes:{}", logPrefix, activeNodes);
         }
-    };
 
-    //**************************************************************************
-    Handler handleCCOpRequest = new Handler<CCOpEvent.Request>() {
-        @Override
-        public void handle(CCOpEvent.Request request) {
-            LOG.trace("{} received:{}", logPrefix, request);
+        Handler handleSample = new Handler<Sample>() {
+            @Override
+            public void handle(Sample sample) {
+                LOG.trace("{}received:{} from:{}", logPrefix, sample, sample.getHeader().getSource());
+                registerSample(sample);
+                if (sampleTid != null) {
+                    cancelCaracalSampleTimeout();
+                }
+                if (!caracalConnected) {
+                    if (schemas != null && !activeNodes.isEmpty()) {
+                        caracalConnected = true;
+                        ready();
+                    } else {
+                        requestSample(schemas == null);
+                    }
+                }
+            }
+        };
+
+        Handler handleSampleTimeout = new Handler<CaracalSampleTimeout>() {
+            @Override
+            public void handle(CaracalSampleTimeout timeout) {
+                LOG.trace("{}caracal sample timeout from:{}", logPrefix, timeout.caracalNode);
+                if (sampleTid == null) {
+                    //possible late timeout
+                    return;
+                }
+                if (activeNodes.contains(timeout.caracalNode)) {
+                    suspectedNode(timeout.caracalNode);
+                }
+                sampleTid = null;
+                requestSample(schemas == null);
+            }
+        };
+
+        public Address randomActiveNode() {
+            return randomCaracalNode(activeNodes);
+        }
+
+        private Address randomCaracalNode(List<Address> nodes) {
+            return nodes.get(rand.nextInt(nodes.size()));
+        }
+
+        public void suspectedNode(Address suspectNode) {
+            if (!activeNodes.remove(suspectNode)) {
+                return;
+            }
             if (activeNodes.isEmpty()) {
-                LOG.info("{} disconnected - cannot serve requests");
-                answer(request, new CCOpEvent.Timeout(request.opReq, request.forwardTo));
-                return;
+                if (caracalConnected) {
+                    caracalConnected = false;
+                    disconnected();
+                }
             }
-
-            Address caracalNode = randomCaracalNode(activeNodes);
-            CaracalMsg msg = new CaracalMsg(ccSelf, caracalNode, request.opReq);
-            ForwardMessage fmsg = new ForwardMessage(ccSelf, caracalNode, request.forwardTo, msg);
-            LOG.debug("{} sending:{}", logPrefix, fmsg);
-            trigger(fmsg, network);
-            UUID timeoutId = scheduleCaracalTimeout(fmsg.getId());
-            activeRequests.put(fmsg.getId(), Triplet.with(request, caracalNode, timeoutId));
+            if (sampleTid == null) {
+                requestSample(schemas == null);
+            }
+            if (!deadNodes.contains(suspectNode)) {
+                deadNodes.add(suspectNode);
+                if (deadNodes.size() > bootstrapConfig.bootstrapSize) {
+                    Address randomNode = randomCaracalNode(deadNodes);
+                    deadNodes.remove(randomNode);
+                }
+            }
         }
-    };
 
-    Handler handleCCOpResponse = new Handler<CaracalMsg>() {
-        @Override
-        public void handle(CaracalMsg response) {
-            LOG.trace("{} received:{}", logPrefix, response);
-            Triplet<CCOpEvent.Request, Address, UUID> requestInfo = activeRequests.remove(response.getId());
-            if (requestInfo == null) {
-                LOG.debug("{} late message:{}", logPrefix, response.getId());
-                return;
+        private void scheduleCaracalSampleTimeout(Address caracalNode) {
+            if (sampleTid != null) {
+                throw new RuntimeException("CaracalConnect logic error");
             }
-            cancelCaracalTimeout(requestInfo.getValue2());
-            LOG.debug("{} received response:{}", logPrefix, response.op);
-            answer(requestInfo.getValue0(), new CCOpEvent.Response(response.op));
+            ScheduleTimeout st = new ScheduleTimeout(bootstrapConfig.caracalRtt);
+            CaracalSampleTimeout ct = new CaracalSampleTimeout(st, caracalNode);
+            st.setTimeoutEvent(ct);
+            trigger(st, timer);
+            sampleTid = ct.getTimeoutId();
         }
-    };
 
-    Handler handleCCOpTimeout = new Handler<CaracalTimeout>() {
-        @Override
-        public void handle(CaracalTimeout timeout) {
-            LOG.trace("{} timeout:{}", logPrefix, timeout);
-            Triplet<CCOpEvent.Request, Address, UUID> requestInfo = activeRequests.remove(timeout.messageId);
-            if (requestInfo == null) {
-                LOG.debug("{} late timeout for message:{}", logPrefix, timeout.messageId);
-                return;
+        private void cancelCaracalSampleTimeout() {
+            if (sampleTid == null) {
+                throw new RuntimeException("CaracalConnect logic error");
             }
-            activeNodes.remove(requestInfo.getValue1());
-            if (activeNodes.isEmpty()) {
-                LOG.warn("{} disconnected from caracal", logPrefix);
-                trigger(new CCDisconnected(), ccbootstrap);
-            }
-            deadNodes.add(requestInfo.getValue1());
-            if (deadNodes.size() > ccBootstrapConfig.bootstrapSize()) {
-                deadNodes.remove(0);
-            }
-            LOG.info("{} timed out message:{} on caracal node:{}",
-                    new Object[]{logPrefix, timeout.messageId, requestInfo.getValue1()});
-            answer(requestInfo.getValue0(), new CCOpEvent.Timeout(requestInfo.getValue0().opReq, requestInfo.getValue0().forwardTo));
+            CancelTimeout cpt = new CancelTimeout(sampleTid);
+            trigger(cpt, timer);
+            sampleTid = null;
         }
-    };
-
-    Handler handleCCGetNodes = new Handler<CCGetNodes.Req>() {
-        @Override
-        public void handle(CCGetNodes.Req request) {
-            LOG.trace("{} received:{}", logPrefix, request);
-            answer(request, new CCGetNodes.Resp(new ArrayList<Address>(activeNodes)));
-        }
-    };
-    //**************************************************************************
-
-    private Address randomCaracalNode(List<Address> nodes) {
-        return nodes.get(rand.nextInt(nodes.size()));
     }
 
-    private void scheduleSanityCheck() {
+    private class OperationTracker {
+
+        //<messageId, <request, timeoutId>>
+        private Map<UUID, Pair<CCOpRequest, UUID>> activeRequests = new HashMap<>();
+        //<timeoutId>
+        private Set<UUID> activeTimeouts = new HashSet<>();
+
+        protected void stateCheck() {
+            LOG.info("{}activeRequests:{} activeTimeout:{}",
+                    new Object[]{logPrefix, activeRequests.size(), activeTimeouts.size()});
+        }
+
+        //handler for caracal disconnected
+        Handler handleCCOpRequestDisconnected = new Handler<CCOpRequest>() {
+            @Override
+            public void handle(CCOpRequest request) {
+                LOG.trace("{}received:{} - disconnected - automatic timeout", logPrefix, request);
+                answer(request, request.timeout());
+            }
+        };
+
+        //handlers for caracalConnected
+        Handler handleCCOpRequest = new Handler<CCOpRequest>() {
+            @Override
+            public void handle(CCOpRequest request) {
+                LOG.debug("{}received:{}", logPrefix, request);
+                Address caracalNode = caracalTracker.randomActiveNode();
+                CaracalMsg msg = new CaracalMsg(privateAdr, caracalNode, request.opReq);
+                ForwardMessage fmsg = new ForwardMessage(privateAdr, caracalNode, request.forwardTo, msg);
+                LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, msg, caracalNode});
+                trigger(fmsg, network);
+                activeRequests.put(fmsg.getId(), Pair.with(request, scheduleCaracalOpTimeout(fmsg.getId(), caracalNode)));
+            }
+        };
+
+        Handler handleCCOpResponse = new Handler<CaracalMsg>() {
+            @Override
+            public void handle(CaracalMsg response) {
+                LOG.trace("{}received:{}", logPrefix, response);
+                Pair<CCOpRequest, UUID> requestInfo = activeRequests.remove(response.getId());
+                if (requestInfo == null) {
+                    LOG.trace("{}late message:{}", logPrefix, response);
+                    return;
+                }
+                LOG.debug("{}received response:{} from:{}", new Object[]{logPrefix, response.op, response.header.getSource()});
+                cancelCaracalOpTimeout(requestInfo.getValue1());
+                answer(requestInfo.getValue0(), requestInfo.getValue0().success(response.op));
+            }
+        };
+        Handler handleCCOpTimeout = new Handler<CaracalOpTimeout>() {
+            @Override
+            public void handle(CaracalOpTimeout timeout) {
+                LOG.trace("{}timeout on:{} from:{}", new Object[]{logPrefix, timeout.messageId, timeout.caracalNode});
+                if (!activeTimeouts.remove(timeout.getTimeoutId())) {
+                    LOG.trace("{}late timeout for message:{}", logPrefix, timeout.messageId);
+                    return;
+                }
+                Pair<CCOpRequest, UUID> requestInfo = activeRequests.remove(timeout.messageId);
+                caracalTracker.suspectedNode(timeout.caracalNode);
+                answer(requestInfo.getValue0(), requestInfo.getValue0().timeout());
+            }
+        };
+
+        private UUID scheduleCaracalOpTimeout(UUID messageId, Address caracalNode) {
+            ScheduleTimeout st = new ScheduleTimeout(bootstrapConfig.caracalRtt);
+            CaracalOpTimeout ct = new CaracalOpTimeout(st, messageId, caracalNode);
+            st.setTimeoutEvent(ct);
+            trigger(st, timer);
+            activeTimeouts.add(ct.getTimeoutId());
+            return ct.getTimeoutId();
+        }
+
+        private void cancelCaracalOpTimeout(UUID timeoutId) {
+            CancelTimeout cpt = new CancelTimeout(timeoutId);
+            trigger(cpt, timer);
+            activeTimeouts.remove(timeoutId);
+        }
+    }
+
+    //**************************************************************************
+    public static class CCBootstrapInit extends Init<CCBootstrapComp> {
+
+        public final Address privateAdr;
+
+        public CCBootstrapInit(KAddress selfAdr) {
+            this.privateAdr = new Address(selfAdr.getIp(), selfAdr.getPort(), null);
+        }
+    }
+
+    private void schedulePeriodicStateCheck() {
         if (sanityCheckTId != null) {
             LOG.warn("{} double starting sanityCheck", logPrefix);
             return;
         }
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(ccBootstrapConfig.sanityCheckPeriod(), ccBootstrapConfig.sanityCheckPeriod());
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(bootstrapConfig.stateCheckPeriod, bootstrapConfig.stateCheckPeriod);
         SanityCheckTimeout sc = new SanityCheckTimeout(spt);
         spt.setTimeoutEvent(sc);
         sanityCheckTId = sc.getTimeoutId();
@@ -287,32 +392,6 @@ public class CCBootstrapComp extends ComponentDefinition {
         trigger(cpt, timer);
     }
 
-    private UUID scheduleCaracalTimeout(UUID messageId) {
-        ScheduleTimeout st = new ScheduleTimeout(ccBootstrapConfig.caracalTimeout());
-        CaracalTimeout ct = new CaracalTimeout(st, messageId);
-        st.setTimeoutEvent(ct);
-        trigger(st, timer);
-        return ct.getTimeoutId();
-    }
-
-    private void cancelCaracalTimeout(UUID timeoutId) {
-        CancelTimeout cpt = new CancelTimeout(timeoutId);
-        trigger(cpt, timer);
-    }
-
-    public static class CCBootstrapInit extends Init<CCBootstrapComp> {
-
-        public final SystemConfig systemConfig;
-        public final CCBootstrapConfig ccBootstrapConfig;
-        public final List<Address> caracalNodes;
-
-        public CCBootstrapInit(SystemConfig systemConfig, CCBootstrapConfig ccBootstrapConfig, List<Address> caracalNodes) {
-            this.systemConfig = systemConfig;
-            this.ccBootstrapConfig = ccBootstrapConfig;
-            this.caracalNodes = caracalNodes;
-        }
-    }
-
     public class SanityCheckTimeout extends Timeout {
 
         public SanityCheckTimeout(SchedulePeriodicTimeout request) {
@@ -325,18 +404,35 @@ public class CCBootstrapComp extends ComponentDefinition {
         }
     }
 
-    public class CaracalTimeout extends Timeout {
+    public class CaracalOpTimeout extends Timeout {
 
         public final UUID messageId;
+        public final Address caracalNode;
 
-        public CaracalTimeout(ScheduleTimeout request, UUID messageId) {
+        public CaracalOpTimeout(ScheduleTimeout request, UUID messageId, Address caracalNode) {
             super(request);
             this.messageId = messageId;
+            this.caracalNode = caracalNode;
         }
 
         @Override
         public String toString() {
-            return "CARACAL_TIMEOUT<" + messageId + ">";
+            return "CARACAL_OP_TIMEOUT<" + messageId + ">";
+        }
+    }
+
+    public class CaracalSampleTimeout extends Timeout {
+
+        public final Address caracalNode;
+
+        public CaracalSampleTimeout(ScheduleTimeout request, Address caracalNode) {
+            super(request);
+            this.caracalNode = caracalNode;
+        }
+
+        @Override
+        public String toString() {
+            return "CARACAL_SAMPLE_TIMEOUT";
         }
     }
 }

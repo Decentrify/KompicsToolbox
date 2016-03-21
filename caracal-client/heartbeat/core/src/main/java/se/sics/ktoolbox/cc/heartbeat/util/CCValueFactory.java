@@ -25,27 +25,25 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCValueFactory {
 
-    public static byte[] getHeartbeatValue(DecoratedAddress src) {
+    public static byte[] getHeartbeatValue(KAddress src) {
         ByteBuf buf = Unpooled.buffer();
-        Serializers.lookupSerializer(DecoratedAddress.class).toBinary(src, buf);
+        Serializers.toBinary(src, buf);
         return Arrays.copyOf(buf.array(), buf.readableBytes());
     }
 
-    public static Set<DecoratedAddress> extractHeartbeatSrc(Collection<byte[]> values) {
-        Set<DecoratedAddress> result = new HashSet<DecoratedAddress>();
-        Serializer serializer = Serializers.lookupSerializer(DecoratedAddress.class);
+    public static Set<KAddress> extractHeartbeatSrc(Collection<byte[]> values) {
+        Set<KAddress> result = new HashSet<>();
         for (byte[] value : values) {
             ByteBuf buf = Unpooled.wrappedBuffer(value);
-            result.add((DecoratedAddress)serializer.fromBinary(buf, Optional.absent()));
+            result.add((KAddress)Serializers.fromBinary(buf, Optional.absent()));
         }
         return result;
     }

@@ -20,9 +20,8 @@
 package se.sics.ktoolbox.cc.heartbeat;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.cc.common.op.CCSimpleReady;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.msg.CCOverlaySample;
+import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
+import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -33,6 +32,5 @@ public class CCHeartbeatPort extends PortType {
         request(CCHeartbeat.Stop.class);
         request(CCOverlaySample.Request.class);
         indication(CCOverlaySample.Response.class);
-        indication(CCSimpleReady.class);
     }    
 }

@@ -19,7 +19,8 @@
 package se.sics.ktoolbox.aggregator.server;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.server.event.AggregatedInfo;
+import se.sics.ktoolbox.aggregator.msg.NodeWindow;
+import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 
 /**
  * Port with which the aggregator communicates with the
@@ -29,5 +30,5 @@ import se.sics.ktoolbox.aggregator.server.event.AggregatedInfo;
  */
 public class GlobalAggregatorPort extends PortType{{
 
-    indication(AggregatedInfo.class);
+    indication(SystemWindow.class);
 }}
