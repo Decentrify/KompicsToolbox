@@ -119,6 +119,10 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         Identifier overlayId;
         if (channelSelector.getEventType().isAssignableFrom(event.getClass())) {
             overlayId = channelSelector.getValue(event);
+            if(overlayId == null) {
+                LOG.info("{}traffic not processable in:{}", logPrefix, details);
+                return;
+            }
         } else {
             LOG.info("{}cannot extract overlay for:{} from:{} in:{}", 
                     new Object[]{logPrefix, channelSelector.getEventType().getName(), event.getClass().getName(), details});

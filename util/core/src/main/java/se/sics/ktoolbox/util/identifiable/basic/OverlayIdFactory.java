@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.identifiable.basic;
 
+import com.google.common.primitives.Ints;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
@@ -53,6 +54,18 @@ public class OverlayIdFactory {
         }
     }
 
+    public static OverlayIdentifier getId(byte owner, Type type, byte[] id) {
+        assert owner == (byte) (owner & 0xF0);
+        assert id.length == 3;
+        byte firstByte = (byte) (owner + type.code);
+        return new OverlayIdentifier(new byte[]{firstByte, id[0], id[1], id[2]});
+    }
+
+    public static OverlayIdentifier fromInt(int id) {
+        byte[] bId = Ints.toByteArray(id);
+        return new OverlayIdentifier(bId);
+    }
+
     public static OverlayIdentifier changeType(Identifier id, Type type) {
         OverlayIdentifier overlayId = (OverlayIdentifier) id;
         byte owner = (byte) (overlayId.id[0] & 0xF0); //first 4 bits
@@ -60,24 +73,17 @@ public class OverlayIdFactory {
         return new OverlayIdentifier(new byte[]{firstByte, overlayId.id[1], overlayId.id[2], overlayId.id[3]});
     }
 
-    public static OverlayIdentifier getId(byte owner, Type type, byte[] id) {
-        assert owner == (byte) (owner & 0xF0);
-        assert id.length == 3;
-        byte firstByte = (byte) (owner + type.code);
-         return new OverlayIdentifier(new byte[]{firstByte, id[0], id[1], id[2]});
-    }
-    
     public static byte getOwner(Identifier id) {
-        OverlayIdentifier overlayId = (OverlayIdentifier)id;
+        OverlayIdentifier overlayId = (OverlayIdentifier) id;
         byte firstByte = overlayId.id[0];
-        byte owner = (byte)(firstByte & 0xF0);
+        byte owner = (byte) (firstByte & 0xF0);
         return owner;
     }
 
     public static Type getType(Identifier id) {
-        OverlayIdentifier overlayId = (OverlayIdentifier)id;
+        OverlayIdentifier overlayId = (OverlayIdentifier) id;
         byte firstByte = overlayId.id[0];
-        byte type = (byte)(firstByte & 0x0F);
+        byte type = (byte) (firstByte & 0x0F);
         return Type.getFromCode(type);
     }
 }

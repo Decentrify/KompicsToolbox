@@ -26,12 +26,16 @@ import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class MsgOverlayIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier> {
+
     public MsgOverlayIdExtractor() {
         super(KContentMsg.class);
     }
-    
+
     @Override
     public Identifier getValue(KContentMsg msg) {
-        return ((OverlayEvent)msg.getContent()).overlayId();
+        if (msg.getContent() instanceof OverlayEvent) {
+            return ((OverlayEvent) msg.getContent()).overlayId();
+        }
+        return null;
     }
 }

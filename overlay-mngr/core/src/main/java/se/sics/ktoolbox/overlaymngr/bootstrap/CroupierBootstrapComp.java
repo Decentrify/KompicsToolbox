@@ -32,6 +32,7 @@ import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
 import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 import se.sics.ktoolbox.croupier.CroupierControlPort;
 import se.sics.ktoolbox.croupier.event.CroupierControl;
+import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrConfig;
 
@@ -88,9 +89,9 @@ public class CroupierBootstrapComp extends ComponentDefinition {
         }
     };
 
-    Handler handleDisconnect = new Handler<CroupierControl>() {
+    Handler handleDisconnect = new Handler<CroupierDisconnected>() {
         @Override
-        public void handle(CroupierControl event) {
+        public void handle(CroupierDisconnected event) {
             if (OverlayMngrConfig.isGlobalCroupier(event.overlayId)) {
                 LOG.warn("{}global croupier disconnected", logPrefix);
                 //TODO Alex
@@ -100,6 +101,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
             }
         }
     };
+    
 
     public static class Init extends se.sics.kompics.Init<CroupierBootstrapComp> {
     }
