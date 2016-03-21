@@ -18,6 +18,7 @@
  */
 package se.sics.p2ptoolbox.gradient.idsort;
 
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -34,12 +35,15 @@ import se.sics.p2ptoolbox.croupier.CroupierPort;
 import se.sics.p2ptoolbox.croupier.msg.CroupierDisconnected;
 import se.sics.p2ptoolbox.croupier.CroupierComp;
 import se.sics.p2ptoolbox.croupier.CroupierConfig;
+import se.sics.p2ptoolbox.croupier.msg.CroupierJoin;
 import se.sics.p2ptoolbox.gradient.GradientPort;
 import se.sics.p2ptoolbox.gradient.GradientComp;
 import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.simulation.NoFilter;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.filters.IntegerOverlayFilter;
+import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
+import se.sics.p2ptoolbox.util.update.SelfViewUpdatePort;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -55,25 +59,29 @@ public class IdSortHostComp extends ComponentDefinition {
     private final CroupierConfig croupierConfig;
     private final GradientConfig gradientConfig;
     private final String logPrefix;
+    private final List<DecoratedAddress> bootstrapNodes;
+    
+    private Component croupier;
 
     public IdSortHostComp(HostInit init) {
         this.systemConfig = init.systemConfig;
         this.croupierConfig = init.croupierConfig;
         this.gradientConfig = init.gradientConfig;
         this.logPrefix = systemConfig.self.toString();
-        log.info("{} initiating with bootstrap:{}", logPrefix, systemConfig.bootstrapNodes);
+        this.bootstrapNodes = init.bootstrapNodes;
+        log.info("{} initiating with bootstrap:{}", logPrefix, bootstrapNodes);
 
         subscribe(handleStart, control);
         subscribe(handleStop, control);
 
         CroupierComp.CroupierInit croupierInit = new CroupierComp.CroupierInit(systemConfig, croupierConfig, 10);
-        Component croupier = createNConnectCroupier(croupierInit);
+        createNConnectCroupier(croupierInit);
 
         GradientComp.GradientInit gradientInit = new GradientComp.GradientInit(systemConfig, gradientConfig, 11, new IdViewComparator(), new NoFilter());
-        Component gradient = createNConnectGradient(gradientInit, croupier);
+        Component gradient = createNConnectGradient(gradientInit);
 
         IdSortComp.IdSortInit exampleInit = new IdSortComp.IdSortInit(systemConfig.self);
-        Component compA = createNConnectIdSort(exampleInit, croupier, gradient);
+        Component compA = createNConnectIdSort(exampleInit, gradient);
 
         subscribe(handleDisconnected, croupier.getPositive(CroupierControlPort.class));
     }
@@ -82,6 +90,7 @@ public class IdSortHostComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             log.info("{} starting...", logPrefix);
+            trigger(new CroupierJoin(bootstrapNodes), croupier.getPositive(CroupierControlPort.class));
         }
     };
 
@@ -92,24 +101,25 @@ public class IdSortHostComp extends ComponentDefinition {
         }
     };
 
-    private Component createNConnectCroupier(CroupierComp.CroupierInit croupierInit) {
-        Component croupier = create(CroupierComp.class, croupierInit);
+    private void createNConnectCroupier(CroupierComp.CroupierInit croupierInit) {
+        croupier = create(CroupierComp.class, croupierInit);
         connect(croupier.getNegative(Network.class), network, new IntegerOverlayFilter(croupierInit.overlayId));
         connect(croupier.getNegative(Timer.class), timer);
-        return croupier;
     }
 
-    private Component createNConnectGradient(GradientComp.GradientInit gradientInit, Component croupier) {
+    private Component createNConnectGradient(GradientComp.GradientInit gradientInit) {
         Component gradient = create(GradientComp.class, gradientInit);
         connect(gradient.getNegative(Network.class), network, new IntegerOverlayFilter(gradientInit.overlayId));
         connect(gradient.getNegative(Timer.class), timer);
         connect(gradient.getNegative(CroupierPort.class), croupier.getPositive(CroupierPort.class));
+        connect(gradient.getPositive(SelfViewUpdatePort.class), croupier.getNegative(SelfViewUpdatePort.class));
         return gradient;
     }
 
-    private Component createNConnectIdSort(IdSortComp.IdSortInit exampleInit, Component croupier, Component gradient) {
+    private Component createNConnectIdSort(IdSortComp.IdSortInit exampleInit, Component gradient) {
         Component example = create(IdSortComp.class, exampleInit);
         connect(example.getNegative(GradientPort.class), gradient.getPositive(GradientPort.class));
+        connect(example.getPositive(SelfViewUpdatePort.class), gradient.getNegative(SelfViewUpdatePort.class));
         return example;
     }
 
@@ -126,11 +136,14 @@ public class IdSortHostComp extends ComponentDefinition {
         public final SystemConfig systemConfig;
         public final CroupierConfig croupierConfig;
         public final GradientConfig gradientConfig;
+        public final List<DecoratedAddress> bootstrapNodes;
         
-        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, GradientConfig gradientConfig) {
+        public HostInit(SystemConfig systemConfig, CroupierConfig croupierConfig, 
+                GradientConfig gradientConfig, List<DecoratedAddress> bootstrapNodes) {
             this.systemConfig = systemConfig;
             this.croupierConfig = croupierConfig;
             this.gradientConfig = gradientConfig;
+            this.bootstrapNodes = bootstrapNodes;
         }
     }
 }

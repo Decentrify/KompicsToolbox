@@ -5,38 +5,27 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>se.sics</groupId>
-        <artifactId>kompics-toolbox</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <artifactId>ktoolbox</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>leader-election</artifactId>
-    <version>1.2-SNAPSHOT</version>
     <name>Leader Election</name>
     <packaging>pom</packaging>
 
     <modules>
         <module>election-api</module>
         <module>election-core</module>
-        <module>election-example</module>
+        <!--<module>election-example</module>-->
         <module>election-network</module>
     </modules>
     
-    <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-        <java.compiler.version>1.6</java.compiler.version>
-        <kompics.version>0.8.1-SNAPSHOT</kompics.version>
-        <gradient.version>1.5-SNAPSHOT</gradient.version>
-        <util.version>1.4-SNAPSHOT</util.version>
-        <nattraverser.version>1.2.1-SNAPSHOT</nattraverser.version>
-        <guava.version>18.0</guava.version>
-    </properties>
     
    <dependencies>
        <dependency>
            <groupId>se.sics.ktoolbox.util</groupId>
-           <artifactId>kompics-basic</artifactId>
-           <version>${util.version}</version>
+           <artifactId>core</artifactId>
+           <version>${project.version}</version>
        </dependency>
        <dependency>
            <groupId>se.sics.kompics</groupId>
@@ -55,16 +44,9 @@
        </dependency>
 
        <dependency>
-           <groupId>se.sics.net</groupId>
-           <artifactId>netty</artifactId>
-           <version>${nattraverser.version}</version>
-       </dependency>
-
-       <dependency>
            <groupId>com.google.guava</groupId>
            <artifactId>guava</artifactId>
            <version>${guava.version}</version>
        </dependency>
-
    </dependencies>
 </project>

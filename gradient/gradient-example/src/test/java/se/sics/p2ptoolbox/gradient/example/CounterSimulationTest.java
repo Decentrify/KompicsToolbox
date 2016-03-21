@@ -24,10 +24,6 @@ import java.net.UnknownHostException;
 import org.junit.Assert;
 import org.junit.Test;
 import se.sics.kompics.Kompics;
-import se.sics.kompics.simulation.SimulatorScheduler;
-import se.sics.p2ptoolbox.gradient.counter.simulation.CounterSimulationScenarios;
-import se.sics.p2ptoolbox.gradient.simulation.GradientSimulationResult;
-import se.sics.p2ptoolbox.simulator.run.LauncherComp;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 

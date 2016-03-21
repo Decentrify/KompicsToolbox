@@ -1,6 +1,5 @@
 package se.sics.p2ptoolbox.election.example.data;
 
-import se.sics.gvod.net.VodAddress;
 import se.sics.kompics.KompicsEvent;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 

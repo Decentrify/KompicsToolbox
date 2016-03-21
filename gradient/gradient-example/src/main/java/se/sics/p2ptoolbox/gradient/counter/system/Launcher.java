@@ -40,7 +40,9 @@ import se.sics.p2ptoolbox.croupier.CroupierConfig;
 import se.sics.p2ptoolbox.gradient.GradientConfig;
 import se.sics.p2ptoolbox.gradient.counter.CounterHostComp;
 import se.sics.p2ptoolbox.gradient.counter.network.CounterSerializerSetup;
+import se.sics.p2ptoolbox.util.config.BootstrapConfig;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -76,15 +78,15 @@ public class Launcher extends ComponentDefinition {
         CounterSerializerSetup.oneTimeSetup();
 
         Config config = ConfigFactory.load("application.conf");
-        SystemConfig systemConfig = new SystemConfig(config);
+        SystemConfig systemConfig = new SystemConfigBuilder(config).build();
         
         timer = create(JavaTimer.class, Init.NONE);
         network = create(NettyNetwork.class, new NettyInit(systemConfig.self));
         
         CroupierConfig croupierConfig = new CroupierConfig(config);
         GradientConfig gradientConfig = new GradientConfig(config);
-        
-        host = create(CounterHostComp.class, new CounterHostComp.HostInit(systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(nodeType.toLowerCase())));
+        BootstrapConfig bootstrapConfig = new BootstrapConfig(config);
+        host = create(CounterHostComp.class, new CounterHostComp.HostInit(systemConfig, croupierConfig, gradientConfig, counterAction, counterRateMap.get(nodeType.toLowerCase()), bootstrapConfig.bootstrapNodes));
         connect(host.getNegative(Network.class), network.getPositive(Network.class));
         connect(host.getNegative(Timer.class), timer.getPositive(Timer.class));
 

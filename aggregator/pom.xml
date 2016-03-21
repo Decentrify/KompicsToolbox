@@ -1,33 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>se.sics</groupId>
-        <artifactId>kompics-toolbox</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <artifactId>ktoolbox</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
+
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>aggregator</artifactId>
     <name>Aggregator</name>
-    <version>1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
-    
+
     <modules>
-        <module>aggregator-api</module>
-        <module>aggregator-core</module>
-        <module>aggregator-example</module>
-        <module>aggregator-network</module>
+        <module>common-api</module>
+        <module>server</module>
+        <module>client</module>
+        <module>network</module>
+        <!--<module>example</module>-->
     </modules>
-    
-    <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-        <java.compiler.version>1.6</java.compiler.version>
-        <kompics.version>0.8.1-SNAPSHOT</kompics.version>
-        <util.version>1.4-SNAPSHOT</util.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -45,10 +37,23 @@
             <artifactId>kompics-port-network</artifactId>
             <version>${kompics.version}</version>
         </dependency>
+        
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>kompics-basic</artifactId>
-            <version>${util.version}</version>
+            <artifactId>kcore</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${logger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${logger.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

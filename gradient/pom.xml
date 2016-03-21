@@ -3,35 +3,22 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>se.sics</groupId>
-        <artifactId>kompics-toolbox</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <artifactId>ktoolbox</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
     </parent>
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>gradient</artifactId>
     <name>Gradient</name>
-    <version>1.5-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>gradient-api</module>
         <module>gradient-core</module>
-        <module>gradient-example</module>
         <module>gradient-network</module>
+        <!-- <module>gradient-example</module> --> <!--not yet updated -->
         <module>tree-gradient-core</module>
-        <module>tree-gradient-example</module>
+        <!--<module>tree-gradient-example</module>--> <!--not yet updated -->
     </modules>
-    
-    <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-        <kompics.version>0.8.1-SNAPSHOT</kompics.version>
-        <croupier.version>1.6-SNAPSHOT</croupier.version>
-        <util.version>1.4-SNAPSHOT</util.version>
-        <guava.version>18.0</guava.version>
-        <tuples.version>1.2</tuples.version>
-        <logger.version>1.5.6</logger.version>
-        <config.version>1.2.1</config.version>
-    </properties>
     
     <dependencies>
         <dependency>
@@ -52,13 +39,13 @@
         
         <dependency>
             <groupId>se.sics.ktoolbox.croupier</groupId>
-            <artifactId>croupier-core</artifactId>
-            <version>${croupier.version}</version>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>
-            <artifactId>basic</artifactId>
-            <version>${util.version}</version>
+            <artifactId>core</artifactId>
+            <version>${project.version}</version>
         </dependency>
         
         <dependency>

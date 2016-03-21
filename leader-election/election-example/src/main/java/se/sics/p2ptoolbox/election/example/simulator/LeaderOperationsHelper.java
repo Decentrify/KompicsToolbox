@@ -1,22 +1,25 @@
 package se.sics.p2ptoolbox.election.example.simulator;
 
+import com.google.common.base.Optional;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.gvod.address.Address;
-import se.sics.gvod.net.VodAddress;
 import se.sics.p2ptoolbox.election.core.ElectionConfig;
 import se.sics.p2ptoolbox.election.example.main.LCPComparator;
 import se.sics.p2ptoolbox.election.example.main.HostManagerComp;
-import se.sics.p2ptoolbox.election.example.main.TestFilter;
 import se.sics.p2ptoolbox.util.config.SystemConfig;
 import se.sics.p2ptoolbox.util.network.impl.BasicAddress;
 import se.sics.p2ptoolbox.util.network.impl.DecoratedAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import se.sics.p2ptoolbox.util.helper.SystemConfigBuilder;
 
 /**
  * Helper Class for the Leader Election Protocol Operations Simulation.
@@ -54,15 +57,15 @@ public class LeaderOperationsHelper {
     public static HostManagerComp.HostManagerCompInit generateComponentInit (long id, DecoratedAddress aggregatorAddress, Set<DecoratedAddress> bootstrapNodes){
 
         logger.info(" Generating address for peer with id: {} ", id);
-        Address address = new Address(ip, 9999, (int) id);
 
         BasicAddress basic = new BasicAddress(ip, 9999, (int)id);
         DecoratedAddress selfAddress = new DecoratedAddress(basic);
         
         addressCollection.put(id, selfAddress);
         copy.add(selfAddress);
-        systemConfig = new SystemConfig(seed, selfAddress, aggregatorAddress, new ArrayList<DecoratedAddress>(bootstrapNodes));
-        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator(), new TestFilter());
+        //TODO Alex - caracal bootstrap missing
+        systemConfig = new SystemConfigBuilder(seed, selfAddress.getIp(), selfAddress.getPort(), selfAddress.getId(), ConfigFactory.load()).setAggregatorAddress(aggregatorAddress).build();
+        HostManagerComp.HostManagerCompInit init = new HostManagerComp.HostManagerCompInit(systemConfig, electionConfig, new LCPComparator());
 
         return init;
     }
