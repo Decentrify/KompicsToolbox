@@ -130,9 +130,9 @@ public class OMngrHostComp extends ComponentDefinition {
                         ccHeartbeat.getValue0().getPositive(CCHeartbeatPort.class))));
         Channel[] oMngrChannels = new Channel[1];
         oMngrChannels[0] = connect(oMngrComp.getPositive(OverlayMngrPort.class), omngrPort.getPair(), Channel.TWO_WAY);
-        croupierEnd = One2NChannel.getChannel(oMngrComp.getPositive(CroupierPort.class), new EventOverlayIdExtractor());
-        gradientEnd = One2NChannel.getChannel(oMngrComp.getPositive(GradientPort.class), new EventOverlayIdExtractor());
-        viewUpdateEnd = One2NChannel.getChannel(oMngrComp.getNegative(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
+        croupierEnd = One2NChannel.getChannel("app", oMngrComp.getPositive(CroupierPort.class), new EventOverlayIdExtractor());
+        gradientEnd = One2NChannel.getChannel("app", oMngrComp.getPositive(GradientPort.class), new EventOverlayIdExtractor());
+        viewUpdateEnd = One2NChannel.getChannel("app", oMngrComp.getNegative(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
         overlayMngr = Pair.with(oMngrComp, oMngrChannels);
     }
 

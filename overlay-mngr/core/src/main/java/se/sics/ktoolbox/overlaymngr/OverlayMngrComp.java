@@ -68,11 +68,11 @@ public class OverlayMngrComp extends ComponentDefinition {
     //externally providing ports - CONNECT(externally) to these
     private final Negative overlayMngr = provides(OverlayMngrPort.class);
     private final One2NChannel<CroupierPort> croupierEnd
-            = One2NChannel.getChannel(provides(CroupierPort.class), new EventOverlayIdExtractor());
+            = One2NChannel.getChannel("omngr", provides(CroupierPort.class), new EventOverlayIdExtractor());
     private final One2NChannel<GradientPort> tgradientEnd
-            = One2NChannel.getChannel(provides(GradientPort.class), new EventOverlayIdExtractor());
+            = One2NChannel.getChannel("omngr", provides(GradientPort.class), new EventOverlayIdExtractor());
     private final One2NChannel<OverlayViewUpdatePort> viewUpdateEnd
-            = One2NChannel.getChannel(requires(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
+            = One2NChannel.getChannel("omngr", requires(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
      //externally provided ports - NO connecting - we don't like chaining ports
     private final ExtPort extPorts;
     private final One2NChannel<Network> networkEnd;
@@ -97,7 +97,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         LOG.info("{}initiating with seed:{}", logPrefix, systemConfig.seed);
 
         extPorts = init.extPorts;
-        networkEnd = One2NChannel.getChannel(extPorts.networkPort, new MsgOverlayIdExtractor());
+        networkEnd = One2NChannel.getChannel("omngr", extPorts.networkPort, new MsgOverlayIdExtractor());
 
         connectCroupierBootstrap();
 
@@ -128,7 +128,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         cBootChannels[0] = connect(cBootComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
         cBootChannels[1] = connect(cBootComp.getNegative(CCHeartbeatPort.class), extPorts.heartbeatPort, Channel.TWO_WAY);
         //croupierControlPort - connect to croupiers
-        bootstrapEnd = One2NChannel.getChannel(cBootComp.getNegative(CroupierControlPort.class), new EventOverlayIdExtractor());
+        bootstrapEnd = One2NChannel.getChannel("omngr", cBootComp.getNegative(CroupierControlPort.class), new EventOverlayIdExtractor());
         //bootstrapPort - used by parent;
         bootstrapComp = Pair.with(cBootComp, cBootChannels);
     }

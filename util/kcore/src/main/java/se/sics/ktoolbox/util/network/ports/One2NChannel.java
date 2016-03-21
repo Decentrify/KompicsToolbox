@@ -55,7 +55,8 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     private final Multimap<Identifier, PortCore<P>> nPorts = HashMultimap.create();
     private final ChannelIdExtractor<KompicsEvent, Identifier> channelSelector;
 
-    private One2NChannel(PortCore<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
+    private One2NChannel(String channelName, PortCore<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
+        this.logPrefix = channelName + " ";
         this.sourcePort = sourcePort;
         this.channelSelector = (ChannelIdExtractor<KompicsEvent, Identifier>) channelSelector;
         id = UUIDIdentifier.randomId();
@@ -132,7 +133,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
             //TODO Alex - check if you can use bitwise XOR as there is no boolean XOR in java(aka ^^)
             if (PortCoreHelper.isPositive(sourcePort) ^ positive) {
                 if (!nPorts.containsKey(overlayId)) {
-                    LOG.warn("{}no {} connection available for overlay:{} event:{} in:{}",
+                    LOG.info("{}no {} connection available for overlay:{} event:{} in:{}",
                             new Object[]{logPrefix, (positive ? "positive" : "negative"), overlayId,
                                 event, details});
                     return;
@@ -211,14 +212,14 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         }
     }
 
-    public static <P extends PortType> One2NChannel<P> getChannel(Negative<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
-        One2NChannel<P> one2NC = new One2NChannel((PortCore) sourcePort, channelSelector);
+    public static <P extends PortType> One2NChannel<P> getChannel(String channelName, Negative<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
+        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }
 
-    public static <P extends PortType> One2NChannel<P> getChannel(Positive<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
-        One2NChannel<P> one2NC = new One2NChannel((PortCore) sourcePort, channelSelector);
+    public static <P extends PortType> One2NChannel<P> getChannel(String channelName, Positive<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
+        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }

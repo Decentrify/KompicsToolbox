@@ -56,7 +56,7 @@ public class TestHostComp extends ComponentDefinition {
         hostConfig = new TestHostKCWrapper(config());
         
         extPorts = init.extPorts;
-        networkEnd = One2NChannel.getChannel(extPorts.networkPort, new MsgOverlayIdExtractor());
+        networkEnd = One2NChannel.getChannel("host", extPorts.networkPort, new MsgOverlayIdExtractor());
         
         subscribe(handleStart, control);
         connectTest1Comp();
