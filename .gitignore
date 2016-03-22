@@ -190,3 +190,4 @@ netty-test/target/
 /net-mngr/core/target/
 /net-mngr/network/target/
 /net-mngr/example/target/
+/caracal-client/mngr/target/
