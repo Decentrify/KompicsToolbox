@@ -29,7 +29,6 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
@@ -74,9 +73,8 @@ public class TestHostComp extends ComponentDefinition {
     private void connectTest1Comp() {
         Identifier overlayId = new IntIdentifier(1);
         Component test1Comp = create(TestComp.class, new TestComp.Init(hostConfig.partner, overlayId));
-        Channel[] test1Channel = new Channel[2];
+        Channel[] test1Channel = new Channel[1];
         test1Channel[0] = connect(test1Comp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-        test1Channel[1] = connect(test1Comp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
         networkEnd.addChannel(overlayId, test1Comp.getNegative(Network.class));
         test1 = Pair.with(test1Comp, test1Channel);
     }
@@ -84,9 +82,8 @@ public class TestHostComp extends ComponentDefinition {
     private void connectTest2Comp() {
         Identifier overlayId = new IntIdentifier(2);
         Component test2Comp = create(TestComp.class, new TestComp.Init(hostConfig.partner, overlayId));
-        Channel[] test2Channel = new Channel[2];
+        Channel[] test2Channel = new Channel[1];
         test2Channel[0] = connect(test2Comp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-        test2Channel[1] = connect(test2Comp.getNegative(AddressUpdatePort.class), extPorts.addressUpdatePort, Channel.TWO_WAY);
         networkEnd.addChannel(overlayId, test2Comp.getNegative(Network.class));
         test2 = Pair.with(test2Comp, test2Channel);
     }
@@ -101,13 +98,10 @@ public class TestHostComp extends ComponentDefinition {
     
     public static class ExtPort {
         public final Positive<Network> networkPort;
-        public final Positive<AddressUpdatePort> addressUpdatePort;
         public final Positive<Timer> timerPort;
         
-        public ExtPort(Positive<Network> networkPort, Positive<AddressUpdatePort> addressUpdatePort,
-                Positive<Timer> timerPort) {
+        public ExtPort(Positive<Network> networkPort, Positive<Timer> timerPort) {
             this.networkPort = networkPort;
-            this.addressUpdatePort = addressUpdatePort;
             this.timerPort = timerPort;
         }
     }

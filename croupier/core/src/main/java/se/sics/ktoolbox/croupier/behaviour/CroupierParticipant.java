@@ -19,8 +19,6 @@
 package se.sics.ktoolbox.croupier.behaviour;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.View;
 
@@ -29,33 +27,20 @@ import se.sics.ktoolbox.util.update.View;
  */
 public class CroupierParticipant implements CroupierBehaviour {
 
-    private NatAwareAddress self;
     private View view;
 
-    public CroupierParticipant(NatAwareAddress self, View view) {
-        this.self = self;
+    public CroupierParticipant(View view) {
         this.view = view;
     }
 
     @Override
     public CroupierBehaviour processView(OverlayViewUpdate.Indication viewUpdate) {
         if (viewUpdate.observer) {
-            return new CroupierObserver(self);
+            return new CroupierObserver();
         } else {
             view = viewUpdate.view;
         }
         return this;
-    }
-
-    @Override
-    public CroupierBehaviour processAddress(AddressUpdate.Indication update) {
-        self = (NatAwareAddress)update.localAddress;
-        return this;
-    }
-
-    @Override
-    public NatAwareAddress getSelf() {
-        return self;
     }
 
     @Override

@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Croupier is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,19 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.croupier.behaviour;
+package se.sics.ktoolbox.netmngr;
 
-import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
-import se.sics.ktoolbox.util.update.View;
+import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface CroupierBehaviour {
-
-    public Optional<View> getView();
-
-    public CroupierBehaviour processView(OverlayViewUpdate.Indication viewUpdate);
-
+public interface NetMngrEvent extends KompicsEvent, Identifiable<Identifier>{
 }

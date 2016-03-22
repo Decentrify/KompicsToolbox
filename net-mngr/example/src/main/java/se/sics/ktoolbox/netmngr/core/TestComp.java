@@ -32,11 +32,8 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
-import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
@@ -45,7 +42,6 @@ import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.other.Chunkable;
 
 /**
@@ -59,7 +55,6 @@ public class TestComp extends ComponentDefinition {
     //*****************************CONNECTIONS**********************************
     private final Positive<Network> networkPort = requires(Network.class);
     private final Positive<Timer> timerPort = requires(Timer.class);
-    private final Positive<AddressUpdatePort> addressUpdatePort = requires(AddressUpdatePort.class);
     //*****************************CONFIGURATION********************************
     private SystemKCWrapper systemConfig;
     //****************************EXTERNAL_STATE********************************
@@ -80,7 +75,6 @@ public class TestComp extends ComponentDefinition {
         partnerAdr = init.partnerAdr;
 
         subscribe(handleStart, control);
-        subscribe(handleAddressUpdate, addressUpdatePort);
         subscribe(handleTimeout, timerPort);
         subscribe(handleData, networkPort);
         subscribe(handleChunkableData, networkPort);
@@ -88,10 +82,6 @@ public class TestComp extends ComponentDefinition {
     }
 
     private boolean ready() {
-        if (selfAdr == null) {
-            LOG.warn("{}no self address");
-            return false;
-        }
         return true;
     }
     //****************************CONTROL***************************************
@@ -99,18 +89,10 @@ public class TestComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}initiating...", logPrefix);
-            trigger(new AddressUpdate.Request(), addressUpdatePort);
             scheduleDataTimeout(selfAdr);
         }
     };
 
-    private Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update self address from:{} to:{}", new Object[]{logPrefix, selfAdr, update.localAddress});
-            selfAdr = update.localAddress;
-        }
-    };
     //**************************************************************************
     private Handler handleTimeout = new Handler<DataTimeout>() {
         @Override

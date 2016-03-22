@@ -58,8 +58,6 @@ import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.croupier.view.LocalView;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
@@ -95,12 +93,12 @@ public class CroupierComp extends ComponentDefinition {
     Positive<CroupierPort> bootstrapPort = positive(CroupierPort.class);
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
-    Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
     Positive<OverlayViewUpdatePort> viewUpdate = requires(OverlayViewUpdatePort.class);
     //******************************CONFIG**************************************
     private final SystemKCWrapper systemConfig;
     private final CroupierKCWrapper croupierConfig;
     private final Identifier overlayId;
+    private final NatAwareAddress selfAdr;
     //******************************SELF****************************************
     private CroupierBehaviour behaviour;
     //******************************STATE***************************************
@@ -120,6 +118,7 @@ public class CroupierComp extends ComponentDefinition {
         logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initiating...", logPrefix);
 
+        selfAdr = init.selfAdr;
         behaviour = new CroupierObserver();
         publicView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
         privateView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
@@ -130,7 +129,6 @@ public class CroupierComp extends ComponentDefinition {
         subscribe(handleLegacyBootstrap, croupierControlPort);
         subscribe(handleReBootstrap, bootstrapPort);
         subscribe(handleViewUpdate, viewUpdate);
-        subscribe(handleAddressUpdate, addressUpdate);
         subscribe(handleShuffleRequest, network);
         subscribe(handleShuffleResponse, network);
         subscribe(handleShuffleCycle, timer);
@@ -150,10 +148,6 @@ public class CroupierComp extends ComponentDefinition {
     private boolean ready() {
         if (!behaviour.getView().isPresent()) {
             LOG.warn("{}no self view", logPrefix);
-            return false;
-        }
-        if (behaviour.getSelf() == null) {
-            LOG.warn("{}no self address", logPrefix);
             return false;
         }
         return true;
@@ -192,7 +186,6 @@ public class CroupierComp extends ComponentDefinition {
         compTracker.registerNegativePort(croupierPort);
         compTracker.registerNegativePort(croupierControlPort);
         compTracker.registerPositivePort(bootstrapPort);
-        compTracker.registerPositivePort(addressUpdate);
         compTracker.registerPositivePort(viewUpdate);
     }
 
@@ -206,16 +199,7 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
             schedulePeriodicShuffle(croupierConfig.shufflePeriod);
-            trigger(new AddressUpdate.Request(), addressUpdate);
             compTracker.start();
-        }
-    };
-
-    Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.debug("{}update self address:{}", new Object[]{logPrefix, update.localAddress});
-            behaviour = behaviour.processAddress(update);
         }
     };
 
@@ -233,7 +217,7 @@ public class CroupierComp extends ComponentDefinition {
         public void handle(CroupierJoin join) {
             LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
             for (NatAwareAddress bootstrap : join.bootstrap) {
-                if (!behaviour.getSelf().getId().equals(bootstrap.getId())) {
+                if (!selfAdr.getId().equals(bootstrap.getId())) {
                     bootstrapNodes.add(bootstrap);
                 }
             }
@@ -246,7 +230,7 @@ public class CroupierComp extends ComponentDefinition {
             while (bootstrapNodes.size() < croupierConfig.viewSize) {
                 for (AdrContainer<KAddress, BootstrapView> container : sample.publicSample.values()) {
                     if (container.getContent().memberOf(overlayId)
-                            && !container.getSource().getId().equals(behaviour.getSelf().getId())) {
+                            && !container.getSource().getId().equals(selfAdr.getId())) {
                         LOG.debug("{}rebootstrap node:{}", logPrefix, container.getSource());
                         bootstrapNodes.add((NatAwareAddress) container.getSource());
                     }
@@ -258,7 +242,7 @@ public class CroupierComp extends ComponentDefinition {
     //**************************************************************************
     private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
         DecoratedHeader requestHeader
-                = new DecoratedHeader(new BasicHeader(behaviour.getSelf(), to, Transport.UDP), overlayId);
+                = new DecoratedHeader(new BasicHeader(selfAdr, to, Transport.UDP), overlayId);
         CroupierShuffle.Request requestContent
                 = new CroupierShuffle.Request(overlayId, behaviour.getView(), publicSample, privateSample);
         BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
@@ -299,7 +283,7 @@ public class CroupierComp extends ComponentDefinition {
                     if (!ready()) {
                         return;
                     }
-                    if (behaviour.getSelf().getId().equals(shufflePartner.getId())) {
+                    if (selfAdr.getId().equals(shufflePartner.getId())) {
                         LOG.error("{} Tried to shuffle with myself", logPrefix);
                         throw new RuntimeException("tried to shuffle with myself");
                     }
@@ -368,8 +352,8 @@ public class CroupierComp extends ComponentDefinition {
         if (overlayId.equals(new IntIdentifier(48833153))) {
             System.out.println(1);
         }
-        publicView.selectToKeep(behaviour.getSelf(), retainPublic, publicSample);
-        privateView.selectToKeep(behaviour.getSelf(), retainPrivate, privateSample);
+        publicView.selectToKeep(selfAdr, retainPublic, publicSample);
+        privateView.selectToKeep(selfAdr, retainPrivate, privateSample);
     }
 
     //**************************************************************************
@@ -378,7 +362,7 @@ public class CroupierComp extends ComponentDefinition {
         Iterator<NatAwareAddress> it = addresses.iterator();
         while (it.hasNext()) {
             NatAwareAddress node = it.next();
-            if (!node.getId().equals(behaviour.getSelf().getId())) {
+            if (!node.getId().equals(selfAdr.getId())) {
                 result.add(node);
             }
         }
@@ -421,9 +405,11 @@ public class CroupierComp extends ComponentDefinition {
 
     public static class Init extends se.sics.kompics.Init<CroupierComp> {
 
+        public final NatAwareAddress selfAdr;
         public final Identifier overlayId;
 
-        public Init(Identifier overlayId) {
+        public Init(NatAwareAddress selfAdr, Identifier overlayId) {
+            this.selfAdr = selfAdr;
             this.overlayId = overlayId;
         }
     }

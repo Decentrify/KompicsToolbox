@@ -29,7 +29,6 @@ import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.ktoolbox.netmngr.core.TestHostComp;
 import se.sics.ktoolbox.netmngr.network.TestSerializerSetup;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -52,7 +51,7 @@ public class HostLauncher extends ComponentDefinition {
         NetworkMngrComp.ExtPort netExtPorts = new NetworkMngrComp.ExtPort(timer.getPositive(Timer.class));
         network = create(NetworkMngrComp.class, new NetworkMngrComp.Init(netExtPorts));
         TestHostComp.ExtPort hostExtPorts = new TestHostComp.ExtPort(network.getPositive(Network.class), 
-                network.getPositive(AddressUpdatePort.class), timer.getPositive(Timer.class));
+                timer.getPositive(Timer.class));
         host = create(TestHostComp.class, new TestHostComp.Init(hostExtPorts));
     }
 

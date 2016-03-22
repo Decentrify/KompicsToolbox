@@ -47,12 +47,10 @@ import se.sics.ktoolbox.overlaymngr.core.TestCroupierComp.TestCroupierInit;
 import se.sics.ktoolbox.overlaymngr.core.TestGradientComp.TestGradientInit;
 import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
 import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
@@ -71,7 +69,6 @@ public class OMngrHostComp extends ComponentDefinition {
     //***************************CONNECTIONS************************************
     //provided external connections - CONNECT to
     private final Positive<StatusPort> inStatusPort = requires(StatusPort.class);
-    private final Positive<AddressUpdatePort> addressUpdatePort = requires(AddressUpdatePort.class);
     //provided external connection - do NOT connect to
     private final ExtPort extPorts;
     //for internal use - DO NOT connect to
@@ -99,10 +96,17 @@ public class OMngrHostComp extends ComponentDefinition {
         logPrefix = "<id:" + systemConfig.id + "> ";
         LOG.info("{}initiating...", logPrefix);
 
+        selfAdr = (NatAwareAddress) init.selfAdr;
         extPorts = init.extPorts;
 
         subscribe(handleStart, control);
-        subscribe(handleAddressUpdate, addressUpdatePort);
+
+        subscribe(handleCaracalReady, inStatusPort);
+        subscribe(handleCaracalDisconnect, inStatusPort);
+        subscribe(handleHeartbeatReady, inStatusPort);
+
+        connectCaracalClient();
+        connectCCHeartbeat();
     }
 
     private void connectCaracalClient() {
@@ -125,9 +129,10 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectOverlayMngr() {
-        Component oMngrComp = create(OverlayMngrComp.class, new OverlayMngrComp.Init(
-                new OverlayMngrComp.ExtPort(extPorts.timerPort, extPorts.networkPort, extPorts.addressUpdatePort,
-                        ccHeartbeat.getValue0().getPositive(CCHeartbeatPort.class))));
+        OverlayMngrComp.ExtPort oMngrExtPorts = new OverlayMngrComp.ExtPort(extPorts.timerPort, extPorts.networkPort,
+                ccHeartbeat.getValue0().getPositive(CCHeartbeatPort.class));
+        Component oMngrComp = create(OverlayMngrComp.class, new OverlayMngrComp.Init( 
+                selfAdr, oMngrExtPorts));
         Channel[] oMngrChannels = new Channel[1];
         oMngrChannels[0] = connect(oMngrComp.getPositive(OverlayMngrPort.class), omngrPort.getPair(), Channel.TWO_WAY);
         croupierEnd = One2NChannel.getChannel("app", oMngrComp.getPositive(CroupierPort.class), new EventOverlayIdExtractor());
@@ -193,32 +198,9 @@ public class OMngrHostComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
-            trigger(new AddressUpdate.Request(), addressUpdatePort);
         }
     };
     //**************************************************************************
-    Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update address from:{} to:{}", new Object[]{logPrefix, selfAdr, update.localAddress});
-            if (selfAdr == null) {
-                selfAdr = (NatAwareAddress) update.localAddress;
-
-                subscribe(handleCaracalReady, inStatusPort);
-                subscribe(handleCaracalDisconnect, inStatusPort);
-                subscribe(handleHeartbeatReady, inStatusPort);
-
-                connectCaracalClient();
-                connectCCHeartbeat();
-
-                trigger(Start.event, caracalClient.getValue0().control());
-                trigger(Start.event, ccHeartbeat.getValue0().control());
-            } else {
-                selfAdr = (NatAwareAddress) update.localAddress;
-            }
-        }
-    };
-
     ClassMatchedHandler handleCaracalReady
             = new ClassMatchedHandler<CCBootstrapReady, Status.Internal<CCBootstrapReady>>() {
 
@@ -286,9 +268,11 @@ public class OMngrHostComp extends ComponentDefinition {
 
     public static class Init extends se.sics.kompics.Init<OMngrHostComp> {
 
+        public final KAddress selfAdr;
         public final ExtPort extPorts;
 
-        public Init(ExtPort extPorts) {
+        public Init(KAddress selfAdr, ExtPort extPorts) {
+            this.selfAdr = selfAdr;
             this.extPorts = extPorts;
         }
     }
@@ -297,13 +281,10 @@ public class OMngrHostComp extends ComponentDefinition {
 
         public final Positive<Timer> timerPort;
         public final Positive<Network> networkPort;
-        public final Positive<AddressUpdatePort> addressUpdatePort;
 
-        public ExtPort(Positive<Timer> timer, Positive<Network> networkPort,
-                Positive<AddressUpdatePort> addressUpdatePort) {
+        public ExtPort(Positive<Timer> timer, Positive<Network> networkPort) {
             this.timerPort = timer;
             this.networkPort = networkPort;
-            this.addressUpdatePort = addressUpdatePort;
         }
     }
 }

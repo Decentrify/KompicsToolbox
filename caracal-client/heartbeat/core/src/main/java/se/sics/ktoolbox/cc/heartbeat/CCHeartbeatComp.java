@@ -61,8 +61,6 @@ import se.sics.ktoolbox.cc.op.CCOperation;
 import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 import se.sics.ktoolbox.cc.operation.event.CCOpResponse;
 import se.sics.ktoolbox.cc.operation.event.CCOpTimeout;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
@@ -80,7 +78,6 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
 
     //There is no need to set timers on caracal requests - it should always answer and it should have a timer of its own
     Positive<Timer> timer = requires(Timer.class);
-    Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
     Positive<CCOperationPort> caracal = requires(CCOperationPort.class);
     Positive<StatusPort> otherStatus = requires(StatusPort.class);
     Negative<StatusPort> myStatus = provides(StatusPort.class);
@@ -117,7 +114,6 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         subscribe(handleOverlaySampleRequest, provided);
         subscribe(handleCCOpResponse, caracal);
         subscribe(handleCCOpTimeout, caracal);
-        subscribe(handleSelfAddressUpdate, addressUpdate);
     }
     //**************************************************************************
     Handler handleStart = new Handler<Start>() {
@@ -168,13 +164,6 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
         }
     }
 
-    Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update self address:{}", logPrefix, update.localAddress);
-            selfAdr = update.localAddress;
-        }
-    };
     //**************************************************************************
     Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
         @Override
