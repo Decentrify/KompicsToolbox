@@ -29,7 +29,6 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Kompics;
-import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
@@ -37,7 +36,7 @@ import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.cc.mngr.CCMngrComp;
-import se.sics.ktoolbox.cc.mngr.event.CCMngrReady;
+import se.sics.ktoolbox.cc.mngr.event.CCMngrStatus;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
 import se.sics.ktoolbox.gradient.GradientPort;
@@ -46,7 +45,6 @@ import se.sics.ktoolbox.netmngr.NetMngrReady;
 import se.sics.ktoolbox.netmngr.NetworkMngrComp;
 import se.sics.ktoolbox.netmngr.NetworkMngrSerializerSetup;
 import se.sics.ktoolbox.overlaymngr.core.network.TestSerializerSetup;
-import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
@@ -120,9 +118,9 @@ public class OMngrLauncher extends ComponentDefinition {
     }
 
     ClassMatchedHandler handleCCReady
-            = new ClassMatchedHandler<CCMngrReady, Status.Internal<CCMngrReady>>() {
+            = new ClassMatchedHandler<CCMngrStatus.Ready, Status.Internal<CCMngrStatus.Ready>>() {
                 @Override
-                public void handle(CCMngrReady content, Status.Internal<CCMngrReady> container) {
+                public void handle(CCMngrStatus.Ready content, Status.Internal<CCMngrStatus.Ready> container) {
                     LOG.info("{}caracal client ready", logPrefix);
                     setOMngr();
                     setHost();

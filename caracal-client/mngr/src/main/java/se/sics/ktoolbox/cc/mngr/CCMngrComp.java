@@ -39,7 +39,7 @@ import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapReady;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatComp;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.cc.heartbeat.event.status.CCHeartbeatReady;
-import se.sics.ktoolbox.cc.mngr.event.CCMngrReady;
+import se.sics.ktoolbox.cc.mngr.event.CCMngrStatus;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
@@ -54,12 +54,12 @@ public class CCMngrComp extends ComponentDefinition {
     private String logPrefix = " ";
 
     //********************************CONNECTIONS*******************************
-    //CONNECT TO EXTERNALLY
+    //***************************EXTERNAL_CONNECT_TO****************************
     private Negative<CCHeartbeatPort> heartbeatPort = provides(CCHeartbeatPort.class);
     private Negative<CCOperationPort> operationPort = provides(CCOperationPort.class);
-    private Negative<StatusPort> internalStatusPort = provides(StatusPort.class);
-    //INTERNAL ONLY
-    private Positive<StatusPort> externalStatusPort = requires(StatusPort.class);
+    private Negative<StatusPort> myStatusPort = provides(StatusPort.class);
+    //***************************INTERNAL_NO_CONNECT****************************
+    private Positive<StatusPort> otherStatusPort = requires(StatusPort.class);
     //********************************CONFIGURATION*****************************
     //********************************EXTERNAL_STATE****************************
     private final KAddress selfAdr;
@@ -78,8 +78,8 @@ public class CCMngrComp extends ComponentDefinition {
         extPorts = init.extPorts;
 
         subscribe(handleStart, control);
-        subscribe(handleCaracalReady, externalStatusPort);
-        subscribe(handleHeartbeatReady, externalStatusPort);
+        subscribe(handleCaracalReady, otherStatusPort);
+        subscribe(handleHeartbeatReady, otherStatusPort);
 
         connectCaracalClient();
         connectCCHeartbeat();
@@ -117,7 +117,7 @@ public class CCMngrComp extends ComponentDefinition {
     private void checkIfReady() {
         if (ready.getValue0() && ready.getValue1()) {
             LOG.info("{}ready", logPrefix);
-            trigger(new Status.Internal(new CCMngrReady(schemas)), internalStatusPort);
+            trigger(new Status.Internal(new CCMngrStatus.Ready(schemas)), myStatusPort);
         }
     }
 
@@ -127,6 +127,7 @@ public class CCMngrComp extends ComponentDefinition {
                 @Override
                 public void handle(CCBootstrapDisconnected content, Status.Internal<CCBootstrapDisconnected> container) {
                     LOG.warn("{}caracal client disconnected", logPrefix);
+                    trigger(new CCMngrStatus.Disconnected(), myStatusPort);
                 }
             };
 
@@ -135,7 +136,7 @@ public class CCMngrComp extends ComponentDefinition {
         Channel[] ccChannels = new Channel[4];
         ccChannels[0] = connect(ccComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
         ccChannels[1] = connect(ccComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
-        ccChannels[2] = connect(ccComp.getPositive(StatusPort.class), externalStatusPort.getPair(), Channel.TWO_WAY);
+        ccChannels[2] = connect(ccComp.getPositive(StatusPort.class), otherStatusPort.getPair(), Channel.TWO_WAY);
         ccChannels[3] = connect(ccComp.getPositive(CCOperationPort.class), operationPort, Channel.TWO_WAY);
         caracalClient = Pair.with(ccComp, ccChannels);
     }
@@ -146,7 +147,7 @@ public class CCMngrComp extends ComponentDefinition {
         ccHChannels[0] = connect(ccHComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
         ccHChannels[1] = connect(ccHComp.getNegative(CCOperationPort.class), caracalClient.getValue0().getPositive(CCOperationPort.class), Channel.TWO_WAY);
         ccHChannels[2] = connect(ccHComp.getNegative(StatusPort.class), caracalClient.getValue0().getPositive(StatusPort.class), Channel.TWO_WAY);
-        ccHChannels[3] = connect(ccHComp.getPositive(StatusPort.class), externalStatusPort.getPair(), Channel.TWO_WAY);
+        ccHChannels[3] = connect(ccHComp.getPositive(StatusPort.class), otherStatusPort.getPair(), Channel.TWO_WAY);
         ccHChannels[4] = connect(ccHComp.getPositive(CCHeartbeatPort.class), heartbeatPort, Channel.TWO_WAY);
         ccHeartbeat = Pair.with(ccHComp, ccHChannels);
     }
