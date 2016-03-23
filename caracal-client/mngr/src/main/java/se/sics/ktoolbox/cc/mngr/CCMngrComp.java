@@ -21,6 +21,7 @@ package se.sics.ktoolbox.cc.mngr;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.caracaldb.global.SchemaData;
 import se.sics.kompics.Channel;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.Component;
@@ -63,7 +64,8 @@ public class CCMngrComp extends ComponentDefinition {
     //********************************EXTERNAL_STATE****************************
     private final KAddress selfAdr;
     private final ExtPort extPorts;
-    //***********************************AUX************************************
+    //********************************AUX)_STATE********************************
+    private SchemaData schemas;
     private Pair<Boolean, Boolean> ready = Pair.with(false, false);
     //*********************************CLEANUP**********************************
     private Pair<Component, Channel[]> caracalClient;
@@ -96,6 +98,7 @@ public class CCMngrComp extends ComponentDefinition {
                 @Override
                 public void handle(CCBootstrapReady content, Status.Internal<CCBootstrapReady> container) {
                     LOG.info("{}caracal ready", logPrefix);
+                    schemas = content.caracalSchemaData;
                     ready = ready.with(true, ready.getValue1());
                     checkIfReady();
                 }
@@ -114,7 +117,7 @@ public class CCMngrComp extends ComponentDefinition {
     private void checkIfReady() {
         if (ready.getValue0() && ready.getValue1()) {
             LOG.info("{}ready", logPrefix);
-            trigger(new Status.Internal(new CCMngrReady()), internalStatusPort);
+            trigger(new Status.Internal(new CCMngrReady(schemas)), internalStatusPort);
         }
     }
 

@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.cc.mngr.event;
 
+import se.sics.caracaldb.global.SchemaData;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
@@ -27,13 +28,15 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
  */
 public class CCMngrReady implements CCMngrEvent {
     public final Identifier eventId;
+    public final SchemaData schemas;
     
-    public CCMngrReady(Identifier eventId) {
+    public CCMngrReady(Identifier eventId, SchemaData schemas) {
         this.eventId = eventId;
+        this.schemas = schemas;
     }
     
-    public CCMngrReady() {
-        this(UUIDIdentifier.randomId());
+    public CCMngrReady(SchemaData schemas) {
+        this(UUIDIdentifier.randomId(), schemas);
     }
     
     @Override
