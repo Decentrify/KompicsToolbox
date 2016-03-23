@@ -124,7 +124,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
                 return;
             }
         } else {
-            LOG.info("{}cannot extract overlay for:{} from:{} in:{}", 
+            LOG.info("{}cannot extract id for:{} from:{} in:{}", 
                     new Object[]{logPrefix, channelSelector.getEventType().getName(), event.getClass().getName(), details});
             return;
         }
@@ -137,7 +137,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
             //TODO Alex - check if you can use bitwise XOR as there is no boolean XOR in java(aka ^^)
             if (PortCoreHelper.isPositive(sourcePort) ^ positive) {
                 if (!nPorts.containsKey(overlayId)) {
-                    LOG.info("{}no {} connection available for overlay:{} event:{} in:{}",
+                    LOG.info("{}no {} connection available for id:{} event:{} in:{}",
                             new Object[]{logPrefix, (positive ? "positive" : "negative"), overlayId,
                                 event, details});
                     return;
@@ -172,15 +172,15 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         nPorts.clear();
     }
 
-    public void addChannel(Identifier overlayId, Negative<P> endPoint) {
-        add(overlayId, (PortCore) endPoint);
+    public void addChannel(Identifier channelId, Negative<P> endPoint) {
+        add(channelId, (PortCore) endPoint);
     }
 
-    public void addChannel(Identifier overlayId, Positive<P> endPoint) {
-        add(overlayId, (PortCore) endPoint);
+    public void addChannel(Identifier channelId, Positive<P> endPoint) {
+        add(channelId, (PortCore) endPoint);
     }
 
-    private void add(Identifier overlayId, PortCore<P> endPoint) {
+    private void add(Identifier channelId, PortCore<P> endPoint) {
         boolean endPointType = PortCoreHelper.isPositive(endPoint);
         boolean sourcePortType = PortCoreHelper.isPositive(sourcePort);
         rwlock.writeLock().lock();
@@ -193,9 +193,9 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
                 throw new RuntimeException("connecting the wrong end");
             }
             LOG.info("{}adding {} connection overlay:{} to:{} in:{}",
-                    new Object[]{logPrefix, (endPointType ? "positive" : "negative"), overlayId,
+                    new Object[]{logPrefix, (endPointType ? "positive" : "negative"), channelId,
                         endPoint.getOwner().getComponent().getClass().getName(), details});
-            nPorts.put(overlayId, endPoint);
+            nPorts.put(channelId, endPoint);
             endPoint.addChannel(this);
         } finally {
             rwlock.writeLock().unlock();
@@ -203,14 +203,22 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
 
     }
 
-    public void removeChannel(Identifier overlayId, PortCore<P> endPoint) {
+    public void removeChannel(Identifier channelId, Positive<P> port) {
+        remove(channelId, (PortCore<P>)port);
+    }
+    
+    public void removeChannel(Identifier channelId, Negative<P> port) {
+        remove(channelId, (PortCore<P>)port);
+    }
+    
+    private void remove(Identifier channelId, PortCore<P> port) {
         rwlock.writeLock().lock();
         try {
             if (destroyed) {
                 return;
             }
-            nPorts.remove(overlayId, endPoint);
-            endPoint.removeChannel(this);
+            nPorts.remove(channelId, port);
+            port.removeChannel(this);
         } finally {
             rwlock.writeLock().unlock();
         }

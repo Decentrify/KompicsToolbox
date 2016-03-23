@@ -16,21 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.overlays;
+package se.sics.ktoolbox.util.idextractor;
 
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class EventOverlayIdExtractor extends ChannelIdExtractor<OverlayEvent, Identifier> {
-    public EventOverlayIdExtractor() {
-        super(OverlayEvent.class);
+public class DestinationPortIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier>{
+
+    public DestinationPortIdExtractor() {
+        super(KContentMsg.class);
     }
     
     @Override
-    public Identifier getValue(OverlayEvent event) {
-        return event.overlayId();
+    public Identifier getValue(KContentMsg msg) {
+        return new IntIdentifier(msg.getHeader().getDestination().getPort());
     }
 }

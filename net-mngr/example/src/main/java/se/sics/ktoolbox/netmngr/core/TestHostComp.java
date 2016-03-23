@@ -31,8 +31,8 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.idextractor.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
-import se.sics.ktoolbox.util.overlays.MsgOverlayIdExtractor;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

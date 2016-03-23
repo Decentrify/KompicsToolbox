@@ -49,11 +49,10 @@ import se.sics.ktoolbox.tgradient.TreeGradientComp;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
-import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.idextractor.EventOverlayIdExtractor;
+import se.sics.ktoolbox.util.idextractor.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
-import se.sics.ktoolbox.util.overlays.EventOverlayIdExtractor;
-import se.sics.ktoolbox.util.overlays.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.overlays.id.OverlayIdRegistry;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
@@ -66,21 +65,20 @@ public class OverlayMngrComp extends ComponentDefinition {
     private String logPrefix = "";
 
     //*****************************CONNECTIONS**********************************
-    //externally providing ports - CONNECT(externally) to these
-    private final Negative overlayMngr = provides(OverlayMngrPort.class);
-    private final One2NChannel<CroupierPort> croupierEnd
-            = One2NChannel.getChannel("omngr", provides(CroupierPort.class), new EventOverlayIdExtractor());
-    private final One2NChannel<GradientPort> tgradientEnd
-            = One2NChannel.getChannel("omngr", provides(GradientPort.class), new EventOverlayIdExtractor());
-    private final One2NChannel<OverlayViewUpdatePort> viewUpdateEnd
-            = One2NChannel.getChannel("omngr", requires(OverlayViewUpdatePort.class), new EventOverlayIdExtractor());
-     //externally provided ports - NO connecting - we don't like chaining ports
-    private final ExtPort extPorts;
-    private final One2NChannel<Network> networkEnd;
-    //internal connection helper
-    private One2NChannel<CroupierControlPort> bootstrapEnd;
-    //**************************************************************************
+    //*************************EXTERNAL_CONNECT_TO******************************
+    Negative<OverlayMngrPort> overlayMngr = provides(OverlayMngrPort.class);
+    Negative<CroupierPort> croupierPort = provides(CroupierPort.class);
+    Negative<GradientPort> gradientPort = provides(GradientPort.class);
+    Positive<OverlayViewUpdatePort> viewUpdatePort = requires(OverlayViewUpdatePort.class);
+    //*************************INTERNAL_NO_CONNECT******************************
+    One2NChannel<Network> networkEnd;
+    One2NChannel<CroupierPort> croupierEnd;
+    One2NChannel<GradientPort> gradientEnd;
+    One2NChannel<OverlayViewUpdatePort> viewUpdateEnd;
+    One2NChannel<CroupierControlPort> bootstrapEnd;
+    //****************************EXTERNAL_STATE********************************
     private final NatAwareAddress selfAdr;
+    private final ExtPort extPorts;
     //***************************CLEANUP PURPOSES*******************************
     private Pair<Component, Channel[]> bootstrapComp;
     //croupier
@@ -101,6 +99,9 @@ public class OverlayMngrComp extends ComponentDefinition {
 
         selfAdr = init.selfAdr;
         extPorts = init.extPorts;
+        croupierEnd = One2NChannel.getChannel("omngr", croupierPort, new EventOverlayIdExtractor());
+        gradientEnd = One2NChannel.getChannel("omngr", gradientPort, new EventOverlayIdExtractor());
+        viewUpdateEnd = One2NChannel.getChannel("omngr", viewUpdatePort, new EventOverlayIdExtractor());
         networkEnd = One2NChannel.getChannel("omngr", extPorts.networkPort, new MsgOverlayIdExtractor());
 
         connectCroupierBootstrap();
@@ -238,7 +239,7 @@ public class OverlayMngrComp extends ComponentDefinition {
                     gradientComp.getPositive(RankUpdatePort.class), Channel.TWO_WAY);
             //providing external port
             viewUpdateEnd.addChannel(req.tgradientId, tgradientComp.getNegative(OverlayViewUpdatePort.class));
-            tgradientEnd.addChannel(req.tgradientId, tgradientComp.getPositive(GradientPort.class));
+            gradientEnd.addChannel(req.tgradientId, tgradientComp.getPositive(GradientPort.class));
             
             tgradientLayers.put(req.tgradientId, Pair.with(tgradientComp, tgradientChannels));
             tgradientContext.put(req.getId(), req);

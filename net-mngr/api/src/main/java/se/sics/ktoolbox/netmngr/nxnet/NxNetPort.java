@@ -16,36 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.netmngr;
+package se.sics.ktoolbox.netmngr.nxnet;
 
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
+import se.sics.kompics.PortType;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetMngrReady implements NetMngrEvent {
-    public final Identifier eventId;
-    public final NatAwareAddress systemAdr;
-
-    public NetMngrReady(Identifier eventId, NatAwareAddress systemAdr) {
-        this.eventId = eventId;
-        this.systemAdr = systemAdr;
-    }
-    
-    public NetMngrReady(NatAwareAddress systemAdr) {
-        this(UUIDIdentifier.randomId(), systemAdr);
-    }
-    
-    @Override
-    public Identifier getId() {
-        return eventId;
-    }
-    
-    @Override
-    public String toString() {
-        return "NetMngrReady<" + eventId + ">";
+public class NxNetPort extends PortType {
+    {
+        request(NxNetBind.Request.class);
+        indication(NxNetBind.Response.class);
+        request(NxNetUnbind.Request.class);
+        indication(NxNetUnbind.Response.class);
     }
 }
