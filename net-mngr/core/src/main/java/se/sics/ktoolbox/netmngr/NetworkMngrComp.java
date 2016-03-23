@@ -165,7 +165,7 @@ public class NetworkMngrComp extends ComponentDefinition {
                 if (req == null) {
                     throw new RuntimeException("logic error - cleanup problems");
                 }
-                answer(req, req.answer());
+                answer(req, req.answer(resp.req.bindAdr));
             }
         }
     };

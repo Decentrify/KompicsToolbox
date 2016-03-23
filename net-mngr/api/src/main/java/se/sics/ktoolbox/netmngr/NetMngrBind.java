@@ -50,16 +50,18 @@ public class NetMngrBind {
             return "NetMngrBindReq<" + eventId + ">";
         }
         
-        public Response answer() {
-            return new Response(this);
+        public Response answer(KAddress boundAdr) {
+            return new Response(this, boundAdr);
         }
     }
     
     public static class Response implements Direct.Response, NetMngrEvent {
         public final Request req;
+        public final KAddress boundAdr;
         
-        public Response(Request req) {
+        public Response(Request req, KAddress boundAddress) {
             this.req = req;
+            this.boundAdr = boundAddress;
         }
         
         public Identifier getId() {
