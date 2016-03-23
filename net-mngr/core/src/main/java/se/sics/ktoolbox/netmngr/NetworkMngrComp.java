@@ -40,6 +40,7 @@ import se.sics.ktoolbox.netmngr.chunk.util.CMTrafficSelector;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.ports.ShortCircuitChannel;
 import se.sics.ktoolbox.util.status.Status;
@@ -54,18 +55,18 @@ public class NetworkMngrComp extends ComponentDefinition {
     private String logPrefix = "";
 
     //*****************************CONNECTIONS**********************************
-    //externally provided ports - NO connecting - we don't like chaining ports
-    private final ExtPort extPorts;
-    //externally providing ports - CONNECT
+    //***************************EXTERNAL_CONNECT*******************************
     private final Negative<Network> networkPort = provides(Network.class);
     private final Negative<StatusPort> statusPort = provides(StatusPort.class);
-    //internal ports - NO connecting
+    //*************************INTERNAL_NO_CONNECT******************************
     private final Positive<IpSolverPort> ipSolverPort = requires(IpSolverPort.class);
     //****************************CONFIGURATION*********************************
     private final SystemKCWrapper systemConfig;
     private final NetMngrKCWrapper netMngrConfig;
-    //*******************************SELF***************************************
-    private KAddress systemAdr;
+    //**************************INTERNAL_STATE**********************************
+    private NatAwareAddress systemAdr;
+    //**************************EXTERNAL_STATE**********************************
+     private final ExtPort extPorts;
     //*****************************CLEANUP**************************************
     private Pair<Component, Channel[]> ipSolver;
     private Component network;

@@ -20,7 +20,7 @@ package se.sics.ktoolbox.netmngr;
 
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
-import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
  *
@@ -28,14 +28,14 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class NetMngrReady implements NetMngrEvent {
     public final Identifier eventId;
-    public final KAddress systemAdr;
+    public final NatAwareAddress systemAdr;
 
-    public NetMngrReady(Identifier eventId, KAddress systemAdr) {
+    public NetMngrReady(Identifier eventId, NatAwareAddress systemAdr) {
         this.eventId = eventId;
         this.systemAdr = systemAdr;
     }
     
-    public NetMngrReady(KAddress systemAdr) {
+    public NetMngrReady(NatAwareAddress systemAdr) {
         this(UUIDIdentifier.randomId(), systemAdr);
     }
     
