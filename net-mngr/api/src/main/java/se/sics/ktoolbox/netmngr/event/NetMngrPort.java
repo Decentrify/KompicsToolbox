@@ -16,14 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.netmngr;
+package se.sics.ktoolbox.netmngr.event;
 
-import se.sics.ktoolbox.util.config.KConfigOption;
+import se.sics.kompics.PortType;
+import se.sics.ktoolbox.netmngr.NetMngrBind;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetMngrKConfig {
-    public final static KConfigOption.Basic<String> ipType = new KConfigOption.Basic("netMngr.ipType", String.class);
+public class NetMngrPort extends PortType {
+    {
+        request(NetMngrBind.Request.class);
+        indication(NetMngrBind.Response.class);
+        request(NetMngrUnbind.Request.class);
+        indication(NetMngrUnbind.Response.class);
+    }
 }

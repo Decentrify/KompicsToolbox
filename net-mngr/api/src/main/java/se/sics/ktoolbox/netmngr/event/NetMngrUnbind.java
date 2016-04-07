@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.netmngr;
+package se.sics.ktoolbox.netmngr.event;
 
 import se.sics.kompics.Direct;
+import se.sics.ktoolbox.netmngr.NetMngrEvent;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 

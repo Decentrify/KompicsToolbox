@@ -21,9 +21,11 @@ package se.sics.ktoolbox.cc.heartbeat.util;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -39,8 +41,8 @@ public class CCValueFactory {
         return Arrays.copyOf(buf.array(), buf.readableBytes());
     }
 
-    public static Set<KAddress> extractHeartbeatSrc(Collection<byte[]> values) {
-        Set<KAddress> result = new HashSet<>();
+    public static List<KAddress> extractHeartbeatSrc(Collection<byte[]> values) {
+        List<KAddress> result = new ArrayList<>();
         for (byte[] value : values) {
             ByteBuf buf = Unpooled.wrappedBuffer(value);
             result.add((KAddress)Serializers.fromBinary(buf, Optional.absent()));

@@ -18,12 +18,13 @@
  */
 package se.sics.ktoolbox.netmngr;
 
+import se.sics.ktoolbox.netmngr.event.NetMngrUnbind;
+import se.sics.ktoolbox.netmngr.event.NetMngrPort;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.ktoolbox.netmngr.nxnet.NxNetPort;
 import se.sics.ktoolbox.netmngr.event.NetMngrReady;
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Channel;
@@ -34,8 +35,6 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.network.netty.NettyInit;
-import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.netmngr.chunk.ChunkMngrComp;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolverComp;
@@ -47,13 +46,10 @@ import se.sics.ktoolbox.netmngr.nxnet.NxNetComp;
 import se.sics.ktoolbox.netmngr.nxnet.NxNetUnbind;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
-import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.network.ports.ShortCircuitChannel;
-import se.sics.ktoolbox.util.idextractor.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
 
@@ -75,7 +71,7 @@ public class NetworkMngrComp extends ComponentDefinition {
     private final Positive<NxNetPort> nxNetPort = requires(NxNetPort.class);
     //****************************CONFIGURATION*********************************
     private final SystemKCWrapper systemConfig;
-    private final NetMngrKCWrapper netMngrConfig;
+    private final NetworkKCWrapper netMngrConfig;
     //**************************INTERNAL_STATE**********************************
     private InetAddress boundIp;
     //**************************EXTERNAL_STATE**********************************
@@ -93,7 +89,7 @@ public class NetworkMngrComp extends ComponentDefinition {
         logPrefix = "<nid:" + systemConfig.id + "> ";
         LOG.info("{}initializing...", logPrefix);
 
-        netMngrConfig = new NetMngrKCWrapper(config());
+        netMngrConfig = new NetworkKCWrapper(config());
 
         extPorts = init.extPorts;
 
@@ -161,7 +157,7 @@ public class NetworkMngrComp extends ComponentDefinition {
                 LOG.info("{}ready", logPrefix);
                 trigger(new Status.Internal(ready), statusPort);
             } else {
-                NetMngrBind.Request req = pendingBind.remove(resp.req.getId());
+                NetMngrBind.Request req = pendingBind.remove(resp.getId());
                 if (req == null) {
                     throw new RuntimeException("logic error - cleanup problems");
                 }
@@ -195,7 +191,7 @@ public class NetworkMngrComp extends ComponentDefinition {
         @Override
         public void handle(NxNetUnbind.Response resp) {
             LOG.trace("{}received:{}", logPrefix, resp);
-            NetMngrUnbind.Request req = pendingUnbind.remove(resp.req.getId());
+            NetMngrUnbind.Request req = pendingUnbind.remove(resp.getId());
             if (req == null) {
                 throw new RuntimeException("logic error - cleanup problems");
             }

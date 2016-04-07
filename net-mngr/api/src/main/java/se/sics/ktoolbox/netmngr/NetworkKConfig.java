@@ -18,16 +18,12 @@
  */
 package se.sics.ktoolbox.netmngr;
 
-import se.sics.kompics.PortType;
+import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetMngrPort extends PortType {
-    {
-        request(NetMngrBind.Request.class);
-        indication(NetMngrBind.Response.class);
-        request(NetMngrUnbind.Request.class);
-        indication(NetMngrUnbind.Response.class);
-    }
+public class NetworkKConfig {
+    public final static KConfigOption.Basic<String> ipType = new KConfigOption.Basic("network.ipType", String.class);
 }
