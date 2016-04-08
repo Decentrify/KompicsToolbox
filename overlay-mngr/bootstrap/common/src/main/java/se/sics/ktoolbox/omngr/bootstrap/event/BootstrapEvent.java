@@ -16,24 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.netmngr;
+package se.sics.ktoolbox.omngr.bootstrap.event;
 
-import java.util.EnumSet;
-import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.netmngr.ipsolver.IpSolve;
-import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetMngrKCWrapper {
-    public final Config configCore;
-    
-    public final EnumSet<IpSolve.NetworkInterfacesMask> ipTypes;
-    
-    public NetMngrKCWrapper(Config configCore) {
-        this.configCore = configCore;
-        String sType = KConfigHelper.read(configCore, NetMngrKConfig.ipType);
-        ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.valueOf(sType));
-    }
+public interface BootstrapEvent extends KompicsEvent, Identifiable<Identifier> {
 }

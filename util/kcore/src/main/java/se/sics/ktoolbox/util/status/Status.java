@@ -21,6 +21,7 @@ package se.sics.ktoolbox.util.status;
 import se.sics.kompics.PatternExtractor;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -28,12 +29,16 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class Status {
 
     public static class Internal<S extends Object> implements PatternExtractor<Class, S>, Identifiable {
-        private final Identifier id; 
+        private final Identifier eventId; 
         public final S status;
 
-        public Internal(Identifier id, S status) {
-            this.id = id;
+        public Internal(Identifier eventId, S status) {
+            this.eventId = eventId;
             this.status = status;
+        }
+        
+        public Internal(S status) {
+            this(UUIDIdentifier.randomId(), status);
         }
 
         @Override
@@ -48,17 +53,21 @@ public class Status {
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
     
     public static class External<S extends Object> implements PatternExtractor<Class<S>, S>, Identifiable {
-        private final Identifier id;
+        private final Identifier eventId;
         public final S status;
 
-        public External(Identifier id, S status) {
-            this.id = id;
+        public External(Identifier eventId, S status) {
+            this.eventId = eventId;
             this.status = status;
+        }
+        
+        public External(S status) {
+            this(UUIDIdentifier.randomId(), status);
         }
 
         @Override
@@ -73,7 +82,7 @@ public class Status {
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
 }

@@ -54,8 +54,6 @@ import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.gradient.util.GradientLocalView;
 import se.sics.ktoolbox.gradient.util.ViewConfig;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -90,7 +88,6 @@ public class TreeGradientComp extends ComponentDefinition {
     Positive network = requires(Network.class);
     Positive timer = requires(Timer.class);
     Positive viewUpdate = requires(OverlayViewUpdatePort.class);
-    Positive addressUpdate = requires(AddressUpdatePort.class);
     Positive croupier = requires(CroupierPort.class);
     Positive gradient = requires(GradientPort.class);
     Positive rankUpdate = requires(RankUpdatePort.class);
@@ -100,7 +97,7 @@ public class TreeGradientComp extends ComponentDefinition {
     private final Identifier overlayId;
     private GradientFilter filter;
     //******************************SELF****************************************
-    private GradientContainer selfView = new GradientContainer(null, null, 0, Integer.MAX_VALUE);
+    private GradientContainer selfView;
     //******************************STATE***************************************
     private final TGParentView gradientFingers;
     private List<GradientContainer> gradientNeighbours = new ArrayList<>();
@@ -119,6 +116,7 @@ public class TreeGradientComp extends ComponentDefinition {
         filter = init.gradientFilter;
         LOG.info("{}initializing...", logPrefix);
 
+        selfView = new GradientContainer(init.selfAdr, null, 0, Integer.MAX_VALUE);
         ViewConfig viewConfig = new ViewConfig(gradientConfig.viewSize, gradientConfig.softMaxTemp, gradientConfig.oldThreshold);
         gradientFingers = new TGParentView(overlayId, new SystemKCWrapper(config()), gradientConfig, tgradientConfig, logPrefix,
                 init.gradientFilter);
@@ -126,7 +124,6 @@ public class TreeGradientComp extends ComponentDefinition {
         setCompTracker();
 
         subscribe(handleStart, control);
-        subscribe(handleSelfAddressUpdate, addressUpdate);
         subscribe(handleViewUpdate, viewUpdate);
         subscribe(handleRankUpdate, rankUpdate);
 
@@ -151,10 +148,6 @@ public class TreeGradientComp extends ComponentDefinition {
             LOG.warn("{}no self view", logPrefix);
             return false;
         }
-        if (selfView.getSource() == null) {
-            LOG.warn("{}no self address", logPrefix);
-            return false;
-        }
         return true;
     }
 
@@ -173,17 +166,8 @@ public class TreeGradientComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
-            trigger(new AddressUpdate.Request(), addressUpdate);
             compTracker.start();
             schedulePeriodicShuffle();
-        }
-    };
-
-    Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update self address:{}", logPrefix, update.localAddress);
-            selfView = selfView.changeAdr(update.localAddress);
         }
     };
 
@@ -236,7 +220,6 @@ public class TreeGradientComp extends ComponentDefinition {
         compTracker.registerNegativePort(gradient);
         compTracker.registerNegativePort(rankUpdate);
         compTracker.registerPositivePort(croupier);
-        compTracker.registerPositivePort(addressUpdate);
         compTracker.registerPositivePort(viewUpdate);
     }
 
@@ -493,10 +476,12 @@ public class TreeGradientComp extends ComponentDefinition {
 
     public static class Init extends se.sics.kompics.Init<TreeGradientComp> {
 
+        public final KAddress selfAdr;
         public final Identifier overlayId;
         public final GradientFilter gradientFilter;
 
-        public Init(Identifier overlayId, GradientFilter gradientFilter) {
+        public Init(KAddress selfAdr, Identifier overlayId, GradientFilter gradientFilter) {
+            this.selfAdr = selfAdr;
             this.overlayId = overlayId;
             this.gradientFilter = gradientFilter;
         }

@@ -16,6 +16,7 @@
         <module>heartbeat</module>
         <!--<module>sim</module>-->
         <!--<module>schemasetup</module>-->
+        <module>mngr</module>
     </modules>
   
     <dependencies>

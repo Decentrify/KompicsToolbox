@@ -18,7 +18,13 @@
  */
 package se.sics.ktoolbox.netmngr;
 
-import org.javatuples.Pair;
+import se.sics.ktoolbox.netmngr.event.NetMngrUnbind;
+import se.sics.ktoolbox.netmngr.event.NetMngrPort;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
+import se.sics.ktoolbox.netmngr.nxnet.NxNetPort;
+import se.sics.ktoolbox.netmngr.event.NetMngrReady;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Channel;
@@ -29,21 +35,23 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.network.netty.NettyInit;
-import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.netmngr.chunk.ChunkMngrComp;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolverComp;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolverPort;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolve;
 import se.sics.ktoolbox.netmngr.chunk.util.CMTrafficSelector;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
+import se.sics.ktoolbox.netmngr.nxnet.NxNetBind;
+import se.sics.ktoolbox.netmngr.nxnet.NxNetComp;
+import se.sics.ktoolbox.netmngr.nxnet.NxNetUnbind;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.ports.ShortCircuitChannel;
+import se.sics.ktoolbox.util.status.Status;
+import se.sics.ktoolbox.util.status.StatusPort;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -54,110 +62,142 @@ public class NetworkMngrComp extends ComponentDefinition {
     private String logPrefix = "";
 
     //*****************************CONNECTIONS**********************************
-    //externally provided ports - NO connecting - we don't like chaining ports
-    private final ExtPort extPorts;
-    //externally providing ports - CONNECT
+    //***************************EXTERNAL_CONNECT*******************************
+    private final Negative<NetMngrPort> netMngrPort = provides(NetMngrPort.class);
     private final Negative<Network> networkPort = provides(Network.class);
-    private final Negative<AddressUpdatePort> addressUpdatePort = provides(AddressUpdatePort.class);
-    //internal ports - NO connecting
+    private final Negative<StatusPort> statusPort = provides(StatusPort.class);
+    //*************************INTERNAL_NO_CONNECT******************************
     private final Positive<IpSolverPort> ipSolverPort = requires(IpSolverPort.class);
+    private final Positive<NxNetPort> nxNetPort = requires(NxNetPort.class);
     //****************************CONFIGURATION*********************************
     private final SystemKCWrapper systemConfig;
-    private final NetMngrKCWrapper netMngrConfig;
-    //*******************************SELF***************************************
-    private KAddress selfAdr;
+    private final NetworkKCWrapper netMngrConfig;
+    //**************************INTERNAL_STATE**********************************
+    private InetAddress boundIp;
+    //**************************EXTERNAL_STATE**********************************
+    private final ExtPort extPorts;
+    //****************************AUX_STATE*************************************
+    private Map<Identifier, NetMngrBind.Request> pendingBind = new HashMap<>();
+    private Map<Identifier, NetMngrUnbind.Request> pendingUnbind = new HashMap<>();
     //*****************************CLEANUP**************************************
-    private Pair<Component, Channel[]> ipSolver;
-    private Component network;
-    private Pair<Component, Channel[]> chunkMngr;
+    private Component ipSolverComp;
+    private Component nxNetComp;
+    private Component chunkMngrComp;
 
     public NetworkMngrComp(Init init) {
         systemConfig = new SystemKCWrapper(config());
         logPrefix = "<nid:" + systemConfig.id + "> ";
         LOG.info("{}initializing...", logPrefix);
-        
-        netMngrConfig = new NetMngrKCWrapper(config());
-        
+
+        netMngrConfig = new NetworkKCWrapper(config());
+
         extPorts = init.extPorts;
 
         subscribe(handleStart, control);
-        subscribe(handleAddressUpdateReq, addressUpdatePort);
-        
-        connectIpSolver();
         subscribe(handleIpDetected, ipSolverPort);
+        subscribe(handleBindReq, netMngrPort);
+        subscribe(handleBindResp, nxNetPort);
+        subscribe(handleUnbindReq, netMngrPort);
+        subscribe(handleUnbindResp, nxNetPort);
     }
-    
-    private boolean ready() {
-        if(selfAdr == null) {
-            LOG.warn("{}self address not yet defined", logPrefix);
-            return false;
-        }
-        return true;
-    }
-    //*****************************CONTROL**************************************
+
     private Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
             LOG.info("{}starting...", logPrefix);
+            setIpSolver();
+            setNxNet();
+            setChunkMngr();
+            trigger(Start.event, ipSolverComp.control());
+            trigger(Start.event, nxNetComp.control());
+            trigger(Start.event, chunkMngrComp.control());
             trigger(new IpSolve.Request(netMngrConfig.ipTypes), ipSolverPort);
         }
     };
-    
-    private Handler handleAddressUpdateReq = new Handler<AddressUpdate.Request>() {
 
-        @Override
-        public void handle(AddressUpdate.Request req) {
-            LOG.trace("{}received:{}", new Object[]{logPrefix, req});
-            if(!ready()) {
-                return;
-            }
-            AddressUpdate.Response resp = req.answer(selfAdr);
-            LOG.trace("{}sending:{}", new Object[]{logPrefix, resp});
-            answer(req, resp);
-        }
-    };
-    
+    private void setIpSolver() {
+        ipSolverComp = create(IpSolverComp.class, new IpSolverComp.IpSolverInit());
+        connect(ipSolverComp.getPositive(IpSolverPort.class), ipSolverPort.getPair(), Channel.TWO_WAY);
+    }
+
+    private void setNxNet() {
+        nxNetComp = create(NxNetComp.class, new NxNetComp.Init());
+        connect(nxNetComp.getPositive(NxNetPort.class), nxNetPort.getPair(), Channel.TWO_WAY);
+    }
+
+    private void setChunkMngr() {
+        chunkMngrComp = create(ChunkMngrComp.class, new ChunkMngrComp.Init());
+        connect(chunkMngrComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
+        ShortCircuitChannel.getChannel(
+                nxNetComp.getPositive(Network.class), chunkMngrComp.getPositive(Network.class), new CMTrafficSelector.Outgoing(),
+                networkPort, chunkMngrComp.getNegative(Network.class), new CMTrafficSelector.Incoming());
+    }
+
     private Handler handleIpDetected = new Handler<IpSolve.Response>() {
         @Override
-        public void handle(IpSolve.Response event) {
+        public void handle(IpSolve.Response resp) {
             LOG.info("{}new ips detected", logPrefix);
-            if(event.boundIp == null) {
+            if (resp.boundIp == null) {
                 throw new RuntimeException("no bound ip");
             }
-            selfAdr = NatAwareAddressImpl.open(new BasicAddress(event.boundIp, systemConfig.port, systemConfig.id));
-            
-            //tell everyone
-            AddressUpdate.Indication ind = new AddressUpdate.Indication(selfAdr);
-            LOG.trace("{}sending:{}", new Object[]{logPrefix, ind});
-            trigger(ind, addressUpdatePort);
-            
-            connectNetwork();
-            connectChunkMngr();
-            trigger(Start.event, network.control());
-            trigger(Start.event, chunkMngr.getValue0().control());
+            boundIp = resp.boundIp;
+            NatAwareAddress systemAdr = NatAwareAddressImpl.open(new BasicAddress(resp.boundIp, systemConfig.port, systemConfig.id));
+            LOG.info("{}binding system adr:{}", new Object[]{logPrefix, systemAdr});
+            trigger(new NxNetBind.Request(systemAdr), nxNetPort);
         }
     };
-    //****************************CONNECTIONS***********************************
-    private void connectIpSolver() {
-        Component ipSolverComp = create(IpSolverComp.class, new IpSolverComp.IpSolverInit());
-        Channel[] ipSolverChannels = new Channel[1];
-        ipSolverChannels[0] = connect(ipSolverComp.getPositive(IpSolverPort.class), ipSolverPort.getPair(), Channel.TWO_WAY);
-        ipSolver = Pair.with(ipSolverComp, ipSolverChannels);
-    }
-    
-    private void connectNetwork() {
-        network = create(NettyNetwork.class, new NettyInit(selfAdr));
-    }
-    
-    private void connectChunkMngr() {
-        Component chunkMngrComp = create(ChunkMngrComp.class, new ChunkMngrComp.Init());
-        Channel[] chunkMngrChannels = new Channel[2];
-        chunkMngrChannels[0] = connect(chunkMngrComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-        chunkMngrChannels[1] = ShortCircuitChannel.getChannel(
-                network.getPositive(Network.class), chunkMngrComp.getPositive(Network.class), new CMTrafficSelector.Outgoing(),
-                networkPort, chunkMngrComp.getNegative(Network.class), new CMTrafficSelector.Incoming());
-        chunkMngr = Pair.with(chunkMngrComp, chunkMngrChannels);
-    }
+
+    private Handler handleBindResp = new Handler<NxNetBind.Response>() {
+        @Override
+        public void handle(NxNetBind.Response resp) {
+            LOG.trace("{}received:{}", logPrefix, resp);
+            if (resp.req.bindAdr.getPort() == systemConfig.port) {
+                //tell everyone
+                NetMngrReady ready = new NetMngrReady((NatAwareAddress) resp.req.bindAdr);
+                LOG.info("{}ready", logPrefix);
+                trigger(new Status.Internal(ready), statusPort);
+            } else {
+                NetMngrBind.Request req = pendingBind.remove(resp.getId());
+                if (req == null) {
+                    throw new RuntimeException("logic error - cleanup problems");
+                }
+                answer(req, req.answer(resp.req.bindAdr));
+            }
+        }
+    };
+
+    private Handler handleBindReq = new Handler<NetMngrBind.Request>() {
+        @Override
+        public void handle(NetMngrBind.Request req) {
+            LOG.trace("{}received:{}", logPrefix, req);
+            NatAwareAddress adr = NatAwareAddressImpl.open(new BasicAddress(boundIp, req.port, systemConfig.id));
+            NxNetBind.Request bindReq = new NxNetBind.Request(adr);
+            trigger(bindReq, nxNetPort);
+            pendingBind.put(bindReq.getId(), req);
+        }
+    };
+
+    private Handler handleUnbindReq = new Handler<NetMngrUnbind.Request>() {
+        @Override
+        public void handle(NetMngrUnbind.Request req) {
+            LOG.trace("{}received:{}", logPrefix, req);
+            NxNetUnbind.Request unbindReq = new NxNetUnbind.Request(req.port);
+            trigger(unbindReq, nxNetPort);
+            pendingUnbind.put(unbindReq.getId(), req);
+        }
+    };
+
+    private Handler handleUnbindResp = new Handler<NxNetUnbind.Response>() {
+        @Override
+        public void handle(NxNetUnbind.Response resp) {
+            LOG.trace("{}received:{}", logPrefix, resp);
+            NetMngrUnbind.Request req = pendingUnbind.remove(resp.getId());
+            if (req == null) {
+                throw new RuntimeException("logic error - cleanup problems");
+            }
+            answer(req, req.answer());
+        }
+    };
 
     public static class Init extends se.sics.kompics.Init<NetworkMngrComp> {
 

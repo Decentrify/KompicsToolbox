@@ -27,10 +27,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
-import se.sics.ktoolbox.util.update.ViewUpdate;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
@@ -50,9 +47,6 @@ public class BasicAggregation {
         AggregationRegistry.registerPositive(Msg.class, Network.class);
         AggregationRegistry.registerNegative(MessageNotify.Req.class, Network.class); //request = negative
         AggregationRegistry.registerPositive(MessageNotify.Resp.class, Network.class);
-        //address update
-        AggregationRegistry.registerNegative(AddressUpdate.Request.class, AddressUpdatePort.class);
-        AggregationRegistry.registerPositive(AddressUpdate.Indication.class, AddressUpdatePort.class);
         //view update
         AggregationRegistry.registerNegative(OverlayViewUpdate.Request.class, OverlayViewUpdatePort.class);
         AggregationRegistry.registerPositive(OverlayViewUpdate.Indication.class, OverlayViewUpdatePort.class);

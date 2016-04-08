@@ -24,7 +24,6 @@ import se.sics.ktoolbox.util.other.Container;
 import se.sics.ktoolbox.util.traits.Ageing;
 import se.sics.ktoolbox.util.update.View;
 
-
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
@@ -85,10 +84,6 @@ public class GradientContainer<C extends View> implements Container<KAddress, C>
     }
     
     //**************************************************************************
-    public GradientContainer changeAdr(KAddress src) {
-        return new GradientContainer(src, content, age, rank);
-    }
-    
     public GradientContainer changeView(View view) {
         return new GradientContainer(src, view, age, rank);
     }

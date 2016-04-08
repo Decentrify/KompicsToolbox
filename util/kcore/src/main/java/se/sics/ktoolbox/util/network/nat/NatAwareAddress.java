@@ -30,5 +30,4 @@ public interface NatAwareAddress extends KAddress {
     public Optional<BasicAddress> getPrivateAdr();
     public BasicAddress getPublicAdr();
     public NatType getNatType();
-    public List<BasicAddress> getParents();
 }

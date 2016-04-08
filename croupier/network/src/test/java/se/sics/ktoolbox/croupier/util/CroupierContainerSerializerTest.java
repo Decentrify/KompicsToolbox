@@ -79,7 +79,7 @@ public class CroupierContainerSerializerTest {
         Assert.assertEquals(original.src.getPrivateAdr(), copy.src.getPrivateAdr());
         Assert.assertEquals(original.src.getPublicAdr(), copy.src.getPublicAdr());
         Assert.assertEquals(original.src.getNatType(), copy.src.getNatType());
-        Assert.assertTrue(Objects.equals(original.src.getParents(), copy.src.getParents()));
+        Assert.assertTrue(Objects.equals(((NatAwareAddressImpl)original.src).getParents(), ((NatAwareAddressImpl)copy.src).getParents()));
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
 }

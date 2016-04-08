@@ -15,6 +15,7 @@
         <module>core</module>
         <module>network</module>
         <module>example</module>
+        <module>bootstrap</module>
     </modules>
     
     <dependencies>
