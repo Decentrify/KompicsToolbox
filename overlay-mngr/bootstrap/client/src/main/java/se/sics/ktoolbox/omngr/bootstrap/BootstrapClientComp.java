@@ -48,6 +48,7 @@ import se.sics.ktoolbox.omngr.bootstrap.event.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.event.Sample;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
@@ -60,7 +61,6 @@ import se.sics.ktoolbox.util.network.basic.BasicHeader;
 public class BootstrapClientComp extends ComponentDefinition {
 
     //hack - change to config later
-
     private final static int maxSampleSize = 10;
     private final static long heartbeatPeriod = 1000;
     private final static long msgTimeout = 2000;
@@ -84,11 +84,13 @@ public class BootstrapClientComp extends ComponentDefinition {
     private Map<Identifier, CCOverlaySample.Request> pendingRequests = new HashMap<>();
 
     public BootstrapClientComp(Init init) {
+        SystemKCWrapper systemConfig = new SystemKCWrapper(config());
         selfAdr = init.selfAdr;
         logPrefix = "<nid:" + selfAdr.getId() + ">";
-        LOG.info("{}initiating...", logPrefix);
+        LOG.info("{}initiating with seed:{}", logPrefix, systemConfig.seed);
 
-        SystemKCWrapper systemConfig = new SystemKCWrapper(config());
+        bootstrapServer = init.bootstrapServer;
+        
         rand = new Random(systemConfig.seed);
 
         subscribe(handleStart, control);
@@ -113,6 +115,7 @@ public class BootstrapClientComp extends ComponentDefinition {
             LOG.debug("{}heartbeating", logPrefix);
             for (Identifier overlayId : heartbeats) {
                 Heartbeat content = new Heartbeat(overlayId, rand.nextInt(maxSampleSize));
+//                Heartbeat content = new Heartbeat(overlayId, ((IntIdentifier) selfAdr.getId()).id);
                 KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
                 LOG.trace("{}sending:{}", logPrefix, container);
                 trigger(container, networkPort);
@@ -125,11 +128,6 @@ public class BootstrapClientComp extends ComponentDefinition {
         public void handle(CCHeartbeat.Start heartbeat) {
             LOG.info("{}heartbeat on:{}", logPrefix, heartbeat.overlayId);
             heartbeats.add(heartbeat.overlayId);
-
-            Heartbeat content = new Heartbeat(heartbeat.overlayId, rand.nextInt(maxSampleSize));
-            KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
-            LOG.trace("{}sending:{}", logPrefix, container);
-            trigger(container, networkPort);
         }
     };
 
@@ -168,7 +166,7 @@ public class BootstrapClientComp extends ComponentDefinition {
     Handler handleSampleRequestTimeout = new Handler<SampleRequestTimeout>() {
         @Override
         public void handle(SampleRequestTimeout timeout) {
-            LOG.debug("{}timeout on sample request");
+            LOG.debug("{}timeout on sample request", logPrefix);
             CCOverlaySample.Request req = pendingRequests.remove(timeout.getId());
             if (req == null) {
                 LOG.trace("{}late:{}", logPrefix, timeout);
@@ -253,7 +251,6 @@ public class BootstrapClientComp extends ComponentDefinition {
     }
 
     //**************************************************************************
-
     public static class Init extends se.sics.kompics.Init<BootstrapClientComp> {
 
         public final KAddress selfAdr;

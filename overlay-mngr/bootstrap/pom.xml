@@ -6,7 +6,7 @@
         <artifactId>overlay-mngr</artifactId>
         <version>2.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>se.sics.ktoolbox.omngr</groupId>
+    <groupId>se.sics.ktoolbox.overlaymngr</groupId>
     <artifactId>bootstrap</artifactId>
     <packaging>pom</packaging>
     <name>OverlayMngr Bootstrap</name>

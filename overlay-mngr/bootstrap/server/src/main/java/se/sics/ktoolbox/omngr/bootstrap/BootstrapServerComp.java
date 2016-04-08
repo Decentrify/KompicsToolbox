@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.omngr.bootstrap;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,6 +28,7 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
+import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.omngr.bootstrap.event.Heartbeat;
@@ -36,6 +36,7 @@ import se.sics.ktoolbox.omngr.bootstrap.event.Sample;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -69,22 +70,22 @@ public class BootstrapServerComp extends ComponentDefinition {
             LOG.info("{}starting...", logPrefix);
         }
     };
-
+    
     ClassMatchedHandler handleHeartbeat
-            = new ClassMatchedHandler<Heartbeat, KContentMsg<?, ?, Heartbeat>>() {
+            = new ClassMatchedHandler<Heartbeat, BasicContentMsg<?, ?, Heartbeat>>() {
 
                 @Override
-                public void handle(Heartbeat content, KContentMsg<?, ?, Heartbeat> container) {
+                public void handle(Heartbeat content, BasicContentMsg<?, ?, Heartbeat> container) {
                     LOG.trace("{}received:{}", logPrefix, container);
                     samples.put(content.overlayId, content.position, container.getHeader().getSource());
                 }
             };
     
     ClassMatchedHandler handleSampleRequest
-            = new ClassMatchedHandler<Sample.Request, KContentMsg<?, ?, Sample.Request>>() {
+            = new ClassMatchedHandler<Sample.Request, BasicContentMsg<?, ?, Sample.Request>>() {
 
                 @Override
-                public void handle(Sample.Request content, KContentMsg<?, ?, Sample.Request> container) {
+                public void handle(Sample.Request content, BasicContentMsg<?, ?, Sample.Request> container) {
                     LOG.trace("{}received:{}", logPrefix, container);
                     List<KAddress> sample = new ArrayList<>(samples.row(content.overlayId).values());
                     KContentMsg response = container.answer(content.answer(sample));
