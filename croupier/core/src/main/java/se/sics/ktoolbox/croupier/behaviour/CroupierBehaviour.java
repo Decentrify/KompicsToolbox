@@ -19,8 +19,6 @@
 package se.sics.ktoolbox.croupier.behaviour;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.View;
 
@@ -29,11 +27,8 @@ import se.sics.ktoolbox.util.update.View;
  */
 public interface CroupierBehaviour {
 
-    public NatAwareAddress getSelf();
-
     public Optional<View> getView();
 
     public CroupierBehaviour processView(OverlayViewUpdate.Indication viewUpdate);
 
-    public CroupierBehaviour processAddress(AddressUpdate.Indication update);
 }

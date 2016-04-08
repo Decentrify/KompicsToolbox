@@ -78,7 +78,7 @@ public class BasicHeaderSerializerTest {
     @Test
     public void testNatAwareOpenAddress() throws UnknownHostException {
         Serializer serializer = Serializers.lookupSerializer(BasicHeader.class);
-        BasicHeader<NatAwareAddress> original, copy;
+        BasicHeader<NatAwareAddressImpl> original, copy;
         ByteBuf serializedOriginal, serializedCopy;
 
         InetAddress localHost;

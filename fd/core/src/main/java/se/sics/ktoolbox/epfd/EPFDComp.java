@@ -45,8 +45,6 @@ import se.sics.ktoolbox.epfd.event.EPFDUnfollow;
 import se.sics.ktoolbox.epfd.msg.EPFDPing;
 import se.sics.ktoolbox.epfd.msg.EPFDPong;
 import se.sics.ktoolbox.epfd.util.HostProber;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
@@ -65,7 +63,6 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
     private final Negative<EPFDPort> epfd = provides(EPFDPort.class);
     private final Positive<Network> network = requires(Network.class);
     private final Positive<Timer> timer = requires(Timer.class);
-    private final Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
 
     private final SystemKCWrapper systemConfig;
     private final EPFDKCWrapper epfdConfig;
@@ -85,7 +82,6 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
 
         subscribe(handleStart, control);
         subscribe(handleStateCheck, timer);
-        subscribe(handleAddressUpdate, addressUpdate);
         subscribe(handleFollow, epfd);
         subscribe(handleUnfollow, epfd);
         subscribe(handleNextPingTimeout, timer);
@@ -114,13 +110,6 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         }
     };
 
-    Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.info("{}update address:{}", logPrefix, update.localAddress);
-            selfAdr = update.localAddress;
-        }
-    };
     //**************************************************************************
     Handler handleFollow = new Handler<EPFDFollow>() {
         @Override

@@ -39,7 +39,7 @@ public class NatAwareAddressImpl implements NatAwareAddress {
     final NatType natType;
     final List<BasicAddress> parents;
     
-    public NatAwareAddressImpl(Optional<BasicAddress> privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
+    private NatAwareAddressImpl(Optional<BasicAddress> privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
         this.privateAdr = privateAdr;
         this.publicAdr = publicAdr;
         this.natType = natType;
@@ -65,7 +65,6 @@ public class NatAwareAddressImpl implements NatAwareAddress {
         return natType;
     }
 
-    @Override
     public List<BasicAddress> getParents() {
         return parents;
     }
@@ -100,6 +99,10 @@ public class NatAwareAddressImpl implements NatAwareAddress {
                 new BasicAddress(publicAdr.getIp(), publicPort, publicAdr.getId()), natType, parents);
     }
     
+    public NatAwareAddress withPrivateAddress(BasicAddress privateAdr) {
+        return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+    }
+    
     public NatAwareAddress changeParents(List<BasicAddress> parents) {
         return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
     }
@@ -111,6 +114,11 @@ public class NatAwareAddressImpl implements NatAwareAddress {
     
     public static NatAwareAddressImpl nated(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
         return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+    }
+    
+    public static NatAwareAddressImpl unknown(BasicAddress adr) {
+        Optional<BasicAddress> privateAdr = Optional.absent();
+        return new NatAwareAddressImpl(privateAdr, adr, NatType.unknown(), new ArrayList<BasicAddress>());
     }
     
     @Override

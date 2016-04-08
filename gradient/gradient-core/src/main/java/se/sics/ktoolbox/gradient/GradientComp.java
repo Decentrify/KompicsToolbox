@@ -52,14 +52,11 @@ import se.sics.ktoolbox.gradient.temp.RankUpdate;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.gradient.util.GradientLocalView;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -90,14 +87,13 @@ public class GradientComp extends ComponentDefinition {
     Negative croupierViewUpdate = provides(OverlayViewUpdatePort.class);
     Negative rankUpdate = provides(RankUpdatePort.class);
     Positive viewUpdate = requires(OverlayViewUpdatePort.class);
-    Positive addressUpdate = requires(AddressUpdatePort.class);
     //******************************CONFIG**************************************
     private final GradientKCWrapper gradientConfig;
     private final Identifier overlayId;
     private GradientFilter filter;
     private final Comparator<GradientContainer> utilityComp;
     //******************************SELF****************************************
-    private GradientContainer selfView = new GradientContainer(null, null, 0, Integer.MAX_VALUE);
+    private GradientContainer selfView;
     //******************************STATE***************************************
     private final GradientView gradientNeighbours;
     //*******************************AUX****************************************
@@ -113,6 +109,7 @@ public class GradientComp extends ComponentDefinition {
         logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initializing...", logPrefix);
 
+        selfView = new GradientContainer(init.selfAdr, null, 0, Integer.MAX_VALUE);
         utilityComp = new WrapperComparator<>(init.utilityComparator);
         filter = init.gradientFilter;
 
@@ -123,7 +120,6 @@ public class GradientComp extends ComponentDefinition {
 
         subscribe(handleStart, control);
         subscribe(handleViewUpdate, viewUpdate);
-        subscribe(handleAddressUpdate, addressUpdate);
 
         subscribe(handleCroupierSample, croupier);
         subscribe(handleShuffleRequest, network);
@@ -145,10 +141,6 @@ public class GradientComp extends ComponentDefinition {
             LOG.warn("{}no self view", logPrefix);
             return false;
         }
-        if (selfView.getSource() == null) {
-            LOG.warn("{}no self address", logPrefix);
-            return false;
-        }
         return true;
     }
 
@@ -163,17 +155,8 @@ public class GradientComp extends ComponentDefinition {
         @Override
         public void handle(Start event) {
             LOG.info("{} starting...", logPrefix);
-            trigger(new AddressUpdate.Request(), addressUpdate);
             compTracker.start();
             schedulePeriodicShuffle();
-        }
-    };
-
-    Handler handleAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.debug("{} updating self address:{}", new Object[]{logPrefix, update.localAddress});
-            selfView = selfView.changeAdr(update.localAddress);
         }
     };
 
@@ -218,7 +201,6 @@ public class GradientComp extends ComponentDefinition {
         compTracker.registerNegativePort(gradient);
         compTracker.registerNegativePort(rankUpdate);
         compTracker.registerPositivePort(croupier);
-        compTracker.registerPositivePort(addressUpdate);
         compTracker.registerPositivePort(viewUpdate);
     }
 
@@ -473,11 +455,13 @@ public class GradientComp extends ComponentDefinition {
 
     public static class Init extends se.sics.kompics.Init<GradientComp> {
 
+        public final KAddress selfAdr;
         public final Identifier overlayId;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
 
-        public Init(Identifier overlayId, Comparator utilityComparator, GradientFilter gradientFilter) {
+        public Init(KAddress selfAdr, Identifier overlayId, Comparator utilityComparator, GradientFilter gradientFilter) {
+            this.selfAdr = selfAdr;
             this.overlayId = overlayId;
             this.utilityComparator = utilityComparator;
             this.gradientFilter = gradientFilter;

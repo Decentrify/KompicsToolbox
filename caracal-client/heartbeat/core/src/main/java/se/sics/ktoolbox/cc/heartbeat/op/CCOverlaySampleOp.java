@@ -18,8 +18,8 @@
  */
 package se.sics.ktoolbox.cc.heartbeat.op;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,14 +79,14 @@ public class CCOverlaySampleOp implements CCOperation {
         if (resp instanceof RangeQuery.Response) {
             RangeQuery.Response rangeResp = (RangeQuery.Response) resp;
             if (rangeResp.code.equals(ResponseCode.SUCCESS)) {
-                Set<KAddress> sample = CCValueFactory.extractHeartbeatSrc(rangeResp.data.values());
+                List<KAddress> sample = CCValueFactory.extractHeartbeatSrc(rangeResp.data.values());
                 sample.remove(self);
                 opMngr.completed(opId, req, req.answer(sample));
                 return;
             } else {
                 //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issue a retry
                 LOG.warn("caracal answer:{} - delivering empty answer - hope to succeed in the future", rangeResp.code);
-                opMngr.completed(opId, req, req.answer(new HashSet<KAddress>()));
+                opMngr.completed(opId, req, req.answer(new ArrayList<KAddress>()));
                 return;
             }
         }
@@ -98,6 +98,6 @@ public class CCOverlaySampleOp implements CCOperation {
         pendingResp = null;
         //TODO Alex - CaracalRead failed - answer with empty and wait for retry - later answer with something to issues a retry
         LOG.warn("caracal answer failed - delivering empty answer - hope to succeed in the future");
-        opMngr.completed(opId, req, req.answer(new HashSet<KAddress>()));
+        opMngr.completed(opId, req, req.answer(new ArrayList<KAddress>()));
     }
 }

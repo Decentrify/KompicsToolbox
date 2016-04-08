@@ -16,64 +16,61 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.ktoolbox.util.address;
+package se.sics.ktoolbox.netmngr.nxnet;
 
 import se.sics.kompics.Direct;
-import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.ktoolbox.netmngr.NetMngrEvent;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AddressUpdate {
-    public static class Request extends Direct.Request<Response> implements Identifiable {
+public class NxNetBind {
+    public static class Request extends Direct.Request<Response> implements NetMngrEvent {
         public final Identifier eventId;
+        public final KAddress bindAdr;
         
-        public Request(Identifier eventId) {
-            super();
+        public Request(Identifier eventId, KAddress bindAdr) {
             this.eventId = eventId;
+            this.bindAdr = bindAdr;
         }
         
-        public Request() {
-            this(UUIDIdentifier.randomId());
-        }
-        
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        public Response answer(KAddress localAddress) {
-            return new Response(eventId, localAddress);
-        }
-    }
-    
-    public static class Indication implements KompicsEvent, Identifiable {
-        public final Identifier eventId;
-        public final KAddress localAddress;
-        
-        public Indication(Identifier eventId, KAddress localAddress) {
-            this.eventId = eventId;
-            this.localAddress = localAddress;
-        }
-        
-        public Indication(KAddress localAddress) {
-            this(UUIDIdentifier.randomId(), localAddress);
+        public Request(KAddress bindAdr) {
+            this(UUIDIdentifier.randomId(), bindAdr);
         }
 
         @Override
         public Identifier getId() {
             return eventId;
         }
+        
+        @Override
+        public String toString() {
+            return "NxNetBindReq<" + eventId + ">";
+        }
+        
+        public Response answer() {
+            return new Response(this);
+        }
     }
     
-    public static class Response extends Indication implements Direct.Response {
-        public Response(Identifier id, KAddress localAddress) {
-            super(id, localAddress);
+    public static class Response implements Direct.Response, NetMngrEvent {
+        public final Request req;
+        
+        public Response(Request req) {
+            this.req = req;
+        }
+        
+        public Identifier getId() {
+            return req.getId();
+        }
+        
+        @Override
+        public String toString() {
+            return "NxNetBindResp<" + req.getId() + ">";
         }
     }
 }

@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.overlaymngr.bootstrap;
 
-import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -31,7 +30,6 @@ import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
 import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 import se.sics.ktoolbox.croupier.CroupierControlPort;
-import se.sics.ktoolbox.croupier.event.CroupierControl;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrConfig;
@@ -84,7 +82,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
             if (OverlayMngrConfig.isGlobalCroupier(resp.req.overlayId)) {
                 //TODO Alex
             } else {
-                trigger(new CroupierJoin(resp.req.overlayId, new ArrayList<>(resp.overlaySample)), croupierStatusPort);
+                trigger(new CroupierJoin(resp.req.overlayId, resp.overlaySample), croupierStatusPort);
             }
         }
     };

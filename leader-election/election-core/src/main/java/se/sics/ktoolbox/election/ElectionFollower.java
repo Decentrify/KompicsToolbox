@@ -32,8 +32,6 @@ import se.sics.ktoolbox.election.msg.Promise;
 import se.sics.ktoolbox.election.util.ElectionHelper;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.GradientSample;
-import se.sics.ktoolbox.util.address.AddressUpdate;
-import se.sics.ktoolbox.util.address.AddressUpdatePort;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -77,7 +75,6 @@ public class ElectionFollower extends ComponentDefinition {
     // Ports.
     Positive<Network> network = requires(Network.class);
     Positive<Timer> timer = requires(Timer.class);
-    Positive<AddressUpdatePort> addressUpdate = requires(AddressUpdatePort.class);
     Positive<GradientPort> gradient = requires(GradientPort.class);
     Negative<LeaderElectionPort> election = provides(LeaderElectionPort.class);
     Negative<TestPort> testPortNegative = provides(TestPort.class);
@@ -116,7 +113,6 @@ public class ElectionFollower extends ComponentDefinition {
         setCompTracker();
 
         subscribe(handleStart, control);
-        subscribe(handleSelfAddressUpdate, addressUpdate);
 
         subscribe(gradientSampleHandler, gradient);
         subscribe(viewUpdateHandler, election);
@@ -137,14 +133,6 @@ public class ElectionFollower extends ComponentDefinition {
         public void handle(Start event) {
             LOG.info("{}starting", logPrefix);
             compTracker.start();
-        }
-    };
-
-    Handler handleSelfAddressUpdate = new Handler<AddressUpdate.Indication>() {
-        @Override
-        public void handle(AddressUpdate.Indication update) {
-            LOG.debug("{}update self address:{}", logPrefix, update.localAddress);
-            self = update.localAddress;
         }
     };
 
@@ -172,7 +160,6 @@ public class ElectionFollower extends ComponentDefinition {
         compTracker.registerPositivePort(network);
         compTracker.registerPositivePort(timer);
         compTracker.registerNegativePort(gradient);
-        compTracker.registerPositivePort(addressUpdate);
         compTracker.registerNegativePort(election);
         //TODO Alex - what is all this testing code doing here? - cleanup when time
         compTracker.registerNegativePort(testPortNegative);
