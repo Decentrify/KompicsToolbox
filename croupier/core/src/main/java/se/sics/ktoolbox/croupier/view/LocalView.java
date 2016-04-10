@@ -224,10 +224,10 @@ public class LocalView {
         }
     }
 
-    public Map<NatAwareAddress, CroupierContainer> publish() {
-        Map<NatAwareAddress, CroupierContainer> sample = new HashMap<>();
+    public Map<Identifier, CroupierContainer> publish() {
+        Map<Identifier, CroupierContainer> sample = new HashMap<>();
         for (CroupierContainer container : containers.values()) {
-            sample.put(container.getSource(), container.copy());
+            sample.put(container.getSource().getId(), container.copy());
         }
         return sample;
     }

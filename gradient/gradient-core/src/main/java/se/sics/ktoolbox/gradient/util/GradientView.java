@@ -117,32 +117,35 @@ public class GradientView {
         if (view.isEmpty()) {
             return Integer.MAX_VALUE;
         }
-        
-        if(isTop(node)) {
+
+        if (isTop(node)) {
             return 0;
         }
 
-        int undefNodes = 0;
-        int defNodes = 0;
-        int maxRank = Integer.MAX_VALUE;
-        for (GradientContainer gc : view.values()) {
-            if (utilityComp.compare(node, gc) < 0) {
-                if (gc.rank < Integer.MAX_VALUE) {
-                    if(maxRank > gc.rank) {
-                        maxRank = gc.rank;
-                    }
-                    defNodes++;
-                } else {
-                    undefNodes++;
-                }
+        List<GradientContainer> sortedList = new ArrayList<GradientContainer>(view.values());
+        Collections.sort(sortedList, utilityComp);
+
+        GradientContainer higher = null;
+        int rankAdjust = 1;
+        for (GradientContainer gc : sortedList) {
+            if (utilityComp.compare(node, gc) >= 0) {
+                continue;
+            }
+            if (gc.rank == Integer.MAX_VALUE) {
+                rankAdjust++;
+            } else {
+                higher = gc;
+                break;
             }
         }
-        //TODO Alex - proper heuristic... if i assume a rank too small... i might become a useless finger for TGradient
-        if (defNodes < undefNodes) {
-            return Integer.MAX_VALUE;
+        if(higher != null) {
+            return higher.rank + rankAdjust;
+        } else {
+            return node.rank;
         }
-        return maxRank + 1;
     }
+
+    
 
     public void merge(GradientContainer newSample, GradientContainer selfView) {
         Set<GradientContainer> newSet = new HashSet<GradientContainer>();

@@ -80,10 +80,11 @@ import se.sics.ktoolbox.util.update.View;
  */
 public class CroupierComp extends ComponentDefinition {
 
+    private static final int maxRebootstrap = 10;
+
     // INFO - status, memory statistics 
     // DEBUG - bootstraping, samples 
     // TRACE - protocol messages
-
     private final static Logger LOG = LoggerFactory.getLogger(CroupierComp.class);
     private String logPrefix = "";
 
@@ -102,6 +103,7 @@ public class CroupierComp extends ComponentDefinition {
     //******************************SELF****************************************
     private CroupierBehaviour behaviour;
     //******************************STATE***************************************
+    private final Random rand;
     private final List<NatAwareAddress> bootstrapNodes = new ArrayList<>();
     private final LocalView publicView;
     private final LocalView privateView;
@@ -120,8 +122,9 @@ public class CroupierComp extends ComponentDefinition {
 
         selfAdr = init.selfAdr;
         behaviour = new CroupierObserver();
-        publicView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
-        privateView = new LocalView(croupierConfig, new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE)));
+        rand = new Random(systemConfig.seed + overlayId.partition(Integer.MAX_VALUE));
+        publicView = new LocalView(croupierConfig, rand);
+        privateView = new LocalView(croupierConfig, rand);
 
         setCompTracker();
 
@@ -215,6 +218,10 @@ public class CroupierComp extends ComponentDefinition {
     Handler handleLegacyBootstrap = new Handler<CroupierJoin>() {
         @Override
         public void handle(CroupierJoin join) {
+            if (bootstrapNodes.size() > maxRebootstrap) {
+                LOG.debug("{}still have bootstrap nodes");
+                return;
+            }
             LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
             for (NatAwareAddress bootstrap : join.bootstrap) {
                 if (!selfAdr.getId().equals(bootstrap.getId())) {
@@ -370,8 +377,12 @@ public class CroupierComp extends ComponentDefinition {
     }
 
     private NatAwareAddress selectPeerToShuffleWith() {
-        if (!bootstrapNodes.isEmpty()) {
-            return bootstrapNodes.remove(0);
+        //we want to rebootstrap from time to time even when we have a full view...so we have a chance between [0.1, 1] (actually 1.1..but ok)
+        double rebootstrapChance = 0.1 + (double)(croupierConfig.viewSize - publicView.size())/croupierConfig.viewSize;
+        if (rand.nextDouble() < rebootstrapChance) {
+            if (!bootstrapNodes.isEmpty()) {
+                return bootstrapNodes.remove(0);
+            }
         }
         NatAwareAddress node = null;
         if (!publicView.isEmpty()) {
