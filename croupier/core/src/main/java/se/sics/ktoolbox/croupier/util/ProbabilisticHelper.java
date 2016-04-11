@@ -19,13 +19,39 @@
 package se.sics.ktoolbox.croupier.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ProbabilisticHelper {
+    
+    //TODO fix algorithm... not working - generates first sampleSize all the time
+//    public static <C extends Object> List<C> generateRandomSample(Random rand, List<C> values, int sampleSize) {
+//        List<C> result = new ArrayList<>();
+//        if (sampleSize >= values.size()) {
+//            //return a copy of all entries
+//            result.addAll(values);
+//            return result;
+//        }
+//        // Don Knuth, The Art of Computer Programming, Algorithm S(3.4.2)
+//        int t = 0, m = 0, n = sampleSize;
+//        while (m < sampleSize) {
+//            int x = rand.nextInt(n - t);
+//            if (x < sampleSize - m) {
+//                result.add(values.get(t));
+//                m += 1;
+//                t += 1;
+//            } else {
+//                t += 1;
+//            }
+//        }
+//        return result;
+//    }
+    
     public static <C extends Object> List<C> generateRandomSample(Random rand, List<C> values, int sampleSize) {
         List<C> result = new ArrayList<>();
         if (sampleSize >= values.size()) {
@@ -33,17 +59,11 @@ public class ProbabilisticHelper {
             result.addAll(values);
             return result;
         }
-        // Don Knuth, The Art of Computer Programming, Algorithm S(3.4.2)
-        int t = 0, m = 0, n = sampleSize;
-        while (m < sampleSize) {
-            int x = rand.nextInt(n - t);
-            if (x < sampleSize - m) {
-                result.add(values.get(t));
-                m += 1;
-                t += 1;
-            } else {
-                t += 1;
-            }
+        
+        List<C> auxVal = new ArrayList<>(values);
+        
+        while(sampleSize > result.size()) {
+            result.add(auxVal.remove(rand.nextInt(auxVal.size())));
         }
         return result;
     }
