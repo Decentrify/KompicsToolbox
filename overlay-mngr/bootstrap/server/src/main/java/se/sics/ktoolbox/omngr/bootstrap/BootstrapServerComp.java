@@ -20,7 +20,9 @@ package se.sics.ktoolbox.omngr.bootstrap;
 
 import com.google.common.collect.HashBasedTable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -28,11 +30,11 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.omngr.bootstrap.event.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.event.Sample;
+import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
@@ -70,7 +72,7 @@ public class BootstrapServerComp extends ComponentDefinition {
             LOG.info("{}starting...", logPrefix);
         }
     };
-    
+
     ClassMatchedHandler handleHeartbeat
             = new ClassMatchedHandler<Heartbeat, BasicContentMsg<?, ?, Heartbeat>>() {
 
@@ -80,19 +82,32 @@ public class BootstrapServerComp extends ComponentDefinition {
                     samples.put(content.overlayId, content.position, container.getHeader().getSource());
                 }
             };
-    
+
     ClassMatchedHandler handleSampleRequest
             = new ClassMatchedHandler<Sample.Request, BasicContentMsg<?, ?, Sample.Request>>() {
 
                 @Override
                 public void handle(Sample.Request content, BasicContentMsg<?, ?, Sample.Request> container) {
                     LOG.trace("{}received:{}", logPrefix, container);
-                    List<KAddress> sample = new ArrayList<>(samples.row(content.overlayId).values());
+                    List<KAddress> sample = sampleWithoutDuplicates(content.overlayId);
                     KContentMsg response = container.answer(content.answer(sample));
                     LOG.trace("{}sending:{}", logPrefix, response);
                     trigger(response, networkPort);
                 }
             };
+
+    private List<KAddress> sampleWithoutDuplicates(Identifier overlayId) {
+        Set<Identifier> ids = new HashSet<>();
+        List<KAddress> adrs = new ArrayList<>();
+        for (KAddress adr : samples.row(overlayId).values()) {
+            if (ids.contains(adr.getId())) {
+                continue;
+            }
+            adrs.add(adr);
+            ids.add(adr.getId());
+        }
+        return adrs;
+    }
 
     public static class Init extends se.sics.kompics.Init<BootstrapServerComp> {
 
