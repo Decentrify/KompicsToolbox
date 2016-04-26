@@ -27,11 +27,6 @@ import com.google.common.base.Optional;
  * Created by babbar on 2015-09-04.
  */
 public interface AggregatorProcessor<P_IN extends AggregatorPacket, P_OUT extends AggregatorPacket> {
-    /**
-     * @param previous
-     * @param current
-     * @return next
-     */
     public P_OUT process(Optional<P_OUT> previous, P_IN current);
     public Class<P_OUT> getAggregatedType();
 }
