@@ -39,7 +39,7 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
     private final long fileSize;
     private final AtomicInteger playPos;
 
-    public VideoStreamMngrImpl(FileMngr fm, int pieceSize, long fileSize, AtomicInteger playPos) throws IOException {
+    public VideoStreamMngrImpl(FileMngr fm, int pieceSize, long fileSize, AtomicInteger playPos) {
         this.fm = fm;
         this.pieceSize = pieceSize;
         this.fileSize = fileSize;

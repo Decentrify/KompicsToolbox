@@ -27,21 +27,21 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NodeWindow implements AggregatorEvent {
-    public final Identifier id;
+    public final Identifier eventId;
     public final Map<Class, AggregatorPacket> window;
     
-    public NodeWindow(Identifier id, Map<Class, AggregatorPacket> window) {
-        this.id = id;
+    public NodeWindow(Identifier eventId, Map<Class, AggregatorPacket> window) {
+        this.eventId = eventId;
         this.window = window;
     }
     
     @Override
     public String toString() {
-        return "AGG_NODE_WINDOW<" + id + ">";
+        return "AGG_NODE_WINDOW<" + eventId + ">";
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
     }
 }
