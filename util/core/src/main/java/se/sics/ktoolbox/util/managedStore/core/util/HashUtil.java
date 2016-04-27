@@ -16,8 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.util;
 
+import com.google.common.io.BaseEncoding;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -74,7 +75,7 @@ public class HashUtil {
                 hashWriter.write(md.digest(piece));
             }
             int rest = fileReader.available();
-            if(rest != 0) {
+            if (rest != 0) {
                 byte[] piece = new byte[rest];
                 fileReader.read(piece);
                 hashWriter.write(md.digest(piece));
@@ -100,7 +101,7 @@ public class HashUtil {
             }
         }
     }
-    
+
     public static boolean checkHash(String hashAlg, byte[] piece, byte[] hash) {
         MessageDigest md;
         try {
@@ -110,6 +111,10 @@ public class HashUtil {
             throw new RuntimeException(ex);
         }
         return Arrays.equals(hash, md.digest(piece));
+    }
+
+    public static boolean checkHash(byte hashId, byte[] piece, byte[] hash) {
+        return checkHash(algMap.get(hashId).getValue0(), piece, hash);
     }
 
     public static class HashBuilderException extends Exception {

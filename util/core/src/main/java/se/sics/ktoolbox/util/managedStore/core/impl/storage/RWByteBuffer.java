@@ -16,55 +16,51 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+package se.sics.ktoolbox.util.managedStore.core.impl.storage;
+
+import se.sics.ktoolbox.util.managedStore.core.Storage;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class RWMemMapFile implements Storage {
-
-    private final long length;
-    private final MappedByteBuffer mbb;
-
-    RWMemMapFile(File file, long length) throws IOException {
-        this.length = length;
-
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        mbb = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, length);
-        raf.close();
-    }
+public class RWByteBuffer implements Storage {
+    private final ByteBuf buf;
+    private final int length;
     
+    public RWByteBuffer(int bufLength) {
+        this.buf = Unpooled.wrappedBuffer(new byte[bufLength]);
+        this.length = bufLength;
+    }
+
     @Override
-    public synchronized byte[] read(long readPos, long readLength) {
-        if(readPos > Integer.MAX_VALUE || readLength > Integer.MAX_VALUE) {
-            System.exit(1);
+    public byte[] read(long readPos, int readLength) {
+        if(readPos > Integer.MAX_VALUE) {
+            throw new RuntimeException("In memory buffer only allow integer sizes");
         }
         if(readPos > length) {
-            return new byte[0];
+            return null;
         }
         if(readPos + readLength > length) {
-            readLength = length - readPos;
+            throw new RuntimeException("not tested yet");
+//            readLength = length - readPos;
         }
         return read((int)readPos, (int)readLength);
     }
     
-    private synchronized byte[] read(int readPos, int readLength) {
+    private byte[] read(int readPos, int readLength) {
         byte[] result = new byte[readLength];
-        mbb.position(readPos);
-        mbb.get(result, 0, result.length);
+        buf.readerIndex(readPos);
+        buf.readBytes(result);
         return result;
     }
-    
+
     @Override
-    public synchronized int write(long writePos, byte[] bytes) {
+    public int write(long writePos, byte[] bytes) {
         if(writePos > Integer.MAX_VALUE) {
-            System.exit(1);
+            throw new RuntimeException("In memory buffer only allow integer sizes");
         }
         if(writePos > length) {
             return 0;
@@ -72,12 +68,16 @@ public class RWMemMapFile implements Storage {
         return write((int)writePos, bytes);
     }
     
-    public synchronized int write(int writePos, byte[] bytes) {
-        mbb.position(writePos);
-        int restFile = (int)(length - writePos);
-        int writeBytes = (bytes.length < restFile ? bytes.length : restFile);
-        mbb.put(bytes, 0, writeBytes);
-        mbb.force();
+    private int write(int writePos, byte[] bytes) {
+        int auxWriterIndex = buf.writerIndex();
+        buf.writerIndex(writePos);
+        int rest = length - writePos;
+        int writeBytes = (bytes.length < rest ? bytes.length : rest);
+        buf.writeBytes(bytes, 0, writeBytes);
+        int auxWriterIndex2 = buf.writerIndex();
+        if(auxWriterIndex2 < auxWriterIndex) {
+            buf.writerIndex(auxWriterIndex);
+        }
         return writeBytes;
     }
 

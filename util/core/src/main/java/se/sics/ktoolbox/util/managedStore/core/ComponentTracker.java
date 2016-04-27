@@ -16,19 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core;
 
 import java.util.Set;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface HashMngr {
-    public boolean hasHash(int hashNr);
-    public byte[] readHash(int hashNr);
-    public int writeHash(int hashNr, byte[] hash);
-    public boolean isComplete(int hashNr);
-    public int contiguous(int hashNr);
-    public Set<Integer> nextHashes(int n, int pos, Set<Integer> exclude);
+public interface ComponentTracker {
+
+    public boolean isComplete(int fromComponentNr);
+
+    public int nextComponentMissing(int fromComponentNr);
+
+    public Integer nextComponentMissing(int fromComponentNr, Set<Integer> except);
+
+    public Set<Integer> nextComponentMissing(int fromComponentNr, int n, Set<Integer> except);
+
+    public boolean hasComponent(int componentNr);
+
+    public void addComponent(int componentNr);
 }

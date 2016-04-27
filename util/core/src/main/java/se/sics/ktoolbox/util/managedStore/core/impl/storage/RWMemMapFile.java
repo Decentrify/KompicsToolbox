@@ -16,8 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.impl.storage;
 
+import se.sics.ktoolbox.util.managedStore.core.Storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -27,42 +28,59 @@ import java.nio.channels.FileChannel;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class RMemMapFile implements Storage {
+public class RWMemMapFile implements Storage {
 
     private final long length;
     private final MappedByteBuffer mbb;
 
-    RMemMapFile(File file) throws IOException {
-        this.length = file.length();
-        RandomAccessFile raf = new RandomAccessFile(file, "r");
-        mbb = raf.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, length);
+    RWMemMapFile(File file, long length) throws IOException {
+        this.length = length;
+
+        RandomAccessFile raf = new RandomAccessFile(file, "rw");
+        mbb = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, length);
         raf.close();
     }
     
     @Override
-    public byte[] read(long readPos, long readLength) {
+    public synchronized byte[] read(long readPos, int readLength) {
         if(readPos > Integer.MAX_VALUE || readLength > Integer.MAX_VALUE) {
-            System.exit(1);
+            throw new RuntimeException("MemoryMappedFiles only allow integer size for read values");
         }
         if(readPos > length) {
-            return new byte[0];
+            return null;
         }
         if(readPos + readLength > length) {
-            readLength = length - readPos;
+            throw new RuntimeException("not tested yet");
+//            readLength = length - readPos;
         }
         return read((int)readPos, (int)readLength);
     }
     
-    private byte[] read(int readPos, int readLength) {
+    private synchronized byte[] read(int readPos, int readLength) {
         byte[] result = new byte[readLength];
         mbb.position(readPos);
         mbb.get(result, 0, result.length);
         return result;
     }
-
+    
     @Override
-    public int write(long writePos, byte[] bytes) {
-        throw new UnsupportedOperationException();
+    public synchronized int write(long writePos, byte[] bytes) {
+        if(writePos > Integer.MAX_VALUE) {
+             throw new RuntimeException("MemoryMappedFiles only allow integer size for read values");
+        }
+        if(writePos > length) {
+            return 0;
+        }
+        return write((int)writePos, bytes);
+    }
+    
+    public synchronized int write(int writePos, byte[] bytes) {
+        mbb.position(writePos);
+        int restFile = (int)(length - writePos);
+        int writeBytes = (bytes.length < restFile ? bytes.length : restFile);
+        mbb.put(bytes, 0, writeBytes);
+        mbb.force();
+        return writeBytes;
     }
 
     @Override

@@ -17,21 +17,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core;
 
 import java.util.Set;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface FileMngr {
-    public boolean isComplete(int fromBlockNr);
-    public int contiguous(int fromBlockNr);
-    public boolean has(long readPos, int length);
-    public byte[] read(long readPos, int length);
-    public boolean hasPiece(int pieceNr);
-    public byte[] readPiece(int pieceNr);
-    public int writeBlock(int blockNr, byte[] block);
-    public Integer nextBlock(int blockNr, Set<Integer> exclude);
-    public int blockSize(int blockNr);
+public interface HashMngr {
+    public boolean hasHash(int hashNr);
+    public byte[] readHash(int hashNr);
+    public int writeHash(int hashNr, byte[] hash);
+    public boolean isComplete(int hashNr);
+    public int contiguous(int hashNr);
+    public Set<Integer> nextHashes(int hashNr, int n, Set<Integer> exclude);
 }

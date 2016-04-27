@@ -17,24 +17,26 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.impl.block;
 
-import se.sics.ktoolbox.util.managerStore.pieceTracker.PieceTracker;
+import se.sics.ktoolbox.util.managedStore.core.BlockMngr;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
+import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class SimpleBlockMngr implements BlockMngr {
+public class InMemoryBlockMngr implements BlockMngr {
     private final Storage storage;
-    private final PieceTracker pieceTracker;
+    private final ComponentTracker tracker;
     private final int blockSize;
     private final int pieceSize;
     private final int lastPiece;
     private final int lastPieceSize;
     
-    public SimpleBlockMngr(Storage storage, PieceTracker pieceTracker, int blockSize, int pieceSize) {
+    public InMemoryBlockMngr(Storage storage, ComponentTracker pieceTracker, int blockSize, int pieceSize) {
         this.storage = storage;
-        this.pieceTracker = pieceTracker;
+        this.tracker = pieceTracker;
         this.blockSize = blockSize;
         this.pieceSize = pieceSize;
         this.lastPiece = (blockSize % pieceSize == 0) ? blockSize / pieceSize - 1 : blockSize / pieceSize;
@@ -43,19 +45,19 @@ public class SimpleBlockMngr implements BlockMngr {
 
     @Override
     public boolean hasPiece(int pieceNr) {
-        return pieceTracker.hasPiece(pieceNr);
+        return tracker.hasComponent(pieceNr);
     }
 
     @Override
     public int writePiece(int pieceNr, byte[] piece) {
-        pieceTracker.addPiece(pieceNr);
+        tracker.addComponent(pieceNr);
         long writePos = pieceNr * pieceSize;
         return storage.write(writePos, piece);
     }
 
     @Override
     public boolean isComplete() {
-        return pieceTracker.isComplete(0);
+        return tracker.isComplete(0);
     }
 
     @Override

@@ -16,25 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.impl;
 
-import se.sics.ktoolbox.util.managedStore.HashUtil;
-import se.sics.ktoolbox.util.managedStore.HashMngr;
-import se.sics.ktoolbox.util.managedStore.StorageMngrFactory;
+import se.sics.ktoolbox.util.managedStore.core.HashMngr;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import org.javatuples.Triplet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
+import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -108,11 +106,11 @@ public class HashFileCopyTest {
     public void run(Random rand, Downloader downloader, int maxInterleavingSize, double lossRate) throws IOException {
         File hashFile = new File(hashPath);
         long hashFileSize = hashFile.length();
-        int nrHashes = StorageMngrFactory.nrPieces(hashFileSize, HashUtil.getHashSize(hashAlg));
+        int nrHashes = ManagedStoreHelper.componentNr(hashFileSize, HashUtil.getHashSize(hashAlg));
 
-        HashMngr hashMngr = StorageMngrFactory.getCompleteHashMngr(hashPath, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
-        HashMngr hashCopy1Mngr = StorageMngrFactory.getIncompleteHashMngr(hashCopy1Path, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
-        HashMngr hashCopy2Mngr = StorageMngrFactory.getIncompleteHashMngr(hashCopy2Path, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
+        HashMngr hashMngr = StorageMngrFactory.completeMMHashMngr(hashPath, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
+        HashMngr hashCopy1Mngr = StorageMngrFactory.incompleteMMHashMngr(hashCopy1Path, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
+        HashMngr hashCopy2Mngr = StorageMngrFactory.incompleteMMHashMngr(hashCopy2Path, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
 
 //        LOG.info("status file1:{} file2:{} pPieces1:{} pPieces2:{}",
 //                new Object[]{download1FileMngr.contiguous(0), download2FileMngr.contiguous(0), download1.getValue2().size(), download2.getValue2().size()});

@@ -16,22 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.impl;
 
-import se.sics.ktoolbox.util.managedStore.FileMngr;
-import se.sics.ktoolbox.util.managedStore.HashUtil;
-import se.sics.ktoolbox.util.managedStore.StorageMngrFactory;
-import com.google.common.io.BaseEncoding;
+import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Random;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -58,7 +53,7 @@ public class FileMngrTest {
 
     @Test
     public void nextBlock() throws IOException, HashUtil.HashBuilderException {
-        FileMngr fileMngr = StorageMngrFactory.getIncompleteFileMngr(filePath, fileSize, blockSize, pieceSize);
+        FileMngr fileMngr = StorageMngrFactory.incompleteMMFileMngr(filePath, fileSize, blockSize, pieceSize);
         
         Assert.assertEquals((Integer)0, fileMngr.nextBlock(0, new HashSet<Integer>()));
         

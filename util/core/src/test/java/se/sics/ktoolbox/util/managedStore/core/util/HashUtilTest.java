@@ -16,9 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.util;
 
-import se.sics.ktoolbox.util.managedStore.HashUtil;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,7 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
-import se.sics.ktoolbox.util.managedStore.HashUtil.HashBuilderException;
+import se.sics.ktoolbox.util.managedStore.core.util.HashUtil.HashBuilderException;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

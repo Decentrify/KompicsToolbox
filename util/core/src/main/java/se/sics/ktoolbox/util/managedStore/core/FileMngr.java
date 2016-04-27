@@ -17,13 +17,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core;
+
+import java.util.Set;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface Storage {
-    public byte[] read(long readPos, long readLength);
-    public int write(long writePos, byte[] bytes);
-    public long length();
+public interface FileMngr {
+    //absolute position
+    public boolean has(long readPos, int length);
+    public byte[] read(long readPos, int length);
+    //piece position
+    public boolean hasPiece(int pieceNr);
+    public byte[] readPiece(int pieceNr);
+    //block position
+    public boolean isComplete(int fromBlockNr);
+    public int contiguous(int fromBlockNr);
+    public int writeBlock(int blockNr, byte[] block);
+    public Integer nextBlock(int blockNr, Set<Integer> exclude);
+    public int blockSize(int blockNr);
 }
