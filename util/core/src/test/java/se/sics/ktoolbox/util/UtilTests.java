@@ -26,33 +26,38 @@ import org.junit.Test;
  */
 public class UtilTests {
 
+//    @Test
+//    public void testInnerEnums() {
+//        A a1 = new A();
+//        A a2 = new A();
+//        Assert.assertEquals(0, a1.enumA.E.phase);
+//        Assert.assertEquals(0, a2.enumA.E.phase);
+//        a1.enumA.setPhase(1);
+//        Assert.assertEquals(1, a1.enumA.E.phase);
+//        Assert.assertEquals(1, a2.enumA.E.phase);
+//    }
+//
+//    public static class A {
+//        public EnumA enumA = EnumA.E;
+//
+//        public enum EnumA {
+//
+//            E(0);
+//
+//            int phase;
+//
+//            EnumA(int phase) {
+//                this.phase = phase;
+//            }
+//
+//            public void setPhase(int phase) {
+//                this.phase = phase;
+//            }
+//        }
+//    }
+    
     @Test
-    public void testInnerEnums() {
-        A a1 = new A();
-        A a2 = new A();
-        Assert.assertEquals(0, a1.enumA.E.phase);
-        Assert.assertEquals(0, a2.enumA.E.phase);
-        a1.enumA.setPhase(1);
-        Assert.assertEquals(1, a1.enumA.E.phase);
-        Assert.assertEquals(1, a2.enumA.E.phase);
-    }
-
-    public static class A {
-        public EnumA enumA = EnumA.E;
-
-        public enum EnumA {
-
-            E(0);
-
-            int phase;
-
-            EnumA(int phase) {
-                this.phase = phase;
-            }
-
-            public void setPhase(int phase) {
-                this.phase = phase;
-            }
-        }
+    public void playGroundTest() {
+        System.out.println((long)Integer.MAX_VALUE * Integer.MAX_VALUE);
     }
 }

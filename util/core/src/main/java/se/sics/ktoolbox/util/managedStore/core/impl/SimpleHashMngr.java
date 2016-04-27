@@ -17,22 +17,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core.impl;
 
 import java.util.Set;
-import se.sics.ktoolbox.util.managerStore.pieceTracker.PieceTracker;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
+import se.sics.ktoolbox.util.managedStore.core.HashMngr;
+import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class SimpleHashMngr implements HashMngr {
     
-    private final PieceTracker pieceTracker;
+    private final ComponentTracker pieceTracker;
     private final Storage storage;
     public final String hashType;
     private final int hashSize;
     
-    public SimpleHashMngr(PieceTracker pieceTracker, Storage storage, String hashType, int hashSize) {
+    public SimpleHashMngr(ComponentTracker pieceTracker, Storage storage, String hashType, int hashSize) {
         this.pieceTracker = pieceTracker;
         this.storage = storage;
         this.hashType = hashType;
@@ -41,7 +43,7 @@ public class SimpleHashMngr implements HashMngr {
     
     @Override
     public boolean hasHash(int hashNr) {
-        return pieceTracker.hasPiece(hashNr);
+        return pieceTracker.hasComponent(hashNr);
     }
 
     @Override
@@ -52,9 +54,9 @@ public class SimpleHashMngr implements HashMngr {
     @Override
     public int writeHash(int hashNr, byte[] hash) {
         if(hash.length > hashSize) {
-            System.exit(1);
+            throw new RuntimeException("exceeding size");
         }
-        pieceTracker.addPiece(hashNr);
+        pieceTracker.addComponent(hashNr);
         return storage.write(hashNr*hashSize, hash);
     }
 
@@ -65,11 +67,11 @@ public class SimpleHashMngr implements HashMngr {
 
     @Override
     public int contiguous(int hashNr) {
-        return pieceTracker.contiguous(hashNr);
+        return pieceTracker.nextComponentMissing(hashNr);
     }
     
     @Override
-    public Set<Integer> nextHashes(int n, int pos, Set<Integer> exclude) {
-        return pieceTracker.nextPiecesNeeded(n, pos, exclude);
+    public Set<Integer> nextHashes(int hashNr, int n, Set<Integer> exclude) {
+        return pieceTracker.nextComponentMissing(hashNr, n, exclude);
     }
 }

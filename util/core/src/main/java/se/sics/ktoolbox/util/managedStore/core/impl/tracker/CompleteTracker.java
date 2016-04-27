@@ -16,52 +16,53 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managerStore.pieceTracker;
+package se.sics.ktoolbox.util.managedStore.core.impl.tracker;
 
 import java.util.Set;
 import java.util.TreeSet;
+import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public class CompletePieceTracker implements PieceTracker {
+public class CompleteTracker implements ComponentTracker {
 
     private final int nrPieces;
 
-    public CompletePieceTracker(int nrPieces) {
+    public CompleteTracker(int nrPieces) {
         this.nrPieces = nrPieces;
     }
 
     @Override
-    public boolean isComplete(int from) {
+    public boolean isComplete(int fromComponentNr) {
         return true;
-    }
-    
-    @Override
-    public int contiguous(int from) {
-        return nrPieces;
-    }
-    
-    @Override
-    public boolean hasPiece(int piecePos) {
-        if(piecePos < nrPieces) {
-        return true;
-    }
-        return false;
     }
 
     @Override
-    public Set<Integer> nextPiecesNeeded(int n, int startPos, Set<Integer> except) {
+    public int nextComponentMissing(int fromComponentNr) {
+        return -1;
+    }
+
+    @Override
+    public Integer nextComponentMissing(int fromComponentNr, Set<Integer> except) {
+        return -1;
+    }
+
+    @Override
+    public Set<Integer> nextComponentMissing(int fromComponentNr, int n, Set<Integer> except) {
         return new TreeSet<Integer>();
     }
 
     @Override
-    public Integer nextPieceNeeded(int startPos, Set<Integer> except) {
-        return null;
+    public boolean hasComponent(int componentNr) {
+        if (componentNr < nrPieces) {
+            return true;
+        }
+        return false;
     }
 
     @Override
-    public void addPiece(int piecePos) {
-        //already have, do nothing
+    public void addComponent(int componentNr) {
+        throw new RuntimeException("Should not call write related methods on a CompleteTracker");
     }
 }

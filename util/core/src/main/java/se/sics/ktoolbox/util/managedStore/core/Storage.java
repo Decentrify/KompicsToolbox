@@ -17,15 +17,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-package se.sics.ktoolbox.util.managedStore;
+package se.sics.ktoolbox.util.managedStore.core;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface BlockMngr {
-    public boolean hasPiece(int pieceNr);
-    public int writePiece(int pieceNr, byte[] piece);
-    public boolean isComplete();
-    public byte[] getBlock();
-    public int nrPieces();
+public interface Storage {
+    public byte[] read(long readPos, int readLength);
+    public int write(long writePos, byte[] bytes);
+    public long length();
 }
