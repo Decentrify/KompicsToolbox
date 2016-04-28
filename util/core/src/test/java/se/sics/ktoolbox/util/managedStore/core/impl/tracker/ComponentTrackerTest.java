@@ -31,7 +31,7 @@ public class ComponentTrackerTest {
 
     @Test
     public void test() {
-        InOrderTracker tracker = InOrderTracker.create(10);
+        IncompleteTracker tracker = IncompleteTracker.create(10);
         Set<Integer> expected;
 
         Assert.assertFalse(tracker.isComplete(0));
@@ -74,7 +74,7 @@ public class ComponentTrackerTest {
     
     @Test
     public void nextPieceTest1() {
-        InOrderTracker pt = InOrderTracker.create(10);
+        IncompleteTracker pt = IncompleteTracker.create(10);
         
         Assert.assertEquals((Integer)0, pt.nextComponentMissing(0, new HashSet<Integer>()));
         
