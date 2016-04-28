@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.util.managedStore.core;
 
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 /**
  *
@@ -58,13 +59,22 @@ public class ManagedStoreHelper {
     }
     
     /**
-     * @param pieceNr
-     * @param piecesPerBlock
-     * @return <blockNr, inBlockNr>
+     * Example - subComp - piece, comp - block - translate pieceNr to <blockNr, inBlockPos>
+     * Example - subcomp - absPosition, comp - piece - translate absolutePosition to <pieceNr, inPiecePos>
+     * @param subCompPosition
+     * @param subCompPerComp
      */
-    public static Pair<Integer, Integer> blockDetails(int pieceNr, int piecesPerBlock) {
-        int blockNr = componentNr(pieceNr, piecesPerBlock);
-        int inBlockNr = pieceNr % piecesPerBlock;
+    public static Pair<Integer, Integer> componentDetails(long subCompPosition, int subCompPerComp) {
+        int blockNr = componentNr(subCompPosition, subCompPerComp);
+        int inBlockNr = (int)(subCompPosition % subCompPerComp);
         return Pair.with(blockNr, inBlockNr);
+    }
+    
+    /**
+     * @return <<pieceNr, inPiecePos>, <blockNr, inBlockPos>>
+     */
+    public static Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> blockDetails(long position, int piecesPerBlock, int pieceSize) {
+        int pieceNr = componentNr(position, pieceSize);
+        return Pair.with(componentDetails(position, pieceSize), componentDetails(pieceNr, piecesPerBlock));
     }
 }

@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.util.managedStore.core;
 
+import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */

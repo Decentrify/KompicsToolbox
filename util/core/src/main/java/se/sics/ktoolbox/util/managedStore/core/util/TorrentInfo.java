@@ -16,26 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
+package se.sics.ktoolbox.util.managedStore.core.util;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FileInfo {
+public class TorrentInfo {
+    public final int pieceSize; 
+    public final int piecesPerBlock;
+    public final String hashAlg;
+    public final long hashFileSize;
     
-    public final String name;
-    public final long size;
-    
-    private FileInfo(String name, long size) {
-        this.name = name;
-        this.size = size;
-    }
-    
-    public static FileInfo newFile(String name, long size) {
-        if(size > ManagedStoreHelper.MAX_BYTE_FILE_SIZE) {
-            throw new RuntimeException("file is too large, maximum accepted:" + ManagedStoreHelper.MAX_BYTE_FILE_SIZE + " bytes, size:" + size + " bytes");
-        }
-        return new FileInfo(name, size);
+    public TorrentInfo(int pieceSize, int piecesPerBlock, String hashAlg, long hashFileSize) {
+        this.pieceSize = pieceSize;
+        this.piecesPerBlock = piecesPerBlock;
+        this.hashAlg = hashAlg;
+        this.hashFileSize = hashFileSize;
     }
 }

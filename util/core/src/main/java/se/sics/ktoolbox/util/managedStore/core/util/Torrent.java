@@ -16,14 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
+package se.sics.ktoolbox.util.managedStore.core.util;
 
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
- * @author Alex Ormenisan <aaor@kth.se>
+ * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface HashHandler {
-    public FileInfo getFileInfo();
-    public HashMngr getHashMngr();
+public class Torrent {
+
+    public final Identifier overlayId;
+    public final FileInfo fileInfo;
+    public final TorrentInfo torrentInfo;
+
+    public Torrent(Identifier overlayId, FileInfo fileInfo, TorrentInfo torrentInfo) {
+        this.overlayId = overlayId;
+        this.fileInfo = fileInfo;
+        this.torrentInfo = torrentInfo;
+    }
+    
+    public TorrentDescriptor getDescriptor() {
+        return new TorrentDescriptor(overlayId, fileInfo.name);
+    }
 }

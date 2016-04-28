@@ -194,3 +194,4 @@ netty-test/target/
 /overlay-mngr/bootstrap/server/target/
 /overlay-mngr/bootstrap/common/target/
 /overlay-mngr/bootstrap/client/target/
+/hops/target/
