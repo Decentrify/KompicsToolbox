@@ -34,8 +34,16 @@ import se.sics.ktoolbox.util.managedStore.core.Storage;
  */
 public class HopsDataStorage implements Storage {
 
-    private static final String HDFS_URL = "hdfs://10.0.0.1:9000";
+    private static final String HDFS_URL = "hdfs://10.0.2.15:8023";
     private String path;
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
     
     
     
@@ -45,7 +53,7 @@ public class HopsDataStorage implements Storage {
         byte [] byte_read = null;
         
         Configuration conf = new Configuration();
-        conf.set("fs.default", HDFS_URL);
+        conf.set("fs.defaultFS", HDFS_URL);
         
         try {
             FileSystem fs = FileSystem.get(conf);
