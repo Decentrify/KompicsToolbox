@@ -18,87 +18,88 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage;
 
-import java.net.URI;
-import se.sics.ktoolbox.util.managedStore.core.Storage;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdfs.DFSClient;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HopsDataStorage implements Storage {
 
-    private static final String HDFS_URL = "localhost:9000";
-    private String remoteFilename;
-
-    public String getRemoteFilename() {
-        return remoteFilename;
-    }
-
-    public void setRemoteFilename(String remoteFilename) {
-        this.remoteFilename = remoteFilename;
-    }
+    private static final String HDFS_URL = "hdfs://10.0.0.1:9000";
+    private String path;
+    
+    
     
     @Override
     public byte[] read(long readPos, int readLength) {
         
+        byte [] byte_read = null;
+        
         Configuration conf = new Configuration();
-        conf.set("fs.defaulFS", HDFS_URL);
-        DFSClient client = null;
-        BufferedInputStream input = null;
-        byte[] read_bytes = null;
+        conf.set("fs.default", HDFS_URL);
+        
         try {
-            client = new DFSClient(new URI(HDFS_URL), conf);
-            input = new BufferedInputStream(client.open(remoteFilename));
-            input.read(read_bytes, (int)readPos, readLength);
+            FileSystem fs = FileSystem.get(conf);
+            FSDataInputStream inputStream = fs.open(new Path(path));
             
-        } catch (IOException | URISyntaxException ex) {
+            inputStream.read(byte_read, (int)readPos, readLength);
+            
+            
+        } catch (IOException ex) {
             Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        return read_bytes;
+        return byte_read;
     }
 
     @Override
     public int write(long writePos, byte[] bytes) {
         
         Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", HDFS_URL);
-        DFSClient client = null;
-        BufferedOutputStream out = null;
+        conf.set("fs.default", HDFS_URL);
+        
         try {
-            client = new DFSClient(new URI(HDFS_URL), conf);
-            out = new BufferedOutputStream(client.create(remoteFilename, true));
+            FileSystem fs = FileSystem.get(conf);
+            FSDataOutputStream out = fs.append(new Path(path));
+            
             out.write(bytes, (int) writePos, bytes.length);
+            
             return bytes.length;
             
-        } catch (IOException | URISyntaxException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         return -1;
+        
     }
 
     @Override
     public long length() {
         
         Configuration conf = new Configuration();
-        conf.set("fs.defaulFS", HDFS_URL);
+        conf.set("fs.default", HDFS_URL);
         
-        DFSClient client = null;
         try {
-            client = new DFSClient(new URI(HDFS_URL), conf);
-            return client.open(remoteFilename).getFileLength();
+            FileSystem fs = FileSystem.get(conf);
             
-        } catch (IOException | URISyntaxException ex) {
+            return fs.getLength(new Path(path));
+            
+        } catch (IOException ex) {
             Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        
         return -1;
     }
+    
 }
