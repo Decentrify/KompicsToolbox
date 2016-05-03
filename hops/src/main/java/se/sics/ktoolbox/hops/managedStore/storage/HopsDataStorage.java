@@ -18,25 +18,87 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage;
 
+import java.net.URI;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
-
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hdfs.DFSClient;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HopsDataStorage implements Storage {
 
+    private static final String HDFS_URL = "localhost:9000";
+    private String remoteFilename;
+
+    public String getRemoteFilename() {
+        return remoteFilename;
+    }
+
+    public void setRemoteFilename(String remoteFilename) {
+        this.remoteFilename = remoteFilename;
+    }
+    
     @Override
     public byte[] read(long readPos, int readLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        Configuration conf = new Configuration();
+        conf.set("fs.defaulFS", HDFS_URL);
+        DFSClient client = null;
+        BufferedInputStream input = null;
+        byte[] read_bytes = null;
+        try {
+            client = new DFSClient(new URI(HDFS_URL), conf);
+            input = new BufferedInputStream(client.open(remoteFilename));
+            input.read(read_bytes, (int)readPos, readLength);
+            
+        } catch (IOException | URISyntaxException ex) {
+            Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return read_bytes;
     }
 
     @Override
     public int write(long writePos, byte[] bytes) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", HDFS_URL);
+        DFSClient client = null;
+        BufferedOutputStream out = null;
+        try {
+            client = new DFSClient(new URI(HDFS_URL), conf);
+            out = new BufferedOutputStream(client.create(remoteFilename, true));
+            out.write(bytes, (int) writePos, bytes.length);
+            return bytes.length;
+            
+        } catch (IOException | URISyntaxException ex) {
+            Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return -1;
     }
 
     @Override
     public long length() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        Configuration conf = new Configuration();
+        conf.set("fs.defaulFS", HDFS_URL);
+        
+        DFSClient client = null;
+        try {
+            client = new DFSClient(new URI(HDFS_URL), conf);
+            return client.open(remoteFilename).getFileLength();
+            
+        } catch (IOException | URISyntaxException ex) {
+            Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return -1;
     }
 }
