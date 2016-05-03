@@ -59,7 +59,7 @@ public class HopsDataStorage implements Storage {
             FileSystem fs = FileSystem.get(conf);
             FSDataInputStream inputStream = fs.open(new Path(path));
             
-            inputStream.read(byte_read, (int)readPos, readLength);
+            inputStream.readFully(byte_read, (int)readPos, readLength);
             
             
         } catch (IOException ex) {
