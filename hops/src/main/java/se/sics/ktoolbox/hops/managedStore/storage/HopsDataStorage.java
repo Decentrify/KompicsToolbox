@@ -34,17 +34,14 @@ import se.sics.ktoolbox.util.managedStore.core.Storage;
  */
 public class HopsDataStorage implements Storage {
 
-    private String hdfsURL = "hdfs://10.0.2.15:8023";
-    private String path;
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
+    private final String hdfsURL;
+    private final String path;
     
+    
+    public HopsDataStorage(String path, String endpoint){
+        this.path = path;
+        this.hdfsURL = endpoint;
+    }
     
     
     @Override
@@ -56,7 +53,11 @@ public class HopsDataStorage implements Storage {
         conf.set("fs.defaultFS", hdfsURL);
         
         try {
-            FileSystem fs = FileSystem.get(conf);
+            Path pt = new Path("."); // HDFS Path
+            FileSystem fs = pt.getFileSystem(conf);
+            
+            System.out.println(fs.getHomeDirectory().getName());
+            
             FSDataInputStream inputStream = fs.open(new Path(path));
             
             inputStream.readFully(byte_read, (int)readPos, readLength);
@@ -76,7 +77,8 @@ public class HopsDataStorage implements Storage {
         conf.set("fs.default", hdfsURL);
         
         try {
-            FileSystem fs = FileSystem.get(conf);
+            Path pt = new Path("."); // HDFS Path
+            FileSystem fs = pt.getFileSystem(conf);
             FSDataOutputStream out = fs.create(new Path(path));
             
             out.write(bytes, (int) writePos, bytes.length);
@@ -98,7 +100,8 @@ public class HopsDataStorage implements Storage {
         conf.set("fs.default", hdfsURL);
         
         try {
-            FileSystem fs = FileSystem.get(conf);
+            Path pt = new Path("."); // HDFS Path
+            FileSystem fs = pt.getFileSystem(conf);
             
             return fs.getLength(new Path(path));
             
