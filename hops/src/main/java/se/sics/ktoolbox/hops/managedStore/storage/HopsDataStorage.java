@@ -77,7 +77,7 @@ public class HopsDataStorage implements Storage {
         
         try {
             FileSystem fs = FileSystem.get(conf);
-            FSDataOutputStream out = fs.append(new Path(path));
+            FSDataOutputStream out = fs.create(new Path(path));
             
             out.write(bytes, (int) writePos, bytes.length);
             
