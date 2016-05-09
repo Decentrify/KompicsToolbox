@@ -16,14 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
-
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+package se.sics.ktoolbox.util.managedStore.core.util;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface HashHandler {
-    public FileInfo getFileInfo();
-    public HashMngr getHashMngr();
+public class TorrentInfo {
+    public final int pieceSize; 
+    public final int piecesPerBlock;
+    public final String hashAlg;
+    public final long hashFileSize;
+    
+    public TorrentInfo(int pieceSize, int piecesPerBlock, String hashAlg, long hashFileSize) {
+        this.pieceSize = pieceSize;
+        this.piecesPerBlock = piecesPerBlock;
+        this.hashAlg = hashAlg;
+        this.hashFileSize = hashFileSize;
+    }
 }

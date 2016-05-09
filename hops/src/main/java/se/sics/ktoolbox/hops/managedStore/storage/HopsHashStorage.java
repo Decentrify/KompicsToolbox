@@ -16,14 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
+package se.sics.ktoolbox.hops.managedStore.storage;
 
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface HashHandler {
-    public FileInfo getFileInfo();
-    public HashMngr getHashMngr();
+public class HopsHashStorage implements Storage {
+
+    @Override
+    public byte[] read(long readPos, int readLength) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int write(long writePos, byte[] bytes) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public long length() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
 }

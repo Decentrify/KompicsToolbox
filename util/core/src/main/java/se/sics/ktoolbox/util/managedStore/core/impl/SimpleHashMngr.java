@@ -19,7 +19,12 @@
 
 package se.sics.ktoolbox.util.managedStore.core.impl;
 
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import org.javatuples.Pair;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.HashMngr;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
@@ -47,8 +52,22 @@ public class SimpleHashMngr implements HashMngr {
     }
 
     @Override
-    public byte[] readHash(int hashNr) {
-        return storage.read(hashNr * hashSize, hashSize);
+    public ByteBuffer readHash(int hashNr) {
+        return ByteBuffer.wrap(storage.read(hashNr * hashSize, hashSize));
+    }
+    
+    @Override
+    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Set<Integer> hashNr) {
+        Map<Integer, ByteBuffer> hashes = new HashMap<>();
+        Set<Integer> missingHashes = new HashSet<>();
+        for (Integer hash : hashNr) {
+            if (hasHash(hash)) {
+                hashes.put(hash, readHash(hash));
+            } else {
+                missingHashes.add(hash);
+            }
+        }
+        return Pair.with(hashes, missingHashes);
     }
 
     @Override
@@ -73,5 +92,10 @@ public class SimpleHashMngr implements HashMngr {
     @Override
     public Set<Integer> nextHashes(int hashNr, int n, Set<Integer> exclude) {
         return pieceTracker.nextComponentMissing(hashNr, n, exclude);
+    }
+
+    @Override
+    public int nextHash(int hashNr, Set<Integer> exclude) {
+        return pieceTracker.nextComponentMissing(hashNr, exclude);
     }
 }

@@ -27,10 +27,10 @@ import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
  */
 public class CompleteTracker implements ComponentTracker {
 
-    private final int nrPieces;
+    private final int nrComponents;
 
-    public CompleteTracker(int nrPieces) {
-        this.nrPieces = nrPieces;
+    public CompleteTracker(int nrComponents) {
+        this.nrComponents = nrComponents;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class CompleteTracker implements ComponentTracker {
 
     @Override
     public boolean hasComponent(int componentNr) {
-        if (componentNr < nrPieces) {
+        if (componentNr < nrComponents) {
             return true;
         }
         return false;
@@ -64,5 +64,15 @@ public class CompleteTracker implements ComponentTracker {
     @Override
     public void addComponent(int componentNr) {
         throw new RuntimeException("Should not call write related methods on a CompleteTracker");
+    }
+
+    @Override
+    public int completedComponents() {
+        return nrComponents;
+    }
+
+    @Override
+    public int nrComponents() {
+        return nrComponents;
     }
 }

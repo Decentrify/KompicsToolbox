@@ -16,26 +16,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
+package se.sics.ktoolbox.hops.managedStore.storage;
+
+import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FileInfo {
-    
-    public final String name;
-    public final long size;
-    
-    private FileInfo(String name, long size) {
-        this.name = name;
-        this.size = size;
+public class HopsDataStorage implements Storage {
+
+    @Override
+    public byte[] read(long readPos, int readLength) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
-    public static FileInfo newFile(String name, long size) {
-        if(size > ManagedStoreHelper.MAX_BYTE_FILE_SIZE) {
-            throw new RuntimeException("file is too large, maximum accepted:" + ManagedStoreHelper.MAX_BYTE_FILE_SIZE + " bytes, size:" + size + " bytes");
-        }
-        return new FileInfo(name, size);
+
+    @Override
+    public int write(long writePos, byte[] bytes) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public long length() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
