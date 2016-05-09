@@ -32,7 +32,7 @@ public class testStorage {
         
         
         String endpoint = "hdfs://bbc1.sics.se:8023";
-        Storage s = new HopsDataStorage(endpoint + "/Projects/tester/test/tsesj.Modern.Operating.Systems.3rd.Edition.pdf", endpoint);
+        Storage s = new HopsDataStorage("/Projects/tester/test/tsesj.Modern.Operating.Systems.3rd.Edition.pdf", endpoint);
         byte [] bytes = s.read(0, 100);
         System.out.println(Arrays.toString(bytes));
         
