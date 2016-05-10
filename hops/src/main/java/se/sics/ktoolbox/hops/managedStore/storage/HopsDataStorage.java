@@ -18,7 +18,9 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,21 +43,46 @@ public class HopsDataStorage implements Storage {
 
     private final String hdfsURL;
     private final String path;
-
-    public HopsDataStorage(String path, String endpoint) {
+    private final String yarnConf;
+    private final String hdfsConf;
+    private final String coreConf;
+    
+    public HopsDataStorage(String path, String endpoint, String yarnConf, String hdfsConf, String coreConf) {
         this.path = path;
         this.hdfsURL = endpoint;
+        this.yarnConf = yarnConf;
+        this.coreConf = coreConf;
+        this.hdfsConf = hdfsConf;
     }
 
-    private FileSystem getFileSystem(){
+    private FileSystem getFileSystem() {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser("glassfish");
         try {
             return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
                 @Override
                 public FileSystem run() throws IOException {
                     Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", hdfsURL); //hdfsURL = hdfs://bbc1.sics.se:8023
-                    Path p = new Path("/");
+                    
+                    File hdfs;
+                    File yarn;
+                    File core;
+                    
+                    if(yarnConf != null && hdfsConf != null && coreConf != null){
+                        hdfs = new File(hdfsConf);
+                        yarn = new File(yarnConf);
+                        core = new File(coreConf);
+                    }else{
+                        
+                        hdfs = new File(System.getProperty("user.dir") + "/src/main/resources/hdfs-site.xml");
+                        yarn = new File(System.getProperty("user.dir") + "/src/main/resources/yarn-site.xml");
+                        core = new File(System.getProperty("user.dir") + "/src/main/resources/core-site.xml");
+                    }
+                    
+                    Boolean test = core.isFile();
+                    
+                    conf.addResource(new Path(hdfs.getAbsolutePath()));
+                    conf.addResource(new Path(yarn.getAbsolutePath()));
+                    conf.addResource(new Path(core.getAbsolutePath()));
                     return FileSystem.get(FileSystem.getDefaultUri(conf), conf);
                 }
             });
@@ -64,16 +91,16 @@ public class HopsDataStorage implements Storage {
             return null;
         }
     }
-    
+
     @Override
     public byte[] read(final long readPos, final int readLength) {
 
-        byte[] byte_read = null; 
-        DistributedFileSystem fs = (DistributedFileSystem)this.getFileSystem();
-        if(fs != null){
+        byte[] byte_read = null;
+        DistributedFileSystem fs = (DistributedFileSystem) this.getFileSystem();
+        if (fs != null) {
             FSDataInputStream fdis = null;
             try {
-                fdis = fs.open(new Path("/yarn.cmd")); 
+                fdis = fs.open(new Path(path));
                 fdis.readFully(byte_read, readLength, readLength);
             } catch (IOException ex) {
                 Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
@@ -85,44 +112,30 @@ public class HopsDataStorage implements Storage {
                 }
             }
         }
-        
+
         return byte_read;
 
     }
 
     @Override
-    public int write(long writePos, byte[] bytes
-    ) {
-
-        Configuration conf = new Configuration();
-        conf.set("fs.default", hdfsURL);
-
+    public int write(long writePos, byte[] bytes) {
         try {
-            Path pt = new Path("/"); // HDFS Path
-            FileSystem fs = pt.getFileSystem(conf);
-            FSDataOutputStream out = fs.create(new Path(path));
-
+            DistributedFileSystem dfs = (DistributedFileSystem) this.getFileSystem();
+            Path p = new Path(path);
+            FSDataOutputStream out = dfs.create(p);
             out.write(bytes, (int) writePos, bytes.length);
-
             return bytes.length;
-
         } catch (IOException ex) {
             Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         return -1;
-
     }
 
     @Override
     public long length() {
 
-        Configuration conf = new Configuration();
-        conf.set("fs.default", hdfsURL);
-
         try {
-            Path pt = new Path("/"); // HDFS Path
-            FileSystem fs = pt.getFileSystem(conf);
+            FileSystem fs = this.getFileSystem();
 
             return fs.getLength(new Path(path));
 
