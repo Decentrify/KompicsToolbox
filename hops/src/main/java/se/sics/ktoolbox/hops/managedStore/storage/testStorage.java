@@ -31,11 +31,11 @@ public class testStorage {
     public static void main(String [] args){
         
         
-        String endpoint = "hdfs://bbc1.sics.se:8023";
-        Storage s = new HopsDataStorage("/Projects/tester/test/tsesj.Modern.Operating.Systems.3rd.Edition.pdf", endpoint);
+        String endpoint = "hdfs://bbc1.sics.se:8020";
+        Storage s = new HopsDataStorage("/user/glassfish/spark.jar", endpoint,null,null,null);
         byte [] bytes = s.read(0, 100);
         System.out.println(Arrays.toString(bytes));
-        
+//        
         
         
         

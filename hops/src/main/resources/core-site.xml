@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+
+<!-- In: conf/core-site.xml -->
+<property>
+  <name>hadoop.tmp.dir</name>
+  <value>/srv/hadoop-2.4.0/tmp</value>
+  <description>A base for other temporary directories.</description>
+</property>
+
+<!--
+<property>
+  <name>io.file.buffer.size</name>
+  <value>131072</value>
+  <description>Size of read/write buffer used in SequenceFiles.</description>
+</property>
+-->
+
+<property>
+  <name>dfs.namenodes.rpc.addresses</name>
+  <value>bbc1.sics.se:8020</value>  
+  <description>HopsFS-specific list of comma-separated host:port pairs for NameNodes.</description>
+</property>
+
+<property>
+  <name>ipc.client.connect.max.retries</name>
+  <value>0</value>
+  <description>If a HDFS client has a communication problem with a NameNode, retry the connection the number of times specified here.</description>
+</property>
+
+
+<property>
+  <name>dfs.storage.driver.configfile</name>
+  <value>ndb.props</value>
+  <description>
+  </description>
+</property>
+
+
+<!--
+  <property>
+    <name>hadoop.proxyuser.glassfish.hosts</name>
+    <value>@hopsworks</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.glassfish.groups</name>
+    <value>*</value>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.glassfish.hosts</name>
+    <value>@hopsworks</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.glassfish.groups</name>
+    <value>*</value>
+  </property>
+-->
+
+  <property>
+    <name>hadoop.proxyuser.glassfish.hosts</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.glassfish.groups</name>
+    <value>*</value>
+  </property>
+
+<property>
+  <name>dfs.leader.check.interval</name>
+  <value>2000</value>
+  <description>Interval between the NameNode or ResourceMgr running the leader election protocol. </description>
+</property>
+
+<property>
+  <name>dfs.leader.missed.hb</name>
+  <value>2</value>
+  <description></description>
+</property>
+
+<property>
+  <name>dfs.leader.tp.increment</name>
+  <value>100</value>
+  <description></description>
+</property>
+
+<!--
+<property>
+    <name>hadoop.ssl.require.client.cert</name>
+    <value>true</value>
+    <description></description>
+</property>
+<property>
+    <name>hadoop.ssl.hostname.verifier</name>
+    <value>DEFAULT</value>
+    <description></description>
+</property>
+<property>
+    <name>hadoop.ssl.keystores.factory.class</name>
+    <value>org.apache.hadoop.security.ssl.FileBasedKeyStoresFactory</value>
+    <description></description>
+</property>
+<property>
+    <name>hadoop.ssl.server.conf</name>
+    <value>ssl-server.xml</value>
+    <description></description>
+</property>
+<property>
+    <name>hadoop.ssl.client.conf</name>
+    <value>ssl-client.xml</value>
+    <description></description>
+</property>
+-->
+
+  
+ <property>
+  <name>fs.defaultFS</name>
+  <value>hdfs://bbc1.sics.se:8020</value>
+ </property>
+
+</configuration>
