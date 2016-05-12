@@ -16,22 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core.impl.util;
+package se.sics.ktoolbox.util.selectors;
+
+import se.sics.kompics.ChannelSelector;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class PrepDwnlInfo {
-    public final int hashesPerMsg;
-    public final int hashMsgPerRound;
-    public final int minBlockPlayBuffer;
-    public final int minAheadHashes;
+public class DestinationHostSelector extends ChannelSelector<KContentMsg, Identifier> {
     
-    public PrepDwnlInfo(int hashesPerMsg, int hashMsgPerRound, int minBlockPlayBuffer, int minAheadHashes) {
-        this.hashesPerMsg = hashesPerMsg;
-        this.hashMsgPerRound = hashMsgPerRound;
-        this.minAheadHashes = minAheadHashes;
-        this.minBlockPlayBuffer = minBlockPlayBuffer;
+    public DestinationHostSelector(Identifier hostId, boolean positive) {
+        super(KContentMsg.class, hostId, positive);
+    }
+
+    @Override
+    public Identifier getValue(KContentMsg msg) {
+        KContentMsg<KAddress, KHeader<KAddress>, Object> message = (KContentMsg<KAddress, KHeader<KAddress>, Object>)msg;
+        return message.getHeader().getDestination().getId();
     }
 }

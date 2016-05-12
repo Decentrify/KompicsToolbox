@@ -157,12 +157,18 @@ public class TransferMngr {
         }
 
         queueBlock(blockPos);
-        if (dwnlHashes) {
+        if (dwnlHashes && hashPos != -1) {
             int nrHashes = (blockPos > hashPos ? blockPos - hashPos : 0);
-            nrHashes = nrHashes + prepInfo.hashesPerMsg * prepInfo.maxHashMsg;
+            nrHashes = nrHashes + prepInfo.hashesPerMsg * prepInfo.hashMsgPerRound;
             prepareNewHashes(hashPos, nrHashes);
         }
-        return nextPieces.size() + nextHashes.size() / prepInfo.hashesPerMsg;
+        int hashMsgs;
+        if(nextHashes.isEmpty()) {
+        hashMsgs = 0;
+        } else {
+            hashMsgs = nextHashes.size() % prepInfo.hashesPerMsg == 0 ? nextHashes.size() / prepInfo.hashesPerMsg : nextHashes.size() / prepInfo.hashesPerMsg + 1;
+        }
+        return nextPieces.size() + hashMsgs;
     }
 
     private void prepareNewHashes(int hashPos, int nrHashes) {

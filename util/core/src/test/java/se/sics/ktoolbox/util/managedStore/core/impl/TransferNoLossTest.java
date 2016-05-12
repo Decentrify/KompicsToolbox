@@ -121,7 +121,7 @@ public class TransferNoLossTest {
         LOG.info("running...");
         LOG.info("start transfer");
         playPos = 0;
-        Assert.assertEquals(piecesPerBlock + prepInfo.maxHashMsg, download1Mngr.prepareDownload(playPos, prepInfo));
+        Assert.assertEquals(piecesPerBlock + prepInfo.hashMsgPerRound, download1Mngr.prepareDownload(playPos, prepInfo));
         download("1", piecesPerBlock - 1, prepInfo, uploadHashMngr, uploadFileMngr, download1Mngr);
         download1Mngr.checkCompleteBlocks();
         Assert.assertEquals(5, download1HashMngr.contiguous(0));

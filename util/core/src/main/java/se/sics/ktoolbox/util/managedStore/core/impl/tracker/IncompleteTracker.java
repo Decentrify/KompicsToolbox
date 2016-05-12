@@ -72,8 +72,11 @@ public class IncompleteTracker implements ComponentTracker {
     public Set<Integer> nextComponentMissing(int fromComponentNr, int n, Set<Integer> except) {
         Set<Integer> result = new TreeSet<Integer>();
         int nextComponentMissing = fromComponentNr;
-        while (result.size() < n && nextComponentMissing < nrComponents) {
+        while (result.size() < n) {
             nextComponentMissing = components.nextClearBit(nextComponentMissing);
+            if(nextComponentMissing >= nrComponents) {
+                break;
+            }
             if (!except.contains(nextComponentMissing)) {
                 result.add(nextComponentMissing);
             }

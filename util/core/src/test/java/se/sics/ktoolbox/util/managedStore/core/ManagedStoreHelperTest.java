@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.util.managedStore.core;
 
 import org.javatuples.Pair;
-import org.javatuples.Triplet;
 import org.junit.Assert;
 import org.junit.Test;
 
