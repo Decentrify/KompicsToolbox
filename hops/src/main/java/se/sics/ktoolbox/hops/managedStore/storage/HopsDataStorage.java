@@ -63,7 +63,7 @@ public class HopsDataStorage implements Storage {
                 public FileSystem run() throws IOException {
                     Configuration conf = new Configuration();
 
-                    File hdfs;
+                    /*File hdfs;
                     File yarn;
                     File core;
 
@@ -80,7 +80,8 @@ public class HopsDataStorage implements Storage {
 
                     conf.addResource(new Path(hdfs.getAbsolutePath()));
                     conf.addResource(new Path(yarn.getAbsolutePath()));
-                    conf.addResource(new Path(core.getAbsolutePath()));
+                    conf.addResource(new Path(core.getAbsolutePath()));*/
+                    conf.set("fs.defaultFS", "hdfs://bbc1.sics.se:26801");
                     return FileSystem.get(conf);
                 }
             });
@@ -90,52 +91,20 @@ public class HopsDataStorage implements Storage {
         }
     }
 
-    private FileSystem testgetFileSystem() {
-        try {
-            File hdfs;
-            File yarn;
-            File core;
-            Configuration conf = new Configuration();
-            
-            if (yarnConf != null && hdfsConf != null && coreConf != null) {
-                hdfs = new File(hdfsConf);
-                yarn = new File(yarnConf);
-                core = new File(coreConf);
-            } else {
-                
-                hdfs = new File(System.getProperty("user.dir") + "/src/main/resources/hdfs-site.xml");
-                yarn = new File(System.getProperty("user.dir") + "/src/main/resources/yarn-site.xml");
-                core = new File(System.getProperty("user.dir") + "/src/main/resources/core-site.xml");
-            }
-            
-            conf.addResource(new Path(hdfs.getAbsolutePath()));
-            conf.addResource(new Path(yarn.getAbsolutePath()));
-            conf.addResource(new Path(core.getAbsolutePath()));
-            return FileSystem.get(conf);
-        } catch (IOException ex) {
-            Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-
     @Override
     public byte[] read(final long readPos, final int readLength) {
 
         byte[] byte_read = null;
-        DistributedFileSystem fs = (DistributedFileSystem) this.testgetFileSystem();
+        DistributedFileSystem fs = (DistributedFileSystem) this.getFileSystem();
         if (fs != null) {
             FSDataInputStream fdis = null;
             try {
-                fdis = fs.open(new Path(path));
-                fdis.readFully(byte_read, readLength, readLength);
+                /*fdis = */fs.create(new Path("/tester123.test"));
+                fs.close();
+                /*fdis.readFully(byte_read, readLength, readLength);*/
             } catch (IOException ex) {
                 Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
-                try {
-                    fdis.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
-                }
             }
         }
 

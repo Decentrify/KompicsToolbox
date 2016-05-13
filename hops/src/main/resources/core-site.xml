@@ -119,7 +119,7 @@
   
  <property>
   <name>fs.defaultFS</name>
-  <value>hdfs://bbc1.sics.se:8020</value>
+  <value>bbc1.sics.se:8020</value>
  </property>
 
 </configuration>

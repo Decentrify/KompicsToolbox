@@ -195,3 +195,4 @@ netty-test/target/
 /overlay-mngr/bootstrap/common/target/
 /overlay-mngr/bootstrap/client/target/
 /hops/target/
+/hops/src/main/java/se/sics/ktoolbox/hops/managedStore/storage/hops/target/
