@@ -46,7 +46,7 @@ public class HopsDataStorage implements Storage {
     private final String yarnConf;
     private final String hdfsConf;
     private final String coreConf;
-    
+
     public HopsDataStorage(String path, String endpoint, String yarnConf, String hdfsConf, String coreConf) {
         this.path = path;
         this.hdfsURL = endpoint;
@@ -62,31 +62,57 @@ public class HopsDataStorage implements Storage {
                 @Override
                 public FileSystem run() throws IOException {
                     Configuration conf = new Configuration();
-                    
+
                     File hdfs;
                     File yarn;
                     File core;
-                    
-                    if(yarnConf != null && hdfsConf != null && coreConf != null){
+
+                    if (yarnConf != null && hdfsConf != null && coreConf != null) {
                         hdfs = new File(hdfsConf);
                         yarn = new File(yarnConf);
                         core = new File(coreConf);
-                    }else{
-                        
+                    } else {
+
                         hdfs = new File(System.getProperty("user.dir") + "/src/main/resources/hdfs-site.xml");
                         yarn = new File(System.getProperty("user.dir") + "/src/main/resources/yarn-site.xml");
                         core = new File(System.getProperty("user.dir") + "/src/main/resources/core-site.xml");
                     }
-                    
-                    Boolean test = core.isFile();
-                    
+
                     conf.addResource(new Path(hdfs.getAbsolutePath()));
                     conf.addResource(new Path(yarn.getAbsolutePath()));
                     conf.addResource(new Path(core.getAbsolutePath()));
-                    return FileSystem.get(FileSystem.getDefaultUri(conf), conf);
+                    return FileSystem.get(conf);
                 }
             });
         } catch (IOException | InterruptedException ex) {
+            Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+    private FileSystem testgetFileSystem() {
+        try {
+            File hdfs;
+            File yarn;
+            File core;
+            Configuration conf = new Configuration();
+            
+            if (yarnConf != null && hdfsConf != null && coreConf != null) {
+                hdfs = new File(hdfsConf);
+                yarn = new File(yarnConf);
+                core = new File(coreConf);
+            } else {
+                
+                hdfs = new File(System.getProperty("user.dir") + "/src/main/resources/hdfs-site.xml");
+                yarn = new File(System.getProperty("user.dir") + "/src/main/resources/yarn-site.xml");
+                core = new File(System.getProperty("user.dir") + "/src/main/resources/core-site.xml");
+            }
+            
+            conf.addResource(new Path(hdfs.getAbsolutePath()));
+            conf.addResource(new Path(yarn.getAbsolutePath()));
+            conf.addResource(new Path(core.getAbsolutePath()));
+            return FileSystem.get(conf);
+        } catch (IOException ex) {
             Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
@@ -96,7 +122,7 @@ public class HopsDataStorage implements Storage {
     public byte[] read(final long readPos, final int readLength) {
 
         byte[] byte_read = null;
-        DistributedFileSystem fs = (DistributedFileSystem) this.getFileSystem();
+        DistributedFileSystem fs = (DistributedFileSystem) this.testgetFileSystem();
         if (fs != null) {
             FSDataInputStream fdis = null;
             try {
