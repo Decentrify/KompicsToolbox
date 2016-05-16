@@ -32,10 +32,23 @@ public class testStorage {
         
         
         String endpoint = "hdfs://bbc1.sics.se:8020";
-        Storage s = new HopsDataStorage("/user/glassfish/spark.jar", endpoint,null,null,null);
-        byte [] bytes = s.read(0, 100);
-        System.out.println(Arrays.toString(bytes));
-//        
+        String path = "/tester1234.test";
+        String example = "This is my example";
+        
+        Storage s = new HopsDataStorage(path, endpoint,null,null,null);
+        
+        byte [] bytes = example.getBytes();
+        
+        s.write(0, bytes);
+        
+        System.out.println("Wrote.." + bytes.length + " to file " + path);
+        
+        byte [] read = s.read(0, bytes.length);
+        
+        for(int i = 0; i< read.length; i++){
+            System.out.print(read[i]);
+            System.out.println();
+        }
         
         
         
