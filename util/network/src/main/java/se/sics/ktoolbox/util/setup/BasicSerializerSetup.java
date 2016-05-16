@@ -28,6 +28,12 @@ import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifierSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifierSerializer;
+import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+import se.sics.ktoolbox.util.managedStore.core.util.FileInfoSerializer;
+import se.sics.ktoolbox.util.managedStore.core.util.Torrent;
+import se.sics.ktoolbox.util.managedStore.core.util.TorrentInfo;
+import se.sics.ktoolbox.util.managedStore.core.util.TorrentInfoSerializer;
+import se.sics.ktoolbox.util.managedStore.core.util.TorrentSerializer;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImplSerializer;
@@ -43,7 +49,7 @@ import se.sics.ktoolbox.util.network.nat.NatTypeSerializer;
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 9;
+    public static final int serializerIds = 12;
 
     public static enum BasicSerializers {
 
@@ -55,8 +61,11 @@ public class BasicSerializerSetup {
         BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
         DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
         BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
-        NatType(NatType.class, "natTypeSerializer");
-
+        NatType(NatType.class, "natTypeSerializer"),
+        FileInfo(FileInfo.class, "mSfileInfoSerializer"),
+        TorrentInfo(TorrentInfo.class, "msTorrentIfnoSerializer"),
+        Torrent(Torrent.class, "msTorrentSerializer");
+                
         public final Class serializedClass;
         public final String serializerName;
 
@@ -116,6 +125,18 @@ public class BasicSerializerSetup {
         NatTypeSerializer natTypeSerializer = new NatTypeSerializer(currentId++);
         Serializers.register(natTypeSerializer, BasicSerializers.NatType.serializerName);
         Serializers.register(BasicSerializers.NatType.serializedClass, BasicSerializers.NatType.serializerName);
+        
+        FileInfoSerializer fileInfoSerializer = new FileInfoSerializer(currentId++);
+        Serializers.register(fileInfoSerializer, BasicSerializers.FileInfo.serializerName);
+        Serializers.register(BasicSerializers.FileInfo.serializedClass, BasicSerializers.FileInfo.serializerName);
+        
+        TorrentInfoSerializer torrentInfoSerializer = new TorrentInfoSerializer(currentId++);
+        Serializers.register(torrentInfoSerializer, BasicSerializers.TorrentInfo.serializerName);
+        Serializers.register(BasicSerializers.TorrentInfo.serializedClass, BasicSerializers.TorrentInfo.serializerName);
+        
+        TorrentSerializer torrentSerializer = new TorrentSerializer(currentId++);
+        Serializers.register(torrentSerializer, BasicSerializers.Torrent.serializerName);
+        Serializers.register(BasicSerializers.Torrent.serializedClass, BasicSerializers.Torrent.serializerName);
 
         assert startingId + serializerIds == currentId;
         return currentId;
