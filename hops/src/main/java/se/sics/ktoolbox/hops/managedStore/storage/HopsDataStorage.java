@@ -43,34 +43,22 @@ public class HopsDataStorage implements Storage {
 
     private final String hdfsURL;
     private final String path;
-    private final String yarnConf;
-    private final String hdfsConf;
-    private final String coreConf;
     private DistributedFileSystem fs;
 
-    public HopsDataStorage(String path, String endpoint, String yarnConf, String hdfsConf, String coreConf) {
+    public HopsDataStorage(String path, String endpoint) {
         this.path = path;
         this.hdfsURL = endpoint;
-        this.yarnConf = yarnConf;
-        this.coreConf = coreConf;
-        this.hdfsConf = hdfsConf;
     }
 
     private FileSystem getFileSystem() {
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser("glassfish");
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", "hdfs://bbc1.sics.se:26801");
         try {
-            return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
-                @Override
-                public FileSystem run() throws IOException {
-                    Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", "hdfs://bbc1.sics.se:26801");
-                    return FileSystem.get(conf);
-                }
-            });
-        } catch (IOException | InterruptedException ex) {
+            return FileSystem.get(conf);
+        } catch (IOException ex) {
             Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
         }
+        return null;
     }
 
     @Override
@@ -82,7 +70,7 @@ public class HopsDataStorage implements Storage {
             FSDataInputStream fdis = null;
             try {
                 fdis = this.fs.open(new Path(path));
-                fdis.readFully(byte_read, (int)readPos, readLength);
+                fdis.readFully(byte_read, (int) readPos, readLength);
                 fdis.close();
             } catch (IOException ex) {
                 Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);
@@ -93,7 +81,7 @@ public class HopsDataStorage implements Storage {
             FSDataInputStream fdis = null;
             try {
                 fdis = fs.open(new Path(path));
-                fdis.readFully(byte_read,(int)readPos, readLength);
+                fdis.readFully(byte_read, (int) readPos, readLength);
                 fdis.close();
             } catch (IOException ex) {
                 Logger.getLogger(HopsDataStorage.class.getName()).log(Level.SEVERE, null, ex);

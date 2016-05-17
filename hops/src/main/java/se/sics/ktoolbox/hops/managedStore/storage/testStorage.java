@@ -35,7 +35,7 @@ public class testStorage {
         String path = "/tester1234.test";
         String example = "This is my example";
         
-        Storage s = new HopsDataStorage(path, endpoint,null,null,null);
+        Storage s = new HopsDataStorage(path, endpoint);
         
         byte [] bytes = example.getBytes();
         
