@@ -63,7 +63,7 @@ public class BasicSerializerSetup {
         BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
         NatType(NatType.class, "natTypeSerializer"),
         FileInfo(FileInfo.class, "mSfileInfoSerializer"),
-        TorrentInfo(TorrentInfo.class, "msTorrentIfnoSerializer"),
+        TorrentInfo(TorrentInfo.class, "msTorrentInfoSerializer"),
         Torrent(Torrent.class, "msTorrentSerializer");
                 
         public final Class serializedClass;

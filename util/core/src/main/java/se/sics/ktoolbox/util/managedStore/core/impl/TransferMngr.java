@@ -211,14 +211,14 @@ public class TransferMngr {
     public double percentageComplete() {
         return fileMngr.percentageCompleted();
     }
-
+    
     @Override
     public String toString() {
         String status = "";
-        status += "hash complete:" + hashMngr.isComplete(0) + " file complete:" + fileMngr.isComplete(0) + "\n";
-        status += "pending hashes:" + pendingHashes.size() + " pending pieces:" + pendingPieces.size() + "\n";
-        status += "next hashes:" + nextHashes.size() + " next pieces:" + nextPieces.size() + "\n";
-        status += "queued blocks:" + queuedBlocks.keySet();
+        status += "hash complete:" + hashMngr.isComplete(0) + " file complete:" + fileMngr.isComplete(0);
+        status += " pending hashes:" + pendingHashes.size() + " pending pieces:" + pendingPieces.size();
+        status += " next hashes:" + nextHashes.size() + " next pieces:" + nextPieces.size();
+        status += " queued blocks:" + queuedBlocks.keySet();
         return status;
     }
 }
