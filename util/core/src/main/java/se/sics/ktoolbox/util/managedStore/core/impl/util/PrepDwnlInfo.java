@@ -16,14 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
-
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+package se.sics.ktoolbox.util.managedStore.core.impl.util;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface HashHandler {
-    public FileInfo getFileInfo();
-    public HashMngr getHashMngr();
+public class PrepDwnlInfo {
+    public final int hashesPerMsg;
+    public final int hashMsgPerRound;
+    public final int minBlockPlayBuffer;
+    public final int minAheadHashes;
+    
+    public PrepDwnlInfo(int hashesPerMsg, int hashMsgPerRound, int minBlockPlayBuffer, int minAheadHashes) {
+        this.hashesPerMsg = hashesPerMsg;
+        this.hashMsgPerRound = hashMsgPerRound;
+        this.minAheadHashes = minAheadHashes;
+        this.minBlockPlayBuffer = minBlockPlayBuffer;
+    }
 }

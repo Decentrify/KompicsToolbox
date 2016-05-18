@@ -26,39 +26,85 @@ import org.junit.Test;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ManagedStoreHelperTest {
+
     @Test
     public void lastComponent1Test() {
         long storeSize = 10;
         int componentSize = 100;
         Pair<Integer, Integer> lastComponent = ManagedStoreHelper.lastComponent(storeSize, componentSize);
-        Assert.assertEquals(0, (int)lastComponent.getValue0());
-        Assert.assertEquals(10, (int)lastComponent.getValue1());
+        Assert.assertEquals(0, (int) lastComponent.getValue0());
+        Assert.assertEquals(10, (int) lastComponent.getValue1());
     }
-    
+
     @Test
     public void lastComponent2Test() {
         long storeSize = 110;
         int componentSize = 100;
         Pair<Integer, Integer> lastComponent = ManagedStoreHelper.lastComponent(storeSize, componentSize);
-        Assert.assertEquals(1, (int)lastComponent.getValue0());
-        Assert.assertEquals(10, (int)lastComponent.getValue1());
+        Assert.assertEquals(1, (int) lastComponent.getValue0());
+        Assert.assertEquals(10, (int) lastComponent.getValue1());
     }
-    
+
     @Test
     public void lastComponent3Test() {
         long storeSize = 100;
         int componentSize = 100;
         Pair<Integer, Integer> lastComponent = ManagedStoreHelper.lastComponent(storeSize, componentSize);
-        Assert.assertEquals(0, (int)lastComponent.getValue0());
-        Assert.assertEquals(100, (int)lastComponent.getValue1());
+        Assert.assertEquals(0, (int) lastComponent.getValue0());
+        Assert.assertEquals(100, (int) lastComponent.getValue1());
     }
-    
+
     @Test
     public void lastComponent4Test() {
         long storeSize = 200;
         int componentSize = 100;
         Pair<Integer, Integer> lastComponent = ManagedStoreHelper.lastComponent(storeSize, componentSize);
-        Assert.assertEquals(1, (int)lastComponent.getValue0());
-        Assert.assertEquals(100, (int)lastComponent.getValue1());
+        Assert.assertEquals(1, (int) lastComponent.getValue0());
+        Assert.assertEquals(100, (int) lastComponent.getValue1());
+    }
+
+    @Test
+    public void absolutePosToBlockDetails1Test() {
+        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> lastComponent = ManagedStoreHelper.blockDetails(0, 1024, 1024);
+        Assert.assertEquals(0, (int) lastComponent.getValue0().getValue0());
+        Assert.assertEquals(0, (int) lastComponent.getValue0().getValue1());
+        Assert.assertEquals(0, (int) lastComponent.getValue1().getValue0());
+        Assert.assertEquals(0, (int) lastComponent.getValue1().getValue1());
+    }
+
+    @Test
+    public void absolutePosToBlockDetails2Test() {
+        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> lastComponent = ManagedStoreHelper.blockDetails(1023, 1024, 1024);
+        Assert.assertEquals(0, (int) lastComponent.getValue0().getValue0());
+        Assert.assertEquals(1023, (int) lastComponent.getValue0().getValue1());
+        Assert.assertEquals(0, (int) lastComponent.getValue1().getValue0());
+        Assert.assertEquals(0, (int) lastComponent.getValue1().getValue1());
+    }
+
+    @Test
+    public void absolutePosToBlockDetails3Test() {
+        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> lastComponent = ManagedStoreHelper.blockDetails(1024, 1024, 1024);
+        Assert.assertEquals(1, (int) lastComponent.getValue0().getValue0());
+        Assert.assertEquals(0, (int) lastComponent.getValue0().getValue1());
+        Assert.assertEquals(0, (int) lastComponent.getValue1().getValue0());
+        Assert.assertEquals(1, (int) lastComponent.getValue1().getValue1());
+    }
+
+    @Test
+    public void absolutePosToBlockDetails4Test() {
+        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> lastComponent = ManagedStoreHelper.blockDetails(1024 * 1024 - 1, 1024, 1024);
+        Assert.assertEquals(1023, (int) lastComponent.getValue0().getValue0());
+        Assert.assertEquals(1023, (int) lastComponent.getValue0().getValue1());
+        Assert.assertEquals(0, (int) lastComponent.getValue1().getValue0());
+        Assert.assertEquals(1023, (int) lastComponent.getValue1().getValue1());
+    }
+    
+    @Test
+    public void absolutePosToBlockDetails5Test() {
+        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> lastComponent = ManagedStoreHelper.blockDetails(10*1024 * 1024 - 1, 1024, 1024);
+        Assert.assertEquals(10*1024-1, (int) lastComponent.getValue0().getValue0());
+        Assert.assertEquals(1023, (int) lastComponent.getValue0().getValue1());
+        Assert.assertEquals(9, (int) lastComponent.getValue1().getValue0());
+        Assert.assertEquals(1023, (int) lastComponent.getValue1().getValue1());
     }
 }

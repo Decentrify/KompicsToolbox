@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.managedStore.core.impl;
 
+import java.nio.ByteBuffer;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import java.util.Set;
@@ -54,11 +55,11 @@ public class CompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public byte[] read(long readPos, int length) {
+    public ByteBuffer read(long readPos, int length) {
         if(readPos + length > storage.length()) {
             throw new RuntimeException("logic error");
         }
-        return storage.read(readPos, length);
+        return ByteBuffer.wrap(storage.read(readPos, length));
     }
 
     @Override
@@ -80,7 +81,7 @@ public class CompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public byte[] readPiece(int pieceNr) {
+    public ByteBuffer readPiece(int pieceNr) {
         long readPos = pieceNr * pieceSize;
         int readLength;
         if (lastPiece.getValue0() == pieceNr) {
@@ -92,7 +93,7 @@ public class CompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public int writeBlock(int blockNr, byte[] block) {
+    public int writeBlock(int blockNr, ByteBuffer block) {
         throw new RuntimeException("Should not call write related methods on a CompleteFileMngr");
     }
 
@@ -108,5 +109,10 @@ public class CompleteFileMngr implements FileMngr {
         } else {
             return blockSize;
         }
+    }
+
+    @Override
+    public double percentageCompleted() {
+        return 1;
     }
 }

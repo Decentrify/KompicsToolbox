@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.managedStore.core.impl;
 
+import java.nio.ByteBuffer;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import java.util.Set;
@@ -65,11 +66,11 @@ public class IncompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public byte[] read(long readPos, int length) {
+    public ByteBuffer read(long readPos, int length) {
         if (readPos + length > storage.length()) {
             throw new RuntimeException("logic error");
         }
-        return storage.read(readPos, length);
+        return ByteBuffer.wrap(storage.read(readPos, length));
     }
 
     @Override
@@ -85,7 +86,7 @@ public class IncompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public byte[] readPiece(int pieceNr) {
+    public ByteBuffer readPiece(int pieceNr) {
         long readPos = pieceNr * pieceSize;
         int readLength;
         if (lastPiece.getValue0() == pieceNr) {
@@ -107,9 +108,9 @@ public class IncompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public int writeBlock(int blockNr, byte[] block) {
+    public int writeBlock(int blockNr, ByteBuffer block) {
         pieceTracker.addComponent(blockNr);
-        return storage.write(blockNr * blockSize, block);
+        return storage.write(blockNr * blockSize, block.array());
     }
 
     @Override
@@ -124,5 +125,10 @@ public class IncompleteFileMngr implements FileMngr {
         } else {
             return blockSize;
         }
+    }
+
+    @Override
+    public double percentageCompleted() {
+        return (double)pieceTracker.completedComponents() / pieceTracker.nrComponents();
     }
 }

@@ -23,6 +23,7 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Random;
@@ -158,8 +159,8 @@ public class HashFileCopyTest {
                     if (uploader.hasHash(hashNr)) {
                         if (rand.nextDouble() > lossRate) {
 //                            LOG.info("downloading hash:{}", hashNr);
-                            byte[] hash = uploader.readHash(hashNr);
-                            downloader.writeHash(hashNr, hash);
+                            ByteBuffer hash = uploader.readHash(hashNr);
+                            downloader.writeHash(hashNr, hash.array());
                         }
                     }
                 }

@@ -19,6 +19,7 @@
 
 package se.sics.ktoolbox.util.managedStore.core;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 /**
@@ -27,14 +28,16 @@ import java.util.Set;
 public interface FileMngr {
     //absolute position
     public boolean has(long readPos, int length);
-    public byte[] read(long readPos, int length);
+    public ByteBuffer read(long readPos, int length);
     //piece position
     public boolean hasPiece(int pieceNr);
-    public byte[] readPiece(int pieceNr);
+    public ByteBuffer readPiece(int pieceNr);
     //block position
+    public double percentageCompleted();
     public boolean isComplete(int fromBlockNr);
     public int contiguous(int fromBlockNr);
-    public int writeBlock(int blockNr, byte[] block);
+    
+    public int writeBlock(int blockNr, ByteBuffer block);
     public Integer nextBlock(int blockNr, Set<Integer> exclude);
     public int blockSize(int blockNr);
 }

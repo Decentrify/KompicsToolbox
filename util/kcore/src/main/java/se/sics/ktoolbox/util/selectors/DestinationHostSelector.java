@@ -16,14 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
+package se.sics.ktoolbox.util.selectors;
 
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+import se.sics.kompics.ChannelSelector;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface HashHandler {
-    public FileInfo getFileInfo();
-    public HashMngr getHashMngr();
+public class DestinationHostSelector extends ChannelSelector<KContentMsg, Identifier> {
+    
+    public DestinationHostSelector(Identifier hostId, boolean positive) {
+        super(KContentMsg.class, hostId, positive);
+    }
+
+    @Override
+    public Identifier getValue(KContentMsg msg) {
+        KContentMsg<KAddress, KHeader<KAddress>, Object> message = (KContentMsg<KAddress, KHeader<KAddress>, Object>)msg;
+        return message.getHeader().getDestination().getId();
+    }
 }

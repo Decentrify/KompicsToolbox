@@ -19,16 +19,21 @@
 
 package se.sics.ktoolbox.util.managedStore.core;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Set;
+import org.javatuples.Pair;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public interface HashMngr {
     public boolean hasHash(int hashNr);
-    public byte[] readHash(int hashNr);
+    public ByteBuffer readHash(int hashNr);
+    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Set<Integer> hashes); 
     public int writeHash(int hashNr, byte[] hash);
     public boolean isComplete(int hashNr);
     public int contiguous(int hashNr);
+    public int nextHash(int hashNr, Set<Integer> exclude);
     public Set<Integer> nextHashes(int hashNr, int n, Set<Integer> exclude);
 }

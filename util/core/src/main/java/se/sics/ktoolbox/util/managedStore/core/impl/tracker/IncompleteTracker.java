@@ -31,10 +31,12 @@ public class IncompleteTracker implements ComponentTracker {
 
     private final BitSet components;
     private final int nrComponents;
+    private int completedComponents;
 
     private IncompleteTracker(int nrComponents) {
-        this.components = new BitSet(nrComponents + 1);
         this.nrComponents = nrComponents;
+        components = new BitSet(nrComponents + 1);
+        completedComponents = 0;
     }
 
     @Override
@@ -70,8 +72,11 @@ public class IncompleteTracker implements ComponentTracker {
     public Set<Integer> nextComponentMissing(int fromComponentNr, int n, Set<Integer> except) {
         Set<Integer> result = new TreeSet<Integer>();
         int nextComponentMissing = fromComponentNr;
-        while (result.size() < n && nextComponentMissing < nrComponents) {
+        while (result.size() < n) {
             nextComponentMissing = components.nextClearBit(nextComponentMissing);
+            if(nextComponentMissing >= nrComponents) {
+                break;
+            }
             if (!except.contains(nextComponentMissing)) {
                 result.add(nextComponentMissing);
             }
@@ -87,6 +92,7 @@ public class IncompleteTracker implements ComponentTracker {
 
     @Override
     public void addComponent(int componentNr) {
+        completedComponents++;
         components.set(componentNr);
     }
 
@@ -95,5 +101,15 @@ public class IncompleteTracker implements ComponentTracker {
             throw new RuntimeException("exceeding maximum block size:" + ManagedStoreHelper.MAX_BIT_SET_SIZE + " pieces");
         }
         return new IncompleteTracker(nrComponents);
+    }
+
+    @Override
+    public int completedComponents() {
+        return completedComponents;
+    }
+
+    @Override
+    public int nrComponents() {
+        return nrComponents;
     }
 }

@@ -16,14 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.managedStore.core;
+package se.sics.ktoolbox.util.managedStore.core.util;
 
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
+import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface HashHandler {
-    public FileInfo getFileInfo();
-    public HashMngr getHashMngr();
+public class FileInfo {
+    
+    public final String name;
+    public final long size;
+    
+    private FileInfo(String name, long size) {
+        this.name = name;
+        this.size = size;
+    }
+    
+    public static FileInfo newFile(String name, long size) {
+        if(size > ManagedStoreHelper.MAX_BYTE_FILE_SIZE) {
+            throw new RuntimeException("file is too large, maximum accepted:" + ManagedStoreHelper.MAX_BYTE_FILE_SIZE + " bytes, size:" + size + " bytes");
+        }
+        return new FileInfo(name, size);
+    }
 }
