@@ -25,7 +25,11 @@ import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 import se.sics.ktoolbox.util.managedStore.core.impl.tracker.CompleteTracker;
 import se.sics.ktoolbox.util.managedStore.core.impl.tracker.IncompleteTracker;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.javatuples.Pair;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.impl.block.InMemoryBlockMngr;
 import se.sics.ktoolbox.util.managedStore.core.impl.storage.StorageFactory;
 
@@ -36,33 +40,53 @@ public class StorageMngrFactory {
 
     public static ComponentTracker getCompletePT(int nrPieces) {
         return new CompleteTracker(nrPieces);
-}
-    
-    public static ComponentTracker getInOrderPT(int nrPieces) {
-         return IncompleteTracker.create(nrPieces);
     }
-    
+
+    public static ComponentTracker getInOrderPT(int nrPieces) {
+        return IncompleteTracker.create(nrPieces);
+    }
+
     public static FileMngr completeMMFileMngr(String pathName, long fileLength, int blockSize, int pieceSize) throws IOException {
         return new CompleteFileMngr(StorageFactory.existingDiskMMFile(pathName), blockSize, pieceSize);
     }
-    
+
     public static FileMngr incompleteMMFileMngr(String pathName, long fileLength, int blockSize, int pieceSize) throws IOException {
         int nrBlocks = ManagedStoreHelper.nrComponents(fileLength, blockSize);
         return new IncompleteFileMngr(StorageFactory.emptyDiskMMFile(pathName, fileLength), getInOrderPT(nrBlocks), blockSize, pieceSize);
     }
-    
+
     public static BlockMngr inMemoryBlockMngr(int blockSize, int pieceSize) {
         int nrPieces = ManagedStoreHelper.nrComponents(blockSize, pieceSize);
         return new InMemoryBlockMngr(StorageFactory.inMemoryEmptyBlock(blockSize), getInOrderPT(nrPieces), blockSize, pieceSize);
     }
-    
+
     public static HashMngr completeMMHashMngr(String pathName, String hashType, long hashFileSize, int hashSize) throws IOException {
         int nrHashes = ManagedStoreHelper.nrComponents(hashFileSize, hashSize);
         return new SimpleHashMngr(getCompletePT(nrHashes), StorageFactory.existingDiskMMFile(pathName), hashType, hashSize);
     }
-    
+
     public static HashMngr incompleteMMHashMngr(String pathName, String hashType, long hashFileSize, int hashSize) throws IOException {
         int nrHashes = ManagedStoreHelper.nrComponents(hashFileSize, hashSize);
         return new SimpleHashMngr(getInOrderPT(nrHashes), StorageFactory.emptyDiskMMFile(pathName, hashFileSize), hashType, hashSize);
+    }
+
+    public static Pair<FileMngr, HashMngr> getCompleteComb1(String pathName, String hashAlg, int blockSize, int pieceSize) {
+        try {
+            FileMngr fileMngr = new CompleteFileMngr(StorageFactory.existingDiskMMFile(pathName), blockSize, pieceSize);
+            HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);
+            return Pair.with(fileMngr, hashMngr);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public static Pair<FileMngr, HashMngr> getIncompleteComb1(String pathName, long fileLength, String hashAlg, int blockSize, int pieceSize) {
+        try {
+            FileMngr fileMngr = incompleteMMFileMngr(pathName, fileLength, blockSize, pieceSize);
+            HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);
+            return Pair.with(fileMngr, hashMngr);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

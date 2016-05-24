@@ -40,4 +40,6 @@ public interface FileMngr {
     public int writeBlock(int blockNr, ByteBuffer block);
     public Integer nextBlock(int blockNr, Set<Integer> exclude);
     public int blockSize(int blockNr);
+    
+    public long length();
 }

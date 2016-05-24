@@ -129,6 +129,11 @@ public class IncompleteFileMngr implements FileMngr {
 
     @Override
     public double percentageCompleted() {
-        return (double)pieceTracker.completedComponents() / pieceTracker.nrComponents();
+        return (double) pieceTracker.completedComponents() / pieceTracker.nrComponents();
+    }
+
+    @Override
+    public long length() {
+        return storage.length();
     }
 }
