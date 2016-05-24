@@ -36,9 +36,9 @@ lib
 
 #Util
 /util/target/
-/util/basic/target/
-/util/kompics-basic/target/
-/util/util-serializer/target/
+/util/core/target/
+/util/kcore/target/
+/util/network/target/
 
 #Croupier
 /croupier/target/
