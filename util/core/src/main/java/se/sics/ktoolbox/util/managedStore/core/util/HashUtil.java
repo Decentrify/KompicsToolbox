@@ -30,6 +30,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.javatuples.Pair;
 
 /**
@@ -60,6 +62,15 @@ public class HashUtil {
 
     public static String getAlgName(byte algId) {
         return algMap.get(algId).getValue0();
+    }
+    
+    public static byte[] makeHash(byte[] bytes, String hashAlg) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(hashAlg);
+            return md.digest(bytes);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public static void makeHashes(String filePath, String hashFilePath, String hashAlg, int pieceSize) throws HashBuilderException {

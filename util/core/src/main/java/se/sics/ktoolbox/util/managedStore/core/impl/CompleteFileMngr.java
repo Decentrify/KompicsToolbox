@@ -115,4 +115,9 @@ public class CompleteFileMngr implements FileMngr {
     public double percentageCompleted() {
         return 1;
     }
+
+    @Override
+    public long length() {
+        return storage.length();
+    }
 }
