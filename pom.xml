@@ -20,6 +20,7 @@
         <!--<module>nat-echo</module>-->
         <module>net-mngr</module>
         <!--<module>hops</module>-->
+        <module>hops</module>
     </modules>
 
     <properties>

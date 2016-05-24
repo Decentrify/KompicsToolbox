@@ -18,26 +18,24 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage;
 
-import se.sics.ktoolbox.util.managedStore.core.Storage;
+import java.io.IOException;
+import org.apache.hadoop.fs.Path;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HopsHashStorage implements Storage {
+public class CompleteHopsDataStorage extends HopsDataStorage {
 
-    @Override
-    public byte[] read(long readPos, int readLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int write(long writePos, byte[] bytes) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public CompleteHopsDataStorage(String hopsURL, String filePath) {
+        super(hopsURL, filePath);
     }
 
     @Override
     public long length() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            return fs.getLength(new Path(filePath));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
-    
 }

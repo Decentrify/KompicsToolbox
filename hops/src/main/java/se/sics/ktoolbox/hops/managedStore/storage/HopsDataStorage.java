@@ -18,25 +18,62 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage;
 
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HopsDataStorage implements Storage {
+public abstract class HopsDataStorage implements Storage {
+
+    protected final String hopsURL;
+    protected final String filePath;
+    protected DistributedFileSystem fs;
+
+    public HopsDataStorage(String hopsURL, String filePath) {
+        this.hopsURL = hopsURL;
+        this.filePath = filePath;
+        this.fs = getFileSystem();
+    }
+
+    private DistributedFileSystem getFileSystem() {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", hopsURL);
+        try {
+            return (DistributedFileSystem) FileSystem.get(conf);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (ClassCastException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
     @Override
-    public byte[] read(long readPos, int readLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public byte[] read(final long readPos, final int readLength) {
+        try (FSDataInputStream fdis = this.fs.open(new Path(filePath))) {
+            byte[] byte_read = new byte[readLength];
+            fdis.readFully(byte_read, (int) readPos, readLength);
+            fdis.close();
+            return byte_read;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     public int write(long writePos, byte[] bytes) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public long length() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try(FSDataOutputStream out = this.fs.create(new Path(filePath))) {
+            out.write(bytes, (int) writePos, bytes.length);
+            out.close();
+            return bytes.length;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
