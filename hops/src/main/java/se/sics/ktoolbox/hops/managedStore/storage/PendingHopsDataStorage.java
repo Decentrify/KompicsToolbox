@@ -18,20 +18,110 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage;
 
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
+
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class PendingHopsDataStorage extends HopsDataStorage {
+public class PendingHopsDataStorage implements Storage {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Storage.class);
+    private String logPrefix;
+
+    protected final String hopsURL;
+    protected final String filePath;
+    protected DistributedFileSystem fs;
+    protected FSDataOutputStream out;
+    protected FSDataInputStream in;
+    private long appendPos;
     private final long length;
 
     public PendingHopsDataStorage(String hopsURL, String filePath, long fileLength) {
-        super(hopsURL, filePath);
+        this.hopsURL = hopsURL;
+        this.filePath = filePath;
+        this.appendPos = 0;
         this.length = fileLength;
+        setup();
+    }
+
+    private void setup() {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", hopsURL);
+        try {
+            fs = (DistributedFileSystem) FileSystem.get(conf);
+            out = fs.create(new Path(filePath));
+            in = fs.open(new Path(filePath));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (ClassCastException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void tearDown() {
+        try {
+            this.out.close();
+            this.in.close();
+            this.fs.close();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
     }
 
     @Override
     public long length() {
         return length;
+    }
+
+    @Override
+    public byte[] read(final long readPos, final int readLength) {
+        try {
+            byte[] byte_read = new byte[readLength];
+            in.readFully(readPos, byte_read);
+            return byte_read;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * hops can only do append
+     *
+     * @param writePos
+     * @param bytes
+     * @return
+     */
+    @Override
+    public int write(long writePos, byte[] bytes) {
+        if (appendPos != writePos) {
+            throw new RuntimeException("hops can only append");
+        }
+
+        int writtenBytes = append(bytes);
+        appendPos += writtenBytes;
+
+        return writtenBytes;
+    }
+
+    private int append(byte[] bytes) {
+        try {
+            out.write(bytes);
+            out.flush();
+            return bytes.length;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

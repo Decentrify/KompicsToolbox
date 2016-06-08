@@ -30,6 +30,7 @@ import se.sics.ktoolbox.util.managedStore.core.BlockMngr;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import se.sics.ktoolbox.util.managedStore.core.HashMngr;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
+import se.sics.ktoolbox.util.managedStore.core.TransferMngr;
 import se.sics.ktoolbox.util.managedStore.core.impl.util.PrepDwnlInfo;
 import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 import se.sics.ktoolbox.util.managedStore.core.util.Torrent;
@@ -37,7 +38,7 @@ import se.sics.ktoolbox.util.managedStore.core.util.Torrent;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TransferMngr {
+public class SimpleTransferMngr implements TransferMngr {
 
     //****************************EXTERNAL_STATE********************************
     private final Torrent torrent;
@@ -50,10 +51,15 @@ public class TransferMngr {
     private final Set<Integer> pendingHashes = new HashSet<>();
     private final ArrayList<Integer> nextHashes = new ArrayList<>();
 
-    public TransferMngr(Torrent torrent, HashMngr hashMngr, FileMngr fileMngr) {
+    public SimpleTransferMngr(Torrent torrent, HashMngr hashMngr, FileMngr fileMngr) {
         this.torrent = torrent;
         this.hashMngr = hashMngr;
         this.fileMngr = fileMngr;
+    }
+    
+    @Override
+    public void tearDown() {
+        fileMngr.tearDown();
     }
 
     public void writeHashes(Map<Integer, ByteBuffer> hashes, Set<Integer> missingHashes) {

@@ -45,6 +45,11 @@ public class CompleteFileMngr implements FileMngr {
         this.lastBlock = ManagedStoreHelper.lastComponent(storage.length(), blockSize);
         this.lastPiece = ManagedStoreHelper.lastComponent(storage.length(), pieceSize);
     }
+    
+    @Override
+    public void tearDown() {
+        storage.tearDown();
+    }
 
     @Override
     public boolean has(long readPos, int length) {
@@ -59,7 +64,9 @@ public class CompleteFileMngr implements FileMngr {
         if(readPos + length > storage.length()) {
             throw new RuntimeException("logic error");
         }
-        return ByteBuffer.wrap(storage.read(readPos, length));
+        byte[] readB = storage.read(readPos, length);
+        ByteBuffer readBB = ByteBuffer.wrap(readB);
+        return readBB;
     }
 
     @Override
@@ -89,7 +96,8 @@ public class CompleteFileMngr implements FileMngr {
         } else {
             readLength = pieceSize;
         }
-        return read(readPos, readLength);
+        ByteBuffer readBB = read(readPos, readLength);
+        return readBB;
     }
 
     @Override

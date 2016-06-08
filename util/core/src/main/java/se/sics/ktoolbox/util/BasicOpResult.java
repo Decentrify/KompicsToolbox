@@ -16,32 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.ktoolbox.util.managedStore.core;
-
-import java.nio.ByteBuffer;
-import java.util.Set;
+package se.sics.ktoolbox.util;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FileMngr {
-    public void tearDown();
+public class BasicOpResult {
+    public static final BasicOpResult success = new BasicOpResult();
+    public static BasicOpResult createFail(String failCause) {
+        return new BasicOpResult(failCause);
+    }
     
-    //absolute position
-    public boolean has(long readPos, int length);
-    public ByteBuffer read(long readPos, int length);
-    //piece position
-    public boolean hasPiece(int pieceNr);
-    public ByteBuffer readPiece(int pieceNr);
-    //block position
-    public double percentageCompleted();
-    public boolean isComplete(int fromBlockNr);
-    public int contiguous(int fromBlockNr);
+    private final Either<Boolean, String> p;
     
-    public int writeBlock(int blockNr, ByteBuffer block);
-    public Integer nextBlock(int blockNr, Set<Integer> exclude);
-    public int blockSize(int blockNr);
+    private BasicOpResult() {
+        p = Either.left(true);
+    }
     
-    public long length();
+    private BasicOpResult(String failCause) {
+        p = Either.right(failCause);
+    }
+    
+    public boolean isSuccess() {
+        return p.isLeft();
+    }
+    
+    public String failCause() {
+        return p.getRight();
+    }
 }
