@@ -116,7 +116,7 @@ public class TransferNoLossTest {
         Torrent torrent1 = new Torrent(new IntIdentifier(1), FileInfo.newFile(torrentName, fileSize), new TorrentInfo(pieceSize, piecesPerBlock, hashAlg, hashFileSize));
         HashMngr download1HashMngr = StorageMngrFactory.incompleteMMHashMngr(download1HashPath, hashAlg, hashFileSize, HashUtil.getHashSize(hashAlg));
         FileMngr download1FileMngr = StorageMngrFactory.incompleteMMFileMngr(download1FilePath, fileSize, blockSize, pieceSize);
-        TransferMngr download1Mngr = new TransferMngr(torrent1, download1HashMngr, download1FileMngr);
+        SimpleTransferMngr download1Mngr = new SimpleTransferMngr(torrent1, download1HashMngr, download1FileMngr);
 
         LOG.info("running...");
         LOG.info("start transfer");
@@ -247,7 +247,7 @@ public class TransferNoLossTest {
     }
 
     private int multiBlockDownload(String logPrefix, int blocks, int playPos, PrepDwnlInfo prepInfo,
-            HashMngr sourceHashMngr, FileMngr sourceFileMngr, TransferMngr destinationMngr) {
+            HashMngr sourceHashMngr, FileMngr sourceFileMngr, SimpleTransferMngr destinationMngr) {
         int nrMsgs = 0;
         for (int i = 0; i < blocks; i++) {
             nrMsgs += destinationMngr.prepareDownload(playPos, prepInfo);
@@ -257,7 +257,7 @@ public class TransferNoLossTest {
     }
 
     private void download(String logPrefix, int pieces, PrepDwnlInfo prepInfo,
-            HashMngr sourceHashMngr, FileMngr sourceFileMngr, TransferMngr destinationMngr) {
+            HashMngr sourceHashMngr, FileMngr sourceFileMngr, SimpleTransferMngr destinationMngr) {
         Pair<Set<Integer>, Set<Integer>> preparedReq = TransferHelper.prepareTransferReq(logPrefix, destinationMngr, pieces, prepInfo);
         Pair<Map<Integer, ByteBuffer>, Set<Integer>> hashesResp = TransferHelper.prepareHashesResp(logPrefix, sourceHashMngr, preparedReq.getValue0());
         Pair<Map<Integer, ByteBuffer>, Set<Integer>> piecesResp = TransferHelper.preparePiecesResp(logPrefix, sourceFileMngr, preparedReq.getValue1());

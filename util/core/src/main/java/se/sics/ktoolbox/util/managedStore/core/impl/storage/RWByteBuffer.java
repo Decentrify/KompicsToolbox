@@ -34,6 +34,10 @@ public class RWByteBuffer implements Storage {
         this.buf = Unpooled.wrappedBuffer(new byte[bufLength]);
         this.length = bufLength;
     }
+    
+    @Override
+    public void tearDown() {
+    }
 
     @Override
     public byte[] read(long readPos, int readLength) {

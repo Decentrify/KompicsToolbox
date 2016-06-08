@@ -41,14 +41,14 @@ public class TransferHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransferHelper.class);
 
-    public static Pair<Set<Integer>, Set<Integer>> prepareTransferReq(String logPrefix, TransferMngr destination, 
+    public static Pair<Set<Integer>, Set<Integer>> prepareTransferReq(String logPrefix, SimpleTransferMngr destination, 
             int pieces, PrepDwnlInfo prepInfo) {
         Set<Integer> requestHashes = prepareHashesReq(destination, prepInfo);
         Set<Integer> requestPieces = preparePieceReq(destination, pieces);
         return Pair.with(requestHashes, requestPieces);
     }
 
-    private static Set<Integer> prepareHashesReq(TransferMngr destination, PrepDwnlInfo prepInfo) {
+    private static Set<Integer> prepareHashesReq(SimpleTransferMngr destination, PrepDwnlInfo prepInfo) {
         Set<Integer> preparedHashes = new TreeSet<>();
         while (true) {
             Optional<Set<Integer>> nextHashes = destination.downloadHash(prepInfo.hashesPerMsg);
@@ -62,7 +62,7 @@ public class TransferHelper {
         return preparedHashes;
     }
 
-    private static Set<Integer> preparePieceReq(TransferMngr destination, int nrOfMsgs) {
+    private static Set<Integer> preparePieceReq(SimpleTransferMngr destination, int nrOfMsgs) {
         Set<Integer> preparedPieces = new TreeSet<>();
         for (int i = 0; i < nrOfMsgs; i++) {
             Optional<Integer> nextPiece = destination.downloadData();
@@ -102,7 +102,7 @@ public class TransferHelper {
         return Pair.with(successPieces, missingPieces);
     }
 
-    public static void write(String logPrefix, TransferMngr destination, 
+    public static void write(String logPrefix, SimpleTransferMngr destination, 
             Pair<Map<Integer, ByteBuffer>, Set<Integer>> hash, Pair<Map<Integer, ByteBuffer>, Set<Integer>> pieces) {
         destination.writeHashes(hash.getValue0(), hash.getValue1());
 

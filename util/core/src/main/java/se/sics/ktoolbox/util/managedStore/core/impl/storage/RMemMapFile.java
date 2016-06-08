@@ -41,6 +41,10 @@ public class RMemMapFile implements Storage {
     }
     
     @Override
+    public void tearDown() {
+    }
+    
+    @Override
     public byte[] read(long readPos, int readLength) {
         if(readPos > Integer.MAX_VALUE) {
             throw new RuntimeException("MemoryMappedFiles only allow integer size for read values");
