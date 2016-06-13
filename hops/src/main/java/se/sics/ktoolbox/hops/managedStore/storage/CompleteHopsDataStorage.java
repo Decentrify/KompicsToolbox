@@ -83,7 +83,8 @@ public class CompleteHopsDataStorage implements Storage {
 
     @Override
     public byte[] read(long readPos, int readLength) {
-        return bufferedRead(readPos, readLength);
+        return hopsRead(readPos, readLength);
+//        return bufferedRead(readPos, readLength);
     }
 
     private byte[] hopsRead(long readPos, int readLength) {

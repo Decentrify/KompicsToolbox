@@ -55,8 +55,6 @@ public class BasicContentMsgSerializer implements DatagramSerializer {
 
     @Override
     public Object fromBinary(ByteBuf buf, DatagramPacket datagram) {
-        System.err.println("recipient:" + datagram.recipient());
-        System.err.println("sender:" + datagram.sender());
         KHeader header = (KHeader)Serializers.fromBinary(buf, datagram);
         Object content = Serializers.fromBinary(buf, Optional.absent());
         return new BasicContentMsg(header, content);
