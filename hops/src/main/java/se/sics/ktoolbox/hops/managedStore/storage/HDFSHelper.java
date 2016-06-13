@@ -33,15 +33,16 @@ public class HDFSHelper {
     public static boolean canConnect(String hopsIp, int hopsPort) {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
-
-        //somethings
-        
-        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
-            FsStatus status = fs.getStatus();
-            return true;
+        DistributedFileSystem fs;
+        try {
+            fs = (DistributedFileSystem) FileSystem.get(conf);
         } catch (IOException ex) {
             return false;
-        } catch (Exception ex) {
+        }
+        try (DistributedFileSystem auxFs = fs) {
+            FsStatus status = auxFs.getStatus();
+            return true;
+        } catch (IOException ex) {
             return false;
         }
     }
