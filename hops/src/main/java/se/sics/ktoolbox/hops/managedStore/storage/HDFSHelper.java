@@ -35,8 +35,9 @@ public class HDFSHelper {
         conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
         DistributedFileSystem fs;
         try {
+            //stupid
             fs = (DistributedFileSystem) FileSystem.get(conf);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             return false;
         }
         try (DistributedFileSystem auxFs = fs) {
