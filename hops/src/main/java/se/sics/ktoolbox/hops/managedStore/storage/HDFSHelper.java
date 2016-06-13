@@ -39,7 +39,9 @@ public class HDFSHelper {
             return true;
         } catch (IOException ex) {
             return false;
-        } 
+        } catch (Exception ex) {
+            return false;
+        }
     }
     
     public static void delete(String hopsIp, int hopsPort, String dirPath, String fileName) {
