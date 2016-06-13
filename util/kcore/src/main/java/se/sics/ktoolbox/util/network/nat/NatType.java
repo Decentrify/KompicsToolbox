@@ -103,7 +103,6 @@ public class NatType {
 
     public boolean isSimpleNat() {
         return type.equals(Nat.Type.NAT) 
-                && mappingPolicy.equals(Nat.MappingPolicy.ENDPOINT_INDEPENDENT)
                 && allocationPolicy.equals(Nat.AllocationPolicy.PORT_PRESERVATION)
                 && filteringPolicy.equals(Nat.FilteringPolicy.ENDPOINT_INDEPENDENT);
     }
