@@ -41,6 +41,8 @@ public class HDFSHelper {
             return true;
         } catch (IOException ex) {
             return false;
+        } catch (Exception ex) {
+            return false;
         }
     }
 
