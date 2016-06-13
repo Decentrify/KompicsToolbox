@@ -36,7 +36,7 @@ public class HDFSHelper {
         DistributedFileSystem fs;
         try {
             fs = (DistributedFileSystem) FileSystem.get(conf);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             return false;
         }
         try (DistributedFileSystem auxFs = fs) {
