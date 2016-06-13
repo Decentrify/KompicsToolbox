@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 
@@ -30,6 +31,17 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HDFSHelper {
+    public static boolean canConnect(String hopsIp, int hopsPort) {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
+        try(DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
+            FsStatus status = fs.getStatus();
+            return true;
+        } catch (IOException ex) {
+            return false;
+        } 
+    }
+    
     public static void delete(String hopsIp, int hopsPort, String dirPath, String fileName) {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
