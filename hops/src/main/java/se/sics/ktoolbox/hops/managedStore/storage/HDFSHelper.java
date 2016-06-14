@@ -19,9 +19,11 @@
 package se.sics.ktoolbox.hops.managedStore.storage;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Path;
@@ -31,24 +33,60 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HDFSHelper {
+
     public static boolean canConnect(String hopsIp, int hopsPort) {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
-        try(DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
+        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
             FsStatus status = fs.getStatus();
             return true;
         } catch (IOException ex) {
             return false;
-        } 
+        }
     }
-    
-    public static void delete(String hopsIp, int hopsPort, String dirPath, String fileName) {
+
+    public static boolean delete(String hopsIp, int hopsPort, String dirPath, String fileName) {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
-        try(DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
+        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
             fs.delete(new Path(dirPath + Path.SEPARATOR + fileName), false);
+            return true;
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } 
+            return false;
+        }
+    }
+
+    public static boolean create(String hopsIp, int hopsPort, String dirPath, String fileName, long fileSize) {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
+        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
+            if (!fs.isDirectory(new Path(dirPath))) {
+                fs.mkdirs(new Path(dirPath));
+            }
+            String filePath = dirPath + Path.SEPARATOR + fileName;
+            if (fs.isFile(new Path(filePath))) {
+                return false;
+            }
+            Random rand = new Random(1234);
+            try (FSDataOutputStream out = fs.create(new Path(filePath))) {
+                for (int i = 0; i < fileSize / 1024; i++) {
+                    byte[] data = new byte[1024];
+                    rand.nextBytes(data);
+                    out.write(data);
+                    out.flush();
+                }
+                if(fileSize % 1024 != 0) {
+                    byte[] data = new byte[(int)(fileSize % 1024)];
+                    rand.nextBytes(data);
+                    out.write(data);
+                    out.flush();
+                }
+                return true;
+            } catch (IOException ex) {
+                return false;
+            }
+        } catch (IOException ex) {
+            return false;
+        }
     }
 }
