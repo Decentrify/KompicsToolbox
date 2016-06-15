@@ -48,6 +48,7 @@ public class HDFSHelper {
             LOG.debug("{}got status from:{}", logPrefix, hopsURL);
             return true;
         } catch (IOException ex) {
+            LOG.warn("{}could not connect:{}", logPrefix, ex.getMessage());
             return false;
         }
     }
@@ -59,6 +60,7 @@ public class HDFSHelper {
             fs.delete(new Path(dirPath + Path.SEPARATOR + fileName), false);
             return true;
         } catch (IOException ex) {
+            LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
             return false;
         }
     }
@@ -90,9 +92,11 @@ public class HDFSHelper {
                 }
                 return true;
             } catch (IOException ex) {
+                LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
                 return false;
             }
         } catch (IOException ex) {
+            LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
             return false;
         }
     }
