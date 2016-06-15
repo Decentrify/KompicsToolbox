@@ -21,8 +21,6 @@ package se.sics.ktoolbox.hops.managedStore.storage;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
