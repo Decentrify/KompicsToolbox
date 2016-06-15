@@ -42,13 +42,15 @@ public class CompleteHopsDataStorage implements Storage {
 
     protected final String hopsURL;
     protected final String filePath;
+    private final String user;
     protected DistributedFileSystem fs;
     protected FSDataInputStream in;
     protected long length;
 
-    public CompleteHopsDataStorage(String hopsURL, String filePath) {
+    public CompleteHopsDataStorage(String user, String hopsURL, String filePath) {
         this.hopsURL = hopsURL;
         this.filePath = filePath;
+        this.user = user;
         setup();
     }
 
@@ -89,10 +91,10 @@ public class CompleteHopsDataStorage implements Storage {
 
     private byte[] hopsRead(long readPos, int readLength) {
         try {
-            byte[] byte_read = new byte[readLength];
-            in.readFully(readPos, byte_read);
-            return byte_read;
+            return HDFSHelper.read(user, in, readPos, readLength);
         } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -107,37 +109,5 @@ public class CompleteHopsDataStorage implements Storage {
     @Override
     public int write(long writePos, byte[] bytes) {
         throw new RuntimeException("hops completed can only read");
-    }
-
-    //small hack
-    private static final int pieceSize = 1024;
-    private static final int piecesPerBlock = 1024;
-    private static final int blockSize = pieceSize * piecesPerBlock;
-    private final LinkedList<Pair<Integer, ByteBuffer>> buffer = new LinkedList<>();
-
-    private byte[] bufferedRead(long readPos, int readLength) {
-        Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> blockDetails = ManagedStoreHelper.blockDetails(readPos, piecesPerBlock, pieceSize);
-        if (readLength == blockSize) {
-            if (blockDetails.getValue1().getValue1() == 0 && blockDetails.getValue0().getValue1() == 0) {
-                //beginning of block
-                byte[] block = hopsRead(readPos, readLength);
-                int blockNr = blockDetails.getValue1().getValue0();
-                buffer.addLast(Pair.with(blockNr, ByteBuffer.wrap(block)));
-                if (buffer.size() > 5) {
-                    buffer.removeFirst();
-                }
-                return block;
-            }
-        }
-
-        for (Pair<Integer, ByteBuffer> bufferedBlock : buffer) {
-            if (bufferedBlock.getValue0().equals(blockDetails.getValue1().getValue0())) {
-                byte[] readResult = new byte[readLength];
-                bufferedBlock.getValue1().position(blockDetails.getValue1().getValue1());
-                bufferedBlock.getValue1().get(readResult);
-                return readResult;
-            }
-        }
-        return hopsRead(readPos, readLength);
     }
 }
