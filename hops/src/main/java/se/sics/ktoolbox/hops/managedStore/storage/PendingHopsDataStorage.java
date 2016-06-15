@@ -40,15 +40,17 @@ public class PendingHopsDataStorage implements Storage {
 
     protected final String hopsURL;
     protected final String filePath;
+    private final String user;
     protected DistributedFileSystem fs;
     protected FSDataOutputStream out;
     protected FSDataInputStream in;
     private long appendPos;
     private final long length;
 
-    public PendingHopsDataStorage(String hopsURL, String filePath, long fileLength) {
+    public PendingHopsDataStorage(String user, String hopsURL, String filePath, long fileLength) {
         this.hopsURL = hopsURL;
         this.filePath = filePath;
+        this.user = user;
         this.appendPos = 0;
         this.length = fileLength;
         setup();
@@ -88,10 +90,10 @@ public class PendingHopsDataStorage implements Storage {
     @Override
     public byte[] read(final long readPos, final int readLength) {
         try {
-            byte[] byte_read = new byte[readLength];
-            in.readFully(readPos, byte_read);
-            return byte_read;
+           return HDFSHelper.read(user, in, readPos, readLength);
         } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -117,10 +119,10 @@ public class PendingHopsDataStorage implements Storage {
 
     private int append(byte[] bytes) {
         try {
-            out.write(bytes);
-            out.flush();
-            return bytes.length;
+            return HDFSHelper.append(user, out, bytes);
         } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     }

@@ -30,20 +30,19 @@ import se.sics.ktoolbox.util.managedStore.core.impl.OnDemandWithRetentionHashMng
 import se.sics.ktoolbox.util.managedStore.core.impl.tracker.IncompleteTracker;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HopsFactory {
 
-    public static Pair<FileMngr, HashMngr> getComplete(String hopsURL, String pathName, String hashAlg, int blockSize, int pieceSize) {
-        Storage fileStorage = new CompleteHopsDataStorage(hopsURL, pathName);
+    public static Pair<FileMngr, HashMngr> getComplete(String user, String hopsURL, String pathName, String hashAlg, int blockSize, int pieceSize) {
+        Storage fileStorage = new CompleteHopsDataStorage(user, hopsURL, pathName);
         FileMngr fileMngr = new CompleteFileMngr(fileStorage, blockSize, pieceSize);
         HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);
         return Pair.with(fileMngr, hashMngr);
     }
 
-    public static Pair<FileMngr, HashMngr> getIncomplete(String hopsURL, String pathName, long fileLength, String hashAlg, int blockSize, int pieceSize) {
-        Storage fileStorage = new PendingHopsDataStorage(hopsURL, pathName, fileLength);
+    public static Pair<FileMngr, HashMngr> getIncomplete(String user, String hopsURL, String pathName, long fileLength, String hashAlg, int blockSize, int pieceSize) {
+        Storage fileStorage = new PendingHopsDataStorage(user, hopsURL, pathName, fileLength);
         int nrBlocks = ManagedStoreHelper.nrComponents(fileLength, blockSize);
         ComponentTracker ct = IncompleteTracker.create(nrBlocks);
         FileMngr fileMngr = new IncompleteFileMngr(fileStorage, ct, blockSize, pieceSize);

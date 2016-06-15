@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Random;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsStatus;
@@ -61,7 +62,6 @@ public class HDFSHelper {
                 public Boolean run() throws Exception {
                     final Configuration conf = new Configuration();
                     conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
-                    conf.set("hadoop.job.ugi", user);
                     try (FileSystem fs = FileSystem.get(conf)) {
                         fs.delete(new Path(dirPath + Path.SEPARATOR + fileName), false);
                         return true;
@@ -123,5 +123,31 @@ public class HDFSHelper {
             LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
             return false;
         }
+    }
+
+    public static byte[] read(String user, final FSDataInputStream in, final long readPos, final int readLength) throws IOException, InterruptedException {
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+        byte[] result = ugi.doAs(new PrivilegedExceptionAction<byte[]>() {
+            @Override
+            public byte[] run() throws Exception {
+                byte[] byte_read = new byte[readLength];
+                in.readFully(readPos, byte_read);
+                return byte_read;
+            }
+        });
+        return result;
+    }
+
+    public static int append(String user, final FSDataOutputStream out, final byte[] data) throws IOException, InterruptedException {
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+        int result = ugi.doAs(new PrivilegedExceptionAction<Integer>() {
+            @Override
+            public Integer run() throws Exception {
+                out.write(data);
+                out.flush();
+                return data.length;
+            }
+        });
+        return result;
     }
 }
