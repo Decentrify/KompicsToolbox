@@ -43,7 +43,9 @@ public class HDFSHelper {
         conf.set("fs.defaultFS", hopsURL);
         LOG.debug("{}testing connection to:{}", logPrefix, hopsURL);
         try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
-            LOG.debug("{}getting status to:{}", logPrefix, hopsURL);
+            LOG.debug("{}getting status from:{}", logPrefix, hopsURL);
+            FsStatus status = fs.getStatus();
+            LOG.debug("{}got status from:{}", logPrefix, hopsURL);
             return true;
         } catch (IOException ex) {
             return false;
