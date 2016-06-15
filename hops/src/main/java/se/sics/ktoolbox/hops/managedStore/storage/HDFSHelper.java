@@ -28,16 +28,22 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HDFSHelper {
+    private final static org.slf4j.Logger LOG = LoggerFactory.getLogger(HDFSHelper.class);
+    private static String logPrefix = "";
 
     public static boolean canConnect(String hopsIp, int hopsPort) {
         Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
+        String hopsURL = hopsIp + ":" + hopsPort;
+        conf.set("fs.defaultFS", hopsURL);
+        LOG.debug("{}testing connection to:{}", logPrefix, hopsURL);
         try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
+            LOG.debug("{}getting status to:{}", logPrefix, hopsURL);
             FsStatus status = fs.getStatus();
             return true;
         } catch (IOException ex) {
