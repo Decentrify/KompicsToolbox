@@ -1,0 +1,254 @@
+/*
+ * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
+ * 2009 Royal Institute of Technology (KTH)
+ *
+ * KompicsToolbox is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+package se.sics.ktoolbox.hops.managedStore.storage.cache;
+
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.SettableFuture;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.javatuples.Pair;
+import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
+
+/**
+ * @author Alex Ormenisan <aaor@kth.se>
+ */
+class HDFSCache implements WriteDriverI, ReadDriverI {
+
+    //**************************************************************************
+    private final HDFSCacheKCWrapper config;
+    private final HDFSResource readResource;
+    private final String user;
+    //**********************************AUX*************************************
+    private final long fileSize;
+    private final Pair<Integer, Integer> lastBlock;
+    //**************************************************************************
+    private HashMap<Identifier, ReaderDiskHead> readers = new HashMap<>();
+    private Pair<ReadOp, SettableFuture<ByteBuffer>> blockingRead;
+    //**************************************************************************
+    private final ExecutorService hdfsReaders;
+    //************************ENSURE_THREAD_SAFETY******************************
+    private final TreeMap<Integer, CachedBlock> cache = new TreeMap<>();
+
+    public HDFSCache(HDFSCacheKCWrapper config, HDFSResource readResource, String user, long fileSize) {
+        this.config = config;
+        this.readResource = readResource;
+        this.user = user;
+        this.fileSize = fileSize;
+        lastBlock = ManagedStoreHelper.lastBlock(fileSize, config.defaultBlockSize);
+        hdfsReaders = Executors.newFixedThreadPool(config.maxThreads);
+    }
+    
+    public void tearDown() {
+        hdfsReaders.shutdownNow();
+        try {
+            boolean completed = hdfsReaders.awaitTermination(10, TimeUnit.SECONDS);
+            if(!completed) {
+                throw new RuntimeException("could not kill cache correctly");
+            }
+        } catch (InterruptedException ex) {
+            throw new RuntimeException("could not kill cache correctly");
+        }
+    }
+
+    //*****************************WriteDriverI*********************************
+    @Override
+    public void success(ReadOp op, ByteBuffer result) {
+        CachedBlock cb = cache.get(op.blockNr);
+        if(cb == null) {
+            return;
+        }
+        cb.setVal(result);
+        checkIfCacheHit(cb);
+    }
+
+    private void checkIfCacheHit(CachedBlock cb) {
+        if (blockingRead != null && blockingRead.getValue0().blockNr == cb.blockNr) {
+            long readPos = blockingRead.getValue0().readPos;
+            int readLength = blockingRead.getValue0().readLength;
+            
+            int blockOffset = ManagedStoreHelper.blockDetails(readPos, config.defaultPiecesPerBlock, config.defaultPieceSize).getValue1().getValue1();
+            byte[] readResult = cb.read(blockOffset, readLength);
+            if(readResult == null) {
+                throw new RuntimeException("logic error while reading from block");
+            }
+            blockingRead.getValue1().set(ByteBuffer.wrap(readResult));
+            blockingRead = null;
+        }
+    }
+
+    @Override
+    public void fail(ReadOp op, Exception ex) {
+        throw new RuntimeException(ex);
+    }
+
+    //*******************************ReadDriverI********************************
+    @Override
+    public SettableFuture<ByteBuffer> read(Identifier reader, long readPos, int readLength, Set<Integer> cacheBlocks) {
+        ReaderDiskHead rdh = readers.get(reader);
+        if (rdh == null) {
+            if(readers.size() > config.maxReaders) {
+                throw new RuntimeException("too many readers");
+            }
+            rdh = new ReaderDiskHead();
+            readers.put(reader, rdh);
+        }
+        rdh.setCache(cacheBlocks);
+        SettableFuture futureResult = rdh.read(readPos, readLength);
+        return futureResult;
+    }
+
+    @Override
+    public void stopRead(Identifier reader) {
+        ReaderDiskHead rdh = readers.remove(reader);
+        rdh.clear();
+    }
+
+    //**************************************************************************
+    private synchronized CachedBlock readBlock(int blockNr) {
+        CachedBlock cb = cache.get(blockNr);
+        if (cb == null) {
+            if (cache.size() > config.cacheSize) {
+                cleanCache();
+            }
+            cb = new CachedBlock(blockNr);
+            cache.put(blockNr, cb);
+
+            long readPos = (long) blockNr * config.defaultBlockSize;
+            int readLength = lastBlock.getValue0().equals(blockNr) ? lastBlock.getValue1() : config.defaultBlockSize;
+            ReadOp readOp = new ReadOp(blockNr, readPos, readLength);
+            hdfsReaders.submit(new HDFSReadTask(readResource, user, readOp, this));
+        }
+        cb.incRef();
+        return cb;
+    }
+
+    private void cleanCache() {
+        Iterator<Map.Entry<Integer, CachedBlock>> it = cache.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, CachedBlock> next = it.next();
+            if(next.getValue().canClean()) {
+                it.remove();
+                return;
+            }
+        }
+        throw new RuntimeException("unexpected logic - too many readers?");
+    }
+
+    public static class CachedBlock {
+
+        public final int blockNr;
+        private int references;
+        private ByteBuffer val;
+
+        public CachedBlock(int blockNr) {
+            this.blockNr = blockNr;
+            this.references = 0;
+        }
+
+        public void incRef() {
+            references++;
+        }
+
+        public void releaseRef() {
+            references--;
+        }
+
+        public boolean canClean() {
+            return references == 0;
+        }
+
+        public void setVal(ByteBuffer val) {
+            this.val = val;
+        }
+
+        public boolean isAvailable() {
+            return val != null;
+        }
+
+        public byte[] read(int readPos, int readLength) {
+            val.position(readPos);
+            byte[] result = new byte[readLength];
+            val.get(result);
+            return result;
+        }
+    }
+
+    public class ReaderDiskHead {
+
+        private final Map<Integer, CachedBlock> cacheReferences = new HashMap<>();
+
+        public void setCache(Set<Integer> cacheBlocks) {
+            Set<Integer> clearBlocks = new HashSet<>(Sets.difference(cacheReferences.keySet(), cacheBlocks));
+            Set<Integer> getBlocks = new HashSet<>(Sets.difference(cacheBlocks, cacheReferences.keySet()));
+
+            for (Integer blockNr : clearBlocks) {
+                CachedBlock cb = cacheReferences.remove(blockNr);
+                cb.releaseRef();
+            }
+
+            for (Integer blockNr : getBlocks) {
+                cacheReferences.put(blockNr, HDFSCache.this.readBlock(blockNr));
+            }
+        }
+
+        public SettableFuture<ByteBuffer> read(long readPos, int readLength) {
+            Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> blockDetails = ManagedStoreHelper.blockDetails(readPos, 
+                    HDFSCache.this.config.defaultPiecesPerBlock, HDFSCache.this.config.defaultPieceSize);
+            int blockNr = blockDetails.getValue1().getValue0();
+            int blockOffset = blockDetails.getValue1().getValue1();
+
+            //read pieces only
+            assert blockDetails.getValue0().getValue1() == 0; 
+            assert readLength <= HDFSCache.this.config.defaultPieceSize;
+            
+            ReadOp op = new ReadOp(blockNr, readPos, readLength);
+            SettableFuture<ByteBuffer> futureResult = SettableFuture.create();
+
+            CachedBlock cb = cacheReferences.get(blockNr);
+            if (cb == null) {
+                throw new RuntimeException("logic error - block should be here after setting the cache");
+            }
+            if (cb.isAvailable()) {
+                byte[] result = cb.read(blockOffset, readLength);
+                futureResult.set(ByteBuffer.wrap(result));
+            } else {
+                HDFSCache.this.readBlock(blockNr);
+            }
+            return futureResult;
+        }
+
+        public void clear() {
+            for (CachedBlock cb : cacheReferences.values()) {
+                cb.releaseRef();
+            }
+        }
+    }
+}

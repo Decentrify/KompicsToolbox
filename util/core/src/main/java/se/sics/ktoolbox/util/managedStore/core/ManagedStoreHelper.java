@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.util.managedStore.core;
 
 import org.javatuples.Pair;
-import org.javatuples.Triplet;
 
 /**
  *
@@ -71,10 +70,27 @@ public class ManagedStoreHelper {
     }
     
     /**
-     * @return <<pieceNr, inPiecePos>, <blockNr, inBlockPos>>
+     * @return <<pieceNr, pieceOffset>, <blockNr, blockOffset>>
      */
     public static Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> blockDetails(long position, int piecesPerBlock, int pieceSize) {
         int pieceNr = componentNr(position, pieceSize);
         return Pair.with(componentDetails(position, pieceSize), componentDetails(pieceNr, piecesPerBlock));
+    }
+    
+    public static int blockNr(long position, int piecesPerBlock, int pieceSize) {
+        return blockDetails(position, piecesPerBlock, pieceSize).getValue0().getValue0();
+    }
+    
+    public static int blockSize(int blockNr, long fileSize, int piecesPerBlock, int pieceSize) {
+        Pair<Integer, Integer> lastComponent = lastComponent(fileSize, piecesPerBlock * pieceSize);
+        if(lastComponent.getValue0().equals(blockNr)) {
+            return lastComponent.getValue1();
+        } else {
+            return piecesPerBlock * pieceSize;
+        }
+    }
+    
+    public static Pair<Integer, Integer> lastBlock(long fileSize, int blockSize) {
+        return lastComponent(fileSize, blockSize);
     }
 }

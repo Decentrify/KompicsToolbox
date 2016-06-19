@@ -20,48 +20,33 @@ package se.sics.ktoolbox.hops.managedStore.storage.cache;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
-import org.javatuples.Pair;
+import se.sics.ktoolbox.hops.managedStore.storage.HDFSHelper;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HDFSReadTask implements Runnable {
 
     private final HDFSResource resource;
+    private final String user;
     private final ReadOp readOp;
-    private final ConcurrentLinkedQueue<Pair<ReadOp, ByteBuffer>> successResult;
-    private final ConcurrentLinkedQueue<Pair<ReadOp, IOException>> failResult;
+    private final WriteDriverI callback;
 
-    public HDFSReadTask(HDFSResource resource, ReadOp readOp, ConcurrentLinkedQueue<Pair<ReadOp, ByteBuffer>> successResult, 
-            ConcurrentLinkedQueue<Pair<ReadOp, IOException>> failResult) {
+    public HDFSReadTask(HDFSResource resource, String user, ReadOp readOp, WriteDriverI callback) {
         this.resource = resource;
+        this.user = user;
         this.readOp = readOp;
-        this.successResult = successResult;
-        this.failResult = failResult;
+        this.callback = callback;
     }
 
     @Override
     public void run() {
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", "hdfs");
-        String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
-        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf);
-                FSDataInputStream in = fs.open(new Path(filePath))) {
-            byte[] byte_read = new byte[readOp.readLength];
-            in.readFully(readOp.readPos, byte_read);
-            successResult.add(Pair.with(readOp, ByteBuffer.wrap(byte_read)));
-        } catch (IOException ex) {
-            failResult.add(Pair.with(readOp, ex));
+        try {
+            byte[] byte_read = HDFSHelper.read(resource, user, readOp.readPos, readOp.readLength);
+            callback.success(readOp, ByteBuffer.wrap(byte_read));
+        } catch (IOException | InterruptedException ex) {
+            callback.fail(readOp, ex);
         }
     }
 }

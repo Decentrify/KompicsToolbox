@@ -18,9 +18,15 @@
  */
 package se.sics.ktoolbox.hops.managedStore.storage.cache;
 
+import com.google.common.util.concurrent.SettableFuture;
+import java.nio.ByteBuffer;
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface ReadDriverI {
-    
+    public SettableFuture<ByteBuffer> read(Identifier reader, long readPos, int readLength, Set<Integer> cacheBlocks);
+    public void stopRead(Identifier reader);
 }

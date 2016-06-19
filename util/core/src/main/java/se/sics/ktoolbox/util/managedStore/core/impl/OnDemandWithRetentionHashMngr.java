@@ -29,7 +29,6 @@ import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import se.sics.ktoolbox.util.managedStore.core.HashMngr;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
-import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.impl.tracker.IncompleteTracker;
 import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 

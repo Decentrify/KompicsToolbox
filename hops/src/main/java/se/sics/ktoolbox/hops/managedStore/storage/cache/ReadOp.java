@@ -19,28 +19,22 @@
 package se.sics.ktoolbox.hops.managedStore.storage.cache;
 
 import com.google.common.collect.Range;
-import java.util.UUID;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ReadOp {
-    public final UUID opIdentifier;
+    public final int blockNr;
     public final long readPos;
     public final int readLength;
 
-    public ReadOp(UUID opIdentifier, long readPos, int readLength) {
-        this.opIdentifier = opIdentifier;
+    public ReadOp(int blockNr, long readPos, int readLength) {
+        this.blockNr = blockNr;
         this.readPos = readPos;
         this.readLength = readLength;
     }
     
-    public ReadOp(long readPos, int readLength) {
-        this(UUID.randomUUID(), readPos, readLength);
-    }
-    
-    public Range getRange() {
+    public Range<Long> getRange() {
         return Range.closed(readPos, readPos + readLength);
     }
 }

@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -74,5 +76,10 @@ public class RMemMapFile implements Storage {
     @Override
     public long length() {
         return length;
+    }
+
+    @Override
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

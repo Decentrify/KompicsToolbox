@@ -19,6 +19,9 @@
 
 package se.sics.ktoolbox.util.managedStore.core;
 
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
@@ -26,6 +29,7 @@ public interface Storage {
     public void tearDown();
     
     public byte[] read(long readPos, int readLength);
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks);
     public int write(long writePos, byte[] bytes);
     public long length();
 }

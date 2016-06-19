@@ -19,17 +19,11 @@
 package se.sics.ktoolbox.hops.managedStore.storage;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
-import org.javatuples.Pair;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
+import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
@@ -40,42 +34,18 @@ public class CompleteHopsDataStorage implements Storage {
     private static final Logger LOG = LoggerFactory.getLogger(Storage.class);
     private String logPrefix;
 
-    protected final String hopsURL;
-    protected final String filePath;
+    private final HDFSResource resource;
     private final String user;
-    protected FileSystem fs;
-    protected FSDataInputStream in;
     protected long length;
 
-    public CompleteHopsDataStorage(String user, String hopsURL, String filePath) {
-        this.hopsURL = hopsURL;
-        this.filePath = filePath;
+    public CompleteHopsDataStorage(HDFSResource resource, String user) {
+        this.resource = resource;
         this.user = user;
-        setup();
-    }
-
-    private void setup() {
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", hopsURL);
-        try {
-            fs = HDFSHelper.getFileSystem(hopsURL, user);
-            in = fs.open(new Path(filePath));
-            length = HDFSHelper.length(hopsURL, filePath, user);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (ClassCastException ex) {
-            throw new RuntimeException(ex);
-        }
+        this.length = HDFSHelper.length(resource, user);
     }
 
     @Override
     public void tearDown() {
-        try {
-            this.in.close();
-            this.fs.close();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
     }
 
     @Override
@@ -85,18 +55,13 @@ public class CompleteHopsDataStorage implements Storage {
 
     @Override
     public byte[] read(long readPos, int readLength) {
-        return hopsRead(readPos, readLength);
-//        return bufferedRead(readPos, readLength);
-    }
-
-    private byte[] hopsRead(long readPos, int readLength) {
+        byte[] result;
         try {
-            return HDFSHelper.read(user, in, readPos, readLength);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (InterruptedException ex) {
+            result = HDFSHelper.read(resource, user, readPos, readLength);
+        } catch (IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
         }
+        return result;
     }
 
     /**
@@ -109,5 +74,10 @@ public class CompleteHopsDataStorage implements Storage {
     @Override
     public int write(long writePos, byte[] bytes) {
         throw new RuntimeException("hops completed can only read");
+    }
+
+    @Override
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

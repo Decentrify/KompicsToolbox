@@ -16,39 +16,53 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hops.managedStore.storage;
+package se.sics.ktoolbox.hops.managedStore.storage.cache;
 
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.hops.managedStore.storage.HDFSHelper;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class PendingHopsDataStorage implements Storage {
+public class CachedHDFSStorage implements Storage {
 
     private static final Logger LOG = LoggerFactory.getLogger(Storage.class);
     private String logPrefix;
 
     private final HDFSResource resource;
     private final String user;
+
+    private final HDFSCache cache;
+
     private final long fileSize;
     private long appendPos;
 
-    public PendingHopsDataStorage(HDFSResource resource, String user, long fileSize) {
+    public CachedHDFSStorage(Config config, HDFSResource resource, String user, long fileSize) {
         this.resource = resource;
         this.user = user;
-        this.fileSize = fileSize;
         this.appendPos = HDFSHelper.length(resource, user);
+        if (fileSize == -1) {
+            this.fileSize = appendPos;
+        } else {
+            this.fileSize = fileSize;
+        }
+        HDFSCacheKCWrapper cacheConfig = new HDFSCacheKCWrapper(config);
+        cache = new HDFSCache(cacheConfig, resource, user, fileSize);
     }
 
     @Override
     public void tearDown() {
+        cache.tearDown();
     }
 
     @Override
@@ -57,44 +71,37 @@ public class PendingHopsDataStorage implements Storage {
     }
 
     @Override
-    public byte[] read(final long readPos, final int readLength) {
-        try {
-           byte[] result = HDFSHelper.read(resource, user, readPos, readLength);
-           return result;
-        } catch (IOException | InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    /**
-     * hops can only do append
-     *
-     * @param writePos
-     * @param bytes
-     * @return
-     */
-    @Override
     public int write(long writePos, byte[] bytes) {
-        if (appendPos != writePos) {
-            throw new RuntimeException("hops can only append");
+        if (writePos < appendPos) {
+            throw new RuntimeException("can only append to HDFS");
         }
-
-        int writtenBytes = append(bytes);
-        appendPos += writtenBytes;
-
-        return writtenBytes;
-    }
-
-    private int append(byte[] bytes) {
         try {
-            return HDFSHelper.append(resource, user, bytes);
+            int bytesWritten = HDFSHelper.append(resource, user, bytes);
+            long auxSize = appendPos;
+            appendPos = HDFSHelper.length(resource, user);
+            if (auxSize + bytesWritten != appendPos) {
+                throw new RuntimeException("logic error");
+            }
+            return bytesWritten;
         } catch (IOException | InterruptedException ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException("can't write");
         }
     }
 
     @Override
     public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
+        SettableFuture<ByteBuffer> futureResult = cache.read(readerId, readPos, readLength, cacheBlocks);
+        ByteBuffer result;
+        try {
+            result = futureResult.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new RuntimeException(ex);
+        }
+        return result.array();
+    }
+
+    @Override
+    public byte[] read(long readPos, int readLength) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

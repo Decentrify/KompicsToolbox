@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -108,6 +109,29 @@ public class HDFSHelper {
         }
     }
 
+    public static Long length(final HDFSResource resource, final String user) {
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+        try {
+            long result = ugi.doAs(new PrivilegedExceptionAction<Long>() {
+                public Long run() throws Exception {
+                    final Configuration conf = new Configuration();
+                    conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
+                    try (FileSystem fs = FileSystem.get(conf)) {
+                        long length = fs.getLength(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName));
+                        return length;
+                    } catch (IOException ex) {
+                        LOG.warn("{}could not get size of file:{}", logPrefix, ex.getMessage());
+                        throw new RuntimeException(ex);
+                    }
+                }
+            });
+            return result;
+        } catch (IOException | InterruptedException ex) {
+            LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
+            throw new RuntimeException(ex);
+        }
+    }
+
     public static boolean delete(final String user, final String hopsIp, final int hopsPort, final String dirPath, final String fileName) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
@@ -178,29 +202,41 @@ public class HDFSHelper {
         }
     }
 
-    public static byte[] read(String user, final FSDataInputStream in, final long readPos, final int readLength) throws IOException, InterruptedException {
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
-        byte[] result = ugi.doAs(new PrivilegedExceptionAction<byte[]>() {
-            @Override
-            public byte[] run() throws Exception {
-                byte[] byte_read = new byte[readLength];
-                in.readFully(readPos, byte_read);
-                return byte_read;
-            }
-        });
-        return result;
+    public static byte[] read(final HDFSResource resource, String user, final long readPos, final int readLength) throws IOException, InterruptedException {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", "hdfs");
+        String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
+        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf);
+                FSDataInputStream in = fs.open(new Path(filePath))) {
+            UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+            byte[] result = ugi.doAs(new PrivilegedExceptionAction<byte[]>() {
+                @Override
+                public byte[] run() throws Exception {
+                    byte[] byte_read = new byte[readLength];
+                    in.readFully(readPos, byte_read);
+                    return byte_read;
+                }
+            });
+            return result;
+        }
     }
 
-    public static int append(String user, final FSDataOutputStream out, final byte[] data) throws IOException, InterruptedException {
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
-        int result = ugi.doAs(new PrivilegedExceptionAction<Integer>() {
-            @Override
-            public Integer run() throws Exception {
-                out.write(data);
-                out.flush();
-                return data.length;
-            }
-        });
-        return result;
+    public static int append(final HDFSResource resource, String user, final byte[] data) throws IOException, InterruptedException {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", "hdfs");
+        String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
+        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf);
+                FSDataOutputStream out = fs.append(new Path(filePath))) {
+            UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+            int result = ugi.doAs(new PrivilegedExceptionAction<Integer>() {
+                @Override
+                public Integer run() throws Exception {
+                    out.write(data);
+                    out.flush();
+                    return data.length;
+                }
+            });
+            return result;
+        }
     }
 }
