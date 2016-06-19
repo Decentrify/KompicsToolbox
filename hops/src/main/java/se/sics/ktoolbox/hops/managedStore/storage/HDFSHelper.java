@@ -132,15 +132,15 @@ public class HDFSHelper {
         }
     }
 
-    public static boolean delete(final String user, final String hopsIp, final int hopsPort, final String dirPath, final String fileName) {
+    public static boolean delete(final HDFSResource resource, final String user) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 public Boolean run() throws Exception {
                     final Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
+                    conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
-                        fs.delete(new Path(dirPath + Path.SEPARATOR + fileName), false);
+                        fs.delete(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName), false);
                         return true;
                     } catch (IOException ex) {
                         LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
@@ -155,18 +155,18 @@ public class HDFSHelper {
         }
     }
 
-    public static boolean create(final String user, final String hopsIp, final int hopsPort, final String dirPath, final String fileName, final long fileSize) {
+    public static boolean create(final HDFSResource resource, final String user, final long fileSize) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 public Boolean run() throws Exception {
                     Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", hopsIp + ":" + hopsPort);
+                    conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
-                        if (!fs.isDirectory(new Path(dirPath))) {
-                            fs.mkdirs(new Path(dirPath));
+                        if (!fs.isDirectory(new Path(resource.dirPath))) {
+                            fs.mkdirs(new Path(resource.dirPath));
                         }
-                        String filePath = dirPath + Path.SEPARATOR + fileName;
+                        String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
                         if (fs.isFile(new Path(filePath))) {
                             return false;
                         }
