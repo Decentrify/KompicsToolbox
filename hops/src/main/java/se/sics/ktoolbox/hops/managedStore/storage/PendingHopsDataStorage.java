@@ -41,7 +41,7 @@ public class PendingHopsDataStorage implements Storage {
     protected final String hopsURL;
     protected final String filePath;
     private final String user;
-    protected DistributedFileSystem fs;
+    protected FileSystem fs;
     protected FSDataOutputStream out;
     protected FSDataInputStream in;
     private long appendPos;
@@ -60,7 +60,7 @@ public class PendingHopsDataStorage implements Storage {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hopsURL);
         try {
-            fs = (DistributedFileSystem) FileSystem.get(conf);
+            fs = HDFSHelper.getFileSystem(hopsURL, user);
             out = fs.create(new Path(filePath));
             in = fs.open(new Path(filePath));
         } catch (IOException ex) {

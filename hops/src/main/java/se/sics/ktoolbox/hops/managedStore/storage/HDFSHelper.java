@@ -54,6 +54,59 @@ public class HDFSHelper {
             return false;
         }
     }
+    
+    public static Long length(String hopsURL, final String filePath, final String user) {
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+        try {
+            final Configuration conf = new Configuration();
+            conf.set("fs.defaultFS", hopsURL);
+            LOG.debug("{}getting length of file from:{}", logPrefix, hopsURL);
+            long result = ugi.doAs(new PrivilegedExceptionAction<Long>() {
+                public Long run() throws Exception {
+                    try (FileSystem fs = FileSystem.get(conf)) {
+                        long length = -1;
+                        if (fs.isFile(new Path(filePath))) {
+                            length = fs.getLength(new Path(filePath));
+                        }
+                        return length;
+                    } catch (IOException ex) {
+                        LOG.warn("{}could not get size of file:{}", logPrefix, ex.getMessage());
+                        throw new RuntimeException(ex);
+                    }
+                }
+            });
+            LOG.debug("{}got length of file from:{}", logPrefix, hopsURL);
+            return result;
+        } catch (IOException | InterruptedException ex) {
+            LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    public static FileSystem getFileSystem(String hopsURL, final String user) {
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
+        try {
+            final Configuration conf = new Configuration();
+            conf.set("fs.defaultFS", hopsURL);
+            LOG.debug("{}getting length of file from:{}", logPrefix, hopsURL);
+            FileSystem result = ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+                public FileSystem run() throws Exception {
+                    try {
+                        FileSystem fs = FileSystem.get(conf);
+                        return fs;
+                    } catch (IOException ex) {
+                        LOG.warn("{}could not get size of file:{}", logPrefix, ex.getMessage());
+                        throw new RuntimeException(ex);
+                    }
+                }
+            });
+            LOG.debug("{}got length of file from:{}", logPrefix, hopsURL);
+            return result;
+        } catch (IOException | InterruptedException ex) {
+            LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
+            throw new RuntimeException(ex);
+        }
+    }
 
     public static boolean delete(final String user, final String hopsIp, final int hopsPort, final String dirPath, final String fileName) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);

@@ -43,7 +43,7 @@ public class CompleteHopsDataStorage implements Storage {
     protected final String hopsURL;
     protected final String filePath;
     private final String user;
-    protected DistributedFileSystem fs;
+    protected FileSystem fs;
     protected FSDataInputStream in;
     protected long length;
 
@@ -58,9 +58,9 @@ public class CompleteHopsDataStorage implements Storage {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hopsURL);
         try {
-            fs = (DistributedFileSystem) FileSystem.get(conf);
+            fs = HDFSHelper.getFileSystem(hopsURL, user);
             in = fs.open(new Path(filePath));
-            length = fs.getLength(new Path(filePath));
+            length = HDFSHelper.length(hopsURL, filePath, user);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         } catch (ClassCastException ex) {
