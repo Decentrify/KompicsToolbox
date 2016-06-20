@@ -19,10 +19,6 @@
 
 package se.sics.ktoolbox.util.managedStore.core.impl.block;
 
-import java.util.HashSet;
-import java.util.Set;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.managedStore.core.BlockMngr;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;

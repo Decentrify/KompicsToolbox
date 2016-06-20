@@ -42,7 +42,7 @@ public class HDFSHelper {
 
     public static boolean canConnect(String hopsIp, int hopsPort) {
         Configuration conf = new Configuration();
-        String hopsURL = hopsIp + ":" + hopsPort;
+        String hopsURL = "hdfs://" + hopsIp + ":" + hopsPort;
         conf.set("fs.defaultFS", hopsURL);
         LOG.debug("{}testing connection to:{}", logPrefix, hopsURL);
         try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf)) {
@@ -112,10 +112,12 @@ public class HDFSHelper {
     public static Long length(final HDFSResource resource, final String user) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
+            final Configuration conf = new Configuration();
+            String hopsURL = "hdfs://" + resource.hopsIp + ":" + resource.hopsPort;
+            conf.set("fs.defaultFS", hopsURL);
+            LOG.debug("{}getting length of file from:{}", logPrefix, hopsURL);
             long result = ugi.doAs(new PrivilegedExceptionAction<Long>() {
                 public Long run() throws Exception {
-                    final Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
                         long length = -1;
                         if (fs.isFile(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName))) {
@@ -128,6 +130,7 @@ public class HDFSHelper {
                     }
                 }
             });
+            LOG.debug("{}got length of file from:{}", logPrefix, hopsURL);
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
@@ -138,10 +141,12 @@ public class HDFSHelper {
     public static boolean delete(final HDFSResource resource, final String user) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
+            final Configuration conf = new Configuration();
+            String hopsURL = "hdfs://" + resource.hopsIp + ":" + resource.hopsPort;
+            conf.set("fs.defaultFS", hopsURL);
+            LOG.debug("{}deleting file from:{}", logPrefix, hopsURL);
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 public Boolean run() throws Exception {
-                    final Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", "hdfs://" + resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
                         fs.delete(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName), false);
                         return true;
@@ -151,6 +156,7 @@ public class HDFSHelper {
                     }
                 }
             });
+            LOG.debug("{}deleted file from:{}", logPrefix, hopsURL);
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
@@ -161,11 +167,13 @@ public class HDFSHelper {
     public static boolean create(final HDFSResource resource, final String user, final long fileSize) {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
+            final Configuration conf = new Configuration();
+            String hopsURL = "hdfs://" + resource.hopsIp + ":" + resource.hopsPort;
+            conf.set("fs.defaultFS", hopsURL);
+            LOG.debug("{}creating file from:{}", logPrefix, hopsURL);
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 @Override
                 public Boolean run() throws Exception {
-                    Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", "hdfs://" + resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
                         if (!fs.isDirectory(new Path(resource.dirPath))) {
                             fs.mkdirs(new Path(resource.dirPath));
@@ -199,6 +207,7 @@ public class HDFSHelper {
                     }
                 }
             });
+            LOG.debug("{}created file from:{}", logPrefix, hopsURL);
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
@@ -209,9 +218,11 @@ public class HDFSHelper {
     }
 
     public static byte[] read(final HDFSResource resource, String user, final long readPos, final int readLength) throws IOException, InterruptedException {
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", "hdfs");
+        final Configuration conf = new Configuration();
+        String hopsURL = "hdfs://" + resource.hopsIp + ":" + resource.hopsPort;
+        conf.set("fs.defaultFS", hopsURL);
         String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
+        LOG.debug("{}reading from file:{} from:{}", new Object[]{logPrefix, filePath, hopsURL});
         try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf);
                 FSDataInputStream in = fs.open(new Path(filePath))) {
             UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
@@ -223,14 +234,20 @@ public class HDFSHelper {
                     return byte_read;
                 }
             });
+            LOG.debug("{}reading done from file:{} from:{}", new Object[]{logPrefix, filePath, hopsURL});
             return result;
+        } catch (Exception ex) {
+             LOG.debug("{}reading exception:{} from:{}", new Object[]{logPrefix, ex, hopsURL});
+             throw ex;
         }
     }
 
     public static int append(final HDFSResource resource, String user, final byte[] data) throws IOException, InterruptedException {
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", "hdfs");
+        final Configuration conf = new Configuration();
+        String hopsURL = "hdfs://" + resource.hopsIp + ":" + resource.hopsPort;
+        conf.set("fs.defaultFS", hopsURL);
         String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
+        LOG.debug("{}appending to file:{} from:{}", new Object[]{logPrefix, filePath, hopsURL});
         try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(conf);
                 FSDataOutputStream out = fs.append(new Path(filePath))) {
             UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
@@ -242,6 +259,7 @@ public class HDFSHelper {
                     return data.length;
                 }
             });
+            LOG.debug("{}appending done to file:{} from:{}", new Object[]{logPrefix, filePath, hopsURL});
             return result;
         }
     }
