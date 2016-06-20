@@ -23,6 +23,7 @@ import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import java.util.Set;
 import org.javatuples.Pair;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
 
@@ -71,11 +72,11 @@ public class IncompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public ByteBuffer read(long readPos, int length) {
+    public ByteBuffer read(Identifier readerId, long readPos, int length, Set<Integer> bufferBlocks) {
         if (readPos + length > storage.length()) {
             throw new RuntimeException("logic error");
         }
-        return ByteBuffer.wrap(storage.read(readPos, length));
+        return ByteBuffer.wrap(storage.read(readerId, readPos, length, bufferBlocks));
     }
 
     @Override
@@ -91,7 +92,7 @@ public class IncompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public ByteBuffer readPiece(int pieceNr) {
+    public ByteBuffer readPiece(Identifier readerId, int pieceNr, Set<Integer> bufferBlocks) {
         long readPos = pieceNr * pieceSize;
         int readLength;
         if (lastPiece.getValue0() == pieceNr) {
@@ -99,7 +100,7 @@ public class IncompleteFileMngr implements FileMngr {
         } else {
             readLength = pieceSize;
         }
-        return read(readPos, readLength);
+        return read(readerId, readPos, readLength, bufferBlocks);
     }
 
     @Override

@@ -23,6 +23,7 @@ import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import java.util.Set;
 import org.javatuples.Pair;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
 
 /**
@@ -60,11 +61,11 @@ public class CompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public ByteBuffer read(long readPos, int length) {
+    public ByteBuffer read(Identifier readerId, long readPos, int length, Set<Integer> bufferBlocks) {
         if(readPos + length > storage.length()) {
             throw new RuntimeException("logic error");
         }
-        byte[] readB = storage.read(readPos, length);
+        byte[] readB = storage.read(readerId, readPos, length, bufferBlocks);
         ByteBuffer readBB = ByteBuffer.wrap(readB);
         return readBB;
     }
@@ -88,7 +89,7 @@ public class CompleteFileMngr implements FileMngr {
     }
 
     @Override
-    public ByteBuffer readPiece(int pieceNr) {
+    public ByteBuffer readPiece(Identifier readerId, int pieceNr, Set<Integer> bufferBlocks) {
         long readPos = pieceNr * pieceSize;
         int readLength;
         if (lastPiece.getValue0() == pieceNr) {
@@ -96,7 +97,7 @@ public class CompleteFileMngr implements FileMngr {
         } else {
             readLength = pieceSize;
         }
-        ByteBuffer readBB = read(readPos, readLength);
+        ByteBuffer readBB = read(readerId, readPos, readLength, bufferBlocks);
         return readBB;
     }
 

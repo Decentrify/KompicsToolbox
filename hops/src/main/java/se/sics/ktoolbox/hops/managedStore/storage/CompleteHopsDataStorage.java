@@ -54,7 +54,7 @@ public class CompleteHopsDataStorage implements Storage {
     }
 
     @Override
-    public byte[] read(long readPos, int readLength) {
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> bufferBlocks) {
         byte[] result;
         try {
             result = HDFSHelper.read(resource, user, readPos, readLength);
@@ -74,10 +74,5 @@ public class CompleteHopsDataStorage implements Storage {
     @Override
     public int write(long writePos, byte[] bytes) {
         throw new RuntimeException("hops completed can only read");
-    }
-
-    @Override
-    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

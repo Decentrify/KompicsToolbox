@@ -28,7 +28,6 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public interface Storage {
     public void tearDown();
     
-    public byte[] read(long readPos, int readLength);
     public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks);
     public int write(long writePos, byte[] bytes);
     public long length();

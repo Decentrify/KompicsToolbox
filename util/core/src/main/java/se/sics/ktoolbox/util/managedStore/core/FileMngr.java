@@ -21,6 +21,7 @@ package se.sics.ktoolbox.util.managedStore.core;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -30,10 +31,10 @@ public interface FileMngr {
     
     //absolute position
     public boolean has(long readPos, int length);
-    public ByteBuffer read(long readPos, int length);
+    public ByteBuffer read(Identifier readerId, long readPos, int length, Set<Integer> bufferBlocks);
     //piece position
     public boolean hasPiece(int pieceNr);
-    public ByteBuffer readPiece(int pieceNr);
+    public ByteBuffer readPiece(Identifier readerId, int pieceNr, Set<Integer> bufferBlocks);
     //block position
     public double percentageCompleted();
     public boolean isComplete(int fromBlockNr);

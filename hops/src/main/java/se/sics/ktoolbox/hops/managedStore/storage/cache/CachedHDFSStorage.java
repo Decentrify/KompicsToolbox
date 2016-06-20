@@ -51,7 +51,13 @@ public class CachedHDFSStorage implements Storage {
         this.resource = resource;
         this.user = user;
         this.appendPos = HDFSHelper.length(resource, user);
+        if(appendPos == -1) {
+            appendPos = 0;
+        }
         if (fileSize == -1) {
+            if(appendPos == 0) {
+                throw new RuntimeException("logic error");
+            }
             this.fileSize = appendPos;
         } else {
             this.fileSize = fileSize;
@@ -98,10 +104,5 @@ public class CachedHDFSStorage implements Storage {
             throw new RuntimeException(ex);
         }
         return result.array();
-    }
-
-    @Override
-    public byte[] read(long readPos, int readLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

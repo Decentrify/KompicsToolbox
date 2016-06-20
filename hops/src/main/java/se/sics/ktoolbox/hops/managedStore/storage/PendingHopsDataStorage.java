@@ -57,7 +57,7 @@ public class PendingHopsDataStorage implements Storage {
     }
 
     @Override
-    public byte[] read(final long readPos, final int readLength) {
+    public byte[] read(Identifier readerId, final long readPos, final int readLength, Set<Integer> bufferBlocks) {
         try {
            byte[] result = HDFSHelper.read(resource, user, readPos, readLength);
            return result;
@@ -91,10 +91,5 @@ public class PendingHopsDataStorage implements Storage {
         } catch (IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
         }
-    }
-
-    @Override
-    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

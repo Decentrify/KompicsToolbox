@@ -19,6 +19,10 @@
 
 package se.sics.ktoolbox.util.managedStore.core.impl.block;
 
+import java.util.HashSet;
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.managedStore.core.BlockMngr;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
@@ -62,7 +66,7 @@ public class InMemoryBlockMngr implements BlockMngr {
 
     @Override
     public byte[] getBlock() {
-        return storage.read(0, blockSize);
+        return storage.read(null, 0, blockSize, null);
     }
 
     @Override

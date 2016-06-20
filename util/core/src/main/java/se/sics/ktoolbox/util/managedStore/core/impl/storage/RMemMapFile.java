@@ -47,7 +47,7 @@ public class RMemMapFile implements Storage {
     }
     
     @Override
-    public byte[] read(long readPos, int readLength) {
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> bufferBlocks) {
         if(readPos > Integer.MAX_VALUE) {
             throw new RuntimeException("MemoryMappedFiles only allow integer size for read values");
         }
@@ -76,10 +76,5 @@ public class RMemMapFile implements Storage {
     @Override
     public long length() {
         return length;
-    }
-
-    @Override
-    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

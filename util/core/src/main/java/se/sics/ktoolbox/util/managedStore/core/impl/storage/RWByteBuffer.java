@@ -42,7 +42,7 @@ public class RWByteBuffer implements Storage {
     }
 
     @Override
-    public byte[] read(long readPos, int readLength) {
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> bufferBlocks) {
         if(readPos > Integer.MAX_VALUE) {
             throw new RuntimeException("In memory buffer only allow integer sizes");
         }
@@ -90,10 +90,5 @@ public class RWByteBuffer implements Storage {
     @Override
     public long length() {
         return length;
-    }
-
-    @Override
-    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

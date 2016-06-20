@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.javatuples.Pair;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.HashMngr;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
@@ -53,11 +54,11 @@ public class SimpleHashMngr implements HashMngr {
 
     @Override
     public ByteBuffer readHash(int hashNr) {
-        return ByteBuffer.wrap(storage.read(hashNr * hashSize, hashSize));
+        return ByteBuffer.wrap(storage.read(null, hashNr * hashSize, hashSize, null));
     }
     
     @Override
-    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Set<Integer> hashNr) {
+    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Identifier readerId, Set<Integer> hashNr, Set<Integer> bufferBlocks) {
         Map<Integer, ByteBuffer> hashes = new HashMap<>();
         Set<Integer> missingHashes = new HashSet<>();
         for (Integer hash : hashNr) {

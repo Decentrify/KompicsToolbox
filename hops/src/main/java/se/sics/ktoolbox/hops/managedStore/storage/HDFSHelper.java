@@ -117,7 +117,10 @@ public class HDFSHelper {
                     final Configuration conf = new Configuration();
                     conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
-                        long length = fs.getLength(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName));
+                        long length = -1;
+                        if (fs.isFile(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName))) {
+                            length = fs.getLength(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName));
+                        }
                         return length;
                     } catch (IOException ex) {
                         LOG.warn("{}could not get size of file:{}", logPrefix, ex.getMessage());
@@ -138,7 +141,7 @@ public class HDFSHelper {
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 public Boolean run() throws Exception {
                     final Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
+                    conf.set("fs.defaultFS", "hdfs://" + resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
                         fs.delete(new Path(resource.dirPath + Path.SEPARATOR + resource.fileName), false);
                         return true;
@@ -159,9 +162,10 @@ public class HDFSHelper {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         try {
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+                @Override
                 public Boolean run() throws Exception {
                     Configuration conf = new Configuration();
-                    conf.set("fs.defaultFS", resource.hopsIp + ":" + resource.hopsPort);
+                    conf.set("fs.defaultFS", "hdfs://" + resource.hopsIp + ":" + resource.hopsPort);
                     try (FileSystem fs = FileSystem.get(conf)) {
                         if (!fs.isDirectory(new Path(resource.dirPath))) {
                             fs.mkdirs(new Path(resource.dirPath));
@@ -199,6 +203,8 @@ public class HDFSHelper {
         } catch (IOException | InterruptedException ex) {
             LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
             return false;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
