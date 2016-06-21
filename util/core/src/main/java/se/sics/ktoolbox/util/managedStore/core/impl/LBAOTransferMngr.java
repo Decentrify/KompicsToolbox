@@ -51,6 +51,7 @@ public class LBAOTransferMngr implements TransferMngr {
     private int writeBlockNr;
 
     private final TreeMap<Integer, BlockMngr> queuedBlocks = new TreeMap<>();
+    private final Set<Integer> bufferHint = new HashSet<>();
     private final Set<Integer> pendingPieces = new HashSet<>();
     private final ArrayList<Integer> nextPieces = new ArrayList<>();
     private final Set<Integer> pendingHashes = new HashSet<>();
@@ -63,10 +64,15 @@ public class LBAOTransferMngr implements TransferMngr {
         this.maxBufferSize = maxBufferSize;
         this.writeBlockNr = 0;
     }
-    
+
     @Override
     public void tearDown() {
         fileMngr.tearDown();
+    }
+
+    @Override
+    public Set<Integer> bufferHint() {
+        return new HashSet<>(bufferHint);
     }
 
     public void writeHashes(Map<Integer, ByteBuffer> hashes, Set<Integer> missingHashes) {
@@ -126,6 +132,7 @@ public class LBAOTransferMngr implements TransferMngr {
                     fileMngr.writeBlock(blockNr, blockBytes);
                     writeBlockNr++;
                     it.remove();
+                    bufferHint.remove(blockNr);
                 } else {
                     resetBlocks.put(blockNr, blockBytes);
                     break;
@@ -151,13 +158,13 @@ public class LBAOTransferMngr implements TransferMngr {
     }
 
     public int prepareDownload(int targetBlockNr, PrepDwnlInfo prepInfo) {
-        if(targetBlockNr != 0) {
+        if (targetBlockNr != 0) {
             throw new RuntimeException("can't do jumps");
         }
-        if(queuedBlocks.size() > maxBufferSize) {
+        if (queuedBlocks.size() > maxBufferSize) {
             return -1;
         }
-        
+
         Set<Integer> excludeBlocks = new HashSet<>(queuedBlocks.keySet());
         Set<Integer> excludeHashes = new HashSet<>(pendingHashes);
         excludeHashes.addAll(nextHashes);
@@ -182,18 +189,33 @@ public class LBAOTransferMngr implements TransferMngr {
         }
 
         queueBlock(blockPos);
-        if (dwnlHashes && hashPos != -1) {
+        bufferHint.add(blockPos);
+        int aux = blockPos;
+        for (int i = 0; i < 5; i++) {
+            int bufHint = fileMngr.nextBlock(aux, excludeHashes);
+            if (bufHint == -1) {
+                break;
+            }
+            bufferHint.add(bufHint);
+            aux = bufHint;
+        }
+
+        if (dwnlHashes && hashPos
+                != -1) {
             int nrHashes = (blockPos > hashPos ? blockPos - hashPos : 0);
             nrHashes = nrHashes + prepInfo.hashesPerMsg * prepInfo.hashMsgPerRound;
             prepareNewHashes(hashPos, nrHashes);
         }
         int hashMsgs;
+
         if (nextHashes.isEmpty()) {
             hashMsgs = 0;
         } else {
             hashMsgs = nextHashes.size() % prepInfo.hashesPerMsg == 0 ? nextHashes.size() / prepInfo.hashesPerMsg : nextHashes.size() / prepInfo.hashesPerMsg + 1;
         }
-        return nextPieces.size() + hashMsgs;
+
+        return nextPieces.size()
+                + hashMsgs;
     }
 
     private void prepareNewHashes(int hashPos, int nrHashes) {

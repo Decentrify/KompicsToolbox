@@ -79,7 +79,9 @@ public class OnDemandWithRetentionHashMngr implements HashMngr {
         } else {
             readLength = blockSize;
         }
-        ByteBuffer fileBlock = fileMngr.read(readerId, hashNr * blockSize, readLength, bufferBlocks);
+        Set<Integer> auxBufBlocks = new HashSet<Integer>(bufferBlocks);
+        auxBufBlocks.add(hashNr);
+        ByteBuffer fileBlock = fileMngr.read(readerId, hashNr * blockSize, readLength, auxBufBlocks);
         ByteBuffer hash = ByteBuffer.wrap(HashUtil.makeHash(fileBlock.array(), hashAlg));
         hashes.put(hashNr, hash);
         hashCompTracker.addComponent(hashNr);

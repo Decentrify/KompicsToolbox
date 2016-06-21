@@ -235,7 +235,7 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
             Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> blockDetails = ManagedStoreHelper.blockDetails(readPos,
                     HDFSCache.this.config.defaultPiecesPerBlock, HDFSCache.this.config.defaultPieceSize);
             int blockNr = blockDetails.getValue1().getValue0();
-            int blockOffset = blockDetails.getValue1().getValue1();
+            int blockOffset = blockDetails.getValue1().getValue1() * HDFSCache.this.config.defaultPieceSize;
 
             //read pieces only
             assert blockDetails.getValue0().getValue1() == 0;
@@ -248,7 +248,7 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
                 throw new RuntimeException("logic error - block should be here after setting the cache");
             }
             if (cb.isAvailable()) {
-                LOG.info("hitting cache for block:{}", blockNr);
+                LOG.debug("hitting cache for block:{}", blockNr);
                 byte[] result = cb.read(blockOffset, readLength);
                 futureResult.set(ByteBuffer.wrap(result));
             } else {

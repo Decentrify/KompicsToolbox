@@ -51,11 +51,15 @@ public class CachedHDFSStorage implements Storage {
         this.resource = resource;
         this.user = user;
         this.appendPos = HDFSHelper.length(resource, user);
-        if(appendPos == -1) {
+        if (appendPos == -1) {
+            boolean result = HDFSHelper.simpleCreate(resource, user);
+            if (!result) {
+                throw new RuntimeException("cannot create file");
+            }
             appendPos = 0;
         }
         if (fileSize == -1) {
-            if(appendPos == 0) {
+            if (appendPos == 0) {
                 throw new RuntimeException("logic error");
             }
             this.fileSize = appendPos;
@@ -81,17 +85,9 @@ public class CachedHDFSStorage implements Storage {
         if (writePos < appendPos) {
             throw new RuntimeException("can only append to HDFS");
         }
-        try {
-            int bytesWritten = HDFSHelper.append(resource, user, bytes);
-            long auxSize = appendPos;
-            appendPos = HDFSHelper.length(resource, user);
-            if (auxSize + bytesWritten != appendPos) {
-                throw new RuntimeException("logic error");
-            }
-            return bytesWritten;
-        } catch (IOException | InterruptedException ex) {
-            throw new RuntimeException("can't write");
-        }
+        int bytesWritten = HDFSHelper.append(resource, user, bytes);
+        appendPos += bytesWritten;
+        return bytesWritten;
     }
 
     @Override

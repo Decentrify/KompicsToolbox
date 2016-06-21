@@ -46,6 +46,7 @@ public class SimpleTransferMngr implements TransferMngr {
     private final FileMngr fileMngr;
     //***************************INTERNAL_STATE*********************************
     private final Map<Integer, BlockMngr> queuedBlocks = new HashMap<>();
+    private final Set<Integer> bufferHint = new HashSet<>();
     private final Set<Integer> pendingPieces = new HashSet<>();
     private final ArrayList<Integer> nextPieces = new ArrayList<>();
     private final Set<Integer> pendingHashes = new HashSet<>();
@@ -60,6 +61,11 @@ public class SimpleTransferMngr implements TransferMngr {
     @Override
     public void tearDown() {
         fileMngr.tearDown();
+    }
+    
+    @Override
+    public Set<Integer> bufferHint() {
+        return new HashSet<>(bufferHint);
     }
 
     public void writeHashes(Map<Integer, ByteBuffer> hashes, Set<Integer> missingHashes) {
@@ -121,6 +127,7 @@ public class SimpleTransferMngr implements TransferMngr {
         }
         for (Integer blockNr : completedBlocks) {
             queuedBlocks.remove(blockNr);
+            bufferHint.remove(blockNr);
         }
         for (Integer blockNr : resetBlocks.keySet()) {
             queueBlock(blockNr);
@@ -163,6 +170,11 @@ public class SimpleTransferMngr implements TransferMngr {
         }
 
         queueBlock(blockPos);
+        bufferHint.add(blockPos);
+        int bufHint = fileMngr.nextBlock(blockPos, excludeBlocks);
+        if(bufHint != -1) {
+            bufferHint.add(bufHint);
+        }
         if (dwnlHashes && hashPos != -1) {
             int nrHashes = (blockPos > hashPos ? blockPos - hashPos : 0);
             nrHashes = nrHashes + prepInfo.hashesPerMsg * prepInfo.hashMsgPerRound;

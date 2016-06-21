@@ -55,5 +55,6 @@ public interface TransferMngr {
     public void checkCompleteBlocks();
 
     public int prepareDownload(int targetBlockNr, PrepDwnlInfo prepInfo);
-
+    
+    public Set<Integer> bufferHint();
 }

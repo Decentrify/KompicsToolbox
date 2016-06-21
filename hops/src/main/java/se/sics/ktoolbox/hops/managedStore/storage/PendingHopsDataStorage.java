@@ -59,8 +59,8 @@ public class PendingHopsDataStorage implements Storage {
     @Override
     public byte[] read(Identifier readerId, final long readPos, final int readLength, Set<Integer> bufferBlocks) {
         try {
-           byte[] result = HDFSHelper.read(resource, user, readPos, readLength);
-           return result;
+            byte[] result = HDFSHelper.read(resource, user, readPos, readLength);
+            return result;
         } catch (IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
         }
@@ -86,10 +86,6 @@ public class PendingHopsDataStorage implements Storage {
     }
 
     private int append(byte[] bytes) {
-        try {
-            return HDFSHelper.append(resource, user, bytes);
-        } catch (IOException | InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+        return HDFSHelper.append(resource, user, bytes);
     }
 }
