@@ -87,7 +87,7 @@ public class CachedHDFSStorage implements Storage {
 
     @Override
     public void tearDown() {
-        if (!buffer.isEmpty()) {
+        if (buffer != null && !buffer.isEmpty()) {
             SettableFuture<Boolean> waitForBuffer = buffer.waitEmpty();
             try {
                 waitForBuffer.get();
