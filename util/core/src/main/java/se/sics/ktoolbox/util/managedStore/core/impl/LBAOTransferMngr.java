@@ -191,17 +191,19 @@ public class LBAOTransferMngr implements TransferMngr {
         queueBlock(blockPos);
         bufferHint.add(blockPos);
         int aux = blockPos;
+        Set<Integer> hintExclude = new HashSet<>(excludeBlocks);
+        hintExclude.add(aux);
         for (int i = 0; i < 5; i++) {
-            int bufHint = fileMngr.nextBlock(aux, excludeHashes);
+            int bufHint = fileMngr.nextBlock(aux, hintExclude);
             if (bufHint == -1) {
                 break;
             }
             bufferHint.add(bufHint);
             aux = bufHint;
+            hintExclude.add(aux);
         }
 
-        if (dwnlHashes && hashPos
-                != -1) {
+        if (dwnlHashes && hashPos != -1) {
             int nrHashes = (blockPos > hashPos ? blockPos - hashPos : 0);
             nrHashes = nrHashes + prepInfo.hashesPerMsg * prepInfo.hashMsgPerRound;
             prepareNewHashes(hashPos, nrHashes);
@@ -214,8 +216,7 @@ public class LBAOTransferMngr implements TransferMngr {
             hashMsgs = nextHashes.size() % prepInfo.hashesPerMsg == 0 ? nextHashes.size() / prepInfo.hashesPerMsg : nextHashes.size() / prepInfo.hashesPerMsg + 1;
         }
 
-        return nextPieces.size()
-                + hashMsgs;
+        return nextPieces.size() + hashMsgs;
     }
 
     private void prepareNewHashes(int hashPos, int nrHashes) {

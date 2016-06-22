@@ -53,11 +53,11 @@ public class HDFSHelperTest {
 //        }
 //    }
 
-    @Test
-    public void simpleCreate() {
-        HDFSResource resource = new HDFSResource("bbc1.sics.se", 26801, "/experiment/download/", "file");
-        String user = "glassfish";
-        HDFSHelper.delete(resource, user);
+//    @Test
+//    public void simpleCreate() {
+//        HDFSResource resource = new HDFSResource("bbc1.sics.se", 26801, "/experiment/download/", "file");
+//        String user = "glassfish";
+//        HDFSHelper.delete(resource, user);
 //        HDFSHelper.create(resource, user, 10*1000*1000);
-    }
+//    }
 }

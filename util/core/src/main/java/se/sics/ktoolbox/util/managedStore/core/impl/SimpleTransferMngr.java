@@ -171,9 +171,17 @@ public class SimpleTransferMngr implements TransferMngr {
 
         queueBlock(blockPos);
         bufferHint.add(blockPos);
-        int bufHint = fileMngr.nextBlock(blockPos, excludeBlocks);
-        if(bufHint != -1) {
+        int aux = blockPos;
+        Set<Integer> hintExclude = new HashSet<>(excludeBlocks);
+        hintExclude.add(aux);
+        for (int i = 0; i < 5; i++) {
+            int bufHint = fileMngr.nextBlock(aux, hintExclude);
+            if (bufHint == -1) {
+                break;
+            }
             bufferHint.add(bufHint);
+            aux = bufHint;
+            hintExclude.add(aux);
         }
         if (dwnlHashes && hashPos != -1) {
             int nrHashes = (blockPos > hashPos ? blockPos - hashPos : 0);
