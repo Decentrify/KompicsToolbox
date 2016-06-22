@@ -21,6 +21,7 @@ package se.sics.ktoolbox.hops.managedStore.storage;
 import java.util.Random;
 import org.junit.Test;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
+import se.sics.ktoolbox.util.profiling.KProfiler;
 
 /**
  *
@@ -28,30 +29,26 @@ import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
  */
 public class HDFSHelperTest {
 
-//    @Test
-//    public void simpleAppend() throws InterruptedException {
-//        HDFSResource resource = new HDFSResource("bbc1.sics.se", 26801, "/experiment/download/", "test4");
-//        String user = "glassfish";
-//        Random rand = new Random(123);
-//        byte[] data;
-//
-//        HDFSHelper.delete(resource, user);
-//        HDFSHelper.simpleCreate(resource, user);
-//        System.err.println("file created");
-//        data = new byte[1024];
-//        rand.nextBytes(data);
-//        System.err.println("appending 1");
-//        HDFSHelper.append(resource, user, data);
-//        System.err.println("appended 1");
-//
-//        for (int i = 0; i < 100; i++) {
-//            data = new byte[1024 * 1024];
-//            rand.nextBytes(data);
-//            System.err.println("appending" + i);
-//            HDFSHelper.append(resource, user, data);
-//            System.err.println("appended" + i);
-//        }
-//    }
+    @Test
+    public void simpleAppend() throws InterruptedException {
+        HDFSResource resource = new HDFSResource("bbc1.sics.se", 26801, "/experiment/download/", "test");
+        String user = "glassfish";
+        Random rand = new Random(123);
+        byte[] data;
+
+        HDFSHelper.delete(resource, user);
+        HDFSHelper.simpleCreate(resource, user);
+
+        KProfiler kp = new KProfiler(KProfiler.Type.LOG);
+        for (int i = 0; i < 100; i++) {
+            data = new byte[1024 * 1024];
+            rand.nextBytes(data);
+            kp.start("hdfs", "append");
+            HDFSHelper.append(resource, user, data);
+            kp.end();
+        }
+        HDFSHelper.delete(resource, user);
+    }
 
 //    @Test
 //    public void simpleCreate() {

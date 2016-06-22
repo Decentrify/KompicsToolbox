@@ -16,15 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hops.managedStore.storage.cache;
+package se.sics.ktoolbox.hops.managedStore.storage.buffer;
 
-import java.nio.ByteBuffer;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfig;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ReadDriverI {
-    public void success(ReadOp op, ByteBuffer result);
-    public void fail(ReadOp op, Exception ex);
+public class HDFSAppendBufferKConfig {
+    public static final String PREFIX = "hdfsWriteBuffer";
+    
+    public HDFSAppendBufferKConfig(Config config) {
+    }
 }

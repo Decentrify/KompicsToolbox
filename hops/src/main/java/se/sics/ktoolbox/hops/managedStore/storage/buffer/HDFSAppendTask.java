@@ -16,37 +16,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hops.managedStore.storage.cache;
+package se.sics.ktoolbox.hops.managedStore.storage.buffer;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import se.sics.ktoolbox.hops.managedStore.storage.HDFSHelper;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HDFSReadTask implements Runnable {
+public class HDFSAppendTask implements Runnable {
 
     private final HDFSResource resource;
     private final String user;
-    private final ReadOp readOp;
-    private final ReadDriverI callback;
+    private final AppendDriverI callback;
+    private final int blockNr;
+    private final byte[] data;
 
-    public HDFSReadTask(HDFSResource resource, String user, ReadOp readOp, ReadDriverI callback) {
+    public HDFSAppendTask(HDFSResource resource, String user, AppendDriverI callback, int blockNr, byte[] data) {
         this.resource = resource;
         this.user = user;
-        this.readOp = readOp;
         this.callback = callback;
+        this.blockNr = blockNr;
+        this.data = data;
     }
 
     @Override
     public void run() {
         try {
-            byte[] byte_read = HDFSHelper.read(resource, user, readOp.readPos, readOp.readLength);
-            callback.success(readOp, ByteBuffer.wrap(byte_read));
-        } catch (IOException | InterruptedException ex) {
-            callback.fail(readOp, ex);
+            int writtenBytes = HDFSHelper.append(resource, user, data);
+            if (writtenBytes != data.length) {
+                callback.fail(blockNr, new RuntimeException("append failed - didn't write all"));
+            } else {
+                callback.success(blockNr);
+            }
+        } catch (Exception ex) {
+            callback.fail(blockNr, ex);
         }
     }
 }

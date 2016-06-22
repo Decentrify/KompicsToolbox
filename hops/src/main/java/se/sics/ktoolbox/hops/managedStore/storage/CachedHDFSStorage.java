@@ -16,19 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hops.managedStore.storage.cache;
+package se.sics.ktoolbox.hops.managedStore.storage;
 
 import com.google.common.util.concurrent.SettableFuture;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.hops.managedStore.storage.HDFSHelper;
+import se.sics.ktoolbox.hops.managedStore.storage.buffer.HDFSAppendBuffer;
+import se.sics.ktoolbox.hops.managedStore.storage.buffer.HDFSAppendBufferImpl;
+import se.sics.ktoolbox.hops.managedStore.storage.cache.HDFSReadCacheImpl;
+import se.sics.ktoolbox.hops.managedStore.storage.cache.HDFSReadCacheKConfig;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
@@ -42,15 +45,16 @@ public class CachedHDFSStorage implements Storage {
     private final HDFSResource resource;
     private final String user;
 
-    private final HDFSCache cache;
+    private final HDFSAppendBuffer buffer;
+    private final HDFSReadCacheImpl cache;
+    private final HDFSReadCacheKConfig cacheConfig;
 
     private final long fileSize;
-    private long appendPos;
 
     public CachedHDFSStorage(Config config, HDFSResource resource, String user, long fileSize) {
         this.resource = resource;
         this.user = user;
-        this.appendPos = HDFSHelper.length(resource, user);
+        long appendPos = HDFSHelper.length(resource, user);
         if (appendPos == -1) {
             boolean result = HDFSHelper.simpleCreate(resource, user);
             if (!result) {
@@ -66,12 +70,31 @@ public class CachedHDFSStorage implements Storage {
         } else {
             this.fileSize = fileSize;
         }
-        HDFSCacheKCWrapper cacheConfig = new HDFSCacheKCWrapper(config);
-        cache = new HDFSCache(cacheConfig, resource, user, fileSize);
+
+        cacheConfig = new HDFSReadCacheKConfig(config);
+        if (appendPos < fileSize) {
+            if (appendPos != 0) {
+                throw new RuntimeException("resume not supported yet");
+            } else {
+                int blockNr = ManagedStoreHelper.blockNr(appendPos, cacheConfig.defaultPieceSize, cacheConfig.defaultPiecesPerBlock);
+                buffer = new HDFSAppendBufferImpl(config, resource, user, blockNr);
+            }
+        } else {
+            buffer = null;
+        }
+        cache = new HDFSReadCacheImpl(config, resource, user, fileSize);
     }
 
     @Override
     public void tearDown() {
+        if (!buffer.isEmpty()) {
+            SettableFuture<Boolean> waitForBuffer = buffer.waitEmpty();
+            try {
+                waitForBuffer.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
         cache.tearDown();
     }
 
@@ -82,16 +105,23 @@ public class CachedHDFSStorage implements Storage {
 
     @Override
     public int write(long writePos, byte[] bytes) {
-        if (writePos < appendPos) {
-            throw new RuntimeException("can only append to HDFS");
+        if (buffer == null) {
+            throw new RuntimeException("unexpected write");
         }
-        int bytesWritten = HDFSHelper.append(resource, user, bytes);
-        appendPos += bytesWritten;
+        int blockNr = ManagedStoreHelper.blockNr(writePos, cacheConfig.defaultPieceSize, cacheConfig.defaultPiecesPerBlock);
+        int bytesWritten = buffer.writeBlock(blockNr, bytes);
         return bytesWritten;
     }
 
     @Override
     public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks) {
+        if (buffer != null) {
+            int blockNr = ManagedStoreHelper.blockNr(readPos, cacheConfig.defaultPieceSize, cacheConfig.defaultPiecesPerBlock);
+            byte[] bufferedBlock = buffer.readBlock(blockNr);
+            if (bufferedBlock != null) {
+                cache.writeBlock(blockNr, bufferedBlock);
+            }
+        }
         SettableFuture<ByteBuffer> futureResult = cache.read(readerId, readPos, readLength, cacheBlocks);
         ByteBuffer result;
         try {

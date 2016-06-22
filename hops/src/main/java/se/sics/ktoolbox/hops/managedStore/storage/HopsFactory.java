@@ -20,7 +20,6 @@ package se.sics.ktoolbox.hops.managedStore.storage;
 
 import org.javatuples.Pair;
 import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.hops.managedStore.storage.cache.CachedHDFSStorage;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;

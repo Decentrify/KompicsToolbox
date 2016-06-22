@@ -78,7 +78,7 @@ public class ManagedStoreHelper {
     }
     
     public static int blockNr(long position, int piecesPerBlock, int pieceSize) {
-        return blockDetails(position, piecesPerBlock, pieceSize).getValue0().getValue0();
+        return blockDetails(position, piecesPerBlock, pieceSize).getValue1().getValue0();
     }
     
     public static int blockSize(int blockNr, long fileSize, int piecesPerBlock, int pieceSize) {

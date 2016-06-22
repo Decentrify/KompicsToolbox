@@ -16,15 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hops.managedStore.storage.cache;
+package se.sics.ktoolbox.util.config;
 
-import java.nio.ByteBuffer;
+import com.google.common.base.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.sics.kompics.config.Config;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface WriteDriverI {
-    public void success(ReadOp op, ByteBuffer result);
-    public void fail(ReadOp op, Exception ex);
+public class KConfig {
+    private static final Logger LOG = LoggerFactory.getLogger(KConfig.class);
+    
+    public static <T> T readValue(Config config, String key, Class<T> type) {
+        Optional<T> val = config.readValue(key, type);
+        if(!val.isPresent()) {
+            LOG.error("missing:{}", key);
+            throw new RuntimeException("missing:" + key);
+        }
+        return val.get();
+    }
 }

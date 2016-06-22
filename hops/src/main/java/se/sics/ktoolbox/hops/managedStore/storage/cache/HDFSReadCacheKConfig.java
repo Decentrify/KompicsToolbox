@@ -19,12 +19,20 @@
 package se.sics.ktoolbox.hops.managedStore.storage.cache;
 
 import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.util.config.KConfig;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HDFSCacheKCWrapper {
+public class HDFSReadCacheKConfig {
+    public static final String PREFIX = "hdfsReadCache";
+    public static final String MAX_THREADS = PREFIX + ".maxThreads";
+    public static final String READ_WINDOW_SIZE = PREFIX + ".readWindowSize";
+    public static final String MAX_READERS = PREFIX + ".maxReaders";
+    public static final String PIECE_SIZE = PREFIX + ".pieceSize";
+    public static final String PIECES_PER_BLOCK = PREFIX + ".piecesPerBlock";
+    
     public final int maxThreads;
     public final int readWindowSize;
     public final int maxReaders;
@@ -33,13 +41,13 @@ public class HDFSCacheKCWrapper {
     public final int defaultPiecesPerBlock;
     public final int defaultBlockSize;
     
-    public HDFSCacheKCWrapper(Config config) {
-        this.maxThreads = KConfigHelper.read(config, HDFSCacheKConfig.maxThreads);
-        this.readWindowSize = KConfigHelper.read(config, HDFSCacheKConfig.readWindowSize);
-        this.maxReaders = KConfigHelper.read(config, HDFSCacheKConfig.maxReaders);
+    public HDFSReadCacheKConfig(Config config) {
+        this.maxThreads = KConfig.readValue(config, MAX_THREADS, Integer.class);
+        this.readWindowSize = KConfig.readValue(config, READ_WINDOW_SIZE, Integer.class);
+        this.maxReaders = KConfig.readValue(config, MAX_READERS, Integer.class);
         this.cacheSize = readWindowSize * maxReaders;
-        this.defaultPieceSize = KConfigHelper.read(config, HDFSCacheKConfig.pieceSize);
-        this.defaultPiecesPerBlock = KConfigHelper.read(config, HDFSCacheKConfig.piecesPerBlock);
+        this.defaultPieceSize = KConfig.readValue(config, PIECE_SIZE, Integer.class);
+        this.defaultPiecesPerBlock = KConfig.readValue(config, PIECES_PER_BLOCK, Integer.class);
         this.defaultBlockSize = defaultPieceSize * defaultPiecesPerBlock;
     }
 }

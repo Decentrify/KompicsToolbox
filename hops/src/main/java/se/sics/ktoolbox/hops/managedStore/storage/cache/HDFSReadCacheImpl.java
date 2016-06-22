@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.hops.managedStore.storage.HDFSHelper;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -42,12 +43,12 @@ import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-class HDFSCache implements WriteDriverI, ReadDriverI {
-    private static final Logger LOG = LoggerFactory.getLogger(HDFSCache.class);
+public class HDFSReadCacheImpl implements HDFSReadCache, ReadDriverI {
+    private static final Logger LOG = LoggerFactory.getLogger(HDFSReadCacheImpl.class);
     private String logPrefix;
 
     //**************************************************************************
-    private final HDFSCacheKCWrapper config;
+    private final HDFSReadCacheKConfig cacheConfig;
     private final HDFSResource readResource;
     private final String user;
     //**********************************AUX*************************************
@@ -61,8 +62,8 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
     //************************ENSURE_THREAD_SAFETY******************************
     private final TreeMap<Integer, CachedBlock> cache = new TreeMap<>();
 
-    public HDFSCache(HDFSCacheKCWrapper config, HDFSResource readResource, String user, long setFileSize) {
-        this.config = config;
+    public HDFSReadCacheImpl(Config config, HDFSResource readResource, String user, long setFileSize) {
+        this.cacheConfig = new HDFSReadCacheKConfig(config);
         this.readResource = readResource;
         this.user = user;
         if (setFileSize == -1) {
@@ -70,8 +71,8 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
         } else {
             fileSize = setFileSize;
         }
-        lastBlock = ManagedStoreHelper.lastBlock(fileSize, config.defaultBlockSize);
-        hdfsReaders = Executors.newFixedThreadPool(config.maxThreads);
+        lastBlock = ManagedStoreHelper.lastBlock(fileSize, cacheConfig.defaultBlockSize);
+        hdfsReaders = Executors.newFixedThreadPool(cacheConfig.maxThreads);
     }
 
     public void tearDown() {
@@ -86,7 +87,7 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
         }
     }
 
-    //*****************************WriteDriverI*********************************
+    //*****************************ReadDriverI**********************************
     @Override
     public synchronized void success(ReadOp op, ByteBuffer result) {
         CachedBlock cb = cache.get(op.blockNr);
@@ -102,7 +103,7 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
             long readPos = blockingRead.getValue0().readPos;
             int readLength = blockingRead.getValue0().readLength;
 
-            int blockOffset = ManagedStoreHelper.blockDetails(readPos, config.defaultPiecesPerBlock, config.defaultPieceSize).getValue1().getValue1();
+            int blockOffset = ManagedStoreHelper.blockDetails(readPos, cacheConfig.defaultPiecesPerBlock, cacheConfig.defaultPieceSize).getValue1().getValue1();
             byte[] readResult = cb.read(blockOffset, readLength);
             if (readResult == null) {
                 throw new RuntimeException("logic error while reading from block");
@@ -117,12 +118,19 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
         throw new RuntimeException(ex);
     }
 
-    //*******************************ReadDriverI********************************
+    //*******************************HDFSReadCache********************************
+    @Override
+    public synchronized void writeBlock(int blockNr, byte[] data) {
+        CachedBlock cb = new CachedBlock(blockNr);
+        cb.setVal(ByteBuffer.wrap(data));
+        cache.put(blockNr, cb);
+    }
+    
     @Override
     public synchronized SettableFuture<ByteBuffer> read(Identifier reader, long readPos, int readLength, Set<Integer> cacheBlocks) {
         ReaderDiskHead rdh = readers.get(reader);
         if (rdh == null) {
-            if (readers.size() > config.maxReaders) {
+            if (readers.size() > cacheConfig.maxReaders) {
                 throw new RuntimeException("too many readers");
             }
             rdh = new ReaderDiskHead();
@@ -144,14 +152,14 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
         CachedBlock cb = cache.get(blockNr);
         if (cb == null) {
             LOG.info("reading block:{}", blockNr);
-            if (cache.size() > config.cacheSize) {
+            if (cache.size() > cacheConfig.cacheSize) {
                 cleanCache();
             }
             cb = new CachedBlock(blockNr);
             cache.put(blockNr, cb);
 
-            long readPos = (long) blockNr * config.defaultBlockSize;
-            int readLength = lastBlock.getValue0().equals(blockNr) ? lastBlock.getValue1() : config.defaultBlockSize;
+            long readPos = (long) blockNr * cacheConfig.defaultBlockSize;
+            int readLength = lastBlock.getValue0().equals(blockNr) ? lastBlock.getValue1() : cacheConfig.defaultBlockSize;
             ReadOp readOp = new ReadOp(blockNr, readPos, readLength);
             hdfsReaders.submit(new HDFSReadTask(readResource, user, readOp, this));
         }
@@ -219,23 +227,23 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
             Set<Integer> getBlocks = new HashSet<>(Sets.difference(cacheBlocks, cacheReferences.keySet()));
 
             Iterator<Integer> it = clearBlocks.iterator();
-            while (it.hasNext() && cacheReferences.size() > (config.readWindowSize + getBlocks.size())) {
+            while (it.hasNext() && cacheReferences.size() > (cacheConfig.readWindowSize + getBlocks.size())) {
                 int blockNr = it.next();
                 CachedBlock cb = cacheReferences.remove(blockNr);
                 cb.releaseRef();
             }
 
             for (Integer blockNr : getBlocks) {
-                cacheReferences.put(blockNr, HDFSCache.this.readBlock(blockNr));
+                cacheReferences.put(blockNr, HDFSReadCacheImpl.this.readBlock(blockNr));
                 
             }
         }
 
         public SettableFuture<ByteBuffer> read(long readPos, int readLength) {
             Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> blockDetails = ManagedStoreHelper.blockDetails(readPos,
-                    HDFSCache.this.config.defaultPiecesPerBlock, HDFSCache.this.config.defaultPieceSize);
+                    HDFSReadCacheImpl.this.cacheConfig.defaultPiecesPerBlock, HDFSReadCacheImpl.this.cacheConfig.defaultPieceSize);
             int blockNr = blockDetails.getValue1().getValue0();
-            int blockOffset = blockDetails.getValue1().getValue1() * HDFSCache.this.config.defaultPieceSize;
+            int blockOffset = blockDetails.getValue1().getValue1() * HDFSReadCacheImpl.this.cacheConfig.defaultPieceSize;
 
             //read pieces only
             assert blockDetails.getValue0().getValue1() == 0;
@@ -253,7 +261,7 @@ class HDFSCache implements WriteDriverI, ReadDriverI {
                 futureResult.set(ByteBuffer.wrap(result));
             } else {
                 LOG.info("waiting for block:{}", blockNr);
-                HDFSCache.this.blockingRead = Pair.with(op, futureResult);
+                HDFSReadCacheImpl.this.blockingRead = Pair.with(op, futureResult);
             }
             return futureResult;
         }
