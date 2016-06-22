@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -45,7 +47,7 @@ public class RMemMapFile implements Storage {
     }
     
     @Override
-    public byte[] read(long readPos, int readLength) {
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> bufferBlocks) {
         if(readPos > Integer.MAX_VALUE) {
             throw new RuntimeException("MemoryMappedFiles only allow integer size for read values");
         }

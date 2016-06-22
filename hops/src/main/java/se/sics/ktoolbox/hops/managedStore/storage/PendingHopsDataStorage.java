@@ -19,14 +19,11 @@
 package se.sics.ktoolbox.hops.managedStore.storage;
 
 import java.io.IOException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
@@ -38,62 +35,33 @@ public class PendingHopsDataStorage implements Storage {
     private static final Logger LOG = LoggerFactory.getLogger(Storage.class);
     private String logPrefix;
 
-    protected final String hopsURL;
-    protected final String filePath;
+    private final HDFSResource resource;
     private final String user;
-    protected FileSystem fs;
-    protected FSDataOutputStream out;
-    protected FSDataInputStream in;
+    private final long fileSize;
     private long appendPos;
-    private final long length;
 
-    public PendingHopsDataStorage(String user, String hopsURL, String filePath, long fileLength) {
-        this.hopsURL = hopsURL;
-        this.filePath = filePath;
+    public PendingHopsDataStorage(HDFSResource resource, String user, long fileSize) {
+        this.resource = resource;
         this.user = user;
-        this.appendPos = 0;
-        this.length = fileLength;
-        setup();
-    }
-
-    private void setup() {
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", hopsURL);
-        try {
-            fs = HDFSHelper.getFileSystem(hopsURL, user);
-            out = fs.create(new Path(filePath));
-            in = fs.open(new Path(filePath));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (ClassCastException ex) {
-            throw new RuntimeException(ex);
-        }
+        this.fileSize = fileSize;
+        this.appendPos = HDFSHelper.length(resource, user);
     }
 
     @Override
     public void tearDown() {
-        try {
-            this.out.close();
-            this.in.close();
-            this.fs.close();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
     }
 
     @Override
     public long length() {
-        return length;
+        return fileSize;
     }
 
     @Override
-    public byte[] read(final long readPos, final int readLength) {
+    public byte[] read(Identifier readerId, final long readPos, final int readLength, Set<Integer> bufferBlocks) {
         try {
-           return HDFSHelper.read(user, in, readPos, readLength);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (InterruptedException ex) {
+            byte[] result = HDFSHelper.read(resource, user, readPos, readLength);
+            return result;
+        } catch (IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -118,12 +86,6 @@ public class PendingHopsDataStorage implements Storage {
     }
 
     private int append(byte[] bytes) {
-        try {
-            return HDFSHelper.append(user, out, bytes);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
+        return HDFSHelper.append(resource, user, bytes);
     }
 }

@@ -25,11 +25,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import org.javatuples.Pair;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import se.sics.ktoolbox.util.managedStore.core.HashMngr;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
-import se.sics.ktoolbox.util.managedStore.core.Storage;
 import se.sics.ktoolbox.util.managedStore.core.impl.tracker.IncompleteTracker;
 import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 
@@ -69,16 +69,19 @@ public class OnDemandWithRetentionHashMngr implements HashMngr {
 
     @Override
     public ByteBuffer readHash(int hashNr) {
-        if (hashes.containsKey(hashNr)) {
-            return hashes.get(hashNr);
-        }
+        return hashes.get(hashNr);
+    }
+
+    private ByteBuffer getHash(Identifier readerId, int hashNr, Set<Integer> bufferBlocks) {
         int readLength;
         if (hashNr == lastBlock.getValue0()) {
             readLength = lastBlock.getValue1();
         } else {
             readLength = blockSize;
         }
-        ByteBuffer fileBlock = fileMngr.read(hashNr * blockSize, readLength);
+        Set<Integer> auxBufBlocks = new HashSet<Integer>(bufferBlocks);
+        auxBufBlocks.add(hashNr);
+        ByteBuffer fileBlock = fileMngr.read(readerId, hashNr * blockSize, readLength, auxBufBlocks);
         ByteBuffer hash = ByteBuffer.wrap(HashUtil.makeHash(fileBlock.array(), hashAlg));
         hashes.put(hashNr, hash);
         hashCompTracker.addComponent(hashNr);
@@ -86,12 +89,16 @@ public class OnDemandWithRetentionHashMngr implements HashMngr {
     }
 
     @Override
-    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Set<Integer> hashNr) {
+    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Identifier readerId, Set<Integer> hashNr, Set<Integer> bufferBlocks) {
         Map<Integer, ByteBuffer> resultHashes = new HashMap<>();
         Set<Integer> missingHashes = new HashSet<>();
         for (Integer hash : hashNr) {
             if (hasHash(hash)) {
-                resultHashes.put(hash, readHash(hash));
+                ByteBuffer hashVal = readHash(hash);
+                if(hashVal == null) {
+                    hashVal = getHash(readerId, hash, bufferBlocks);
+                }
+                resultHashes.put(hash, hashVal);
             } else {
                 missingHashes.add(hash);
             }

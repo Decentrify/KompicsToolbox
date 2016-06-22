@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -260,7 +261,7 @@ public class TransferNoLossTest {
             HashMngr sourceHashMngr, FileMngr sourceFileMngr, SimpleTransferMngr destinationMngr) {
         Pair<Set<Integer>, Set<Integer>> preparedReq = TransferHelper.prepareTransferReq(logPrefix, destinationMngr, pieces, prepInfo);
         Pair<Map<Integer, ByteBuffer>, Set<Integer>> hashesResp = TransferHelper.prepareHashesResp(logPrefix, sourceHashMngr, preparedReq.getValue0());
-        Pair<Map<Integer, ByteBuffer>, Set<Integer>> piecesResp = TransferHelper.preparePiecesResp(logPrefix, sourceFileMngr, preparedReq.getValue1());
+        Pair<Map<Integer, ByteBuffer>, Set<Integer>> piecesResp = TransferHelper.preparePiecesResp(null, (Set)new HashSet<Integer>(), logPrefix, sourceFileMngr, preparedReq.getValue1());
         TransferHelper.write(logPrefix, destinationMngr, hashesResp, piecesResp);
     }
 }

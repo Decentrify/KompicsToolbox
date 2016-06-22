@@ -62,7 +62,7 @@ public class InMemoryBlockMngr implements BlockMngr {
 
     @Override
     public byte[] getBlock() {
-        return storage.read(0, blockSize);
+        return storage.read(null, 0, blockSize, null);
     }
 
     @Override

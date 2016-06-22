@@ -19,6 +19,8 @@
 package se.sics.ktoolbox.hops.managedStore.storage;
 
 import org.javatuples.Pair;
+import se.sics.kompics.config.Config;
+import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
 import se.sics.ktoolbox.util.managedStore.core.ComponentTracker;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import se.sics.ktoolbox.util.managedStore.core.HashMngr;
@@ -34,16 +36,32 @@ import se.sics.ktoolbox.util.managedStore.core.impl.tracker.IncompleteTracker;
  */
 public class HopsFactory {
 
-    public static Pair<FileMngr, HashMngr> getComplete(String user, String hopsURL, String pathName, String hashAlg, int blockSize, int pieceSize) {
-        Storage fileStorage = new CompleteHopsDataStorage(user, hopsURL, pathName);
+    public static Pair<FileMngr, HashMngr> getComplete(HDFSResource resource, String user, String hashAlg, int blockSize, int pieceSize) {
+        Storage fileStorage = new CompleteHopsDataStorage(resource, user);
         FileMngr fileMngr = new CompleteFileMngr(fileStorage, blockSize, pieceSize);
         HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);
         return Pair.with(fileMngr, hashMngr);
     }
 
-    public static Pair<FileMngr, HashMngr> getIncomplete(String user, String hopsURL, String pathName, long fileLength, String hashAlg, int blockSize, int pieceSize) {
-        Storage fileStorage = new PendingHopsDataStorage(user, hopsURL, pathName, fileLength);
-        int nrBlocks = ManagedStoreHelper.nrComponents(fileLength, blockSize);
+    public static Pair<FileMngr, HashMngr> getIncomplete(HDFSResource resource, String user, long fileSize, String hashAlg, int blockSize, int pieceSize) {
+        Storage fileStorage = new PendingHopsDataStorage(resource, user, fileSize);
+        int nrBlocks = ManagedStoreHelper.nrComponents(fileSize, blockSize);
+        ComponentTracker ct = IncompleteTracker.create(nrBlocks);
+        FileMngr fileMngr = new IncompleteFileMngr(fileStorage, ct, blockSize, pieceSize);
+        HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);
+        return Pair.with(fileMngr, hashMngr);
+    }
+
+    public static Pair<FileMngr, HashMngr> getCompleteCached(Config config, HDFSResource resource, String user, String hashAlg, int blockSize, int pieceSize) {
+        Storage fileStorage = new CachedHDFSStorage(config, resource, user, -1);
+        FileMngr fileMngr = new CompleteFileMngr(fileStorage, blockSize, pieceSize);
+        HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);
+        return Pair.with(fileMngr, hashMngr);
+    }
+    
+    public static Pair<FileMngr, HashMngr> getIncompleteCached(Config config, HDFSResource resource, String user, long fileSize, String hashAlg, int blockSize, int pieceSize) {
+        Storage fileStorage = new CachedHDFSStorage(config, resource, user, fileSize);
+        int nrBlocks = ManagedStoreHelper.nrComponents(fileSize, blockSize);
         ComponentTracker ct = IncompleteTracker.create(nrBlocks);
         FileMngr fileMngr = new IncompleteFileMngr(fileStorage, ct, blockSize, pieceSize);
         HashMngr hashMngr = new OnDemandWithRetentionHashMngr(fileMngr, hashAlg, blockSize);

@@ -22,6 +22,8 @@ package se.sics.ktoolbox.util.managedStore.core.impl.storage;
 import se.sics.ktoolbox.util.managedStore.core.Storage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.util.Set;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -40,7 +42,7 @@ public class RWByteBuffer implements Storage {
     }
 
     @Override
-    public byte[] read(long readPos, int readLength) {
+    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> bufferBlocks) {
         if(readPos > Integer.MAX_VALUE) {
             throw new RuntimeException("In memory buffer only allow integer sizes");
         }

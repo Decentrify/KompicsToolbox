@@ -16,63 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hops.managedStore.storage;
+package se.sics.ktoolbox.hops.managedStore.storage.cache;
 
 import java.io.IOException;
-import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.nio.ByteBuffer;
+import se.sics.ktoolbox.hops.managedStore.storage.HDFSHelper;
 import se.sics.ktoolbox.hops.managedStore.storage.util.HDFSResource;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class CompleteHopsDataStorage implements Storage {
-
-    private static final Logger LOG = LoggerFactory.getLogger(Storage.class);
-    private String logPrefix;
+public class HDFSReadTask implements Runnable {
 
     private final HDFSResource resource;
     private final String user;
-    protected long length;
+    private final ReadOp readOp;
+    private final ReadDriverI callback;
 
-    public CompleteHopsDataStorage(HDFSResource resource, String user) {
+    public HDFSReadTask(HDFSResource resource, String user, ReadOp readOp, ReadDriverI callback) {
         this.resource = resource;
         this.user = user;
-        this.length = HDFSHelper.length(resource, user);
+        this.readOp = readOp;
+        this.callback = callback;
     }
 
     @Override
-    public void tearDown() {
-    }
-
-    @Override
-    public long length() {
-        return length;
-    }
-
-    @Override
-    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> bufferBlocks) {
-        byte[] result;
+    public void run() {
         try {
-            result = HDFSHelper.read(resource, user, readPos, readLength);
+            byte[] byte_read = HDFSHelper.read(resource, user, readOp.readPos, readOp.readLength);
+            callback.success(readOp, ByteBuffer.wrap(byte_read));
         } catch (IOException | InterruptedException ex) {
-            throw new RuntimeException(ex);
+            callback.fail(readOp, ex);
         }
-        return result;
-    }
-
-    /**
-     * hops can only do append
-     *
-     * @param writePos
-     * @param bytes
-     * @return
-     */
-    @Override
-    public int write(long writePos, byte[] bytes) {
-        throw new RuntimeException("hops completed can only read");
     }
 }

@@ -21,6 +21,8 @@ package se.sics.ktoolbox.videostream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +92,7 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
             }
         }
         while (fm.hasPiece(pieceIdx) && pieceIdx < endPieceIdx && restToSend > 0) {
-            ByteBuffer piece = fm.readPiece(pieceIdx);
+            ByteBuffer piece = fm.readPiece(null, pieceIdx, (Set)new HashSet<Integer>());
             buf.writeBytes(piece.array(), startOffset, piece.array().length - startOffset);
             LOG.debug("sending piece:{} total:{}", new Object[]{pieceIdx, buf.writerIndex()});
             pieceIdx++;
@@ -100,13 +102,13 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
         if (pieceIdx == endPieceIdx && readPos / pieceSize == pieceIdx) { //if start piece = end piece
             if (fm.hasPiece(pieceIdx)) {
                 if (endOffset == 0) {
-                    ByteBuffer piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = startOffset;
                     int pieceLength = piece.array().length - pieceStartOffset;
                     buf.writeBytes(piece.array(), pieceStartOffset, piece.array().length);
                     LOG.debug("sending part of piece:{} startOff:{} endOff:{} total: {}", new Object[]{pieceIdx, pieceStartOffset, pieceLength, buf.writerIndex()});
                 } else {
-                    ByteBuffer piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = startOffset;
                     int pieceLength = (endOffset < piece.array().length ? endOffset + 1 : piece.array().length) - startOffset;
                     buf.writeBytes(piece.array(), pieceStartOffset, pieceLength);
@@ -116,13 +118,13 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
         } else if (pieceIdx == endPieceIdx) { //if need to write part of end piece
             if (fm.hasPiece(pieceIdx)) {
                 if (endOffset == 0) {
-                    ByteBuffer piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = 0;
                     int pieceLength = piece.array().length;
                     buf.writeBytes(piece);
                     LOG.debug("sending part of piece:{} startOff:{} endOff:{} total: {}", new Object[]{pieceIdx, pieceStartOffset, pieceLength, buf.writerIndex()});
                 } else {
-                    ByteBuffer piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = 0;
                     int pieceLength = (endOffset < piece.array().length ? endOffset + 1 : piece.array().length);
                     buf.writeBytes(piece.array(), pieceStartOffset, pieceLength);

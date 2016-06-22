@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import org.javatuples.Pair;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -30,7 +31,7 @@ import org.javatuples.Pair;
 public interface HashMngr {
     public boolean hasHash(int hashNr);
     public ByteBuffer readHash(int hashNr);
-    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Set<Integer> hashes); 
+    public Pair<Map<Integer, ByteBuffer>, Set<Integer>> readHashes(Identifier readerId, Set<Integer> hashes, Set<Integer> bufferBlocks); 
     public int writeHash(int hashNr, byte[] hash);
     public boolean isComplete(int hashNr);
     public int contiguous(int hashNr);

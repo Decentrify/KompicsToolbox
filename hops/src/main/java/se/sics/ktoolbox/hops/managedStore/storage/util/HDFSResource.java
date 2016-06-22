@@ -16,19 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
-package se.sics.ktoolbox.util.managedStore.core;
-
-import java.util.Set;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+package se.sics.ktoolbox.hops.managedStore.storage.util;
 
 /**
- * @author Alex Ormenisan <aaor@sics.se>
+ * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface Storage {
-    public void tearDown();
+public class HDFSResource {
+
+    public final String hopsIp;
+    public final int hopsPort;
+    public final String dirPath;
+    public final String fileName;
     
-    public byte[] read(Identifier readerId, long readPos, int readLength, Set<Integer> cacheBlocks);
-    public int write(long writePos, byte[] bytes);
-    public long length();
+    public HDFSResource(String hopsIp, int hopsPort, String dirPath, String fileName) {
+        this.hopsIp = hopsIp;
+        this.hopsPort = hopsPort;
+        this.dirPath = dirPath;
+        this.fileName = fileName;
+    }
 }
