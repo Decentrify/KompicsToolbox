@@ -48,7 +48,7 @@ public class NodeWindowSerializer implements Serializer {
     @Override
     public void toBinary(Object o, ByteBuf buf) {
         NodeWindow window = (NodeWindow) o;
-        Serializers.toBinary(window.id, buf);
+        Serializers.toBinary(window.getId(), buf);
         buf.writeInt(window.window.size());
         for (Map.Entry<Class, AggregatorPacket> e : window.window.entrySet()) {
             buf.writeInt(e.getKey().getName().length());

@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.aggregator.server;
 
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.aggregator.msg.NodeWindow;
 import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 
 /**

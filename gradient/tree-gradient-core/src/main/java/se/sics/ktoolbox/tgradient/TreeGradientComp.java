@@ -19,8 +19,10 @@
 package se.sics.ktoolbox.tgradient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.javatuples.Pair;
@@ -42,6 +44,7 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
+import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.gradient.GradientFilter;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
 import se.sics.ktoolbox.gradient.GradientPort;
@@ -67,6 +70,8 @@ import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
+import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
+import se.sics.ktoolbox.util.other.Container;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.update.View;
 
@@ -84,6 +89,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
     //****************************CONNECTIONS***********************************
     Negative tGradient = provides(GradientPort.class);
+    Negative outCroupier = provides(CroupierPort.class);
     Negative gradientViewUpdate = provides(OverlayViewUpdatePort.class);
     Positive network = requires(Network.class);
     Positive timer = requires(Timer.class);
@@ -249,8 +255,26 @@ public class TreeGradientComp extends ComponentDefinition {
                 croupierCopy.add(new GradientContainer(container.getSource(), container.getContent().appView, age, container.getContent().rank));
             }
             gradientFingers.merge(croupierCopy, selfView);
+            
+            //publish simplified sample
+            Map publicSample = unwrappedSample(sample.publicSample);
+            Map privateSample = unwrappedSample(sample.privateSample);
+            
+            CroupierSample publishSample = new CroupierSample(sample.overlayId, publicSample, privateSample);
+            trigger(publishSample, outCroupier);
         }
     };
+    
+    private Map unwrappedSample(Map wrapped) {
+        Map unwrapped = new HashMap();
+        for(Map.Entry<Identifier, AgingAdrContainer> e : ((Map<Identifier, AgingAdrContainer>)wrapped).entrySet()) {
+            NatAwareAddress src = (NatAwareAddress)e.getValue().getSource();
+            View appView = (View)e.getValue().getContent();
+            int age = e.getValue().getAge();
+            unwrapped.put(e.getKey(), new CroupierContainer(src, appView, age));
+        }
+        return unwrapped;
+    }
 
     /**
      * Samples from linear gradient used for bootstrapping gradient as well as
@@ -320,7 +344,7 @@ public class TreeGradientComp extends ComponentDefinition {
         LOG.info("{}fingers:{} neighbours:{}", new Object[]{logPrefix, sample.gradientFingers, sample.gradientNeighbours});
         trigger(sample, tGradient);
     }
-
+    
     ClassMatchedHandler handleShuffleRequest
             = new ClassMatchedHandler<GradientShuffle.Request, BasicContentMsg<KAddress, DecoratedHeader<KAddress>, GradientShuffle.Request>>() {
 

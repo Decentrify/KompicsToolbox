@@ -20,11 +20,13 @@ package se.sics.ktoolbox.videostream;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.ktoolbox.util.managedStore.FileMngr;
+import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -39,7 +41,7 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
     private final long fileSize;
     private final AtomicInteger playPos;
 
-    public VideoStreamMngrImpl(FileMngr fm, int pieceSize, long fileSize, AtomicInteger playPos) throws IOException {
+    public VideoStreamMngrImpl(FileMngr fm, int pieceSize, long fileSize, AtomicInteger playPos) {
         this.fm = fm;
         this.pieceSize = pieceSize;
         this.fileSize = fileSize;
@@ -90,8 +92,8 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
             }
         }
         while (fm.hasPiece(pieceIdx) && pieceIdx < endPieceIdx && restToSend > 0) {
-            byte[] piece = fm.readPiece(pieceIdx);
-            buf.writeBytes(piece, startOffset, piece.length - startOffset);
+            ByteBuffer piece = fm.readPiece(null, pieceIdx, (Set)new HashSet<Integer>());
+            buf.writeBytes(piece.array(), startOffset, piece.array().length - startOffset);
             LOG.debug("sending piece:{} total:{}", new Object[]{pieceIdx, buf.writerIndex()});
             pieceIdx++;
             restToSend--;
@@ -100,32 +102,32 @@ public class VideoStreamMngrImpl implements VideoStreamManager {
         if (pieceIdx == endPieceIdx && readPos / pieceSize == pieceIdx) { //if start piece = end piece
             if (fm.hasPiece(pieceIdx)) {
                 if (endOffset == 0) {
-                    byte[] piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = startOffset;
-                    int pieceLength = piece.length - pieceStartOffset;
-                    buf.writeBytes(piece, pieceStartOffset, piece.length);
+                    int pieceLength = piece.array().length - pieceStartOffset;
+                    buf.writeBytes(piece.array(), pieceStartOffset, piece.array().length);
                     LOG.debug("sending part of piece:{} startOff:{} endOff:{} total: {}", new Object[]{pieceIdx, pieceStartOffset, pieceLength, buf.writerIndex()});
                 } else {
-                    byte[] piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = startOffset;
-                    int pieceLength = (endOffset < piece.length ? endOffset + 1 : piece.length) - startOffset;
-                    buf.writeBytes(piece, pieceStartOffset, pieceLength);
+                    int pieceLength = (endOffset < piece.array().length ? endOffset + 1 : piece.array().length) - startOffset;
+                    buf.writeBytes(piece.array(), pieceStartOffset, pieceLength);
                     LOG.debug("sending part of piece:{} startOff:{} endOff:{} total: {}", new Object[]{pieceIdx, pieceStartOffset, pieceLength, buf.writerIndex()});
                 }
             }
         } else if (pieceIdx == endPieceIdx) { //if need to write part of end piece
             if (fm.hasPiece(pieceIdx)) {
                 if (endOffset == 0) {
-                    byte[] piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = 0;
-                    int pieceLength = piece.length;
+                    int pieceLength = piece.array().length;
                     buf.writeBytes(piece);
                     LOG.debug("sending part of piece:{} startOff:{} endOff:{} total: {}", new Object[]{pieceIdx, pieceStartOffset, pieceLength, buf.writerIndex()});
                 } else {
-                    byte[] piece = fm.readPiece(pieceIdx);
+                    ByteBuffer piece = fm.readPiece(null, pieceIdx, null);
                     int pieceStartOffset = 0;
-                    int pieceLength = (endOffset < piece.length ? endOffset + 1 : piece.length);
-                    buf.writeBytes(fm.readPiece(pieceIdx), pieceStartOffset, pieceLength);
+                    int pieceLength = (endOffset < piece.array().length ? endOffset + 1 : piece.array().length);
+                    buf.writeBytes(piece.array(), pieceStartOffset, pieceLength);
                     LOG.debug("sending part of piece:{} startOff:{} endOff:{} total: {}", new Object[]{pieceIdx, pieceStartOffset, pieceLength, buf.writerIndex()});
                 }
             }

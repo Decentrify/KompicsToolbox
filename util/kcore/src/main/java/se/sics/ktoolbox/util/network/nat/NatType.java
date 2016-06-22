@@ -101,6 +101,16 @@ public class NatType {
         }
     }
 
+    public boolean isSimpleNat() {
+        return type.equals(Nat.Type.NAT) 
+                && allocationPolicy.equals(Nat.AllocationPolicy.PORT_PRESERVATION)
+                && filteringPolicy.equals(Nat.FilteringPolicy.ENDPOINT_INDEPENDENT);
+    }
+    
+    public boolean isOpen() {
+        return type.equals(Nat.Type.OPEN);
+    }
+
     public static NatType open() {
         return new NatType(Nat.Type.OPEN, null, null, 0, null, 0);
     }
@@ -152,6 +162,5 @@ public class NatType {
         } else {
             return false;
         }
-
     }
 }

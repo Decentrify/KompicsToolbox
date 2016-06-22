@@ -197,8 +197,9 @@ public class OverlayMngrComp extends ComponentDefinition {
             //provided external ports
             networkEnd.addChannel(croupierId, croupierComp.getNegative(Network.class));
             croupierChannels[0] = connect(croupierComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
+            //TODO Alex check - tgradient provides croupier 
             //providing external ports
-            croupierEnd.addChannel(croupierId, croupierComp.getPositive(CroupierPort.class));
+            //croupierEnd.addChannel(croupierId, croupierComp.getPositive(CroupierPort.class));
             //control
             bootstrapEnd.addChannel(croupierId, croupierComp.getPositive(CroupierControlPort.class));
             //viewUpdate, croupier - connected by gradient˜
@@ -240,6 +241,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             //providing external port
             viewUpdateEnd.addChannel(req.tgradientId, tgradientComp.getNegative(OverlayViewUpdatePort.class));
             gradientEnd.addChannel(req.tgradientId, tgradientComp.getPositive(GradientPort.class));
+            croupierEnd.addChannel(croupierId, tgradientComp.getPositive(CroupierPort.class));
             
             tgradientLayers.put(req.tgradientId, Pair.with(tgradientComp, tgradientChannels));
             tgradientContext.put(req.getId(), req);

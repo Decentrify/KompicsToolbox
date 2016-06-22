@@ -9,8 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
-import se.sics.ktoolbox.util.managedStore.FileMngr;
-import se.sics.ktoolbox.util.managedStore.StorageMngrFactory;
+import se.sics.ktoolbox.util.managedStore.core.FileMngr;
+import se.sics.ktoolbox.util.managedStore.core.impl.StorageMngrFactory;
 import se.sics.ktoolbox.videostream.VideoStreamMngrImpl;
 import se.sics.ktoolbox.videostream.http.BaseHandler;
 import se.sics.ktoolbox.videostream.http.JwHttpServer;
@@ -29,12 +29,12 @@ public class Main {
         
         String filePath1 = "/Users/Alex/Documents/Temp/videos/gvod.mp4"; 
         File file1 = new File(filePath1);
-        FileMngr fm1 = StorageMngrFactory.getCompleteFileMngr(filePath1, file1.length(), blockSize, pieceSize);
+        FileMngr fm1 = StorageMngrFactory.completeMMFileMngr(filePath1, file1.length(), blockSize, pieceSize);
         BaseHandler handler1 = new RangeCapableMp4Handler(new VideoStreamMngrImpl(fm1, pieceSize, file1.length(), new AtomicInteger(0)));
         
         String filePath2 = "/Users/Alex/Documents/Temp/videos/gvod2.mp4"; 
         File file2 = new File(filePath2);
-        FileMngr fm2 = StorageMngrFactory.getCompleteFileMngr(filePath2, file2.length(), blockSize, pieceSize);
+        FileMngr fm2 = StorageMngrFactory.completeMMFileMngr(filePath2, file2.length(), blockSize, pieceSize);
         BaseHandler handler2 = new RangeCapableMp4Handler(new VideoStreamMngrImpl(fm2, pieceSize, file2.length(), new AtomicInteger(0)));
         
         JwHttpServer.startOrUpdate(addr, "/gvod.mp4/", handler1);
