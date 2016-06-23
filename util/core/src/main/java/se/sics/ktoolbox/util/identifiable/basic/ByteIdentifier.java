@@ -26,10 +26,10 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ByteIdentifier implements Identifier {
+public abstract class ByteIdentifier implements Identifier {
     public final byte[] id;
 
-    public ByteIdentifier(byte[] id) {
+    protected ByteIdentifier(byte[] id) {
         this.id = id;
     }
 

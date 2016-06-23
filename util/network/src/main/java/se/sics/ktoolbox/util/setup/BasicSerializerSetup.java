@@ -26,6 +26,8 @@ import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifierSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifierSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdentifierSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifierSerializer;
 import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
@@ -49,10 +51,10 @@ import se.sics.ktoolbox.util.network.nat.NatTypeSerializer;
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 12;
+    public static final int serializerIds = 13;
 
     public static enum BasicSerializers {
-
+        SimpleByteIdentifier(SimpleByteIdentifier.class, "simpleByteIdentifierSerializer"),
         IntIdentifier(IntIdentifier.class, "intIdentifierSerializer"),
         UUIDIdentifier(UUIDIdentifier.class, "uuidIdentifierSerializer"),
         OverlayIdentifier(OverlayIdentifier.class, "overlayIdentifierSerializer"),
@@ -89,6 +91,10 @@ public class BasicSerializerSetup {
             throw new RuntimeException("start your serializer ids at 128");
         }
         int currentId = startingId;
+        
+        SimpleByteIdentifierSerializer simpleByteIdentifierSerializer = new SimpleByteIdentifierSerializer(currentId++);
+        Serializers.register(simpleByteIdentifierSerializer, BasicSerializers.SimpleByteIdentifier.serializerName);
+        Serializers.register(BasicSerializers.SimpleByteIdentifier.serializedClass, BasicSerializers.SimpleByteIdentifier.serializerName);
 
         IntIdentifierSerializer intIdentifierSerializer = new IntIdentifierSerializer(currentId++);
         Serializers.register(intIdentifierSerializer, BasicSerializers.IntIdentifier.serializerName);
