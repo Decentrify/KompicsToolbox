@@ -103,7 +103,7 @@ public class KafkaProducer implements KafkaAppendI, KStreamOut {
         if (newData.writableBytes() != 0) {
             throw new RuntimeException("logic error");
         }
-        avroParser.execute(new AvroParserTask(this, schema, newData.array()));
+        avroParser.execute(new AvroParserTask(this, schema, newData));
         buf = null;
         leftover = null;
     }

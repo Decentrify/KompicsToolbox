@@ -18,10 +18,9 @@
  */
 package se.sics.kafka;
 
-import java.io.EOFException;
+import io.netty.buffer.ByteBuf;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.javatuples.Pair;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -30,9 +29,9 @@ public class AvroParserTask implements Runnable {
 
     private final Schema schema;
     private final KafkaAppendI callback;
-    private byte[] data;
+    private final ByteBuf data;
 
-    public AvroParserTask(KafkaAppendI callback, Schema schema, byte[] data) {
+    public AvroParserTask(KafkaAppendI callback, Schema schema, ByteBuf data) {
         this.callback = callback;
         this.schema = schema;
         this.data = data;
@@ -41,21 +40,15 @@ public class AvroParserTask implements Runnable {
     @Override
     public void run() {
         while (true) {
-            try {
-                GenericRecord record;
-                int readPos = 0;
-                try {
-                    while (true) {
-                        Pair<GenericRecord, byte[]> result = AvroParser.blobToAvro(schema, data);
-                        callback.record(result.getValue0());
-                        data = result.getValue1();
-                    }
-                } catch (EOFException ex) {
-                    callback.end(data);
-                    break;
-                }
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+            GenericRecord record = AvroParser.blobToAvro(schema, data);
+            if (record != null) {
+                callback.record(record);
+            } else {
+                int leftoverSize = data.writerIndex() - data.readerIndex();
+                byte[] leftover = new byte[leftoverSize];
+                data.readBytes(leftover);
+                callback.end(leftover);
+                break;
             }
         }
     }

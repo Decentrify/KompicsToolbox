@@ -18,11 +18,12 @@
  */
 package se.sics.kafka;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -32,26 +33,26 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
-import org.javatuples.Pair;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class AvroParser {
 
-    public static Pair<GenericRecord, byte[]> blobToAvro(Schema schema, byte[] data) throws EOFException {
+    public static GenericRecord blobToAvro(Schema schema, ByteBuf data) {
+        int readPos = data.readerIndex();
         GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(data, null);
-        GenericRecord record;
-        int rest;
-        try {
-            record = reader.read(null, decoder);
-            int from = data.length - decoder.inputStream().available();
-            int to = data.length;
-            byte[] leftover = Arrays.copyOfRange(data, from, to);
-            return Pair.with(record, leftover);
-        } catch (EOFException ex) {
-            throw ex;
+        try (InputStream in = new ByteBufInputStream(data)) {
+            BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(in, null);
+            try {
+                GenericRecord record = reader.read(null, decoder);
+                readPos = data.readerIndex() - decoder.inputStream().available();
+                data.readerIndex(readPos);
+                return record;
+            } catch (EOFException ex) {
+                data.readerIndex(readPos);
+                return null;
+            }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
