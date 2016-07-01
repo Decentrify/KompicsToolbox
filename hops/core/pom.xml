@@ -11,4 +11,16 @@
     <name>Hops Core</name>
     <packaging>jar</packaging>
     
+    <dependencies>
+        <dependency>
+            <groupId>se.sics.ktoolbox.hops</groupId>
+            <artifactId>kafka</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>se.sics.ktoolbox.hops</groupId>
+            <artifactId>hdfs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>
