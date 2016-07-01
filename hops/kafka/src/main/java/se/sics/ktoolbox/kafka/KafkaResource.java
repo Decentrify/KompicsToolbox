@@ -18,10 +18,8 @@
  */
 package se.sics.ktoolbox.kafka;
 
-import org.apache.avro.Schema;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KafkaResource {
@@ -31,24 +29,20 @@ public class KafkaResource {
     public final String sessionId;
     public final String projectId;
     public final String topicName;
-    public final Schema schema;
+    public final String schemaName;
     public final String keyStore;
     public final String trustStore;
 
     public KafkaResource(String brokerEndpoint, String restEndpoint, String domain, String sessionId, 
-            String projectId, String topicName, Schema schema, String keyStore, String trustStore) {
+            String projectId, String topicName, String schemaName, String keyStore, String trustStore) {
         this.brokerEndpoint = brokerEndpoint;
         this.restEndpoint = restEndpoint;
         this.domain = domain;
         this.sessionId = sessionId;
         this.projectId = projectId;
         this.topicName = topicName;
-        this.schema = schema;
+        this.schemaName = schemaName;
         this.keyStore = keyStore;
         this.trustStore = trustStore;
-    }
-    
-    public KafkaResource(Schema schema) {
-        this(null, null, null, null, null, null, schema, null, null);
     }
 }

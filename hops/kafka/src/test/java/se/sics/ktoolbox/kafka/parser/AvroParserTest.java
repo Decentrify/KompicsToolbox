@@ -58,7 +58,7 @@ public class AvroParserTest {
                 .name("field2").type().nullable().stringType().noDefault()
                 .name("field3").type().nullable().stringType().noDefault()
                 .endRecord();
-        KafkaProducer kso = new KafkaProducer(new KafkaResource(schema));
+        KBlobAsyncParser kso = new KBlobAsyncParser(schema);
 
         GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema);
         byte[] bRecord, piece;
@@ -122,7 +122,7 @@ public class AvroParserTest {
             }
             Thread.sleep(1000);
         }
-        Assert.assertEquals(nrRecords, kso.kafkaMsgs);
+        Assert.assertEquals(nrRecords, kso.producedMsgs());
     }
 
     @Test
@@ -137,7 +137,7 @@ public class AvroParserTest {
                 .name("field2").type().nullable().stringType().noDefault()
                 .name("field3").type().nullable().stringType().noDefault()
                 .endRecord();
-        KafkaProducer kso = new KafkaProducer(new KafkaResource(schema));
+        KBlobAsyncParser kso = new KBlobAsyncParser(schema);
         List<BKOutputStream> outStreams = new ArrayList<>();
         outStreams.add(kso);
         RABKOutputStream out = new RABKOuputStreamImpl(outStreams, 0);
@@ -217,6 +217,6 @@ public class AvroParserTest {
             }
             Thread.sleep(1000);
         }
-        Assert.assertEquals(nrRecords, kso.kafkaMsgs);
+        Assert.assertEquals(nrRecords, kso.producedMsgs());
     }
 }

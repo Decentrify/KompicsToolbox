@@ -35,7 +35,7 @@ import se.sics.ktoolbox.hdfs.cache.HDFSReadCacheKConfig;
 import se.sics.ktoolbox.hdfs.HDFSResource;
 import se.sics.ktoolbox.kafka.KafkaResource;
 import se.sics.ktoolbox.util.BKOutputStream;
-import se.sics.ktoolbox.kafka.parser.KafkaProducer;
+import se.sics.ktoolbox.kafka.parser.KBlobAsyncParser;
 import se.sics.ktoolbox.util.RABKOuputStreamImpl;
 import se.sics.ktoolbox.util.RABKOutputStream;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -89,7 +89,7 @@ public class CachedHDFSStorage implements Storage {
                 hfdsBuffer = new HDFSAppendBufferImpl(config, hdfsResource, blockNr);
                 if (kafkaResource != null) {
                     List<BKOutputStream> outputStreams = new ArrayList<>();
-                    outputStreams.add(new KafkaProducer(kafkaResource));
+                    outputStreams.add(new KBlobAsyncParser(kafkaResource));
                     outputStream = new RABKOuputStreamImpl(outputStreams, appendPos);
                 } else { 
                     outputStream = null;

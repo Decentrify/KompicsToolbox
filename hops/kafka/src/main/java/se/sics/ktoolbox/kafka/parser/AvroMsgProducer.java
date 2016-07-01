@@ -18,41 +18,13 @@
  */
 package se.sics.ktoolbox.kafka.parser;
 
-import io.netty.buffer.ByteBuf;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AvroParserTask implements Runnable {
-
-    private final AvroMsgProducer output;
-    private final ParserMngrI callback;
-    private final ByteBuf data;
-
-    public AvroParserTask(ParserMngrI callback, AvroMsgProducer out, ByteBuf data) {
-        this.callback = callback;
-        this.output = out;
-        this.data = data;
-    }
-
-    @Override
-    public void run() {
-        Schema schema = output.getSchema();
-        int producedMsgs = 0;
-        while (true) {
-            GenericRecord record = AvroParser.blobToAvro(schema, data);
-            if (record != null) {
-                producedMsgs++;
-                output.append(record);
-            } else {
-                int leftoverSize = data.writerIndex() - data.readerIndex();
-                byte[] leftover = new byte[leftoverSize];
-                data.readBytes(leftover);
-                callback.end(producedMsgs, leftover);
-                break;
-            }
-        }
-    }
+public interface AvroMsgProducer {
+    public Schema getSchema();
+    public void append(GenericRecord record);
 }

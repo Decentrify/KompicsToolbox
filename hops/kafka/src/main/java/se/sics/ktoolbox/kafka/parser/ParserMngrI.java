@@ -18,25 +18,9 @@
  */
 package se.sics.ktoolbox.kafka.parser;
 
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-import se.sics.ktoolbox.kafka.KafkaResource;
-
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class KafkaProducer implements AvroMsgProducer {
-
-    public KafkaProducer(KafkaResource resource) {
-    }
-    
-    @Override
-    public void append(GenericRecord record) {
-        System.err.println(record);
-    }
-
-    @Override
-    public Schema getSchema() {
-        return null;
-    }
+public interface ParserMngrI {
+    public void end(int producedMsgs, byte[] leftover);
 }

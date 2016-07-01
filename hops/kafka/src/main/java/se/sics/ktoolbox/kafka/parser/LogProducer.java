@@ -18,12 +18,31 @@
  */
 package se.sics.ktoolbox.kafka.parser;
 
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface KafkaAppendI {
-    public void record(GenericRecord record);
-    public void end(byte[] leftover);
+public class LogProducer implements AvroMsgProducer {
+    private final static Logger LOG = LoggerFactory.getLogger(AvroMsgProducer.class);
+    private String logPrefix = "";
+    
+    private final Schema schema;
+    
+    public LogProducer(Schema schema) {
+        this.schema = schema;
+    }
+    
+    @Override
+    public void append(GenericRecord record) {
+        LOG.info("{}record{}", logPrefix, record);
+    }
+
+    @Override
+    public Schema getSchema() {
+        return schema;
+    }
 }
