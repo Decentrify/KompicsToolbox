@@ -18,7 +18,11 @@
  */
 package se.sics.ktoolbox.kafka.parser;
 
+import io.hops.kafkautil.HopsKafkaProducer;
+import io.hops.kafkautil.HopsKafkaUtil;
+import io.hops.kafkautil.SchemaNotFoundException;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import se.sics.ktoolbox.kafka.KafkaResource;
 
@@ -26,17 +30,28 @@ import se.sics.ktoolbox.kafka.KafkaResource;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KafkaProducer implements AvroMsgProducer {
+    private final HopsKafkaUtil hopsKafkaUtil;
+    private final HopsKafkaProducer producer;
 
     public KafkaProducer(KafkaResource resource) {
+        hopsKafkaUtil = HopsKafkaUtil.getInstance();
+        int projectId = Integer.parseInt(resource.projectId);
+        hopsKafkaUtil.setup(resource.sessionId, projectId, resource.topicName, resource.domain, resource.brokerEndpoint, resource.restEndpoint, 
+                resource.keyStore, resource.trustStore);
+        try {
+            this.producer = hopsKafkaUtil.getHopsKafkaProducer(resource.topicName);
+        } catch (SchemaNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
     }
     
     @Override
     public void append(GenericRecord record) {
-        System.err.println(record);
+        producer.produce(record);
     }
 
     @Override
     public Schema getSchema() {
-        return null;
+        return producer.getSchema();
     }
 }
