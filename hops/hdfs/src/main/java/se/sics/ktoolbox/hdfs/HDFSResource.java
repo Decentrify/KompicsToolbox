@@ -18,20 +18,30 @@
  */
 package se.sics.ktoolbox.hdfs;
 
+import org.apache.hadoop.conf.Configuration;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HDFSResource {
 
-    public final String hopsIp;
-    public final int hopsPort;
+    public final Configuration hdfsConfig;
     public final String user;
     public final String dirPath;
     public final String fileName;
 
     public HDFSResource(String hopsIp, int hopsPort, String user, String dirPath, String fileName) {
-        this.hopsIp = hopsIp;
-        this.hopsPort = hopsPort;
+        this.hdfsConfig = new Configuration();
+        String hopsURL = "hdfs://" + hopsIp + ":" + hopsPort;
+        hdfsConfig.set("fs.defaultFS", hopsURL);
+        this.user = user;
+        this.dirPath = dirPath;
+        this.fileName = fileName;
+    }
+    
+    public HDFSResource(String hdfsXMLPath, String user, String dirPath, String fileName) {
+        this.hdfsConfig = new Configuration();
+        this.hdfsConfig.addResource(hdfsXMLPath);
         this.user = user;
         this.dirPath = dirPath;
         this.fileName = fileName;

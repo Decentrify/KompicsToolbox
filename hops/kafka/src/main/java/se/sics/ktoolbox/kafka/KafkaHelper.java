@@ -1,0 +1,95 @@
+/*
+ * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
+ * 2009 Royal Institute of Technology (KTH)
+ *
+ * KompicsToolbox is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
+package se.sics.ktoolbox.kafka;
+
+import io.hops.kafkautil.HopsKafkaProducer;
+import io.hops.kafkautil.HopsKafkaUtil;
+import io.hops.kafkautil.SchemaNotFoundException;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Random;
+import java.util.logging.Level;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.io.DatumWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * @author Alex Ormenisan <aaor@kth.se>
+ */
+public class KafkaHelper {
+
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaHelper.class);
+
+    public static HopsKafkaProducer getKafkaProducer(KafkaResource kafkaResource) {
+        LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
+        HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
+        int projectId = Integer.parseInt(kafkaResource.projectId);
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                kafkaResource.keyStore, kafkaResource.trustStore);
+        HopsKafkaProducer kp;
+        try {
+            kp = hopsKafkaUtil.getHopsKafkaProducer(kafkaResource.topicName);
+            return kp;
+        } catch (SchemaNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public static Schema getKafkaSchema(KafkaResource kafkaResource) {
+        return getKafkaProducer(kafkaResource).getSchema();
+    }
+
+    public static byte[] getSimpleAvroMsgsAsBlob(Schema schema, int nrMsgs, Random rand) {
+        ByteBuf buf = Unpooled.buffer();
+        OutputStream out = new ByteBufOutputStream(buf);
+        DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
+        DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
+        try {
+            dataFileWriter.create(schema, out);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        GenericRecordBuilder grb;
+
+        for (int i = 0; i < nrMsgs; i++) {
+            grb = new GenericRecordBuilder(schema);
+            for (Field field : schema.getFields()) {
+                //TODO Alex - I assume each field is a string
+                grb.set(field, "val" + rand.nextInt());
+            }
+            try {
+                dataFileWriter.append(grb.build());
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        byte[] result = new byte[buf.writerIndex()];
+        buf.readBytes(result);
+        return result;
+    }
+}
