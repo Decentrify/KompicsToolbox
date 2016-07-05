@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.kafka;
 
+import io.hops.kafkautil.HopsKafkaConsumer;
 import io.hops.kafkautil.HopsKafkaProducer;
 import io.hops.kafkautil.HopsKafkaUtil;
 import io.hops.kafkautil.SchemaNotFoundException;
@@ -55,6 +56,21 @@ public class KafkaHelper {
         try {
             kp = hopsKafkaUtil.getHopsKafkaProducer(kafkaResource.topicName);
             return kp;
+        } catch (SchemaNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    public static HopsKafkaConsumer getKafkaConsumer(KafkaResource kafkaResource) {
+        LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
+        HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
+        int projectId = Integer.parseInt(kafkaResource.projectId);
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                kafkaResource.keyStore, kafkaResource.trustStore);
+        HopsKafkaConsumer kc;
+        try {
+            kc = hopsKafkaUtil.getHopsKafkaConsumer(kafkaResource.topicName);
+            return kc;
         } catch (SchemaNotFoundException ex) {
             throw new RuntimeException(ex);
         }

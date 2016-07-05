@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.kafka.parser;
+package se.sics.ktoolbox.kafka.producer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -33,7 +33,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.ktoolbox.kafka.KafkaResource;
 import se.sics.ktoolbox.util.BKOutputStream;
 import se.sics.ktoolbox.util.RABKOuputStreamImpl;
 import se.sics.ktoolbox.util.RABKOutputStream;

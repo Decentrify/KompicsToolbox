@@ -16,33 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.kafka.parser;
+package se.sics.ktoolbox.kafka.producer;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class LogProducer implements AvroMsgProducer {
-    private final static Logger LOG = LoggerFactory.getLogger(AvroMsgProducer.class);
-    private String logPrefix = "";
-    
-    private final Schema schema;
-    
-    public LogProducer(Schema schema) {
-        this.schema = schema;
-    }
-    
-    @Override
-    public void append(GenericRecord record) {
-        LOG.info("{}record{}", logPrefix, record);
-    }
-
-    @Override
-    public Schema getSchema() {
-        return schema;
-    }
+public interface AvroMsgProducer {
+    public Schema getSchema();
+    public void append(GenericRecord record);
 }
