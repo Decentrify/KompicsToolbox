@@ -21,11 +21,14 @@ package se.sics.ktoolbox.kafka.producer;
 import io.netty.buffer.ByteBuf;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class AvroParserTask implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(AvroParserTask.class);
 
     private final AvroMsgProducer output;
     private final ParserMngrI callback;
@@ -41,13 +44,16 @@ public class AvroParserTask implements Runnable {
     public void run() {
         Schema schema = output.getSchema();
         int producedMsgs = 0;
+        LOG.info("trying to parse blob of:<{},{}> bytes", data.readerIndex(), data.writerIndex());
         while (true) {
             GenericRecord record = AvroParser.blobToAvro(schema, data);
             if (record != null) {
+                LOG.info("produced record");
                 producedMsgs++;
                 output.append(record);
             } else {
                 int leftoverSize = data.writerIndex() - data.readerIndex();
+                LOG.info("leftover:{}", leftoverSize);
                 byte[] leftover = new byte[leftoverSize];
                 data.readBytes(leftover);
                 callback.end(producedMsgs, leftover);
