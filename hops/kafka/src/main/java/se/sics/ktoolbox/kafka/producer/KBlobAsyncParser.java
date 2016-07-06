@@ -109,6 +109,7 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
         ByteBuf newData = Unpooled.buffer(dataLength, dataLength);
         newData.writeBytes(leftover);
         newData.writeBytes(buf, buf.writerIndex());
+        LOG.info("stream:{}", BaseEncoding.base16().encode(newData.array()));
         if (newData.writableBytes() != 0) {
             throw new RuntimeException("logic error - writable bytes:" + newData.writableBytes() + " expected:0");
         }
