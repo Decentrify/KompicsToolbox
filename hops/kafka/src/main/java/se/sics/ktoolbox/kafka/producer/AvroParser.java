@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.kafka.producer;
 
+import com.google.common.io.BaseEncoding;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,13 +34,22 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class AvroParser {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AvroParser.class);
+
     public static GenericRecord blobToAvro(Schema schema, ByteBuf data) {
+        if(data.readerIndex() == 0) {
+            byte[] bData = new byte[data.writerIndex()];
+            LOG.info("blob to avro:{}", BaseEncoding.base16().encode(bData));
+            data.readerIndex(0);
+        }
         int readPos = data.readerIndex();
         GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
         try (InputStream in = new ByteBufInputStream(data)) {
@@ -85,6 +95,8 @@ public class AvroParser {
         } catch (Exception ex) {
             throw new RuntimeException("hmmm", ex);
         }
-        return out.toByteArray();
+        byte[] bData = out.toByteArray();
+        LOG.info("avro to blob:{}", BaseEncoding.base16().encode(bData));
+        return bData;
     }
 }
