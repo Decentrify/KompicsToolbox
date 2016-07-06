@@ -118,7 +118,7 @@ public class KafkaHelper {
             grb = new GenericRecordBuilder(schema);
             for (Field field : schema.getFields()) {
                 //TODO Alex - I assume each field is a string
-                grb.set(field, "val" + rand.nextInt());
+                grb.set(field, "val" + (1000+rand.nextInt(1000)));
             }
             try {
                 dataFileWriter.append(grb.build());

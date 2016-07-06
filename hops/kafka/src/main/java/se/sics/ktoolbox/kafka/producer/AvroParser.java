@@ -46,9 +46,7 @@ public class AvroParser {
 
     public static GenericRecord blobToAvro(Schema schema, ByteBuf data) {
         if(data.readerIndex() == 0) {
-            byte[] bData = new byte[data.writerIndex()];
-            LOG.info("blob to avro:{}", BaseEncoding.base16().encode(bData));
-            data.readerIndex(0);
+            LOG.info("blob to avro:{}", BaseEncoding.base16().encode(data.array()));
         }
         int readPos = data.readerIndex();
         GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
