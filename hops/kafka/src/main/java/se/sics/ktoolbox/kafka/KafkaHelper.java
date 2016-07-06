@@ -51,7 +51,7 @@ public class KafkaHelper {
         int projectId = Integer.parseInt(kafkaResource.projectId);
         LOG.info("getting producer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
                 new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                kafkaResource.keyStore, kafkaResource.trustStore});
+                    kafkaResource.keyStore, kafkaResource.trustStore});
         hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
                 kafkaResource.keyStore, kafkaResource.trustStore);
         HopsKafkaProducer kp;
@@ -62,7 +62,7 @@ public class KafkaHelper {
             throw new RuntimeException(ex);
         }
     }
-    
+
     public static HopsKafkaConsumer getKafkaConsumer(KafkaResource kafkaResource) {
         LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
@@ -79,7 +79,23 @@ public class KafkaHelper {
     }
 
     public static Schema getKafkaSchema(KafkaResource kafkaResource) {
-        return getKafkaProducer(kafkaResource).getSchema();
+        HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
+        int projectId = Integer.parseInt(kafkaResource.projectId);
+        LOG.info("getting producer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
+                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                    kafkaResource.keyStore, kafkaResource.trustStore});
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                kafkaResource.keyStore, kafkaResource.trustStore);
+        String stringSchema;
+        try {
+            stringSchema = hopsKafkaUtil.getSchema();
+        } catch (SchemaNotFoundException ex) {
+             throw new RuntimeException(ex);
+        }
+        LOG.info("schema:{}", stringSchema);
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parser.parse(stringSchema);
+        return schema;
     }
 
     public static byte[] getSimpleAvroMsgsAsBlob(Schema schema, int nrMsgs, Random rand) {
