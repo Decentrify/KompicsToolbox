@@ -28,7 +28,6 @@ import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Random;
-import java.util.logging.Level;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.file.DataFileWriter;
@@ -50,6 +49,9 @@ public class KafkaHelper {
         LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
         int projectId = Integer.parseInt(kafkaResource.projectId);
+        LOG.info("getting producer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
+                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                kafkaResource.keyStore, kafkaResource.trustStore});
         hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
                 kafkaResource.keyStore, kafkaResource.trustStore);
         HopsKafkaProducer kp;
