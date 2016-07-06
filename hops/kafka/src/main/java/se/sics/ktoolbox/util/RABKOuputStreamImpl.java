@@ -18,11 +18,13 @@
  */
 package se.sics.ktoolbox.util;
 
-import io.netty.buffer.ByteBuf;
+import com.google.common.io.BaseEncoding;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RandomAccessBufferedKompicsOutputStream buffered append stream out with
@@ -31,7 +33,7 @@ import java.util.TreeMap;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class RABKOuputStreamImpl implements RABKOutputStream {
-
+    private static final Logger LOG = LoggerFactory.getLogger(RABKOuputStreamImpl.class);
     private final List<BKOutputStream> outStreams;
     private long writePos;
     private final TreeMap<Long, byte[]> buffer = new TreeMap<>();
@@ -42,6 +44,7 @@ public class RABKOuputStreamImpl implements RABKOutputStream {
     }
 
     private void outWrite(byte[] data) {
+        LOG.info("stream:{}", BaseEncoding.base16().encode(data));
         for (BKOutputStream outStream : outStreams) {
             outStream.write(data);
         }

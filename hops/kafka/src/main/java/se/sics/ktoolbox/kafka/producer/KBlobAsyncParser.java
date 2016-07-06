@@ -18,12 +18,15 @@
  */
 package se.sics.ktoolbox.kafka.producer;
 
+import com.google.common.io.BaseEncoding;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.avro.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.kafka.KafkaResource;
 import se.sics.ktoolbox.util.BKOutputStream;
 
@@ -31,6 +34,7 @@ import se.sics.ktoolbox.util.BKOutputStream;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
+    private static final Logger LOG = LoggerFactory.getLogger(KBlobAsyncParser.class);
 
     private final ExecutorService avroParser = Executors.newFixedThreadPool(1);
     private final AvroMsgProducer output;
@@ -66,6 +70,7 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
     //****************************K_STREAM_OUT**********************************
     @Override
     public synchronized void write(byte[] data) {
+        LOG.info("stream:{}", BaseEncoding.base16().encode(data));
         if (buf == null) {
             buf = Unpooled.buffer();
         }
