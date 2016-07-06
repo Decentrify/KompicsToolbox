@@ -67,6 +67,9 @@ public class KafkaHelper {
         LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
         int projectId = Integer.parseInt(kafkaResource.projectId);
+        LOG.info("getting consumer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
+                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                    kafkaResource.keyStore, kafkaResource.trustStore});
         hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
                 kafkaResource.keyStore, kafkaResource.trustStore);
         HopsKafkaConsumer kc;
@@ -81,7 +84,7 @@ public class KafkaHelper {
     public static Schema getKafkaSchema(KafkaResource kafkaResource) {
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
         int projectId = Integer.parseInt(kafkaResource.projectId);
-        LOG.info("getting producer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
+        LOG.info("getting schema session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
                 new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
                     kafkaResource.keyStore, kafkaResource.trustStore});
         hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
