@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.kafka;
 
+import com.google.common.io.BaseEncoding;
 import io.hops.kafkautil.HopsKafkaConsumer;
 import io.hops.kafkautil.HopsKafkaProducer;
 import io.hops.kafkautil.HopsKafkaUtil;
@@ -127,6 +128,7 @@ public class KafkaHelper {
         }
         byte[] result = new byte[buf.writerIndex()];
         buf.readBytes(result);
+        LOG.info("avro to blob:{}", BaseEncoding.base16().encode(result));
         return result;
     }
 }
