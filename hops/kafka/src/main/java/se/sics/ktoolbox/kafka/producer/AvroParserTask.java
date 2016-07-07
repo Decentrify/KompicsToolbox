@@ -44,11 +44,9 @@ public class AvroParserTask implements Runnable {
     public void run() {
         Schema schema = output.getSchema();
         int producedMsgs = 0;
-        LOG.info("trying to parse blob of:<{},{}> bytes", data.readerIndex(), data.writerIndex());
         while (true) {
             GenericRecord record = AvroParser.blobToAvro(schema, data);
             if (record != null) {
-                LOG.info("produced record");
                 producedMsgs++;
                 output.append(record);
             } else {

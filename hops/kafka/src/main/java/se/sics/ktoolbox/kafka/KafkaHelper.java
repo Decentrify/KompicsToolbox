@@ -18,24 +18,11 @@
  */
 package se.sics.ktoolbox.kafka;
 
-import com.google.common.io.BaseEncoding;
 import io.hops.kafkautil.HopsKafkaConsumer;
 import io.hops.kafkautil.HopsKafkaProducer;
 import io.hops.kafkautil.HopsKafkaUtil;
 import io.hops.kafkautil.SchemaNotFoundException;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.Unpooled;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Random;
 import org.apache.avro.Schema;
-import org.apache.avro.Schema.Field;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.avro.io.DatumWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,35 +87,5 @@ public class KafkaHelper {
         Schema.Parser parser = new Schema.Parser();
         Schema schema = parser.parse(stringSchema);
         return schema;
-    }
-
-    public static byte[] getSimpleAvroMsgsAsBlob(Schema schema, int nrMsgs, Random rand) {
-        ByteBuf buf = Unpooled.buffer();
-        OutputStream out = new ByteBufOutputStream(buf);
-        DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
-        DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
-        try {
-            dataFileWriter.create(schema, out);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        GenericRecordBuilder grb;
-
-        for (int i = 0; i < nrMsgs; i++) {
-            grb = new GenericRecordBuilder(schema);
-            for (Field field : schema.getFields()) {
-                //TODO Alex - I assume each field is a string
-                grb.set(field, "val" + (1000+rand.nextInt(1000)));
-            }
-            try {
-                dataFileWriter.append(grb.build());
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        byte[] result = new byte[buf.writerIndex()];
-        buf.readBytes(result);
-        LOG.info("avro to blob:{}", BaseEncoding.base16().encode(result));
-        return result;
     }
 }

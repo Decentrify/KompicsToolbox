@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.kafka.producer;
 
-import com.google.common.io.BaseEncoding;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +69,6 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
     //****************************K_STREAM_OUT**********************************
     @Override
     public synchronized void write(byte[] data) {
-        LOG.info("stream:{}", BaseEncoding.base16().encode(data));
         if (buf == null) {
             buf = Unpooled.buffer();
         }
@@ -109,7 +107,6 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
         ByteBuf newData = Unpooled.buffer(dataLength, dataLength);
         newData.writeBytes(leftover);
         newData.writeBytes(buf, buf.writerIndex());
-        LOG.info("stream:{}", BaseEncoding.base16().encode(newData.array()));
         if (newData.writableBytes() != 0) {
             throw new RuntimeException("logic error - writable bytes:" + newData.writableBytes() + " expected:0");
         }

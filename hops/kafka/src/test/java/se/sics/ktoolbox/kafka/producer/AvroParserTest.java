@@ -18,12 +18,14 @@
  */
 package se.sics.ktoolbox.kafka.producer;
 
+import com.google.common.io.BaseEncoding;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
@@ -65,7 +67,7 @@ public class AvroParserTest {
         GenericRecord pipedRecord;
 
         int nrRecords = 7;
-        int recordSize = 18; 
+        int recordSize = 18;
         int bufferSize = nrRecords * recordSize;
         ByteBuffer bb = ByteBuffer.allocate(nrRecords * recordSize);
         for (int i = 0; i < nrRecords; i++) {
@@ -164,7 +166,7 @@ public class AvroParserTest {
         Assert.assertEquals(nrRecords * recordSize, bb.writerIndex());
 
         piece = new byte[18];
-        pos = 0*recordSize;
+        pos = 0 * recordSize;
         bb.readerIndex(pos);
         bb.readBytes(piece);
         LOG.info("writting piece 0");
@@ -217,5 +219,43 @@ public class AvroParserTest {
             Thread.sleep(1000);
         }
         Assert.assertEquals(nrRecords, kso.producedMsgs());
+    }
+
+    @Test
+    public void test1000() throws InterruptedException {
+        LOG.info("***********************************************************");
+        LOG.info("streaming out of order partial records test");
+        Schema schema = SchemaBuilder
+                .record("schema")
+                .namespace("org.apache.avro.ipc")
+                .fields()
+                .name("field1").type().nullable().stringType().noDefault()
+                .name("field2").type().nullable().stringType().noDefault()
+                .name("field3").type().nullable().stringType().noDefault()
+                .endRecord();
+
+        Random rand = new Random(1234);
+        ByteBuf buf = Unpooled.buffer();
+        for (int i = 0; i < 10; i++) {
+            buf.writeBytes(AvroParser.nAvroToBlob(schema, 100, rand));
+        }
+        
+        KBlobAsyncParser kso = new KBlobAsyncParser(schema);
+        List<BKOutputStream> outStreams = new ArrayList<>();
+        outStreams.add(kso);
+        RABKOutputStream out = new RABKOuputStreamImpl(outStreams, 0);
+        
+        byte[] piece = new byte[buf.writerIndex()];
+        buf.readBytes(piece);
+        LOG.info("piece:{}", BaseEncoding.base16().encode(piece));
+        out.write(piece);
+        
+         while (true) {
+            if (kso.isIdle()) {
+                break;
+            }
+            Thread.sleep(1000);
+        }
+        Assert.assertEquals(1000, kso.producedMsgs());
     }
 }

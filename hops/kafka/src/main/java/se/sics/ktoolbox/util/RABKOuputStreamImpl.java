@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.util;
 
-import com.google.common.io.BaseEncoding;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,6 @@ public class RABKOuputStreamImpl implements RABKOutputStream {
     }
 
     private void outWrite(byte[] data) {
-        LOG.info("stream:{}", BaseEncoding.base16().encode(data));
         for (BKOutputStream outStream : outStreams) {
             outStream.write(data);
         }
