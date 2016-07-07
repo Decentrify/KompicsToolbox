@@ -28,11 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.hdfs.HDFSHelper;
+import se.sics.ktoolbox.hdfs.HDFSResource;
 import se.sics.ktoolbox.hdfs.buffer.HDFSAppendBuffer;
 import se.sics.ktoolbox.hdfs.buffer.HDFSAppendBufferImpl;
 import se.sics.ktoolbox.hdfs.cache.HDFSReadCacheImpl;
 import se.sics.ktoolbox.hdfs.cache.HDFSReadCacheKConfig;
-import se.sics.ktoolbox.hdfs.HDFSResource;
 import se.sics.ktoolbox.kafka.KafkaResource;
 import se.sics.ktoolbox.kafka.producer.KBlobAsyncParser;
 import se.sics.ktoolbox.util.BKOutputStream;
@@ -105,6 +105,14 @@ public class CachedHDFSStorage implements Storage {
     @Override
     public void tearDown() {
         if (outputStream != null) {
+            //TODO Alex - make timer - make nicer
+            while(!outputStream.isIdle()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
             outputStream.terminate();
         }
         if (hfdsBuffer != null && !hfdsBuffer.isEmpty()) {
