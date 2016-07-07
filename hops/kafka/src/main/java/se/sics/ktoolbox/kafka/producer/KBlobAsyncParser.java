@@ -60,6 +60,7 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
     //***************************PARSER_MNGR_I*********************************
     @Override
     public synchronized void end(int producerdMsgs, byte[] leftover) {
+        LOG.info("finished kafka producer task");
         this.leftover = leftover;
         this.producedMsgs += producerdMsgs;
         if (buf != null) {
@@ -110,6 +111,7 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
         if (newData.writableBytes() != 0) {
             throw new RuntimeException("logic error - writable bytes:" + newData.writableBytes() + " expected:0");
         }
+        LOG.info("submitting new kafka producer task");
         avroParser.execute(new AvroParserTask(this, output, newData));
         buf = null;
         leftover = null;
