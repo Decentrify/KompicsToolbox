@@ -108,11 +108,13 @@ public class CachedHDFSStorage implements Storage {
             //TODO Alex - make timer - make nicer
             while(!outputStream.isIdle()) {
                 try {
+                    LOG.info("{}kafka is busy", logPrefix);
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }
             }
+            LOG.info("{}kafka is idle", logPrefix);
             outputStream.terminate();
         }
         if (hfdsBuffer != null && !hfdsBuffer.isEmpty()) {
