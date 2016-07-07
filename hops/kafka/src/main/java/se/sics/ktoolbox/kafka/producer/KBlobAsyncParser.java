@@ -81,6 +81,7 @@ public class KBlobAsyncParser implements ParserMngrI, BKOutputStream {
 
     @Override
     public synchronized boolean isIdle() {
+        LOG.info("idle:{}<{},{}>", new Object[]{buf == null && leftover != null, buf == null, leftover != null});
         return buf == null && leftover != null; 
     }
     

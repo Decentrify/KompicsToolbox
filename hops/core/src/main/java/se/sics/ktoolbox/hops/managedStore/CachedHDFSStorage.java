@@ -48,7 +48,7 @@ import se.sics.ktoolbox.util.managedStore.core.Storage;
 public class CachedHDFSStorage implements Storage {
 
     private static final Logger LOG = LoggerFactory.getLogger(Storage.class);
-    private String logPrefix;
+    private String logPrefix = "";
 
     private final HDFSResource hdfsResource;
     private final KafkaResource kafkaResource;
