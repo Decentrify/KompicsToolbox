@@ -29,19 +29,17 @@ public class KafkaResource {
     public final String sessionId;
     public final String projectId;
     public final String topicName;
-    public final String schemaName;
     public final String keyStore;
     public final String trustStore;
 
     public KafkaResource(String brokerEndpoint, String restEndpoint, String domain, String sessionId, 
-            String projectId, String topicName, String schemaName, String keyStore, String trustStore) {
+            String projectId, String topicName, String keyStore, String trustStore) {
         this.brokerEndpoint = brokerEndpoint;
         this.restEndpoint = restEndpoint;
         this.domain = domain;
         this.sessionId = sessionId;
         this.projectId = projectId;
         this.topicName = topicName;
-        this.schemaName = schemaName;
         this.keyStore = keyStore;
         this.trustStore = trustStore;
     }
