@@ -81,8 +81,9 @@ public class RABKOuputStreamImpl implements RABKOutputStream {
     public boolean isIdle() {
         boolean idle = buffer.isEmpty();
         for (BKOutputStream outStream : outStreams) {
-            idle = idle || outStream.isIdle();
+            idle = idle && outStream.isIdle();
         }
+        LOG.info("idle:{}", idle);
         return idle;
     }
 
