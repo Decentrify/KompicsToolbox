@@ -68,6 +68,27 @@ public class AvroParser {
         }
     }
 
+//    public static List<GenericRecord> blobToAvroList(Schema schema, ByteBuf data) {
+//        List<GenericRecord> records = new ArrayList<>();
+//        int readPos = data.readerIndex();
+//        GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
+//        try (InputStream in = new ByteBufInputStream(data)) {
+//            BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(in, null);
+//            try {
+//                while (true) {
+//                    GenericRecord record = reader.read(null, decoder);
+//                    records.add(record);
+//                }
+//            } catch (EOFException ex) {
+//                readPos = data.readerIndex() - decoder.inputStream().available();
+//                data.readerIndex(readPos);
+//                return records;
+//            }
+//        } catch (Exception ex) {
+//            throw new RuntimeException(ex);
+//        }
+//    }
+
     public static List<GenericRecord> blobToAvroList(Schema schema, InputStream in) {
         List<GenericRecord> records = new ArrayList<>();
         GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);

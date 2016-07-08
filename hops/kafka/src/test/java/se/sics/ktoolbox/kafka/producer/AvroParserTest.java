@@ -239,23 +239,63 @@ public class AvroParserTest {
         for (int i = 0; i < 10; i++) {
             buf.writeBytes(AvroParser.nAvroToBlob(schema, 100, rand));
         }
-        
+
         KBlobAsyncParser kso = new KBlobAsyncParser(schema);
         List<BKOutputStream> outStreams = new ArrayList<>();
         outStreams.add(kso);
         RABKOutputStream out = new RABKOuputStreamImpl(outStreams, 0);
-        
+
         byte[] piece = new byte[buf.writerIndex()];
         buf.readBytes(piece);
         LOG.info("piece:{}", BaseEncoding.base16().encode(piece));
         out.write(piece);
-        
-         while (true) {
+
+        while (true) {
             if (kso.isIdle()) {
                 break;
             }
             Thread.sleep(1000);
         }
+        Assert.assertEquals(1000, kso.producedMsgs());
+    }
+
+    @Test
+    public void test1MilTime() throws InterruptedException {
+        LOG.info("***********************************************************");
+        LOG.info("streaming out of order partial records test");
+        Schema schema = SchemaBuilder
+                .record("schema")
+                .namespace("org.apache.avro.ipc")
+                .fields()
+                .name("field1").type().nullable().stringType().noDefault()
+                .name("field2").type().nullable().stringType().noDefault()
+                .name("field3").type().nullable().stringType().noDefault()
+                .endRecord();
+
+        Random rand = new Random(1234);
+        ByteBuf buf = Unpooled.buffer();
+        for (int i = 0; i < 2000; i++) {
+            buf.writeBytes(AvroParser.nAvroToBlob(schema, 1000, rand));
+        }
+
+        KBlobAsyncParser kso = new KBlobAsyncParser(schema);
+        List<BKOutputStream> outStreams = new ArrayList<>();
+        outStreams.add(kso);
+        RABKOutputStream out = new RABKOuputStreamImpl(outStreams, 0);
+
+        byte[] piece = new byte[buf.writerIndex()];
+        buf.readBytes(piece);
+        long startTime = System.currentTimeMillis();
+        out.write(piece);
+
+        while (true) {
+            if (kso.isIdle()) {
+                break;
+            }
+            Thread.sleep(1000);
+        }
+        long endTime = System.currentTimeMillis();
+        LOG.info("spent time(ms):{}", (endTime - startTime));
         Assert.assertEquals(1000, kso.producedMsgs());
     }
 }

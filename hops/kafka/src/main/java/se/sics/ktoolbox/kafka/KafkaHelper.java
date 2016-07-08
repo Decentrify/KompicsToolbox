@@ -44,7 +44,8 @@ public class KafkaHelper {
                 kafkaResource.keyStore, kafkaResource.trustStore);
         HopsKafkaProducer kp;
         try {
-            kp = hopsKafkaUtil.getHopsKafkaProducer(kafkaResource.topicName);
+            //TODO Alex - hardcoded linger delay
+            kp = hopsKafkaUtil.getHopsKafkaProducer(kafkaResource.topicName, 5);
             return kp;
         } catch (SchemaNotFoundException ex) {
             throw new RuntimeException(ex);
