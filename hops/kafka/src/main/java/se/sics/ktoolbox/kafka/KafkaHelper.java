@@ -21,6 +21,7 @@ package se.sics.ktoolbox.kafka;
 import io.hops.kafkautil.HopsKafkaConsumer;
 import io.hops.kafkautil.HopsKafkaProducer;
 import io.hops.kafkautil.HopsKafkaUtil;
+import io.hops.kafkautil.NHopsKafkaUtil;
 import io.hops.kafkautil.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
@@ -70,17 +71,15 @@ public class KafkaHelper {
         }
     }
 
-    public static Schema getKafkaSchema(KafkaResource kafkaResource) {
+    public static Schema getKafkaSchemaByTopic(KafkaResource kafkaResource) {
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
         int projectId = Integer.parseInt(kafkaResource.projectId);
         LOG.info("getting schema session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
                 new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
                     kafkaResource.keyStore, kafkaResource.trustStore});
-        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                kafkaResource.keyStore, kafkaResource.trustStore);
         String stringSchema;
         try {
-            stringSchema = hopsKafkaUtil.getSchema();
+            stringSchema = NHopsKafkaUtil.getSchemaByTopic(kafkaResource.domain, kafkaResource.restEndpoint, kafkaResource.sessionId, projectId, kafkaResource.topicName);
         } catch (SchemaNotFoundException ex) {
              throw new RuntimeException(ex);
         }
