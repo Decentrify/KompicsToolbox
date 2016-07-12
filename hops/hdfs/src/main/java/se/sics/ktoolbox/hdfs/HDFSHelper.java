@@ -113,17 +113,17 @@ public class HDFSHelper {
         }
     }
 
-    public static boolean simpleCreate(final HDFSResource resource) {
-        final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
+    public static boolean simpleCreate(final HDFSResource hdfsResource) {
+        final String filePath = hdfsResource.dirPath + Path.SEPARATOR + hdfsResource.fileName;
         LOG.debug("{}creating file:{}", new Object[]{logPrefix, filePath});
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(resource.user);
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsResource.user);
         try {
             boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
                 @Override
                 public Boolean run() throws Exception {
-                    try (FileSystem fs = FileSystem.get(resource.hdfsConfig)) {
-                        if (!fs.isDirectory(new Path(resource.dirPath))) {
-                            return false;
+                    try (FileSystem fs = FileSystem.get(hdfsResource.hdfsConfig)) {
+                        if (!fs.isDirectory(new Path(hdfsResource.dirPath))) {
+                            fs.mkdirs(new Path(hdfsResource.dirPath));
                         }
                         if (fs.isFile(new Path(filePath))) {
                             return false;
