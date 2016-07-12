@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.util.result.Result;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -39,132 +40,115 @@ public class HDFSHelper {
     private final static org.slf4j.Logger LOG = LoggerFactory.getLogger(HDFSHelper.class);
     private static String logPrefix = "";
 
-    public static boolean canConnect(final Configuration hdfsConfig) {
+    public static Result<Boolean> canConnect(final Configuration hdfsConfig) {
         LOG.debug("{}testing hdfs connection", logPrefix);
-        try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(hdfsConfig)) {
+        try (FileSystem fs = FileSystem.get(hdfsConfig)) {
             LOG.debug("{}getting status", logPrefix);
             FsStatus status = fs.getStatus();
             LOG.debug("{}got status", logPrefix);
-            return true;
+            return Result.success(true);
         } catch (IOException ex) {
-            LOG.warn("{}could not connect:{}", logPrefix, ex.getMessage());
-            return false;
-        } catch (Exception ex) {
-            LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            LOG.info("{}could not connect:{}", logPrefix, ex.getMessage());
+            return Result.success(false);
         }
     }
 
-    public static Long length(final HDFSResource resource) {
+    public static Result<Long> length(UserGroupInformation ugi, final HDFSResource resource) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}getting length of file:{}", new Object[]{logPrefix, filePath});
 
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(resource.user);
         try {
-            long result = ugi.doAs(new PrivilegedExceptionAction<Long>() {
-                public Long run() throws Exception {
+            Result<Long> result = ugi.doAs(new PrivilegedExceptionAction<Result<Long>>() {
+                @Override
+                public Result<Long> run() {
                     try (FileSystem fs = FileSystem.get(resource.hdfsConfig)) {
                         long length = -1;
                         if (fs.isFile(new Path(filePath))) {
                             length = fs.getLength(new Path(filePath));
                         }
-                        return length;
+                        return Result.success(length);
                     } catch (IOException ex) {
                         LOG.warn("{}could not get size of file:{}", logPrefix, ex.getMessage());
-                        throw new RuntimeException(ex);
+                        return Result.externalSafeFailure("hdfs file length");
                     }
                 }
             });
-            LOG.debug("{}got length of file{}", new Object[]{logPrefix, filePath});
+            LOG.trace("{}op completed", new Object[]{logPrefix});
             return result;
         } catch (IOException | InterruptedException ex) {
-            LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
-            throw new RuntimeException(ex);
-        } catch (Exception ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            return Result.externalSafeFailure("hdfs file length");
         }
     }
 
-    public static boolean delete(final HDFSResource resource) {
+    public static Result<Boolean> delete(UserGroupInformation ugi, final HDFSResource resource) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}deleting file:{}", new Object[]{logPrefix, filePath});
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(resource.user);
         try {
-            boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
-                public Boolean run() throws Exception {
+            Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
+                @Override
+                public Result<Boolean> run() {
                     try (FileSystem fs = FileSystem.get(resource.hdfsConfig)) {
                         fs.delete(new Path(filePath), false);
-                        return true;
+                        return Result.success(true);
                     } catch (IOException ex) {
                         LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
-                        return false;
+                        return Result.externalUnsafeFailure("hdfs file delete");
                     }
                 }
             });
-            LOG.debug("{}deleted file:{}", logPrefix, filePath);
+            LOG.trace("{}op completed", new Object[]{logPrefix});
             return result;
         } catch (IOException | InterruptedException ex) {
-            LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
-            return false;
-        } catch (Exception ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            return Result.externalUnsafeFailure("hdfs file delete");
         }
     }
 
-    public static boolean simpleCreate(final HDFSResource hdfsResource) {
+    public static Result<Boolean> simpleCreate(UserGroupInformation ugi, final HDFSResource hdfsResource) {
         final String filePath = hdfsResource.dirPath + Path.SEPARATOR + hdfsResource.fileName;
         LOG.debug("{}creating file:{}", new Object[]{logPrefix, filePath});
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsResource.user);
         try {
-            boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+            Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
-                public Boolean run() throws Exception {
+                public Result<Boolean> run() {
                     try (FileSystem fs = FileSystem.get(hdfsResource.hdfsConfig)) {
                         if (!fs.isDirectory(new Path(hdfsResource.dirPath))) {
                             fs.mkdirs(new Path(hdfsResource.dirPath));
                         }
                         if (fs.isFile(new Path(filePath))) {
-                            return false;
+                            return Result.success(false);
                         }
-                        try (FSDataOutputStream out = fs.create(new Path(filePath), (short)1)) {
-                            return true;
-                        } catch (IOException ex) {
-                            LOG.warn("{}could not write file:{}", logPrefix, ex.getMessage());
-                            return false;
+                        try (FSDataOutputStream out = fs.create(new Path(filePath), (short) 1)) {
+                            return Result.success(true);
                         }
                     } catch (IOException ex) {
-                        LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
-                        return false;
+                        LOG.warn("{}could not write file:{}", logPrefix, ex.getMessage());
+                        return Result.externalUnsafeFailure("hdfs file simpleCreate");
                     }
                 }
             });
-            LOG.debug("{}created file:{}", logPrefix, filePath);
+            LOG.trace("{}op completed", new Object[]{logPrefix});
             return result;
         } catch (IOException | InterruptedException ex) {
-            LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
-            return false;
-        } catch (Exception ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            return Result.externalUnsafeFailure("hdfs file simpleCreate");
         }
     }
 
-    public static boolean create(final HDFSResource hdfsResource, final long fileSize) {
+    public static Result<Boolean> createWithLength(UserGroupInformation ugi, final HDFSResource hdfsResource, final long fileSize) {
         final String filePath = hdfsResource.dirPath + Path.SEPARATOR + hdfsResource.fileName;
         LOG.debug("{}creating file:{}", new Object[]{logPrefix, filePath});
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsResource.user);
         try {
-            boolean result = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+            Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
-                public Boolean run() throws Exception {
+                public Result<Boolean> run() {
                     try (FileSystem fs = FileSystem.get(hdfsResource.hdfsConfig)) {
                         if (!fs.isDirectory(new Path(hdfsResource.dirPath))) {
                             fs.mkdirs(new Path(hdfsResource.dirPath));
                         }
                         if (fs.isFile(new Path(filePath))) {
-                            return false;
+                            return Result.success(false);
                         }
                         Random rand = new Random(1234);
                         try (FSDataOutputStream out = fs.create(new Path(filePath))) {
@@ -180,85 +164,71 @@ public class HDFSHelper {
                                 out.write(data);
                                 out.flush();
                             }
-                            return true;
-                        } catch (IOException ex) {
-                            LOG.warn("{}could not write file:{}", logPrefix, ex.getMessage());
-                            return false;
+                            return Result.success(true);
                         }
                     } catch (IOException ex) {
                         LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
-                        return false;
+                        return Result.externalUnsafeFailure("hdfs file createWithLength");
                     }
                 }
             });
-            LOG.debug("{}created file:{}", logPrefix, filePath);
+            LOG.trace("{}op completed", new Object[]{logPrefix});
             return result;
         } catch (IOException | InterruptedException ex) {
-            LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
-            return false;
-        } catch (Exception ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            return Result.externalUnsafeFailure("hdfs file createWithLength");
         }
     }
 
-    public static byte[] read(final HDFSResource resource, final long readPos, final int readLength) throws IOException, InterruptedException {
+    public static Result<byte[]> read(UserGroupInformation ugi, final HDFSResource resource, final long readPos, final int readLength) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}reading from file:{}", new Object[]{logPrefix, filePath});
         try {
-            UserGroupInformation ugi = UserGroupInformation.createRemoteUser(resource.user);
-            byte[] result = ugi.doAs(new PrivilegedExceptionAction<byte[]>() {
+            Result<byte[]> result = ugi.doAs(new PrivilegedExceptionAction<Result<byte[]>>() {
                 @Override
-                public byte[] run() throws Exception {
+                public Result<byte[]> run() {
                     try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(resource.hdfsConfig);
                             FSDataInputStream in = fs.open(new Path(filePath))) {
                         byte[] byte_read = new byte[readLength];
                         in.readFully(readPos, byte_read);
-                        return byte_read;
+                        return Result.success(byte_read);
                     } catch (IOException ex) {
                         LOG.warn("{}could not read file:{} ex:{}", new Object[]{logPrefix, filePath, ex.getMessage()});
-                        return null;
-                    } catch (Exception ex) {
-                        LOG.error("{}unexpected exception:{}", logPrefix, ex);
-                        throw new RuntimeException(ex);
+                        return Result.externalSafeFailure("hdfs file read");
                     }
                 }
             });
-            LOG.debug("{}reading done from file:{}", new Object[]{logPrefix, filePath});
+            LOG.trace("{}op completed", new Object[]{logPrefix});
             return result;
-        } catch (Exception ex) {
+        } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            return Result.externalSafeFailure("hdfs file read");
         }
     }
 
-    public static int append(final HDFSResource resource, final byte[] data) {
+    public static Result<Integer> append(UserGroupInformation ugi, final HDFSResource resource, final byte[] data) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}appending to file:{}", new Object[]{logPrefix, filePath});
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(resource.user);
         try {
-            int result = ugi.doAs(new PrivilegedExceptionAction<Integer>() {
+            Result<Integer> result = ugi.doAs(new PrivilegedExceptionAction<Result<Integer>>() {
                 @Override
-                public Integer run() throws Exception {
+                public Result<Integer> run() {
                     try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(resource.hdfsConfig);
                             FSDataOutputStream out = fs.append(new Path(filePath))) {
                         out.write(data);
                         out.flush();
-                        return data.length;
+                        return Result.success(data.length);
                     } catch (IOException ex) {
                         LOG.warn("{}could not append to file:{} ex:{}", new Object[]{logPrefix, filePath, ex.getMessage()});
-                        return -1;
-                    } catch (Exception ex) {
-                        LOG.error("{}unexpected exception:{}", logPrefix, ex);
-                        throw new RuntimeException(ex);
+                        return Result.externalUnsafeFailure("hdfs file append");
                     }
                 }
             });
-            LOG.debug("{}appending done to file:{}", new Object[]{logPrefix, filePath});
+            LOG.trace("{}op completed", new Object[]{logPrefix});
             return result;
-        } catch (Exception ex) {
+        } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            throw new RuntimeException(ex);
+            return Result.externalUnsafeFailure("hdfs file append");
         }
     }
 }
