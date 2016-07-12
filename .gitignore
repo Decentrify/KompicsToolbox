@@ -195,3 +195,7 @@ netty-test/target/
 /overlay-mngr/bootstrap/common/target/
 /overlay-mngr/bootstrap/client/target/
 /hops/target/
+/hdfs/target/
+/hops/hdfs/target/
+/hops/kafka/target/
+/hops/core/target/
