@@ -77,11 +77,13 @@ public class KafkaHelper {
         LOG.info("getting schema session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
                 new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
                     kafkaResource.keyStore, kafkaResource.trustStore});
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
+                kafkaResource.keyStore, kafkaResource.trustStore);
         String stringSchema;
         try {
-            stringSchema = NHopsKafkaUtil.getSchemaByTopic(kafkaResource.domain, kafkaResource.restEndpoint, kafkaResource.sessionId, projectId, kafkaResource.topicName);
+            stringSchema = NHopsKafkaUtil.getSchemaByTopic(hopsKafkaUtil, kafkaResource.topicName);
         } catch (SchemaNotFoundException ex) {
-             throw new RuntimeException(ex);
+            throw new RuntimeException(ex);
         }
         LOG.info("schema:{}", stringSchema);
         Schema.Parser parser = new Schema.Parser();
