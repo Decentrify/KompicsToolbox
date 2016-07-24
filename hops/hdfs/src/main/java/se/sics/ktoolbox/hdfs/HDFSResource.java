@@ -21,11 +21,12 @@ package se.sics.ktoolbox.hdfs;
 import java.io.File;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import se.sics.ktoolbox.util.stream.StreamResource;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HDFSResource {
+public class HDFSResource implements StreamResource {
 
     public final Configuration hdfsConfig;
     public final String user;
@@ -53,5 +54,15 @@ public class HDFSResource {
         this.user = user;
         this.dirPath = dirPath;
         this.fileName = fileName;
+    }
+
+    @Override
+    public Class<HDFSPort> resourcePort() {
+        return HDFSPort.class;
+    }
+
+    @Override
+    public String getResourceName() {
+        return "hdfs://" + dirPath + "/" + fileName;
     }
 }

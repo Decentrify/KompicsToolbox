@@ -18,11 +18,14 @@
  */
 package se.sics.ktoolbox.kafka;
 
+import se.sics.ktoolbox.kafka.avro.AvroMsgProducer;
+import se.sics.ktoolbox.kafka.avro.KafkaProducer;
+import se.sics.ktoolbox.util.stream.StreamResource;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class KafkaResource {
+public class KafkaResource implements StreamResource {
     public final String brokerEndpoint;
     public final String restEndpoint;
     public final String domain;
@@ -42,5 +45,19 @@ public class KafkaResource {
         this.topicName = topicName;
         this.keyStore = keyStore;
         this.trustStore = trustStore;
+    }
+
+    @Override
+    public Class<KafkaPort> resourcePort() {
+        return KafkaPort.class;
+    }
+
+    @Override
+    public String getResourceName() {
+        return "kafka - topic:" + topicName; 
+    }
+    
+    public AvroMsgProducer getProducer() {
+        return new KafkaProducer(this);
     }
 }

@@ -35,12 +35,12 @@ public class Result<V extends Object> {
     public final Status status;
     /**
      * SUCCESS leads to the existance of an actual value of type V in value.
-     * Failure of any kind leads to the existance of a description String in the
+     * Failure of any kind leads to the existance of an Exception in the
      * value fields
      */
-    private final Either<V, String> value;
+    private final Either<V, Exception> value;
     
-    public Result(Status status, Either<V, String> value) {
+    public Result(Status status, Either<V, Exception> value) {
         this.status = status;
         this.value = value;
     }
@@ -52,38 +52,43 @@ public class Result<V extends Object> {
     public V getValue() {
         return value.getLeft();
     }
-    
-    public String getErrorDescription() {
+
+    public Exception getException() {
         return value.getRight();
     }
+    
+    public String getExceptionDescription() {
+        return value.getRight().getMessage();
+    }
+    
 
     public static <V extends Object> Result<V> success(V value) {
         Either<V, String> evalue = Either.left(value);
         return new Result(Status.SUCCESS, evalue);
     }
     
-    public static <V extends Object> Result<V> failure(Status status, String description) {
-        Either<V, String> evalue = Either.right(description);
+    public static Result failure(Status status, Exception ex) {
+        Either evalue = Either.right(ex);
         return new Result(status, evalue);
     }
     
-    public static <V extends Object> Result<V> timeout(String description) {
-        return failure(Result.Status.TIMEOUT, description);
+    public static Result timeout(Exception ex) {
+        return failure(Result.Status.TIMEOUT, ex);
     }
     
-    public static <V extends Object> Result<V> badRequest(String description) {
-        return failure(Result.Status.BAD_REQUEST, description);
+    public static Result badRequest(Exception ex) {
+        return failure(Result.Status.BAD_REQUEST, ex);
     }
     
-    public static <V extends Object> Result<V> internalFailure(String description) {
-        return failure(Result.Status.INT_FAILURE, description);
+    public static Result internalFailure(Exception ex) {
+        return failure(Result.Status.INT_FAILURE, ex);
     }
     
-    public static <V extends Object> Result<V> externalSafeFailure(String description) {
-        return failure(Result.Status.SAFE_EXT_FAILURE, description);
+    public static  Result externalSafeFailure(Exception ex) {
+        return failure(Result.Status.SAFE_EXT_FAILURE, ex);
     }
     
-    public static <V extends Object> Result<V> externalUnsafeFailure(String description) {
-        return failure(Result.Status.UNSAFE_EXT_FAILURE, description);
+    public static Result externalUnsafeFailure(Exception ex) {
+        return failure(Result.Status.UNSAFE_EXT_FAILURE, ex);
     }
 }

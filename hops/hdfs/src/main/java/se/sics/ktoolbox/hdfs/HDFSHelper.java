@@ -31,6 +31,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.util.result.Result;
+import se.sics.ktoolbox.util.stream.ranges.KRange;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -69,7 +70,7 @@ public class HDFSHelper {
                         return Result.success(length);
                     } catch (IOException ex) {
                         LOG.warn("{}could not get size of file:{}", logPrefix, ex.getMessage());
-                        return Result.externalSafeFailure("hdfs file length");
+                        return Result.externalSafeFailure(new HDFSException("hdfs file length", ex));
                     }
                 }
             });
@@ -77,7 +78,7 @@ public class HDFSHelper {
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            return Result.externalSafeFailure("hdfs file length");
+            return Result.externalSafeFailure(new HDFSException("hdfs file length", ex));
         }
     }
 
@@ -93,7 +94,7 @@ public class HDFSHelper {
                         return Result.success(true);
                     } catch (IOException ex) {
                         LOG.warn("{}could not delete file:{}", logPrefix, ex.getMessage());
-                        return Result.externalUnsafeFailure("hdfs file delete");
+                        return Result.externalUnsafeFailure(new HDFSException("hdfs file delete", ex));
                     }
                 }
             });
@@ -101,7 +102,7 @@ public class HDFSHelper {
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            return Result.externalUnsafeFailure("hdfs file delete");
+            return Result.externalUnsafeFailure(new HDFSException("hdfs file delete", ex));
         }
     }
 
@@ -124,7 +125,7 @@ public class HDFSHelper {
                         }
                     } catch (IOException ex) {
                         LOG.warn("{}could not write file:{}", logPrefix, ex.getMessage());
-                        return Result.externalUnsafeFailure("hdfs file simpleCreate");
+                        return Result.externalUnsafeFailure(new HDFSException("hdfs file simpleCreate", ex));
                     }
                 }
             });
@@ -132,7 +133,7 @@ public class HDFSHelper {
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            return Result.externalUnsafeFailure("hdfs file simpleCreate");
+            return Result.externalUnsafeFailure(new HDFSException("hdfs file simpleCreate", ex));
         }
     }
 
@@ -168,7 +169,7 @@ public class HDFSHelper {
                         }
                     } catch (IOException ex) {
                         LOG.warn("{}could not create file:{}", logPrefix, ex.getMessage());
-                        return Result.externalUnsafeFailure("hdfs file createWithLength");
+                        return Result.externalUnsafeFailure(new HDFSException("hdfs file createWithLength", ex));
                     }
                 }
             });
@@ -176,11 +177,11 @@ public class HDFSHelper {
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            return Result.externalUnsafeFailure("hdfs file createWithLength");
+            return Result.externalUnsafeFailure(new HDFSException("hdfs file createWithLength", ex));
         }
     }
 
-    public static Result<byte[]> read(UserGroupInformation ugi, final HDFSResource resource, final long readPos, final int readLength) {
+    public static Result<byte[]> read(UserGroupInformation ugi, final HDFSResource resource, final KRange readRange) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}reading from file:{}", new Object[]{logPrefix, filePath});
         try {
@@ -189,12 +190,13 @@ public class HDFSHelper {
                 public Result<byte[]> run() {
                     try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(resource.hdfsConfig);
                             FSDataInputStream in = fs.open(new Path(filePath))) {
+                        int readLength = (int)(readRange.upperAbsEndpoint() - readRange.lowerAbsEndpoint());
                         byte[] byte_read = new byte[readLength];
-                        in.readFully(readPos, byte_read);
+                        in.readFully(readRange.lowerAbsEndpoint(), byte_read);
                         return Result.success(byte_read);
                     } catch (IOException ex) {
                         LOG.warn("{}could not read file:{} ex:{}", new Object[]{logPrefix, filePath, ex.getMessage()});
-                        return Result.externalSafeFailure("hdfs file read");
+                        return Result.externalSafeFailure(new HDFSException("hdfs file read", ex));
                     }
                 }
             });
@@ -202,25 +204,25 @@ public class HDFSHelper {
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            return Result.externalSafeFailure("hdfs file read");
+            return Result.externalSafeFailure(new HDFSException("hdfs file read", ex));
         }
     }
 
-    public static Result<Integer> append(UserGroupInformation ugi, final HDFSResource resource, final byte[] data) {
+    public static Result<Boolean> append(UserGroupInformation ugi, final HDFSResource resource, final byte[] data) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}appending to file:{}", new Object[]{logPrefix, filePath});
         try {
-            Result<Integer> result = ugi.doAs(new PrivilegedExceptionAction<Result<Integer>>() {
+            Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
-                public Result<Integer> run() {
+                public Result<Boolean> run() {
                     try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(resource.hdfsConfig);
                             FSDataOutputStream out = fs.append(new Path(filePath))) {
                         out.write(data);
                         out.flush();
-                        return Result.success(data.length);
+                        return Result.success(true);
                     } catch (IOException ex) {
                         LOG.warn("{}could not append to file:{} ex:{}", new Object[]{logPrefix, filePath, ex.getMessage()});
-                        return Result.externalUnsafeFailure("hdfs file append");
+                        return Result.externalUnsafeFailure(new HDFSException("hdfs file append", ex));
                     }
                 }
             });
@@ -228,7 +230,7 @@ public class HDFSHelper {
             return result;
         } catch (IOException | InterruptedException ex) {
             LOG.error("{}unexpected exception:{}", logPrefix, ex);
-            return Result.externalUnsafeFailure("hdfs file append");
+            return Result.externalUnsafeFailure(new HDFSException("hdfs file append", ex));
         }
     }
 }
