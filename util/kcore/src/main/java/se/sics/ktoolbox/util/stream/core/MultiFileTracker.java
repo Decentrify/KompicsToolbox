@@ -27,14 +27,15 @@ import org.javatuples.Pair;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
+import se.sics.ktoolbox.util.stream.StreamEndpoint;
 import se.sics.ktoolbox.util.stream.StreamResource;
 import se.sics.ktoolbox.util.stream.TransferMngr;
 import se.sics.ktoolbox.util.stream.buffer.KBuffer;
 import se.sics.ktoolbox.util.stream.buffer.MultiKBuffer;
 import se.sics.ktoolbox.util.stream.buffer.SimpleAppendKBuffer;
 import se.sics.ktoolbox.util.stream.cache.SimpleKCache;
-import se.sics.ktoolbox.util.stream.storage.AsyncAppendStorage;
 import se.sics.ktoolbox.util.stream.storage.AsyncCompleteStorage;
+import se.sics.ktoolbox.util.stream.storage.AsyncIncompleteStorage;
 import se.sics.ktoolbox.util.stream.storage.AsyncOnDemandHashStorage;
 import se.sics.ktoolbox.util.stream.storage.managed.AppendFileMngr;
 import se.sics.ktoolbox.util.stream.storage.managed.CompleteFileMngr;
@@ -56,19 +57,20 @@ public class MultiFileTracker {
         for (Map.Entry<Integer, FileDetails> entry : transferDetails.entrySet()) {
             FileDetails fileDetails = entry.getValue();
             if (complete) {
-                AsyncCompleteStorage file = new AsyncCompleteStorage(config, proxy, exSyncHandler, fileDetails);
+                SimpleKCache cache = new SimpleKCache(config, proxy, exSyncHandler, fileDetails.mainResource.getValue0(), fileDetails.mainResource.getValue1());
+                AsyncCompleteStorage file = new AsyncCompleteStorage(cache);
                 AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(fileDetails, exSyncHandler, file);
                 CompleteFileMngr fileMngr = new CompleteFileMngr(fileDetails, file, hash);
                 completed.put(entry.getKey(), new UploadTransferMngr(fileDetails, fileMngr));
             } else {
-                SimpleKCache cache = new SimpleKCache(config, proxy, exSyncHandler, fileDetails.mainResource);
+                SimpleKCache cache = new SimpleKCache(config, proxy, exSyncHandler, fileDetails.mainResource.getValue0(), fileDetails.mainResource.getValue1());
                 List<KBuffer> bufs = new ArrayList<>();
-                bufs.add(new SimpleAppendKBuffer(config, proxy, exSyncHandler, fileDetails.mainResource, 0));
-                for (StreamResource writeResource : fileDetails.secondaryResources) {
-                    bufs.add(new SimpleAppendKBuffer(config, proxy, exSyncHandler, writeResource, 0));
+                bufs.add(new SimpleAppendKBuffer(config, proxy, exSyncHandler, fileDetails.mainResource.getValue0(), fileDetails.mainResource.getValue1(), 0));
+                for (Pair<StreamEndpoint, StreamResource> writeResource : fileDetails.secondaryResources) {
+                    bufs.add(new SimpleAppendKBuffer(config, proxy, exSyncHandler, writeResource.getValue0(), writeResource.getValue1(), 0));
                 }
                 KBuffer buffer = new MultiKBuffer(bufs);
-                AsyncAppendStorage file = new AsyncAppendStorage(cache, buffer);
+                AsyncIncompleteStorage file = new AsyncIncompleteStorage(cache, buffer);
                 AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(entry.getValue(), exSyncHandler, file);
                 AppendFileMngr fileMngr = new AppendFileMngr(entry.getValue(), file, hash);
                 ongoing.put(entry.getKey(), new DownloadTransferMngr(entry.getValue(), fileMngr));

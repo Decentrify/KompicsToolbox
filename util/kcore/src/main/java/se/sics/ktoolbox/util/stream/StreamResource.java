@@ -22,6 +22,5 @@ package se.sics.ktoolbox.util.stream;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface StreamResource {
-    public <P extends StreamPort> Class<P> resourcePort();
     public String getResourceName();
 }

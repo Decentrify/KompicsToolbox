@@ -31,12 +31,12 @@ import se.sics.ktoolbox.util.stream.ranges.KRange;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AsyncAppendStorage implements AsyncStorage {
+public class AsyncIncompleteStorage implements AsyncStorage {
 
     private final KCache cache;
     private final KBuffer buffer;
 
-    public AsyncAppendStorage(KCache cache, KBuffer buffer) {
+    public AsyncIncompleteStorage(KCache cache, KBuffer buffer) {
         this.cache = cache;
         this.buffer = buffer;
     }

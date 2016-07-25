@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.kafka.avro.AvroParser;
+import se.sics.ktoolbox.kafka.test.TestKafkaEndpoint;
 import se.sics.ktoolbox.kafka.test.TestKafkaResource;
 import se.sics.ktoolbox.util.result.Result;
 import se.sics.ktoolbox.util.stream.events.StreamWrite;
@@ -40,7 +41,6 @@ import se.sics.ktoolbox.util.test.PortValidator;
 import se.sics.ktoolbox.util.test.Validator;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class KafkaProxyTest {
@@ -87,36 +87,38 @@ public class KafkaProxyTest {
         LOG.info("simple test");
 
         stream1.readerIndex(0);
-        KafkaResource resource = new TestKafkaResource(schema1);
+        
+        KafkaEndpoint kafkaEndpoint = new TestKafkaEndpoint();
+        KafkaResource kafkaResource = new TestKafkaResource(schema1);
         MockComponentProxy proxy = new MockComponentProxy();
         Validator validator;
 
         byte[] v1 = new byte[18];
         stream1.readBytes(v1);
-        StreamWrite.Request req1 = new StreamWrite.Request(0, v1);
+        StreamWrite.Request req1 = new StreamWrite.Request(kafkaResource, 0, v1);
         byte[] v2 = new byte[2 * 18];
         stream1.readBytes(v2);
-        StreamWrite.Request req2 = new StreamWrite.Request(18, v2);
+        StreamWrite.Request req2 = new StreamWrite.Request(kafkaResource, 18, v2);
         byte[] v3 = new byte[10];
         stream1.readBytes(v3);
-        StreamWrite.Request req3 = new StreamWrite.Request(3 * 18, v3);
+        StreamWrite.Request req3 = new StreamWrite.Request(kafkaResource, 3 * 18, v3);
         byte[] v4 = new byte[5];
         stream1.readBytes(v4);
-        StreamWrite.Request req4 = new StreamWrite.Request(3 * 18 + 10, v4);
+        StreamWrite.Request req4 = new StreamWrite.Request(kafkaResource, 3 * 18 + 10, v4);
         byte[] v5 = new byte[3];
         stream1.readBytes(v5);
-        StreamWrite.Request req5 = new StreamWrite.Request(3 * 18 + 15, v5);
+        StreamWrite.Request req5 = new StreamWrite.Request(kafkaResource, 3 * 18 + 15, v5);
         byte[] v6 = new byte[21];
         stream1.readBytes(v6);
-        StreamWrite.Request req6 = new StreamWrite.Request(4 * 18, v6);
+        StreamWrite.Request req6 = new StreamWrite.Request(kafkaResource, 4 * 18, v6);
         byte[] v7 = new byte[18];
         stream1.readBytes(v7);
-        StreamWrite.Request req7 = new StreamWrite.Request(5 * 18+3, v7);
+        StreamWrite.Request req7 = new StreamWrite.Request(kafkaResource, 5 * 18+3, v7);
         byte[] v8 = new byte[15];
         stream1.readBytes(v8);
-        StreamWrite.Request req8 = new StreamWrite.Request(6 * 18+3, v8);
+        StreamWrite.Request req8 = new StreamWrite.Request(kafkaResource, 6 * 18+3, v8);
 
-        KafkaProxy kafka = buildKafka(proxy, resource);
+        KafkaProxy kafka = buildKafka(proxy, kafkaEndpoint);
         startKafka(proxy, kafka);
         //write one msg - full value, no leftover
         proxy.expect(new EventContentValidator(new StreamWriteRespEC(), req1.respond(Result.success(true))));
@@ -163,9 +165,9 @@ public class KafkaProxyTest {
         closeKafka(proxy, kafka);
     }
 
-    private KafkaProxy buildKafka(MockComponentProxy proxy, KafkaResource resource) {
+    private KafkaProxy buildKafka(MockComponentProxy proxy, KafkaEndpoint kafkaEndpoint) {
         proxy.expect(new PortValidator(KafkaPort.class, false));
-        KafkaProxy kafka = new KafkaProxy(proxy, resource);
+        KafkaProxy kafka = new KafkaProxy(proxy, kafkaEndpoint);
         Validator v;
         v = proxy.validateNext();
         Assert.assertTrue(v.toString(), v.isValid());

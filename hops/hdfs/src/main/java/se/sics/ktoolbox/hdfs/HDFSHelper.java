@@ -54,7 +54,7 @@ public class HDFSHelper {
         }
     }
 
-    public static Result<Long> length(UserGroupInformation ugi, final HDFSResource resource) {
+    public static Result<Long> length(UserGroupInformation ugi, final HDFSEndpoint hdfsEndpoint, HDFSResource resource) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}getting length of file:{}", new Object[]{logPrefix, filePath});
 
@@ -62,7 +62,7 @@ public class HDFSHelper {
             Result<Long> result = ugi.doAs(new PrivilegedExceptionAction<Result<Long>>() {
                 @Override
                 public Result<Long> run() {
-                    try (FileSystem fs = FileSystem.get(resource.hdfsConfig)) {
+                    try (FileSystem fs = FileSystem.get(hdfsEndpoint.hdfsConfig)) {
                         long length = -1;
                         if (fs.isFile(new Path(filePath))) {
                             length = fs.getLength(new Path(filePath));
@@ -82,14 +82,14 @@ public class HDFSHelper {
         }
     }
 
-    public static Result<Boolean> delete(UserGroupInformation ugi, final HDFSResource resource) {
+    public static Result<Boolean> delete(UserGroupInformation ugi, final HDFSEndpoint hdfsEndpoint, HDFSResource resource) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}deleting file:{}", new Object[]{logPrefix, filePath});
         try {
             Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
                 public Result<Boolean> run() {
-                    try (FileSystem fs = FileSystem.get(resource.hdfsConfig)) {
+                    try (FileSystem fs = FileSystem.get(hdfsEndpoint.hdfsConfig)) {
                         fs.delete(new Path(filePath), false);
                         return Result.success(true);
                     } catch (IOException ex) {
@@ -106,14 +106,14 @@ public class HDFSHelper {
         }
     }
 
-    public static Result<Boolean> simpleCreate(UserGroupInformation ugi, final HDFSResource hdfsResource) {
+    public static Result<Boolean> simpleCreate(UserGroupInformation ugi, final HDFSEndpoint hdfsEndpoint, final HDFSResource hdfsResource) {
         final String filePath = hdfsResource.dirPath + Path.SEPARATOR + hdfsResource.fileName;
         LOG.debug("{}creating file:{}", new Object[]{logPrefix, filePath});
         try {
             Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
                 public Result<Boolean> run() {
-                    try (FileSystem fs = FileSystem.get(hdfsResource.hdfsConfig)) {
+                    try (FileSystem fs = FileSystem.get(hdfsEndpoint.hdfsConfig)) {
                         if (!fs.isDirectory(new Path(hdfsResource.dirPath))) {
                             fs.mkdirs(new Path(hdfsResource.dirPath));
                         }
@@ -137,14 +137,14 @@ public class HDFSHelper {
         }
     }
 
-    public static Result<Boolean> createWithLength(UserGroupInformation ugi, final HDFSResource hdfsResource, final long fileSize) {
+    public static Result<Boolean> createWithLength(UserGroupInformation ugi, final HDFSEndpoint hdfsEndpoint, final HDFSResource hdfsResource, final long fileSize) {
         final String filePath = hdfsResource.dirPath + Path.SEPARATOR + hdfsResource.fileName;
         LOG.debug("{}creating file:{}", new Object[]{logPrefix, filePath});
         try {
             Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
                 public Result<Boolean> run() {
-                    try (FileSystem fs = FileSystem.get(hdfsResource.hdfsConfig)) {
+                    try (FileSystem fs = FileSystem.get(hdfsEndpoint.hdfsConfig)) {
                         if (!fs.isDirectory(new Path(hdfsResource.dirPath))) {
                             fs.mkdirs(new Path(hdfsResource.dirPath));
                         }
@@ -181,14 +181,14 @@ public class HDFSHelper {
         }
     }
 
-    public static Result<byte[]> read(UserGroupInformation ugi, final HDFSResource resource, final KRange readRange) {
+    public static Result<byte[]> read(UserGroupInformation ugi, final HDFSEndpoint hdfsEndpoint, HDFSResource resource, final KRange readRange) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}reading from file:{}", new Object[]{logPrefix, filePath});
         try {
             Result<byte[]> result = ugi.doAs(new PrivilegedExceptionAction<Result<byte[]>>() {
                 @Override
                 public Result<byte[]> run() {
-                    try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(resource.hdfsConfig);
+                    try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(hdfsEndpoint.hdfsConfig);
                             FSDataInputStream in = fs.open(new Path(filePath))) {
                         int readLength = (int)(readRange.upperAbsEndpoint() - readRange.lowerAbsEndpoint());
                         byte[] byte_read = new byte[readLength];
@@ -208,14 +208,14 @@ public class HDFSHelper {
         }
     }
 
-    public static Result<Boolean> append(UserGroupInformation ugi, final HDFSResource resource, final byte[] data) {
+    public static Result<Boolean> append(UserGroupInformation ugi, final HDFSEndpoint hdfsEndpoint, HDFSResource resource, final byte[] data) {
         final String filePath = resource.dirPath + Path.SEPARATOR + resource.fileName;
         LOG.debug("{}appending to file:{}", new Object[]{logPrefix, filePath});
         try {
             Result<Boolean> result = ugi.doAs(new PrivilegedExceptionAction<Result<Boolean>>() {
                 @Override
                 public Result<Boolean> run() {
-                    try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(resource.hdfsConfig);
+                    try (DistributedFileSystem fs = (DistributedFileSystem) FileSystem.get(hdfsEndpoint.hdfsConfig);
                             FSDataOutputStream out = fs.append(new Path(filePath))) {
                         out.write(data);
                         out.flush();

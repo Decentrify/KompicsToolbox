@@ -35,6 +35,7 @@ import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 import se.sics.ktoolbox.util.result.Result;
+import se.sics.ktoolbox.util.stream.StreamEndpoint;
 import se.sics.ktoolbox.util.stream.StreamResource;
 import se.sics.ktoolbox.util.stream.buffer.KBuffer;
 import se.sics.ktoolbox.util.stream.buffer.MultiKBuffer;
@@ -43,7 +44,7 @@ import se.sics.ktoolbox.util.stream.buffer.SimpleAppendKBufferTest;
 import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.cache.SimpleKCache;
 import se.sics.ktoolbox.util.stream.events.StreamWrite;
-import se.sics.ktoolbox.util.stream.storage.AsyncAppendStorage;
+import se.sics.ktoolbox.util.stream.storage.AsyncIncompleteStorage;
 import se.sics.ktoolbox.util.stream.storage.AsyncOnDemandHashStorage;
 import se.sics.ktoolbox.util.stream.storage.managed.AppendFileMngr;
 import se.sics.ktoolbox.util.stream.util.BlockDetails;
@@ -55,6 +56,7 @@ import se.sics.ktoolbox.util.test.MockComponentProxy;
 import se.sics.ktoolbox.util.test.MockExceptionHandler;
 import se.sics.ktoolbox.util.test.MockHWC;
 import se.sics.ktoolbox.util.test.MockPWC;
+import se.sics.ktoolbox.util.test.MockStreamEndpoint;
 import se.sics.ktoolbox.util.test.MockStreamPort;
 import se.sics.ktoolbox.util.test.MockStreamResource;
 import se.sics.ktoolbox.util.test.MockWC;
@@ -78,8 +80,10 @@ public class DownloadTransferMngrTest {
         BlockDetails defaultBlock = new BlockDetails(10, 2, 5, 5);
         String hashAlg = HashUtil.getAlgName(HashUtil.SHA);
         BlockDetails lastBlock1 = new BlockDetails(6, 2, 5, 1);
+        StreamEndpoint writeEndpoint = new MockStreamEndpoint();
         StreamResource writeResource = new MockStreamResource("mock1");
-        fileDetails1 = new FileDetails(56, writeResource, new ArrayList<StreamResource>(), 6, defaultBlock, lastBlock1, hashAlg);
+        fileDetails1 = new FileDetails(56, Pair.with(writeEndpoint, writeResource), new ArrayList<Pair<StreamEndpoint, StreamResource>>(), 
+                6, defaultBlock, lastBlock1, hashAlg);
 
         defBlock = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         defHash = HashUtil.makeHash(defBlock, fileDetails1.hashAlg);
@@ -282,15 +286,16 @@ public class DownloadTransferMngrTest {
         proxy.expect(new PortValidator(Timer.class, false));
         proxy.expect(new PortValidator(MockStreamPort.class, false));
 
-        SimpleKCache cache = new SimpleKCache(config, proxy, syncExHandler, fileDetails1.mainResource);
+        SimpleKCache cache = new SimpleKCache(config, proxy, syncExHandler, fileDetails1.mainResource.getValue0(), fileDetails1.mainResource.getValue1());
         List<KBuffer> bufs = new ArrayList<>();
-        SimpleAppendKBuffer mainBuffer = new SimpleAppendKBuffer(config, proxy, syncExHandler, fileDetails1.mainResource, 0);
+        SimpleAppendKBuffer mainBuffer = new SimpleAppendKBuffer(config, proxy, syncExHandler, 
+                fileDetails1.mainResource.getValue0(), fileDetails1.mainResource.getValue1(), 0);
         bufs.add(mainBuffer);
-        for (StreamResource writeResource : fileDetails1.secondaryResources) {
-            bufs.add(new SimpleAppendKBuffer(config, proxy, syncExHandler, writeResource, 0));
+        for (Pair<StreamEndpoint, StreamResource> writeResource : fileDetails1.secondaryResources) {
+            bufs.add(new SimpleAppendKBuffer(config, proxy, syncExHandler, writeResource.getValue0(), writeResource.getValue1(), 0));
         }
         KBuffer buffer = new MultiKBuffer(bufs);
-        AsyncAppendStorage file = new AsyncAppendStorage(cache, buffer);
+        AsyncIncompleteStorage file = new AsyncIncompleteStorage(cache, buffer);
         AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(fileDetails1, syncExHandler, file);
         AppendFileMngr afm = new AppendFileMngr(fileDetails1, file, hash);
         DownloadTransferMngr dtm = new DownloadTransferMngr(fileDetails1, afm);

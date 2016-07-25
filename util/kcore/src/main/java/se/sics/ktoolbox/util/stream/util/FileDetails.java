@@ -19,6 +19,8 @@
 package se.sics.ktoolbox.util.stream.util;
 
 import java.util.List;
+import org.javatuples.Pair;
+import se.sics.ktoolbox.util.stream.StreamEndpoint;
 import se.sics.ktoolbox.util.stream.StreamResource;
 
 /**
@@ -26,14 +28,14 @@ import se.sics.ktoolbox.util.stream.StreamResource;
  */
 public class FileDetails {
     public final long length;
-    public final StreamResource mainResource;
-    public final List<StreamResource> secondaryResources;
+    public final Pair<StreamEndpoint, StreamResource> mainResource;
+    public final List<Pair<StreamEndpoint, StreamResource>> secondaryResources;
     public final int nrBlocks;
     public final BlockDetails defaultBlock;
     public final BlockDetails lastBlock;
     public final String hashAlg;
     
-    public FileDetails(long length, StreamResource mainResource, List<StreamResource> secondaryResources, 
+    public FileDetails(long length, Pair<StreamEndpoint, StreamResource> mainResource, List<Pair<StreamEndpoint, StreamResource>> secondaryResources, 
             int nrBlocks, BlockDetails defaultBlock, BlockDetails lastBlock, String hashAlg) {
         this.length = length;
         this.mainResource = mainResource;

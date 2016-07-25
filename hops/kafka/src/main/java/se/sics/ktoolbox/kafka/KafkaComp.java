@@ -38,7 +38,7 @@ public class KafkaComp extends ComponentDefinition {
     
     public KafkaComp(Init init) {
         LOG.info("{}init", logPrefix);
-        kafka = new KafkaProxy(proxy, init.resource);
+        kafka = new KafkaProxy(proxy, init.kafkaEndpoint);
         proxy.subscribe(handleStart, control);
     }
 
@@ -57,10 +57,10 @@ public class KafkaComp extends ComponentDefinition {
     //**************************************************************************
     public static class Init extends se.sics.kompics.Init<KafkaComp> {
 
-        public final KafkaResource resource;
+        public final KafkaEndpoint kafkaEndpoint;
 
-        public Init(KafkaResource resource) {
-            this.resource = resource;
+        public Init(KafkaEndpoint kafkaEndpoint) {
+            this.kafkaEndpoint = kafkaEndpoint;
         }
     }
 }

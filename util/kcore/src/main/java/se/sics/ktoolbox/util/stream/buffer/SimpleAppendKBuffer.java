@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.util.stream.buffer;
 
-import se.sics.ktoolbox.util.stream.util.WriteCallback;
 import java.util.HashMap;
 import java.util.Map;
 import org.javatuples.Pair;
@@ -32,10 +31,12 @@ import se.sics.ktoolbox.util.reference.KReference;
 import se.sics.ktoolbox.util.reference.KReferenceException;
 import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
 import se.sics.ktoolbox.util.result.Result;
+import se.sics.ktoolbox.util.stream.StreamEndpoint;
 import se.sics.ktoolbox.util.stream.StreamPort;
 import se.sics.ktoolbox.util.stream.StreamResource;
 import se.sics.ktoolbox.util.stream.events.StreamWrite;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 
 /**
  * The Buffer runs in the same component that calls its KBuffer methods. We
@@ -61,12 +62,12 @@ public class SimpleAppendKBuffer implements KBuffer {
     //**************************************************************************
 
     public SimpleAppendKBuffer(Config config, ComponentProxy proxy, DelayedExceptionSyncHandler syncExceptionHandling, 
-            StreamResource writeResource, long appendPos) {
+            StreamEndpoint writeEndpoint, StreamResource writeResource, long appendPos) {
         this.bufferConfig = new KBufferConfig(config);
         this.writeResource = writeResource;
         this.proxy = proxy;
         this.syncExHandling = syncExceptionHandling;
-        this.writePort = proxy.getNegative(writeResource.resourcePort()).getPair();
+        this.writePort = proxy.getNegative(writeEndpoint.resourcePort()).getPair();
         this.appendPos = appendPos;
         proxy.subscribe(handleWriteResp, writePort);
     }
@@ -109,7 +110,7 @@ public class SimpleAppendKBuffer implements KBuffer {
             if (next == null) {
                 break;
             }
-            proxy.trigger(new StreamWrite.Request(appendPos, next.getValue0().getValue().get()), writePort);
+            proxy.trigger(new StreamWrite.Request(writeResource, appendPos, next.getValue0().getValue().get()), writePort);
             appendPos += next.getValue0().getValue().get().length;
         }
     }

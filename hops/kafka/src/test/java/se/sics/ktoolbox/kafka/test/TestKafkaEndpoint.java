@@ -1,5 +1,3 @@
-package se.sics.ktoolbox.kafka.test;
-
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
@@ -18,20 +16,26 @@ package se.sics.ktoolbox.kafka.test;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.ktoolbox.kafka.test;
 
-
-import org.apache.avro.Schema;
+import se.sics.ktoolbox.kafka.KafkaEndpoint;
 import se.sics.ktoolbox.kafka.KafkaResource;
+import se.sics.ktoolbox.kafka.avro.AvroMsgProducer;
+import se.sics.ktoolbox.kafka.avro.LogProducer;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestKafkaResource extends KafkaResource {
-    public final Schema schema;
+public class TestKafkaEndpoint extends KafkaEndpoint {
+
+    public TestKafkaEndpoint() {
+        super(null, null, null, null, null, null);
+    }
     
-    public TestKafkaResource(Schema schema) {
-        super(null, null);
-        this.schema = schema;
+    @Override
+    public AvroMsgProducer getProducer(KafkaResource resource) {
+        TestKafkaResource kafkaResource = (TestKafkaResource)resource;
+        return new LogProducer(kafkaResource.schema);
     }
 }

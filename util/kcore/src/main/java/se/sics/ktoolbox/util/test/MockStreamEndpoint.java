@@ -1,5 +1,3 @@
-package se.sics.ktoolbox.kafka.test;
-
 /*
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
@@ -18,20 +16,17 @@ package se.sics.ktoolbox.kafka.test;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package se.sics.ktoolbox.util.test;
 
-
-import org.apache.avro.Schema;
-import se.sics.ktoolbox.kafka.KafkaResource;
+import se.sics.ktoolbox.util.stream.StreamEndpoint;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestKafkaResource extends KafkaResource {
-    public final Schema schema;
-    
-    public TestKafkaResource(Schema schema) {
-        super(null, null);
-        this.schema = schema;
+public class MockStreamEndpoint implements StreamEndpoint {
+    @Override
+    public Class<MockStreamPort> resourcePort() {
+        return MockStreamPort.class;
     }
 }

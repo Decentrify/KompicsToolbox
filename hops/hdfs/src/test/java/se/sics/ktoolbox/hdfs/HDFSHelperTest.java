@@ -31,22 +31,23 @@ public class HDFSHelperTest {
 
     @Test
     public void simpleAppend() throws InterruptedException {
-        HDFSResource resource = new HDFSResource("bbc1.sics.se", 26801, "glassfish", "/experiment/download/", "test");
+        HDFSEndpoint endpoint = new HDFSEndpoint("bbc1.sics.se", 26801, "glassfish");
+        HDFSResource resource = new HDFSResource("/experiment/download/", "test");
         Random rand = new Random(123);
         byte[] data;
 
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser("glassfish");
-        HDFSHelper.delete(ugi, resource);
-        HDFSHelper.simpleCreate(ugi, resource);
+        HDFSHelper.delete(ugi, endpoint, resource);
+        HDFSHelper.simpleCreate(ugi, endpoint, resource);
 
         KProfiler kp = new KProfiler(KProfiler.Type.LOG);
         for (int i = 0; i < 100; i++) {
             data = new byte[1024 * 1024];
             rand.nextBytes(data);
             kp.start("hdfs", "append");
-            HDFSHelper.append(ugi, resource, data);
+            HDFSHelper.append(ugi, endpoint, resource, data);
             kp.end();
         }
-        HDFSHelper.delete(ugi, resource);
+        HDFSHelper.delete(ugi, endpoint, resource);
     }
 }

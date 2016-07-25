@@ -29,10 +29,6 @@ public class MockStreamResource implements StreamResource {
     public MockStreamResource(String resourceName) {
         this.resourceName = resourceName;
     }
-    @Override
-    public Class<MockStreamPort> resourcePort() {
-        return MockStreamPort.class;
-    }
 
     @Override
     public String getResourceName() {

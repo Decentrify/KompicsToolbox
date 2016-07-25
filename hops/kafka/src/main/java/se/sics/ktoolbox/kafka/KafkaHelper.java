@@ -34,15 +34,15 @@ public class KafkaHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(KafkaHelper.class);
 
-    public static HopsKafkaProducer getKafkaProducer(KafkaResource kafkaResource) {
+    public static HopsKafkaProducer getKafkaProducer(KafkaEndpoint kafkaEndpoint, KafkaResource kafkaResource) {
         LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
-        int projectId = Integer.parseInt(kafkaResource.projectId);
+        int projectId = Integer.parseInt(kafkaEndpoint.projectId);
         LOG.info("getting producer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
-                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                    kafkaResource.keyStore, kafkaResource.trustStore});
-        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                kafkaResource.keyStore, kafkaResource.trustStore);
+                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaEndpoint.domain, kafkaEndpoint.brokerEndpoint, kafkaEndpoint.restEndpoint,
+                    kafkaEndpoint.keyStore, kafkaEndpoint.trustStore});
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaEndpoint.domain, kafkaEndpoint.brokerEndpoint, kafkaEndpoint.restEndpoint,
+                kafkaEndpoint.keyStore, kafkaEndpoint.trustStore);
         HopsKafkaProducer kp;
         try {
             //TODO Alex - hardcoded linger delay
@@ -53,15 +53,15 @@ public class KafkaHelper {
         }
     }
 
-    public static HopsKafkaConsumer getKafkaConsumer(KafkaResource kafkaResource) {
+    public static HopsKafkaConsumer getKafkaConsumer(KafkaEndpoint kafkaEndpoint, KafkaResource kafkaResource) {
         LOG.warn("do not start multiple kafka workers in parallel - risk of race condition (setup/getProducer/getConsumer");
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
-        int projectId = Integer.parseInt(kafkaResource.projectId);
+        int projectId = Integer.parseInt(kafkaEndpoint.projectId);
         LOG.info("getting consumer session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
-                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                    kafkaResource.keyStore, kafkaResource.trustStore});
-        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                kafkaResource.keyStore, kafkaResource.trustStore);
+                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaEndpoint.domain, kafkaEndpoint.brokerEndpoint, kafkaEndpoint.restEndpoint,
+                    kafkaEndpoint.keyStore, kafkaEndpoint.trustStore});
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaEndpoint.domain, kafkaEndpoint.brokerEndpoint, kafkaEndpoint.restEndpoint,
+                kafkaEndpoint.keyStore, kafkaEndpoint.trustStore);
         HopsKafkaConsumer kc;
         try {
             kc = hopsKafkaUtil.getHopsKafkaConsumer(kafkaResource.topicName);
@@ -71,14 +71,14 @@ public class KafkaHelper {
         }
     }
 
-    public static Schema getKafkaSchemaByTopic(KafkaResource kafkaResource) {
+    public static Schema getKafkaSchemaByTopic(KafkaEndpoint kafkaEndpoint, KafkaResource kafkaResource) {
         HopsKafkaUtil hopsKafkaUtil = HopsKafkaUtil.getInstance();
-        int projectId = Integer.parseInt(kafkaResource.projectId);
+        int projectId = Integer.parseInt(kafkaEndpoint.projectId);
         LOG.info("getting schema session:{}, project:{} topic:{} domain:{} broker:{} rest:{} key:{} trust:{}",
-                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                    kafkaResource.keyStore, kafkaResource.trustStore});
-        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaResource.domain, kafkaResource.brokerEndpoint, kafkaResource.restEndpoint,
-                kafkaResource.keyStore, kafkaResource.trustStore);
+                new Object[]{kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaEndpoint.domain, kafkaEndpoint.brokerEndpoint, kafkaEndpoint.restEndpoint,
+                    kafkaEndpoint.keyStore, kafkaEndpoint.trustStore});
+        hopsKafkaUtil.setup(kafkaResource.sessionId, projectId, kafkaResource.topicName, kafkaEndpoint.domain, kafkaEndpoint.brokerEndpoint, kafkaEndpoint.restEndpoint,
+                kafkaEndpoint.keyStore, kafkaEndpoint.trustStore);
         String stringSchema;
         try {
             stringSchema = NHopsKafkaUtil.getSchemaByTopic(hopsKafkaUtil, kafkaResource.topicName);

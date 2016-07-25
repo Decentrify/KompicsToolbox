@@ -21,6 +21,7 @@ package se.sics.ktoolbox.kafka.avro;
 import io.hops.kafkautil.HopsKafkaProducer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import se.sics.ktoolbox.kafka.KafkaEndpoint;
 import se.sics.ktoolbox.kafka.KafkaHelper;
 import se.sics.ktoolbox.kafka.KafkaResource;
 
@@ -30,8 +31,8 @@ import se.sics.ktoolbox.kafka.KafkaResource;
 public class KafkaProducer implements AvroMsgProducer {
     private final HopsKafkaProducer producer;
 
-    public KafkaProducer(KafkaResource resource) {
-        producer = KafkaHelper.getKafkaProducer(resource);
+    public KafkaProducer(KafkaEndpoint kafkaEndpoint, KafkaResource kafkaResource) {
+        producer = KafkaHelper.getKafkaProducer(kafkaEndpoint, kafkaResource);
     }
     
     @Override

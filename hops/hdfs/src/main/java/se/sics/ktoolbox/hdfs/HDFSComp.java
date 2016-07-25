@@ -37,14 +37,14 @@ public class HDFSComp extends ComponentDefinition {
     private String logPrefix = "";
     
     Negative<HDFSPort> streamPort = provides(HDFSPort.class);
-    private final HDFSResource resource;
+    private final HDFSEndpoint hdfsEndpoint;
     private final UserGroupInformation ugi;
     
     public HDFSComp(Init init) {
         LOG.info("{}init", logPrefix);
         
-        resource = init.resource;
-        ugi = UserGroupInformation.createRemoteUser(resource.user);
+        hdfsEndpoint = init.hdfsEndpoint;
+        ugi = UserGroupInformation.createRemoteUser(hdfsEndpoint.user);
         
         subscribe(handleStart, control);
         subscribe(handleReadRequest, streamPort);
@@ -67,7 +67,7 @@ public class HDFSComp extends ComponentDefinition {
         @Override
         public void handle(StreamRead.Request req) {
             LOG.trace("{}received:{}", logPrefix, req);
-            Result<byte[]> readResult = HDFSHelper.read(ugi, resource, req.readRange);
+            Result<byte[]> readResult = HDFSHelper.read(ugi, hdfsEndpoint, (HDFSResource)req.resource, req.readRange);
             StreamRead.Response resp = req.respond(readResult);
             LOG.trace("{}answering:{}", logPrefix, resp);
             answer(req, resp);
@@ -78,7 +78,7 @@ public class HDFSComp extends ComponentDefinition {
         @Override
         public void handle(StreamWrite.Request req) {
             LOG.trace("{}received:{}", logPrefix, req);
-            Result<Boolean> writeResult = HDFSHelper.append(ugi, resource, req.value);
+            Result<Boolean> writeResult = HDFSHelper.append(ugi, hdfsEndpoint, (HDFSResource)req.resource, req.value);
             StreamWrite.Response resp = req.respond(writeResult);
             LOG.trace("{}answering:{}", logPrefix, resp);
             
@@ -86,10 +86,10 @@ public class HDFSComp extends ComponentDefinition {
     };
     
     public static class Init extends se.sics.kompics.Init<HDFSComp> {
-        public final HDFSResource resource;
+        public final HDFSEndpoint hdfsEndpoint;
         
-        public Init(HDFSResource resource) {
-            this.resource = resource;
+        public Init(HDFSEndpoint hdfsEndpoint) {
+            this.hdfsEndpoint = hdfsEndpoint;
         }
     }
 }

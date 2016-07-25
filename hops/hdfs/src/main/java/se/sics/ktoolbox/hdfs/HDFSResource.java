@@ -18,9 +18,6 @@
  */
 package se.sics.ktoolbox.hdfs;
 
-import java.io.File;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import se.sics.ktoolbox.util.stream.StreamResource;
 
 /**
@@ -28,37 +25,12 @@ import se.sics.ktoolbox.util.stream.StreamResource;
  */
 public class HDFSResource implements StreamResource {
 
-    public final Configuration hdfsConfig;
-    public final String user;
     public final String dirPath;
     public final String fileName;
 
-    public HDFSResource(String hopsIp, int hopsPort, String user, String dirPath, String fileName) {
-        this.hdfsConfig = new Configuration();
-        String hopsURL = "hdfs://" + hopsIp + ":" + hopsPort;
-        hdfsConfig.set("fs.defaultFS", hopsURL);
-        this.user = user;
+    public HDFSResource(String dirPath, String fileName) {
         this.dirPath = dirPath;
         this.fileName = fileName;
-    }
-
-    public HDFSResource(String hdfsXMLPath, String user, String dirPath, String fileName) {
-        this.hdfsConfig = new Configuration();
-        //TODO Alex - I know, shouldn't throw exceptions in constructors
-        //maybe later I will make it as a static method to do the checks before invoking constructor
-        File confFile = new File(hdfsXMLPath);
-        if(!confFile.exists()) {
-            throw new RuntimeException("conf file does not exist");
-        }
-        this.hdfsConfig.addResource(new Path(hdfsXMLPath));
-        this.user = user;
-        this.dirPath = dirPath;
-        this.fileName = fileName;
-    }
-
-    @Override
-    public Class<HDFSPort> resourcePort() {
-        return HDFSPort.class;
     }
 
     @Override

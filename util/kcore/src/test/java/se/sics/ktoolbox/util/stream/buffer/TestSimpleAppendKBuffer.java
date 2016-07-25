@@ -34,10 +34,11 @@ import se.sics.ktoolbox.util.stream.ranges.KBlockImpl;
 import se.sics.ktoolbox.util.stream.test.StreamWriteReqEC;
 import se.sics.ktoolbox.util.test.EventContentValidator;
 import se.sics.ktoolbox.util.test.MockComponentProxy;
-import se.sics.ktoolbox.util.test.MockWC;
 import se.sics.ktoolbox.util.test.MockExceptionHandler;
+import se.sics.ktoolbox.util.test.MockStreamEndpoint;
 import se.sics.ktoolbox.util.test.MockStreamPort;
 import se.sics.ktoolbox.util.test.MockStreamResource;
+import se.sics.ktoolbox.util.test.MockWC;
 import se.sics.ktoolbox.util.test.PortValidator;
 import se.sics.ktoolbox.util.test.Validator;
 
@@ -56,6 +57,7 @@ public class TestSimpleAppendKBuffer {
         MockComponentProxy proxy = new MockComponentProxy();
         MockExceptionHandler syncExHandler = new MockExceptionHandler();
         MockStreamResource writeResource = new MockStreamResource("mock1");
+        MockStreamEndpoint writeEndpoint = new MockStreamEndpoint();
         MockWC allWriteResult = new MockWC();
 
         long appendPos = 0;
@@ -65,15 +67,15 @@ public class TestSimpleAppendKBuffer {
 
         KBlock b1 = new KBlockImpl(0, 0, 2);
         ref1 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr1 = new StreamWrite.Request(b1.lowerAbsEndpoint(), ref1.getValue().get());
+        swr1 = new StreamWrite.Request(writeResource, b1.lowerAbsEndpoint(), ref1.getValue().get());
 
         KBlock b2 = new KBlockImpl(2, 6, 8);
         ref2 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr2 = new StreamWrite.Request(b2.lowerAbsEndpoint(), ref2.getValue().get());
+        swr2 = new StreamWrite.Request(writeResource, b2.lowerAbsEndpoint(), ref2.getValue().get());
 
         KBlock b3 = new KBlockImpl(1, 3, 5);
         ref3 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr3 = new StreamWrite.Request(b3.lowerAbsEndpoint(), ref3.getValue().get());
+        swr3 = new StreamWrite.Request(writeResource, b3.lowerAbsEndpoint(), ref3.getValue().get());
 
         //settig up validators;
         proxy.expect(new PortValidator(MockStreamPort.class, false));
@@ -82,7 +84,7 @@ public class TestSimpleAppendKBuffer {
         proxy.expect(new EventContentValidator(new StreamWriteReqEC(), swr2));
 
         //actual run
-        SimpleAppendKBuffer sakBuf = new SimpleAppendKBuffer(config, proxy, syncExHandler, writeResource, 0);
+        SimpleAppendKBuffer sakBuf = new SimpleAppendKBuffer(config, proxy, syncExHandler, writeEndpoint, writeResource, 0);
 
         //write1
         sakBuf.write(b1, ref1, allWriteResult);
@@ -127,6 +129,7 @@ public class TestSimpleAppendKBuffer {
         Config config = TypesafeConfig.load();
         MockComponentProxy proxy = new MockComponentProxy();
         MockExceptionHandler syncExHandler = new MockExceptionHandler();
+        MockStreamEndpoint writeEndpoint = new MockStreamEndpoint();
         MockStreamResource writeResource = new MockStreamResource("mock1");
         MockWC allWriteResult = new MockWC();
         long appendPos = 0;
@@ -136,15 +139,15 @@ public class TestSimpleAppendKBuffer {
 
         KBlock b1 = new KBlockImpl(0, 0, 2);
         ref1 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr1 = new StreamWrite.Request(b1.lowerAbsEndpoint(), ref1.getValue().get());
+        swr1 = new StreamWrite.Request(writeResource, b1.lowerAbsEndpoint(), ref1.getValue().get());
 
         KBlock b2 = new KBlockImpl(2, 6, 8);
         ref2 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr2 = new StreamWrite.Request(b2.lowerAbsEndpoint(), ref2.getValue().get());
+        swr2 = new StreamWrite.Request(writeResource, b2.lowerAbsEndpoint(), ref2.getValue().get());
 
         KBlock b3 = new KBlockImpl(1, 3, 5);
         ref3 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr3 = new StreamWrite.Request(b3.lowerAbsEndpoint(), ref3.getValue().get());
+        swr3 = new StreamWrite.Request(writeResource, b3.lowerAbsEndpoint(), ref3.getValue().get());
 
         //settig up validators;
         proxy.expect(new PortValidator(MockStreamPort.class, false));
@@ -153,7 +156,7 @@ public class TestSimpleAppendKBuffer {
         proxy.expect(new EventContentValidator(new StreamWriteReqEC(), swr2));
 
         //actual run
-        SimpleAppendKBuffer sakBuf = new SimpleAppendKBuffer(config, proxy, syncExHandler, writeResource, 0);
+        SimpleAppendKBuffer sakBuf = new SimpleAppendKBuffer(config, proxy, syncExHandler, writeEndpoint, writeResource, 0);
 
         //write1
         sakBuf.write(b1, ref1, allWriteResult);
@@ -195,6 +198,7 @@ public class TestSimpleAppendKBuffer {
         Config config = TypesafeConfig.load();
         MockComponentProxy proxy = new MockComponentProxy();
         MockExceptionHandler syncExHandler = new MockExceptionHandler();
+        MockStreamEndpoint writeEndpoint = new MockStreamEndpoint();
         MockStreamResource writeResource = new MockStreamResource("mock1");
         MockWC allWriteResult = new MockWC();
         long appendPos = 0;
@@ -204,15 +208,15 @@ public class TestSimpleAppendKBuffer {
 
         KBlock b1 = new KBlockImpl(0, 0, 2);
         ref1 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr1 = new StreamWrite.Request(b1.lowerAbsEndpoint(), ref1.getValue().get());
+        swr1 = new StreamWrite.Request(writeResource, b1.lowerAbsEndpoint(), ref1.getValue().get());
 
         KBlock b2 = new KBlockImpl(2, 6, 8);
         ref2 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr2 = new StreamWrite.Request(b2.lowerAbsEndpoint(), ref2.getValue().get());
+        swr2 = new StreamWrite.Request(writeResource, b2.lowerAbsEndpoint(), ref2.getValue().get());
 
         KBlock b3 = new KBlockImpl(1, 3, 5);
         ref3 = KReferenceFactory.getReference(new byte[]{1, 2, 3});
-        swr3 = new StreamWrite.Request(b3.lowerAbsEndpoint(), ref3.getValue().get());
+        swr3 = new StreamWrite.Request(writeResource, b3.lowerAbsEndpoint(), ref3.getValue().get());
 
         //settig up validators;
         proxy.expect(new PortValidator(MockStreamPort.class, false));
@@ -221,7 +225,7 @@ public class TestSimpleAppendKBuffer {
         proxy.expect(new EventContentValidator(new StreamWriteReqEC(), swr2));
 
         //actual run
-        SimpleAppendKBuffer sakBuf = new SimpleAppendKBuffer(config, proxy, syncExHandler, writeResource, 0);
+        SimpleAppendKBuffer sakBuf = new SimpleAppendKBuffer(config, proxy, syncExHandler, writeEndpoint, writeResource, 0);
 
         //write1
         sakBuf.write(b1, ref1, allWriteResult);

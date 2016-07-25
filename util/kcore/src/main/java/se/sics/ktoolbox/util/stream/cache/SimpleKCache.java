@@ -47,6 +47,7 @@ import se.sics.ktoolbox.util.reference.KReferenceException;
 import se.sics.ktoolbox.util.reference.KReferenceFactory;
 import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
 import se.sics.ktoolbox.util.result.Result;
+import se.sics.ktoolbox.util.stream.StreamEndpoint;
 import se.sics.ktoolbox.util.stream.StreamPort;
 import se.sics.ktoolbox.util.stream.StreamResource;
 import se.sics.ktoolbox.util.stream.events.StreamRead;
@@ -64,6 +65,7 @@ public class SimpleKCache implements KCache {
     private String logPrefix = "";
 
     private final KCacheConfig cacheConfig;
+    private final StreamResource readResource;
     //**************************************************************************
     private final Positive<StreamPort> readPort;
     private final Positive<Timer> timerPort;
@@ -83,11 +85,13 @@ public class SimpleKCache implements KCache {
     //**************************************************************************
     private UUID extendedCacheCleanTid;
 
-    public SimpleKCache(Config config, ComponentProxy proxy, DelayedExceptionSyncHandler syncExHandling, StreamResource readResource) {
+    public SimpleKCache(Config config, ComponentProxy proxy, DelayedExceptionSyncHandler syncExHandling, 
+            StreamEndpoint readEndpoint, StreamResource readResource) {
         this.cacheConfig = new KCacheConfig(config);
+        this.readResource = readResource;
         this.proxy = proxy;
         this.syncExHandling = syncExHandling;
-        this.readPort = proxy.getNegative(readResource.resourcePort()).getPair();
+        this.readPort = proxy.getNegative(readEndpoint.resourcePort()).getPair();
         this.timerPort = proxy.getNegative(Timer.class).getPair();
         this.proxy.subscribe(handleExtendedCacheClean, timerPort);
         this.proxy.subscribe(handleReadResp, readPort);
@@ -195,7 +199,7 @@ public class SimpleKCache implements KCache {
             cacheFetch = Pair.with(blockRange, rhList);
             pendingCacheFetch.put(blockPos, cacheFetch);
             //read from external resource
-            proxy.trigger(new StreamRead.Request(blockRange), readPort);
+            proxy.trigger(new StreamRead.Request(readResource, blockRange), readPort);
         }
         cacheFetch.getValue1().add(reader);
     }

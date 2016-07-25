@@ -18,19 +18,14 @@
  */
 package se.sics.ktoolbox.util.stream.storage;
 
-import se.sics.kompics.ComponentProxy;
-import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
-import se.sics.ktoolbox.util.stream.util.WriteCallback;
-import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.cache.KCache;
-import se.sics.ktoolbox.util.stream.cache.SimpleKCache;
+import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
 import se.sics.ktoolbox.util.stream.ranges.KRange;
-import se.sics.ktoolbox.util.stream.util.FileDetails;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 
 /**
  *
@@ -42,9 +37,6 @@ public class AsyncCompleteStorage implements AsyncStorage {
 
     public AsyncCompleteStorage(KCache cache) {
         this.cache = cache;
-    }
-    public AsyncCompleteStorage(Config config, ComponentProxy proxy, DelayedExceptionSyncHandler exSyncHandler, FileDetails fileDetails) {
-         this(new SimpleKCache(config, proxy, exSyncHandler, fileDetails.mainResource));
     }
     
     @Override

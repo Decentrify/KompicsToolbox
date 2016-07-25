@@ -30,7 +30,7 @@ import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
 import se.sics.ktoolbox.util.stream.ranges.KRange;
-import se.sics.ktoolbox.util.stream.storage.AsyncAppendStorage;
+import se.sics.ktoolbox.util.stream.storage.AsyncIncompleteStorage;
 import se.sics.ktoolbox.util.stream.storage.AsyncOnDemandHashStorage;
 import se.sics.ktoolbox.util.stream.tracker.ComponentTracker;
 import se.sics.ktoolbox.util.stream.tracker.IncompleteTracker;
@@ -44,12 +44,12 @@ import se.sics.ktoolbox.util.stream.util.WriteCallback;
 public class AppendFileMngr implements StreamControl, FileMngr.Reader, FileMngr.Writer {
 
     private final FileDetails fileDetails;
-    private final AsyncAppendStorage file;
+    private final AsyncIncompleteStorage file;
     private final ComponentTracker fileTracker;
     private final AsyncOnDemandHashStorage hash;
     private final ComponentTracker hashTracker;
 
-    public AppendFileMngr(FileDetails fileDetails, AsyncAppendStorage file, AsyncOnDemandHashStorage hash) {
+    public AppendFileMngr(FileDetails fileDetails, AsyncIncompleteStorage file, AsyncOnDemandHashStorage hash) {
         this.fileDetails = fileDetails;
         this.file = file;
         this.fileTracker = IncompleteTracker.create(fileDetails.nrBlocks);
