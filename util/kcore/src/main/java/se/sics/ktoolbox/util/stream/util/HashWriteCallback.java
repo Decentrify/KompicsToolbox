@@ -13,20 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, writeBlock to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.hdfs.buffer;
-
-import com.google.common.util.concurrent.SettableFuture;
+package se.sics.ktoolbox.util.stream.util;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface HDFSAppendBuffer {
-    public int writeBlock(int blockNr, byte[] data);
-    public byte[] readBlock(int blockNr);
-    public boolean isEmpty();
-    public SettableFuture<Boolean> waitEmpty();
+public interface HashWriteCallback extends WriteCallback {
 }

@@ -18,14 +18,21 @@
  */
 package se.sics.ktoolbox.util.stream.core;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.javatuples.Pair;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
+import se.sics.ktoolbox.util.stream.StreamResource;
 import se.sics.ktoolbox.util.stream.TransferMngr;
+import se.sics.ktoolbox.util.stream.buffer.KBuffer;
+import se.sics.ktoolbox.util.stream.buffer.MultiKBuffer;
+import se.sics.ktoolbox.util.stream.buffer.SimpleAppendKBuffer;
+import se.sics.ktoolbox.util.stream.cache.SimpleKCache;
 import se.sics.ktoolbox.util.stream.storage.AsyncAppendStorage;
 import se.sics.ktoolbox.util.stream.storage.AsyncCompleteStorage;
 import se.sics.ktoolbox.util.stream.storage.AsyncOnDemandHashStorage;
@@ -46,17 +53,25 @@ public class MultiFileTracker {
 
     public MultiFileTracker(Config config, ComponentProxy proxy, DelayedExceptionSyncHandler exSyncHandler,
             Map<Integer, FileDetails> transferDetails, boolean complete) {
-        for (Map.Entry<Integer, FileDetails> fileDetails : transferDetails.entrySet()) {
+        for (Map.Entry<Integer, FileDetails> entry : transferDetails.entrySet()) {
+            FileDetails fileDetails = entry.getValue();
             if (complete) {
-                AsyncCompleteStorage file = new AsyncCompleteStorage(config, proxy, exSyncHandler, fileDetails.getValue());
-                AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(fileDetails.getValue(), exSyncHandler, file);
-                CompleteFileMngr fileMngr = new CompleteFileMngr(fileDetails.getValue(), file, hash);
-                completed.put(fileDetails.getKey(), new UploadTransferMngr(fileDetails.getValue(), fileMngr));
+                AsyncCompleteStorage file = new AsyncCompleteStorage(config, proxy, exSyncHandler, fileDetails);
+                AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(fileDetails, exSyncHandler, file);
+                CompleteFileMngr fileMngr = new CompleteFileMngr(fileDetails, file, hash);
+                completed.put(entry.getKey(), new UploadTransferMngr(fileDetails, fileMngr));
             } else {
-                AsyncAppendStorage file = new AsyncAppendStorage(config, proxy, exSyncHandler, fileDetails.getValue());
-                AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(fileDetails.getValue(), exSyncHandler, file);
-                AppendFileMngr fileMngr = new AppendFileMngr(fileDetails.getValue(), file, hash);
-                ongoing.put(fileDetails.getKey(), new DownloadTransferMngr(fileDetails.getValue(), fileMngr));
+                SimpleKCache cache = new SimpleKCache(config, proxy, exSyncHandler, fileDetails.mainResource);
+                List<KBuffer> bufs = new ArrayList<>();
+                bufs.add(new SimpleAppendKBuffer(config, proxy, exSyncHandler, fileDetails.mainResource, 0));
+                for (StreamResource writeResource : fileDetails.secondaryResources) {
+                    bufs.add(new SimpleAppendKBuffer(config, proxy, exSyncHandler, writeResource, 0));
+                }
+                KBuffer buffer = new MultiKBuffer(bufs);
+                AsyncAppendStorage file = new AsyncAppendStorage(cache, buffer);
+                AsyncOnDemandHashStorage hash = new AsyncOnDemandHashStorage(entry.getValue(), exSyncHandler, file);
+                AppendFileMngr fileMngr = new AppendFileMngr(entry.getValue(), file, hash);
+                ongoing.put(entry.getKey(), new DownloadTransferMngr(entry.getValue(), fileMngr));
             }
         }
     }
@@ -75,7 +90,7 @@ public class MultiFileTracker {
         if (transferMngr == null) {
             transferMngr = pendingComplete.get(file);
         }
-        if(transferMngr == null) {
+        if (transferMngr == null) {
             transferMngr = ongoing.get(file);
         }
         return transferMngr;
@@ -94,7 +109,7 @@ public class MultiFileTracker {
     }
 
     public Pair<Integer, TransferMngr.Writer> nextOngoing() {
-        Pair<Integer, TransferMngr.Writer> next = Pair.with(ongoing.firstEntry().getKey(), (TransferMngr.Writer)ongoing.firstEntry().getValue());
+        Pair<Integer, TransferMngr.Writer> next = Pair.with(ongoing.firstEntry().getKey(), (TransferMngr.Writer) ongoing.firstEntry().getValue());
         return next;
     }
 }

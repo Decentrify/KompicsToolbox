@@ -18,23 +18,49 @@
  */
 package se.sics.ktoolbox.util.stream.transfer;
 
+import se.sics.ktoolbox.util.managedStore.core.util.HashUtil;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
+import se.sics.ktoolbox.util.stream.ranges.KBlockImpl;
 import se.sics.ktoolbox.util.stream.ranges.KPiece;
+import se.sics.ktoolbox.util.stream.ranges.KPieceImpl;
+import se.sics.ktoolbox.util.stream.util.BlockDetails;
 import se.sics.ktoolbox.util.stream.util.FileDetails;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BlockHelper {
+    public static int getBlockNr(long pieceNr, FileDetails fileDetails) {
+        int blockNr = (int)pieceNr / fileDetails.defaultBlock.nrPieces;
+        return blockNr;
+    }
+    
+    public static int getBlockPieceNr(long pieceNr, FileDetails fileDetails) {
+        int bpNr = (int)pieceNr % fileDetails.defaultBlock.nrPieces;
+        return bpNr;
+    }
+    
     public static KBlock getBlockRange(int blockNr, FileDetails fileDetails) {
-        return null;
+        BlockDetails blockDetails = fileDetails.getBlockDetails(blockNr);
+        long lower = blockNr * fileDetails.defaultBlock.blockSize;
+        long higher = lower + blockDetails.blockSize;
+        return new KBlockImpl(blockNr, lower, higher);
     }
-    
+
     public static KPiece getPieceRange(long pieceNr, FileDetails fileDetails) {
-        return null;
+        int blockNr = getBlockNr(pieceNr, fileDetails);
+        int bpNr = getBlockPieceNr(pieceNr, fileDetails);
+        BlockDetails blockDetails = fileDetails.getBlockDetails(blockNr);
+        int pieceSize = blockDetails.getPieceSize(bpNr);
+        long lower = blockNr * fileDetails.defaultBlock.blockSize + bpNr * blockDetails.defaultPieceSize;
+        long higher = lower + pieceSize;
+        return new KPieceImpl(blockNr, pieceNr, bpNr, lower, higher);
     }
-    
+
     public static KBlock getHashRange(int blockNr, FileDetails fileDetails) {
-        return null;
+        int hashSize = HashUtil.getHashSize(fileDetails.hashAlg);
+        long lower = blockNr * hashSize;
+        long higher = lower + hashSize;
+        return new KBlockImpl(blockNr, lower, higher);
     }
 }

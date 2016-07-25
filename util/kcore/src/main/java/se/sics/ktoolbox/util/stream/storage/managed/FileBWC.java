@@ -16,35 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.stream.buffer;
+package se.sics.ktoolbox.util.stream.storage.managed;
 
+import se.sics.ktoolbox.util.result.Result;
 import se.sics.ktoolbox.util.stream.util.WriteCallback;
-import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.stream.ranges.KBlock;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NoKBuffer implements KBuffer {
-
-    public NoKBuffer() {}
-    
-    @Override
-    public void start() {
-    }
-
-    @Override
-    public boolean isIdle() {
-        return true;
-    }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedWrite) {
-        throw new UnsupportedOperationException("Not supported");
-    }
+public interface FileBWC extends WriteCallback {
+    public void hashResult(Result<Boolean> result);
 }

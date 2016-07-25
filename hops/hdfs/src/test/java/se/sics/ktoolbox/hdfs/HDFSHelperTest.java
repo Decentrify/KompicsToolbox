@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.hdfs;
 
 import java.util.Random;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Test;
 import se.sics.ktoolbox.util.profiling.KProfiler;
 
@@ -34,25 +35,18 @@ public class HDFSHelperTest {
         Random rand = new Random(123);
         byte[] data;
 
-        HDFSHelper.delete(resource);
-        HDFSHelper.simpleCreate(resource);
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser("glassfish");
+        HDFSHelper.delete(ugi, resource);
+        HDFSHelper.simpleCreate(ugi, resource);
 
         KProfiler kp = new KProfiler(KProfiler.Type.LOG);
         for (int i = 0; i < 100; i++) {
             data = new byte[1024 * 1024];
             rand.nextBytes(data);
             kp.start("hdfs", "append");
-            HDFSHelper.append(resource, data);
+            HDFSHelper.append(ugi, resource, data);
             kp.end();
         }
-        HDFSHelper.delete(resource);
+        HDFSHelper.delete(ugi, resource);
     }
-
-//    @Test
-//    public void simpleCreate() {
-//        HDFSResource resource = new HDFSResource("bbc1.sics.se", 26801, "/experiment/download/", "file");
-//        String user = "glassfish";
-//        HDFSHelper.delete(resource, user);
-//        HDFSHelper.create(resource, user, 10*1000*1000);
-//    }
 }

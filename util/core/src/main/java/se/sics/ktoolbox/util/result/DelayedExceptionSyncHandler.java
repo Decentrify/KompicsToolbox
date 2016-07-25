@@ -21,7 +21,7 @@ package se.sics.ktoolbox.util.result;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public abstract class DelayedExceptionSyncHandler implements DelayedResultCallback<Object>{
+public abstract class DelayedExceptionSyncHandler implements ResultCallback<Object>{
     @Override
     public final boolean success(Result<Object> result) {
         throw new UnsupportedOperationException("Not supported."); 

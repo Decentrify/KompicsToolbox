@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.stream.buffer;
 
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 import java.util.List;
 import se.sics.ktoolbox.util.reference.KReference;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
@@ -57,7 +58,7 @@ public class MultiKBuffer implements KBuffer {
     }
 
     @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, DelayedWrite delayedResult) {
+    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedResult) {
         for (KBuffer buffer : buffers) {
             buffer.write(writeRange, val, delayedResult);
         }

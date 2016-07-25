@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.util.stream.cache;
 
 import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.result.DelayedResultCallback;
+import se.sics.ktoolbox.util.result.ResultCallback;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface DelayedRead extends DelayedResultCallback<KReference<byte[]>> {
+public interface DelayedRead extends ResultCallback<KReference<byte[]>> {
 }

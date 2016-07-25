@@ -19,16 +19,22 @@
 package se.sics.ktoolbox.util.test;
 
 import se.sics.ktoolbox.util.result.Result;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
 import se.sics.ktoolbox.util.stream.buffer.WriteResult;
+import se.sics.ktoolbox.util.stream.util.BlockWriteCallback;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MockDelayedWrite extends DelayedWrite {
+public class MockBWC implements BlockWriteCallback {
+
+    public WriteResult result;
+    public boolean done = false;
+
     @Override
     public boolean success(Result<WriteResult> result) {
+        this.result = result.getValue();
+        done = true;
         return true;
     }
 

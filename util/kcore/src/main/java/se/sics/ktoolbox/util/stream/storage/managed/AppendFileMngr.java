@@ -25,7 +25,6 @@ import se.sics.ktoolbox.util.reference.KReference;
 import se.sics.ktoolbox.util.result.Result;
 import se.sics.ktoolbox.util.stream.FileMngr;
 import se.sics.ktoolbox.util.stream.StreamControl;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
 import se.sics.ktoolbox.util.stream.buffer.WriteResult;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.cache.KHint;
@@ -36,8 +35,8 @@ import se.sics.ktoolbox.util.stream.storage.AsyncOnDemandHashStorage;
 import se.sics.ktoolbox.util.stream.tracker.ComponentTracker;
 import se.sics.ktoolbox.util.stream.tracker.IncompleteTracker;
 import se.sics.ktoolbox.util.stream.transfer.BlockHelper;
-import se.sics.ktoolbox.util.stream.transfer.HashingException;
 import se.sics.ktoolbox.util.stream.util.FileDetails;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -79,59 +78,14 @@ public class AppendFileMngr implements StreamControl, FileMngr.Reader, FileMngr.
         return new CompleteFileMngr(fileDetails, file.complete(), hash);
     }
 
-    //******************************BASIC_WRITE*********************************
-    @Override
-    public void write(final KBlock writeRange, final KReference<byte[]> val, final DelayedWrite delayedResult) {
-        final int blockNr = writeRange.parentBlock();
-        DelayedRead hashRead = new DelayedRead() {
-
-            @Override
-            public boolean fail(Result<KReference<byte[]>> result) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public boolean success(Result<KReference<byte[]>> result) {
-                if (!result.isSuccess()) {
-                    delayedResult.fail((Result) result);
-                    return false;
-                }
-                validatedWrite(writeRange, result.getValue(), val, delayedResult);
-                return true;
-            }
-        };
-
-        KBlock hashRange = BlockHelper.getHashRange(blockNr, fileDetails);
-        hash.read(hashRange, hashRead);
-    }
-
-    private void validatedWrite(final KBlock writeRange, KReference<byte[]> hash, KReference<byte[]> val, final DelayedWrite delayedResult) {
-        if (HashUtil.checkHash(fileDetails.hashAlg, val.getValue().get(), hash.getValue().get())) {
-            DelayedWrite pieceWrite = new DelayedWrite() {
-
-                @Override
-                public boolean fail(Result<WriteResult> result) {
-                    return delayedResult.fail(result);
-                }
-
-                @Override
-                public boolean success(Result<WriteResult> result) {
-                    fileTracker.addComponent(writeRange.parentBlock());
-                    return delayedResult.success(result);
-                }
-            };
-            file.write(writeRange, val, delayedResult);
-        } else {
-            delayedResult.fail(Result.badRequest(new HashingException()));
-        }
-    }
-
     //*******************************BASIC_READ*********************************
     @Override
     public void read(KRange readRange, DelayedRead delayedResult) {
         file.read(readRange, delayedResult);
     }
+
     //***************************CACHE_HINT_READ*****************************
+
     @Override
     public void clean(Identifier reader) {
         file.clean(reader);
@@ -143,7 +97,7 @@ public class AppendFileMngr implements StreamControl, FileMngr.Reader, FileMngr.
         file.setFutureReads(reader, hint);
         hash.setFutureReads(reader, hint);
     }
-    
+
     //*********************************READER***********************************
     @Override
     public boolean hasBlock(int blockNr) {
@@ -159,21 +113,21 @@ public class AppendFileMngr implements StreamControl, FileMngr.Reader, FileMngr.
     public Set<Integer> nextBlocksMissing(int fromBlock, int nrBlocks, Set<Integer> except) {
         return fileTracker.nextComponentMissing(fromBlock, nrBlocks, except);
     }
-    
+
     @Override
     public Set<Integer> nextHashesMissing(int fromBlock, int nrBlocks, Set<Integer> except) {
         return fileTracker.nextComponentMissing(fromBlock, nrBlocks, except);
     }
-    
+
     @Override
     public void readHash(KBlock readRange, DelayedRead delayedResult) {
         hash.read(readRange, delayedResult);
     }
-    
+
     //*******************************WRITER*************************************
     @Override
-    public void writeHash(final KBlock writeRange, KReference<byte[]> val, final DelayedWrite delayedResult) {
-        DelayedWrite hashResult = new DelayedWrite() {
+    public void writeHash(final KBlock writeRange, KReference<byte[]> val, final WriteCallback delayedResult) {
+        WriteCallback hashResult = new WriteCallback() {
 
             @Override
             public boolean success(Result<WriteResult> result) {
@@ -187,5 +141,54 @@ public class AppendFileMngr implements StreamControl, FileMngr.Reader, FileMngr.
             }
         };
         hash.write(writeRange, val, hashResult);
+    }
+
+    @Override
+    public void writeBlock(final KBlock writeRange, final KReference<byte[]> val, final FileBWC blockWC) {
+        final int blockNr = writeRange.parentBlock();
+        DelayedRead hashRead = new DelayedRead() {
+
+            @Override
+            public boolean fail(Result<KReference<byte[]>> result) {
+                blockWC.hashResult((Result) result);
+                return false;
+            }
+
+            @Override
+            public boolean success(Result<KReference<byte[]>> result) {
+                validatedWrite(writeRange, result.getValue(), val, blockWC);
+                return true;
+            }
+        };
+
+        KBlock hashRange = BlockHelper.getHashRange(blockNr, fileDetails);
+        hash.read(hashRange, hashRead);
+    }
+
+    private void validatedWrite(final KBlock writeRange, KReference<byte[]> hash, KReference<byte[]> val, final FileBWC blockWC) {
+        if (HashUtil.checkHash(fileDetails.hashAlg, val.getValue().get(), hash.getValue().get())) {
+            fileTracker.addComponent(writeRange.parentBlock());
+            blockWC.hashResult(Result.success(true));
+            WriteCallback pieceWrite = new WriteCallback() {
+
+                @Override
+                public boolean fail(Result<WriteResult> result) {
+                    return blockWC.fail(result);
+                }
+
+                @Override
+                public boolean success(Result<WriteResult> result) {
+                    return blockWC.success(result);
+                }
+            };
+            file.write(writeRange, val, pieceWrite);
+        } else {
+            blockWC.hashResult(Result.success(false));
+        }
+    }
+    
+    @Override
+    public boolean isComplete() {
+        return hashTracker.isComplete(0) && fileTracker.isComplete(0);
     }
 }

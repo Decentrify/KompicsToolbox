@@ -20,10 +20,11 @@ package se.sics.ktoolbox.util.stream;
 
 import java.util.Set;
 import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
 import se.sics.ktoolbox.util.stream.ranges.KRange;
+import se.sics.ktoolbox.util.stream.storage.managed.FileBWC;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -37,7 +38,9 @@ public class FileMngr {
         public void readHash(KBlock readRange, DelayedRead delayedResult);
     }
     
-    public static interface Writer extends AsyncWriteOp<KBlock> {
-        public void writeHash(KBlock writeRange, KReference<byte[]> val, DelayedWrite delayedResult);
+    public static interface Writer {
+        public void writeHash(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedResult);
+        public void writeBlock(KBlock writeRange, KReference<byte[]> val, FileBWC blockWC);
+        public boolean isComplete();
     }
 }

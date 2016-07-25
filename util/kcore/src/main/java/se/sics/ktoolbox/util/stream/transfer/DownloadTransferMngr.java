@@ -18,25 +18,29 @@
  */
 package se.sics.ktoolbox.util.stream.transfer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.reference.KReference;
+import se.sics.ktoolbox.util.reference.KReferenceException;
 import se.sics.ktoolbox.util.reference.KReferenceFactory;
+import se.sics.ktoolbox.util.result.Result;
 import se.sics.ktoolbox.util.stream.StreamControl;
 import se.sics.ktoolbox.util.stream.TransferMngr;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
-import se.sics.ktoolbox.util.stream.buffer.NopDelayedWrite;
+import se.sics.ktoolbox.util.stream.buffer.WriteResult;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
 import se.sics.ktoolbox.util.stream.ranges.KPiece;
 import se.sics.ktoolbox.util.stream.storage.managed.AppendFileMngr;
+import se.sics.ktoolbox.util.stream.storage.managed.FileBWC;
+import se.sics.ktoolbox.util.stream.util.BlockWriteCallback;
 import se.sics.ktoolbox.util.stream.util.FileDetails;
+import se.sics.ktoolbox.util.stream.util.HashWriteCallback;
+import se.sics.ktoolbox.util.stream.util.PieceWriteCallback;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -47,13 +51,14 @@ public class DownloadTransferMngr implements StreamControl, TransferMngr.Writer,
     private final AppendFileMngr file;
 
     private final Map<Integer, BlockMngr> pendingBlocks = new HashMap<>();
-    private final List<Integer> nextBlocks = new ArrayList<>();
+    private final TreeSet<Long> nextPieces = new TreeSet<>();
+    private final TreeSet<Integer> nextBlocks = new TreeSet<>();
     private KHint.Summary oldHint;
-    private boolean moreWork = true;
 
     public DownloadTransferMngr(FileDetails fileDetails, AppendFileMngr file) {
         this.fileDetails = fileDetails;
         this.file = file;
+        oldHint = new KHint.Summary(0, new TreeSet<Integer>());
     }
 
     //*********************************CONTROL**********************************
@@ -90,14 +95,19 @@ public class DownloadTransferMngr implements StreamControl, TransferMngr.Writer,
                 nextBlocks.addAll(newBlocks);
                 hintSet.addAll(newBlocks);
                 oldHint = new KHint.Summary(oldHint.lStamp + 1, hintSet);
-                moreWork = true;
-            } else {
-                moreWork = false;
+            }
+        } else {
+            //maybe i finished something
+            Set<Integer> hintSet = new TreeSet<>();
+            hintSet.addAll(pendingBlocks.keySet());
+            hintSet.addAll(nextBlocks);
+            if (oldHint.blocks.size() > nextBlocks.size() + pendingBlocks.size()) {
+                oldHint = new KHint.Summary(oldHint.lStamp + 1, hintSet);
             }
         }
         return oldHint;
     }
-    
+
     //*************************TRANSFER_HINT_READ*******************************
     @Override
     public void clean(Identifier reader) {
@@ -112,42 +122,111 @@ public class DownloadTransferMngr implements StreamControl, TransferMngr.Writer,
     //*********************************WRITER***********************************
     @Override
     public boolean moreWork() {
-        return moreWork;
+        return !nextPieces.isEmpty() || !nextBlocks.isEmpty();
     }
 
     @Override
     public boolean pendingWork() {
-        return moreWork || pendingBlocks.isEmpty();
+        return !pendingBlocks.isEmpty();
     }
-    
+
+    @Override
+    public boolean isComplete() {
+        return file.isComplete();
+    }
+
     /**
      * @param writeRange
      * @param value
      * @return true if block is complete, false otherwise
      */
     @Override
-    public void writePiece(long pieceNr, byte[] value, DelayedWrite delayedResult) {
+    public void writePiece(long pieceNr, byte[] value, final PieceWriteCallback delayedResult) {
         KPiece piece = BlockHelper.getPieceRange(pieceNr, fileDetails);
         BlockMngr block = pendingBlocks.get(piece.parentBlock());
         block.writePiece(piece.blockPieceNr(), value);
         if (block.isComplete()) {
-            KBlock blockRange = BlockHelper.getBlockRange(piece.parentBlock(), fileDetails);
+            final KBlock blockRange = BlockHelper.getBlockRange(piece.parentBlock(), fileDetails);
             byte[] blockBytes = block.getBlock();
-            KReference<byte[]> blockRef = KReferenceFactory.getReference(blockBytes);
-            //TODO Alex - add keeping track of when write finish
-            file.write(blockRange, blockRef, new NopDelayedWrite());
+            final KReference<byte[]> blockRef = KReferenceFactory.getReference(blockBytes);
+            final BlockWriteCallback blockWC = delayedResult.getBlockCallback();
+            FileBWC fileBWC = new FileBWC() {
+                @Override
+                public void hashResult(Result<Boolean> result) {
+                    if (result.isSuccess()) {
+                        if (result.getValue()) {
+                            pendingBlocks.remove(blockRange.parentBlock());
+                        } else {
+                            BlockMngr blockMngr = new InMemoryBlockMngr(fileDetails.getBlockDetails(blockRange.parentBlock()));
+                            pendingBlocks.put(blockRange.parentBlock(), blockMngr);
+                            nextBlocks.add(blockRange.parentBlock());
+                            blockWC.success(Result.success(new WriteResult(blockRange.lowerAbsEndpoint(), 0, "downloadTransferMngr")));
+                            silentRelease(blockRef);
+                        }
+                    }
+                }
+
+                @Override
+                public boolean fail(Result<WriteResult> result) {
+                    silentRelease(blockRef);
+                    return blockWC.fail(result);
+                }
+
+                @Override
+                public boolean success(Result<WriteResult> result) {
+                    silentRelease(blockRef);
+                    return blockWC.success(result);
+                }
+            };
+            file.writeBlock(blockRange, blockRef, fileBWC);
+        }
+        WriteResult pieceResult = new WriteResult(piece.lowerAbsEndpoint(), 0, "transfer");
+        delayedResult.success(Result.success(pieceResult));
+    }
+
+    private void silentRelease(KReference<byte[]> ref) {
+        try {
+            ref.release();
+        } catch (KReferenceException ex) {
+            throw new RuntimeException(ex);
         }
     }
-    
+
     @Override
-    public void writeHash(int blockNr, byte[] value, DelayedWrite delayedResult) {
+    public void writeHash(int blockNr, byte[] value, HashWriteCallback delayedResult) {
         KBlock hashRange = BlockHelper.getHashRange(blockNr, fileDetails);
         KReference<byte[]> hashVal = KReferenceFactory.getReference(value);
         file.writeHash(hashRange, hashVal, delayedResult);
     }
-    
+
+    @Override
+    public void resetPiece(long pieceId) {
+        nextPieces.add(pieceId);
+    }
+
+    @Override
+    public int nextBlock() {
+        int next = nextBlocks.first();
+        nextBlocks.remove(next);
+        BlockMngr blockMngr = new InMemoryBlockMngr(fileDetails.getBlockDetails(next));
+        pendingBlocks.put(next, blockMngr);
+        return next;
+    }
+
+    @Override
+    public Set<Long> nextPieces(int nrPieces) {
+        Set<Long> next = new TreeSet<>();
+        Iterator<Long> it = nextPieces.iterator();
+        while (it.hasNext() && nrPieces > 0) {
+            next.add(it.next());
+            it.remove();
+            nrPieces--;
+        }
+        return next;
+    }
+
     //*********************************READER***********************************
-     @Override
+    @Override
     public boolean hasBlock(int blockNr) {
         return file.hasBlock(blockNr);
     }
@@ -156,7 +235,7 @@ public class DownloadTransferMngr implements StreamControl, TransferMngr.Writer,
     public boolean hasHash(int blockNr) {
         return file.hasBlock(blockNr);
     }
-    
+
     @Override
     public void readHash(int blockNr, DelayedRead delayedResult) {
         KBlock hashRange = BlockHelper.getHashRange(blockNr, fileDetails);

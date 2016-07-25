@@ -21,17 +21,17 @@ package se.sics.ktoolbox.util.stream.transfer;
 
 import se.sics.ktoolbox.util.stream.tracker.ComponentTracker;
 import se.sics.ktoolbox.util.stream.tracker.IncompleteTracker;
-import se.sics.ktoolbox.util.stream.util.DefaultBlockDetails;
+import se.sics.ktoolbox.util.stream.util.BlockDetails;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class InMemoryBlockMngr implements BlockMngr {
-    private final DefaultBlockDetails blockDetails;
+    private final BlockDetails blockDetails;
     private final RWByteBuffer storage;
     private final ComponentTracker tracker;
     
-    public InMemoryBlockMngr(DefaultBlockDetails blockDetails) {
+    public InMemoryBlockMngr(BlockDetails blockDetails) {
         this.blockDetails = blockDetails;
         this.storage = new RWByteBuffer(blockDetails.blockSize);
         this.tracker = IncompleteTracker.create(blockDetails.nrPieces);

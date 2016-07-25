@@ -16,22 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.stream.buffer;
+package se.sics.ktoolbox.util.test;
 
 import se.sics.ktoolbox.util.result.Result;
+import se.sics.ktoolbox.util.stream.buffer.WriteResult;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NopDelayedWrite extends DelayedWrite {
+public class MockWC implements WriteCallback {
+    public WriteResult result;
+    public boolean done = false;
+    
     @Override
     public boolean success(Result<WriteResult> result) {
+        this.result = result.getValue();
+        done = true;
         return true;
     }
 
     @Override
     public boolean fail(Result<WriteResult> result) {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

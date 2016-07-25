@@ -18,33 +18,19 @@
  */
 package se.sics.ktoolbox.util.stream.buffer;
 
-import se.sics.ktoolbox.util.stream.util.WriteCallback;
-import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.stream.ranges.KBlock;
+import se.sics.ktoolbox.util.stream.events.StreamWrite;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NoKBuffer implements KBuffer {
-
-    public NoKBuffer() {}
-    
-    @Override
-    public void start() {
+public class SimpleAppendKBufferTest {
+    private final SimpleAppendKBuffer buf;
+    public SimpleAppendKBufferTest(SimpleAppendKBuffer buf) {
+        this.buf = buf;
     }
 
-    @Override
-    public boolean isIdle() {
-        return true;
-    }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedWrite) {
-        throw new UnsupportedOperationException("Not supported");
+    public void handleWriteResp(StreamWrite.Response resp) {
+        buf.handleWriteResp.handle(resp);
     }
 }

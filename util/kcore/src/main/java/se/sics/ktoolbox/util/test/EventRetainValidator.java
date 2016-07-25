@@ -16,35 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.stream.buffer;
+package se.sics.ktoolbox.util.test;
 
-import se.sics.ktoolbox.util.stream.util.WriteCallback;
-import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.stream.ranges.KBlock;
+import se.sics.kompics.KompicsEvent;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NoKBuffer implements KBuffer {
-
-    public NoKBuffer() {}
+public class EventRetainValidator implements EventValidator {
+    public Class expectedEvent;
+    public KompicsEvent event;
+    
+    public EventRetainValidator(Class expectedEvent) {
+        this.expectedEvent = expectedEvent;
+    }
     
     @Override
-    public void start() {
+    public boolean isValid() {
+        return expectedEvent.equals(event.getClass());
     }
 
     @Override
-    public boolean isIdle() {
-        return true;
-    }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedWrite) {
-        throw new UnsupportedOperationException("Not supported");
+    public void setFound(KompicsEvent event) {
+        this.event = event;
     }
 }

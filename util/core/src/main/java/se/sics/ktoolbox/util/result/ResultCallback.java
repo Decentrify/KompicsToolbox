@@ -21,7 +21,7 @@ package se.sics.ktoolbox.util.result;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface DelayedResultCallback<R extends Object> {
+public interface ResultCallback<R extends Object> {
     /**
      * @param result
      * @return true - continue / false - stop

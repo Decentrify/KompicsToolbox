@@ -34,7 +34,7 @@ import se.sics.ktoolbox.util.stream.ranges.KBlockImpl;
 import se.sics.ktoolbox.util.stream.test.StreamWriteReqEC;
 import se.sics.ktoolbox.util.test.EventContentValidator;
 import se.sics.ktoolbox.util.test.MockComponentProxy;
-import se.sics.ktoolbox.util.test.MockDelayedWrite;
+import se.sics.ktoolbox.util.test.MockWC;
 import se.sics.ktoolbox.util.test.MockExceptionHandler;
 import se.sics.ktoolbox.util.test.MockStreamPort;
 import se.sics.ktoolbox.util.test.MockStreamResource;
@@ -56,7 +56,7 @@ public class TestSimpleAppendKBuffer {
         MockComponentProxy proxy = new MockComponentProxy();
         MockExceptionHandler syncExHandler = new MockExceptionHandler();
         MockStreamResource writeResource = new MockStreamResource("mock1");
-        MockDelayedWrite allWriteResult = new MockDelayedWrite();
+        MockWC allWriteResult = new MockWC();
 
         long appendPos = 0;
         Validator validator;
@@ -128,7 +128,7 @@ public class TestSimpleAppendKBuffer {
         MockComponentProxy proxy = new MockComponentProxy();
         MockExceptionHandler syncExHandler = new MockExceptionHandler();
         MockStreamResource writeResource = new MockStreamResource("mock1");
-        MockDelayedWrite allWriteResult = new MockDelayedWrite();
+        MockWC allWriteResult = new MockWC();
         long appendPos = 0;
         Validator validator;
         KReference<byte[]> ref1, ref2, ref3;
@@ -196,7 +196,7 @@ public class TestSimpleAppendKBuffer {
         MockComponentProxy proxy = new MockComponentProxy();
         MockExceptionHandler syncExHandler = new MockExceptionHandler();
         MockStreamResource writeResource = new MockStreamResource("mock1");
-        MockDelayedWrite allWriteResult = new MockDelayedWrite();
+        MockWC allWriteResult = new MockWC();
         long appendPos = 0;
         Validator validator;
         KReference<byte[]> ref1, ref2, ref3;

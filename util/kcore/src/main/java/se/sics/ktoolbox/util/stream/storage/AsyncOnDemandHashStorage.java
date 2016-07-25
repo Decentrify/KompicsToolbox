@@ -27,7 +27,8 @@ import se.sics.ktoolbox.util.reference.KReferenceException;
 import se.sics.ktoolbox.util.reference.KReferenceFactory;
 import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
 import se.sics.ktoolbox.util.result.Result;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
+import se.sics.ktoolbox.util.stream.buffer.WriteResult;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.ranges.KBlock;
@@ -109,8 +110,9 @@ public class AsyncOnDemandHashStorage implements AsyncStorage {
     }
 
     @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, DelayedWrite writeResult) {
+    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback writeResult) {
         val.retain();
         hashes.put(writeRange.parentBlock(), val);
+        writeResult.success(Result.success(new WriteResult(writeRange.lowerAbsEndpoint(), val.getValue().get().length, "hashes")));
     }
 }

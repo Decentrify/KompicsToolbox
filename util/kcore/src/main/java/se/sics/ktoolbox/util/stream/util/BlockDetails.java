@@ -16,13 +16,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.stream.buffer;
-
-import se.sics.ktoolbox.util.result.DelayedResultCallback;
+package se.sics.ktoolbox.util.stream.util;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public abstract class DelayedWrite implements DelayedResultCallback<WriteResult> {
+public class BlockDetails {
+    public final int blockSize;
+    public final int nrPieces;
+    public final int defaultPieceSize;
+    public final int lastPieceSize;
+    
+    public BlockDetails(int blockSize, int nrPieces, int defaultPieceSize, int lastPieceSize) {
+        this.blockSize = blockSize;
+        this.nrPieces = nrPieces;
+        this.defaultPieceSize = defaultPieceSize;
+        this.lastPieceSize = lastPieceSize;
+    }
+    
+    public int getPieceSize(int pieceNr) {
+        if(pieceNr == nrPieces - 1) {
+            return lastPieceSize;
+        }
+        return defaultPieceSize;
+    }
+    
+    
+//    {
+//        this.lastPiece = (blockSize % pieceSize == 0) ? blockSize / pieceSize - 1 : blockSize / pieceSize;
+//        this.lastPieceSize = (blockSize % pieceSize == 0) ? pieceSize : blockSize % pieceSize;
+//    }
 }
-

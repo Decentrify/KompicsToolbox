@@ -18,8 +18,10 @@
  */
 package se.sics.ktoolbox.util.stream;
 
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
+import java.util.Set;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
+import se.sics.ktoolbox.util.stream.util.HashWriteCallback;
+import se.sics.ktoolbox.util.stream.util.PieceWriteCallback;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -42,9 +44,17 @@ public class TransferMngr {
         public boolean moreWork();
 
         public boolean pendingWork();
-
-        public void writeHash(int blockNr, byte[] hash, DelayedWrite delayedResult);
         
-        public void writePiece(long pieceId, byte[] val, DelayedWrite delayedResult);
+        public boolean isComplete();
+
+        public void writeHash(int blockNr, byte[] hash, HashWriteCallback delayedResult);
+        
+        public void writePiece(long pieceId, byte[] val, PieceWriteCallback delayedResult);
+        
+        public void resetPiece(long pieceId);
+        
+        public int nextBlock();
+        
+        public Set<Long> nextPieces(int nrPieces);
     }
 }

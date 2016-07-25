@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.stream.buffer;
 
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 import java.util.HashMap;
 import java.util.Map;
 import org.javatuples.Pair;
@@ -56,7 +57,7 @@ public class SimpleAppendKBuffer implements KBuffer {
     private final DelayedExceptionSyncHandler syncExHandling;
     //**************************************************************************
     private long appendPos;
-    private final Map<Long, Pair<KReference<byte[]>, DelayedWrite>> buffer = new HashMap<>();
+    private final Map<Long, Pair<KReference<byte[]>, WriteCallback>> buffer = new HashMap<>();
     //**************************************************************************
 
     public SimpleAppendKBuffer(Config config, ComponentProxy proxy, DelayedExceptionSyncHandler syncExceptionHandling, 
@@ -91,7 +92,7 @@ public class SimpleAppendKBuffer implements KBuffer {
     }
     
     @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, DelayedWrite delayedWrite) {
+    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedWrite) {
         if(!val.retain()) {
             fail(Result.internalFailure(new IllegalStateException("buffer can't retain ref")));
             return;
@@ -104,7 +105,7 @@ public class SimpleAppendKBuffer implements KBuffer {
 
     private void addNewTasks() {
         while (true) {
-            Pair<KReference<byte[]>, DelayedWrite> next = buffer.get(appendPos);
+            Pair<KReference<byte[]>, WriteCallback> next = buffer.get(appendPos);
             if (next == null) {
                 break;
             }
@@ -118,7 +119,7 @@ public class SimpleAppendKBuffer implements KBuffer {
         public void handle(StreamWrite.Response resp) {
             LOG.debug("{}received:{}", logPrefix, resp);
             if (resp.result.isSuccess()) {
-                Pair<KReference<byte[]>, DelayedWrite> ref = buffer.remove(resp.req.pos);
+                Pair<KReference<byte[]>, WriteCallback> ref = buffer.remove(resp.req.pos);
                 try {
                     ref.getValue0().release();
                 } catch (KReferenceException ex) {
@@ -146,7 +147,7 @@ public class SimpleAppendKBuffer implements KBuffer {
     }
 
     private void clean() throws KReferenceException {
-        for (Pair<KReference<byte[]>, DelayedWrite> ref : buffer.values()) {
+        for (Pair<KReference<byte[]>, WriteCallback> ref : buffer.values()) {
             ref.getValue0().release();
         }
         buffer.clear();

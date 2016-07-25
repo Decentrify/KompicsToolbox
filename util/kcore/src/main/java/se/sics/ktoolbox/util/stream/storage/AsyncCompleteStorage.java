@@ -23,7 +23,7 @@ import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.reference.KReference;
 import se.sics.ktoolbox.util.result.DelayedExceptionSyncHandler;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 import se.sics.ktoolbox.util.stream.cache.KHint;
 import se.sics.ktoolbox.util.stream.cache.DelayedRead;
 import se.sics.ktoolbox.util.stream.cache.KCache;
@@ -80,7 +80,7 @@ public class AsyncCompleteStorage implements AsyncStorage {
     }
     
     @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, DelayedWrite delayedResult) {
+    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedResult) {
         throw new UnsupportedOperationException("Not supported"); 
     }
 }

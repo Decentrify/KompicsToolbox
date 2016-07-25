@@ -19,12 +19,12 @@
 package se.sics.ktoolbox.util.stream;
 
 import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.stream.buffer.DelayedWrite;
+import se.sics.ktoolbox.util.stream.util.WriteCallback;
 import se.sics.ktoolbox.util.stream.ranges.KRange;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface AsyncWriteOp<R extends KRange> {
-    public void write(R writeRange, KReference<byte[]> val, DelayedWrite delayedResult);
+    public void write(R writeRange, KReference<byte[]> val, WriteCallback delayedResult);
 }

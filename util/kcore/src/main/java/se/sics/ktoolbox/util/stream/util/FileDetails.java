@@ -29,12 +29,12 @@ public class FileDetails {
     public final StreamResource mainResource;
     public final List<StreamResource> secondaryResources;
     public final int nrBlocks;
-    public final DefaultBlockDetails defaultBlock;
-    public final DefaultBlockDetails lastBlock;
+    public final BlockDetails defaultBlock;
+    public final BlockDetails lastBlock;
     public final String hashAlg;
     
     public FileDetails(long length, StreamResource mainResource, List<StreamResource> secondaryResources, 
-            int nrBlocks, DefaultBlockDetails defaultBlock, DefaultBlockDetails lastBlock, String hashAlg) {
+            int nrBlocks, BlockDetails defaultBlock, BlockDetails lastBlock, String hashAlg) {
         this.length = length;
         this.mainResource = mainResource;
         this.secondaryResources = secondaryResources;
@@ -42,5 +42,13 @@ public class FileDetails {
         this.defaultBlock = defaultBlock;
         this.lastBlock = lastBlock;
         this.hashAlg = hashAlg;
+    }
+    
+    public BlockDetails getBlockDetails(int blockNr) {
+        if(blockNr == nrBlocks - 1) {
+            return lastBlock;
+        } else {
+            return defaultBlock;
+        }
     }
 }

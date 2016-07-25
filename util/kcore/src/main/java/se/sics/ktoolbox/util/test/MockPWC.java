@@ -16,35 +16,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.stream.buffer;
+package se.sics.ktoolbox.util.test;
 
-import se.sics.ktoolbox.util.stream.util.WriteCallback;
-import se.sics.ktoolbox.util.reference.KReference;
-import se.sics.ktoolbox.util.stream.ranges.KBlock;
+import se.sics.ktoolbox.util.result.Result;
+import se.sics.ktoolbox.util.stream.buffer.WriteResult;
+import se.sics.ktoolbox.util.stream.util.BlockWriteCallback;
+import se.sics.ktoolbox.util.stream.util.PieceWriteCallback;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NoKBuffer implements KBuffer {
-
-    public NoKBuffer() {}
+public class MockPWC implements PieceWriteCallback {
+    public MockBWC blockCallback = new MockBWC();
+    public boolean waitingOnBlock = false;
+    public WriteResult pieceResult;
+    public boolean done = false;
     
     @Override
-    public void start() {
+    public BlockWriteCallback getBlockCallback() {
+        waitingOnBlock = true;
+        return blockCallback;
     }
 
     @Override
-    public boolean isIdle() {
+    public boolean fail(Result<WriteResult> result) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean success(Result<WriteResult> result) {
+        pieceResult = result.getValue();
+        done = true;
         return true;
     }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void write(KBlock writeRange, KReference<byte[]> val, WriteCallback delayedWrite) {
-        throw new UnsupportedOperationException("Not supported");
-    }
+    
 }

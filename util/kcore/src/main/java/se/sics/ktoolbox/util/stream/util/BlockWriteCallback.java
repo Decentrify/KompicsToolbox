@@ -19,23 +19,8 @@
 package se.sics.ktoolbox.util.stream.util;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class DefaultBlockDetails {
-    public final int blockSize;
-    public final int nrPieces;
-    public final int defaultPieceSize;
-    public final int lastPieceSize;
-    
-    public DefaultBlockDetails(int blockSize, int nrPieces, int defaultPieceSize, int lastPieceSize) {
-        this.blockSize = blockSize;
-        this.nrPieces = nrPieces;
-        this.defaultPieceSize = defaultPieceSize;
-        this.lastPieceSize = lastPieceSize;
-    }
-    
-//    {
-//        this.lastPiece = (blockSize % pieceSize == 0) ? blockSize / pieceSize - 1 : blockSize / pieceSize;
-//        this.lastPieceSize = (blockSize % pieceSize == 0) ? pieceSize : blockSize % pieceSize;
-//    }
+public interface BlockWriteCallback extends WriteCallback {
 }
