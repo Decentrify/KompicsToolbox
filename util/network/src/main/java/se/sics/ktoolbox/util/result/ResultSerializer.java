@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -18,31 +18,39 @@
  */
 package se.sics.ktoolbox.util.result;
 
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import se.sics.kompics.network.netty.serialization.Serializer;
+
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OldResult {
-    public static enum Status {
-        SUCCESS, TIMEOUT, INTERNAL_FAILURE, BAD_REQUEST;
-    }
-    
-    public final Status status;
-    public final String description;
-    
-    public OldResult(Status status, String description) {
-        this.status = status;
-        this.description = description;
-    }
-    
-    public static OldResult success() {
-        return new OldResult(Status.SUCCESS, "success");
-    }
-    
-    public static OldResult badRequest(String description) {
-        return new OldResult(Status.BAD_REQUEST, description);
-    }
-    
-    public static OldResult fail(String description) {
-        return new OldResult(Status.INTERNAL_FAILURE, description);
+public class ResultSerializer {
+
+    public static class Status implements Serializer {
+
+        private final int id;
+
+        public Status(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int identifier() {
+            return id;
+        }
+
+        @Override
+        public void toBinary(Object o, ByteBuf buf) {
+            Result.Status obj = (Result.Status) o;
+            buf.writeByte(obj.code);
+        }
+
+        @Override
+        public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
+            Result.Status status = Result.Status.statusFrom(buf.readByte());
+            return status;
+        }
     }
 }

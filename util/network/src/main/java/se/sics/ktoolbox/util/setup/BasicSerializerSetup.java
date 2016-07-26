@@ -39,13 +39,14 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImplSerializer;
 import se.sics.ktoolbox.util.network.nat.NatType;
 import se.sics.ktoolbox.util.network.nat.NatTypeSerializer;
+import se.sics.ktoolbox.util.result.ResultSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 10;
+    public static final int serializerIds = 11;
 
     public static enum BasicSerializers {
         SimpleByteIdentifier(SimpleByteIdentifier.class, "simpleByteIdentifierSerializer"),
@@ -57,7 +58,8 @@ public class BasicSerializerSetup {
         BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
         DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
         BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
-        NatType(NatType.class, "natTypeSerializer");
+        NatType(NatType.class, "natTypeSerializer"),
+        ResultStatusSerializer(ResultSerializer.class, "resultSerializer");
                 
         public final Class serializedClass;
         public final String serializerName;
@@ -122,6 +124,10 @@ public class BasicSerializerSetup {
         NatTypeSerializer natTypeSerializer = new NatTypeSerializer(currentId++);
         Serializers.register(natTypeSerializer, BasicSerializers.NatType.serializerName);
         Serializers.register(BasicSerializers.NatType.serializedClass, BasicSerializers.NatType.serializerName);
+        
+        ResultSerializer.Status resultSerializer = new ResultSerializer.Status(currentId++);
+        Serializers.register(resultSerializer, BasicSerializers.ResultStatusSerializer.serializerName);
+        Serializers.register(BasicSerializers.ResultStatusSerializer.serializedClass, BasicSerializers.ResultStatusSerializer.serializerName);
         
         assert startingId + serializerIds == currentId;
         return currentId;
