@@ -107,10 +107,16 @@ public class Result<V extends Object> {
         return failure(Result.Status.TIMEOUT, ex);
     }
 
+    public static Result badArgument(String cause) {
+        return failure(Result.Status.BAD_REQUEST, new IllegalArgumentException(cause));
+    }
     public static Result badRequest(Exception ex) {
         return failure(Result.Status.BAD_REQUEST, ex);
     }
 
+    public static Result internalStateFailure(String msg) {
+        return failure(Result.Status.INT_FAILURE, new IllegalStateException(msg));
+    }
     public static Result internalFailure(Exception ex) {
         return failure(Result.Status.INT_FAILURE, ex);
     }
