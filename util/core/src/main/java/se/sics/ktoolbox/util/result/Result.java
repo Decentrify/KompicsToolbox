@@ -38,6 +38,10 @@ public class Result<V extends Object> {
             this.code = code;
         }
 
+        public boolean isSuccess() {
+            return SUCCESS.equals(this);
+        }
+        
         public static boolean isSuccess(Status status) {
             return SUCCESS.equals(status);
         }

@@ -18,16 +18,20 @@
  */
 package se.sics.ktoolbox.util;
 
+import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
+import java.util.TreeMap;
+import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class StringSerializerHelper {
+public class SerializerHelper {
 
-    public static void toBinary(String val, ByteBuf buf) {
+    public static void stringToBinary(String val, ByteBuf buf) {
         byte[] stringB;
         try {
             stringB = val.getBytes("UTF-8");
@@ -37,8 +41,8 @@ public class StringSerializerHelper {
         buf.writeInt(stringB.length);
         buf.writeBytes(stringB);
     }
-    
-    public static String fromBinary(ByteBuf buf) {
+
+    public static String stringFromBinary(ByteBuf buf) {
         int stringLength = buf.readInt();
         byte[] stringB = new byte[stringLength];
         buf.readBytes(stringB);
@@ -47,5 +51,24 @@ public class StringSerializerHelper {
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    public static <V extends Object> void sKMtoBinary(Map<String, V> map, Class<V> vClass, ByteBuf buf) {
+        buf.writeInt(map.size());
+        for (Map.Entry<String, V> e : map.entrySet()) {
+            SerializerHelper.stringToBinary(e.getKey(), buf);
+            Serializers.lookupSerializer(vClass).toBinary(e.getValue(), buf);
+        }
+    }
+
+    public static <V extends Object> Map<String, V> sKMFromBinary(Class<V> vClass, ByteBuf buf) {
+        int nrE = buf.readInt();
+        Map<String, V> map = new TreeMap<>();
+        for (int i = 0; i < nrE; i++) {
+            String mapKey = SerializerHelper.stringFromBinary(buf);
+            V mapValue = (V) Serializers.lookupSerializer(vClass).fromBinary(buf, Optional.absent());
+            map.put(mapKey, mapValue);
+        }
+        return map;
     }
 }
