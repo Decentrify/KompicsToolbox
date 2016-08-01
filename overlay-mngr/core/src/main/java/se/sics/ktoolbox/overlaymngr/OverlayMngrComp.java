@@ -42,9 +42,9 @@ import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
 import se.sics.ktoolbox.overlaymngr.bootstrap.CroupierBootstrapComp;
 import se.sics.ktoolbox.overlaymngr.bootstrap.CroupierBootstrapPort;
+import se.sics.ktoolbox.overlaymngr.bootstrap.OMCroupierBootstrap;
 import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
 import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
-import se.sics.ktoolbox.overlaymngr.bootstrap.OMCroupierBootstrap;
 import se.sics.ktoolbox.tgradient.TreeGradientComp;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -202,7 +202,7 @@ public class OverlayMngrComp extends ComponentDefinition {
             //croupierEnd.addChannel(croupierId, croupierComp.getPositive(CroupierPort.class));
             //control
             bootstrapEnd.addChannel(croupierId, croupierComp.getPositive(CroupierControlPort.class));
-            //viewUpdate, croupier - connected by gradient˜
+            //viewUpdate, croupier - connected by gradient
             //bootstrap port not yet fully defined
             
             croupierLayers.put(croupierId, Pair.with(croupierComp, croupierChannels));
