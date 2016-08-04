@@ -32,6 +32,7 @@ import se.sics.kompics.PortCore;
 import se.sics.kompics.PortCoreHelper;
 import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
+import se.sics.kompics.network.MessageNotify;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
@@ -43,7 +44,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     private final static Logger LOG = LoggerFactory.getLogger(One2NChannel.class);
     private String logPrefix = "";
     private String details = "";
-    
+
     private final Identifier id;
 
     private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
@@ -117,14 +118,21 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
 
     private void forwardTo(KompicsEvent event, int wid, boolean positive) {
         Identifier overlayId;
+
         if (channelSelector.getEventType().isAssignableFrom(event.getClass())) {
             overlayId = channelSelector.getValue(event);
-            if(overlayId == null) {
+            if (overlayId == null) {
+                LOG.info("{}traffic not processable in:{}", logPrefix, details);
+                return;
+            }
+        } else if (event instanceof MessageNotify.Req && channelSelector.getEventType().isAssignableFrom((((MessageNotify.Req)event).msg).getClass())) {
+            overlayId = channelSelector.getValue(event);
+            if (overlayId == null) {
                 LOG.info("{}traffic not processable in:{}", logPrefix, details);
                 return;
             }
         } else {
-            LOG.info("{}cannot extract id for:{} from:{} in:{}", 
+            LOG.info("{}cannot extract id for:{} from:{} in:{}",
                     new Object[]{logPrefix, channelSelector.getEventType().getName(), event.getClass().getName(), details});
             return;
         }
@@ -204,13 +212,13 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
 
     public void removeChannel(Identifier channelId, Positive<P> port) {
-        remove(channelId, (PortCore<P>)port);
+        remove(channelId, (PortCore<P>) port);
     }
-    
+
     public void removeChannel(Identifier channelId, Negative<P> port) {
-        remove(channelId, (PortCore<P>)port);
+        remove(channelId, (PortCore<P>) port);
     }
-    
+
     private void remove(Identifier channelId, PortCore<P> port) {
         rwlock.writeLock().lock();
         try {

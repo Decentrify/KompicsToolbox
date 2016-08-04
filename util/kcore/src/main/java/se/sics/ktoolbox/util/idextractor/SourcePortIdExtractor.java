@@ -18,7 +18,8 @@
  */
 package se.sics.ktoolbox.util.idextractor;
 
-import se.sics.kompics.network.Msg;
+import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.network.MessageNotify;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 import se.sics.ktoolbox.util.network.KContentMsg;
@@ -28,14 +29,20 @@ import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SourcePortIdExtractor extends ChannelIdExtractor<Msg, Identifier>{
+public class SourcePortIdExtractor extends ChannelIdExtractor<KompicsEvent, Identifier> {
 
     public SourcePortIdExtractor() {
-        super(Msg.class);
+        super(KompicsEvent.class);
     }
-    
+
     @Override
-    public Identifier getValue(Msg msg) {
-        return new IntIdentifier(msg.getHeader().getSource().getPort());
+    public Identifier getValue(KompicsEvent msg) {
+        if (msg instanceof KContentMsg) {
+            return new IntIdentifier(((KContentMsg)msg).getHeader().getSource().getPort());
+        } else if(msg instanceof MessageNotify.Req && ((MessageNotify.Req)msg).msg instanceof KContentMsg) {
+            return new IntIdentifier(((KContentMsg)((MessageNotify.Req)msg).msg).getHeader().getSource().getPort());
+        } else {
+            return null;
+        }
     }
 }
