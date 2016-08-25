@@ -18,11 +18,8 @@
  */
 package se.sics.ktoolbox.util.setup;
 
-import se.sics.ktoolbox.util.network.basic.BasicHeaderSerializer;
-import se.sics.ktoolbox.util.network.basic.BasicAddressSerializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdentifierSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifierSerializer;
@@ -30,28 +27,26 @@ import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdentifierSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifierSerializer;
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfo;
-import se.sics.ktoolbox.util.managedStore.core.util.FileInfoSerializer;
-import se.sics.ktoolbox.util.managedStore.core.util.Torrent;
-import se.sics.ktoolbox.util.managedStore.core.util.TorrentInfo;
-import se.sics.ktoolbox.util.managedStore.core.util.TorrentInfoSerializer;
-import se.sics.ktoolbox.util.managedStore.core.util.TorrentSerializer;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.network.basic.BasicAddressSerializer;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsgSerializer;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import se.sics.ktoolbox.util.network.basic.BasicHeaderSerializer;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeaderSerializer;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImplSerializer;
 import se.sics.ktoolbox.util.network.nat.NatType;
-import se.sics.ktoolbox.util.network.basic.BasicContentMsgSerializer;
-import se.sics.ktoolbox.util.network.basic.BasicHeader;
-import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
-import se.sics.ktoolbox.util.network.basic.DecoratedHeaderSerializer;
 import se.sics.ktoolbox.util.network.nat.NatTypeSerializer;
+import se.sics.ktoolbox.util.result.ResultSerializer;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 13;
+    public static final int serializerIds = 11;
 
     public static enum BasicSerializers {
         SimpleByteIdentifier(SimpleByteIdentifier.class, "simpleByteIdentifierSerializer"),
@@ -64,9 +59,7 @@ public class BasicSerializerSetup {
         DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
         BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
         NatType(NatType.class, "natTypeSerializer"),
-        FileInfo(FileInfo.class, "mSfileInfoSerializer"),
-        TorrentInfo(TorrentInfo.class, "msTorrentInfoSerializer"),
-        Torrent(Torrent.class, "msTorrentSerializer");
+        ResultStatusSerializer(ResultSerializer.class, "resultSerializer");
                 
         public final Class serializedClass;
         public final String serializerName;
@@ -132,18 +125,10 @@ public class BasicSerializerSetup {
         Serializers.register(natTypeSerializer, BasicSerializers.NatType.serializerName);
         Serializers.register(BasicSerializers.NatType.serializedClass, BasicSerializers.NatType.serializerName);
         
-        FileInfoSerializer fileInfoSerializer = new FileInfoSerializer(currentId++);
-        Serializers.register(fileInfoSerializer, BasicSerializers.FileInfo.serializerName);
-        Serializers.register(BasicSerializers.FileInfo.serializedClass, BasicSerializers.FileInfo.serializerName);
+        ResultSerializer.Status resultSerializer = new ResultSerializer.Status(currentId++);
+        Serializers.register(resultSerializer, BasicSerializers.ResultStatusSerializer.serializerName);
+        Serializers.register(BasicSerializers.ResultStatusSerializer.serializedClass, BasicSerializers.ResultStatusSerializer.serializerName);
         
-        TorrentInfoSerializer torrentInfoSerializer = new TorrentInfoSerializer(currentId++);
-        Serializers.register(torrentInfoSerializer, BasicSerializers.TorrentInfo.serializerName);
-        Serializers.register(BasicSerializers.TorrentInfo.serializedClass, BasicSerializers.TorrentInfo.serializerName);
-        
-        TorrentSerializer torrentSerializer = new TorrentSerializer(currentId++);
-        Serializers.register(torrentSerializer, BasicSerializers.Torrent.serializerName);
-        Serializers.register(BasicSerializers.Torrent.serializedClass, BasicSerializers.Torrent.serializerName);
-
         assert startingId + serializerIds == currentId;
         return currentId;
     }

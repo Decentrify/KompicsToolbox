@@ -18,25 +18,42 @@
  */
 package se.sics.ktoolbox.util.idextractor;
 
-import se.sics.ktoolbox.util.overlays.OverlayEvent;
+import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.network.MessageNotify;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
+import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MsgOverlayIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier> {
+public class MsgOverlayIdExtractor extends ChannelIdExtractor<KompicsEvent, Identifier> {
 
     public MsgOverlayIdExtractor() {
-        super(KContentMsg.class);
+        super(KompicsEvent.class);
     }
 
     @Override
-    public Identifier getValue(KContentMsg msg) {
+    public Identifier getValue(KompicsEvent m) {
+        KContentMsg msg = null;
+        if (m instanceof KContentMsg) {
+            msg = (KContentMsg) m;
+
+        } else if (m instanceof MessageNotify.Req) {
+            MessageNotify.Req mm = (MessageNotify.Req) m;
+            if(mm.msg instanceof KContentMsg) {
+                msg = (KContentMsg)(mm.msg);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
         if (msg.getContent() instanceof OverlayEvent) {
             return ((OverlayEvent) msg.getContent()).overlayId();
+        } else {
+            return null;
         }
-        return null;
     }
 }

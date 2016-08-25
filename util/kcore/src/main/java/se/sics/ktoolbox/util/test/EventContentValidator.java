@@ -16,33 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.idextractor;
+package se.sics.ktoolbox.util.test;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.kompics.network.MessageNotify;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SourcePortIdExtractor extends ChannelIdExtractor<KompicsEvent, Identifier> {
-
-    public SourcePortIdExtractor() {
-        super(KompicsEvent.class);
+public class EventContentValidator implements EventValidator {
+    private final EqualComparator eventComp;
+    private final KompicsEvent expectedEvent;
+    private KompicsEvent foundEvent;
+    
+    public EventContentValidator(EqualComparator eventComp, KompicsEvent expectedEvent) {
+        this.eventComp = eventComp;
+        this.expectedEvent = expectedEvent;
     }
-
+    
+    public void setFound(KompicsEvent foundEvent) {
+        this.foundEvent = foundEvent;
+    }
+    
     @Override
-    public Identifier getValue(KompicsEvent msg) {
-        if (msg instanceof KContentMsg) {
-            return new IntIdentifier(((KContentMsg)msg).getHeader().getSource().getPort());
-        } else if(msg instanceof MessageNotify.Req && ((MessageNotify.Req)msg).msg instanceof KContentMsg) {
-            return new IntIdentifier(((KContentMsg)((MessageNotify.Req)msg).msg).getHeader().getSource().getPort());
-        } else {
-            return null;
-        }
+    public boolean isValid() {
+        return eventComp.isEqual(expectedEvent, foundEvent);
     }
 }
