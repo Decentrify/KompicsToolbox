@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * GVoD is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,33 +16,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util;
+package se.sics.ledbat.core.sender;
+
+import se.sics.kompics.config.Config;
+import se.sics.kompics.config.TypesafeConfig;
+import se.sics.ledbat.core.LedbatConfig;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class BasicOpResult {
-    public static final BasicOpResult success = new BasicOpResult();
-    public static BasicOpResult createFail(String failCause) {
-        return new BasicOpResult(failCause);
+public class SenderConfig {
+    public static class Names {
+        public static String MAX_DUPLICATE_ACKS = "reliableUDP.max_duplicate_acks";
     }
+    /**
+     * max number of times that if the same lastAckNumber is received, it should
+     * be considered a loss for next seq#.
+     */
+    public final int maxDuplicateAcks;
+    public final LedbatConfig ledbatConfig;
     
-    private final Either<Boolean, String> p;
-    
-    private BasicOpResult() {
-        p = Either.left(true);
+    public SenderConfig(LedbatConfig ledbatConfig) {
+        this.ledbatConfig = ledbatConfig;
+        Config config = TypesafeConfig.load();
+        maxDuplicateAcks = config.getValue(Names.MAX_DUPLICATE_ACKS, Integer.class);
     }
-    
-    private BasicOpResult(String failCause) {
-        p = Either.right(failCause);
-    }
-    
-    public boolean isSuccess() {
-        return p.isLeft();
-    }
-    
-    public String failCause() {
-        return p.getRight();
-    }
-    
 }

@@ -19,6 +19,7 @@
         <module>overlay-mngr</module>
         <!--<module>nat-echo</module>-->
         <module>net-mngr</module>
+        <module>ledbat</module>
     </modules>
 
     <properties>

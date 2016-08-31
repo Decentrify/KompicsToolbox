@@ -199,3 +199,6 @@ netty-test/target/
 /hops/hdfs/target/
 /hops/kafka/target/
 /hops/core/target/
+/ledbat/core/target/
+/ledbat/example/target/
+/ledbat/network/target/
