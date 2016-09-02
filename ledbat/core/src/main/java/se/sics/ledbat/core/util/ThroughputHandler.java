@@ -1,7 +1,6 @@
 package se.sics.ledbat.core.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,16 +9,19 @@ import org.slf4j.LoggerFactory;
  */
 public class ThroughputHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ThroughputHandler.class);
-    private long currentSecondNumOfBytes;
-    private String connectionId;
-
-    public static List<Long> throughPutHistory = new ArrayList<Long>(400);
-    private long currentSecond;
+    
     private static final int TIME_STEP = 1 ;
+    private static final int HISTORY_SIZE = 600; //10mins
 
+    private final String connectionId;
+    private final LinkedList<Long> throughPutHistory = new LinkedList<>();
+    private long currentSecond;
+    private long currentSecondNumOfBytes;
+    
 
     public ThroughputHandler(String connectionId) {
         this.connectionId = connectionId;
+        this.throughPutHistory.add(0l);
     }
 
     public void packetReceived(int size) {
@@ -37,10 +39,17 @@ public class ThroughputHandler {
         long now = System.currentTimeMillis()/1000;
         if (now > currentSecond) {
             throughPutHistory.add(currentSecondNumOfBytes);
+            if(throughPutHistory.size() > HISTORY_SIZE) {
+                throughPutHistory.removeFirst();
+            }
             currentSecond = now ;
             currentSecondNumOfBytes = size;
         } else {
             currentSecondNumOfBytes += size;
         }
+    }
+    
+    public long speed() {
+        return throughPutHistory.getLast();
     }
 }

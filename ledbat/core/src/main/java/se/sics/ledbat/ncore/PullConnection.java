@@ -50,7 +50,8 @@ public class PullConnection {
     private ThroughputHandler requestedThroughput;
     private ThroughputHandler lateThroughput;
     private ThroughputHandler timeoutThroughput;
-
+    //**************************************************************************
+    
     public PullConnection(LedbatConfig ledbatConfig, Identifier connectionId) {
         this.ledbatConfig = ledbatConfig;
         flightSize = 0;
@@ -111,4 +112,8 @@ public class PullConnection {
         cwndHandler.handleLoss(rttEstimator.getRetransmissionTimeout());
     }
 
+    //******************************REPORTING***********************************
+    public long downloadSpeed() {
+        return receivedThroughput.speed();
+    }
 }
