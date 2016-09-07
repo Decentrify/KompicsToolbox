@@ -43,8 +43,8 @@ import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 import se.sics.ktoolbox.util.tracking.load.NetworkQueueLoadProxy;
 import se.sics.ktoolbox.util.tracking.load.QueueLoadConfig;
+import se.sics.ledbat.core.AppCongestionWindow;
 import se.sics.ledbat.core.LedbatConfig;
-import se.sics.ledbat.ncore.PullConnection;
 import se.sics.ledbat.ncore.msg.LedbatMsg;
 
 /**
@@ -53,7 +53,7 @@ import se.sics.ledbat.ncore.msg.LedbatMsg;
  */
 public class Leecher extends ComponentDefinition {
 
-    private final static Logger LOG = LoggerFactory.getLogger(PullConnection.class);
+    private final static Logger LOG = LoggerFactory.getLogger(Leecher.class);
     private String logPrefix = "";
 
     //**************************************************************************
@@ -62,7 +62,7 @@ public class Leecher extends ComponentDefinition {
     //**************************************************************************
     private final KAddress self;
     private final KAddress seeder;
-    private final PullConnection conn;
+    private final AppCongestionWindow conn;
     private final NetworkQueueLoadProxy networkLoad;
     private final Set<UUID> ongoing = new HashSet<UUID>();
     //**************************************************************************
@@ -73,7 +73,7 @@ public class Leecher extends ComponentDefinition {
         this.self = init.self;
         this.seeder = init.seeder;
         this.ledbatConfig = new LedbatConfig(config());
-        this.conn = new PullConnection(ledbatConfig, UUIDIdentifier.randomId());
+        this.conn = new AppCongestionWindow(ledbatConfig, UUIDIdentifier.randomId());
         this.networkLoad = new NetworkQueueLoadProxy("leechNetwork", this.proxy, new QueueLoadConfig(config()));
 
         subscribe(handleStart, control);
@@ -109,7 +109,7 @@ public class Leecher extends ComponentDefinition {
         public void handle(ExMsg.Timeout event) {
             LOG.debug("{}timeout", logPrefix);
             if (ongoing.remove(event.getTimeoutId())) {
-                conn.timeout(ledbatConfig.mss);
+                conn.timeout(System.currentTimeMillis(), ledbatConfig.mss);
             }
         }
     };
@@ -122,31 +122,20 @@ public class Leecher extends ComponentDefinition {
                     LOG.trace("{}received resp", logPrefix);
                     if (ongoing.remove(content.payload.eventId)) {
                         cancelTimeout(content.payload.eventId);
-                        conn.success(ledbatConfig.mss, content);
+                        conn.success(System.currentTimeMillis(), ledbatConfig.mss, content);
                         trySend();
                     } else {
-                        conn.late(ledbatConfig.mss, content);
+                        conn.late(System.currentTimeMillis(), ledbatConfig.mss, content);
                         trySend();
                     }
                 }
             };
 
     private void trySend() {
-        for (int i = 0; i < conn.canSend(); i++) {
-            switch (networkLoad.state()) {
-                case SLOW_DOWN:
-                    return;
-                case MAINTAIN:
-                    request();
-                    conn.request(ledbatConfig.mss);
-                    return;
-                case SPEED_UP:
-                    request();
-                    conn.request(ledbatConfig.mss);
-                    break;
-                default:
-                    return;
-            }
+        long now = System.currentTimeMillis();
+        conn.appState(now, networkLoad.state());
+        while (conn.canSend()) {
+            conn.request(now, ledbatConfig.mss);
         }
     }
 

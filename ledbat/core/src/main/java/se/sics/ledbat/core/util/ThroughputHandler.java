@@ -24,31 +24,31 @@ public class ThroughputHandler {
         this.throughPutHistory.add(0l);
     }
 
-    private void update() {
-        long now = System.currentTimeMillis() / 1000;
-        if (now > currentSecond + (TIME_STEP - 1)) {
+    private void update(long now) {
+        long nowSeconds = now / 1000;
+        if (nowSeconds > currentSecond + (TIME_STEP - 1)) {
             LOG.info(connectionId + "\t" + currentSecondNumOfBytes / TIME_STEP);
             throughPutHistory.add(currentSecondNumOfBytes);
             if (throughPutHistory.size() > HISTORY_SIZE) {
                 throughPutHistory.removeFirst();
             }
-            currentSecond = now;
+            currentSecond = nowSeconds;
             currentSecondNumOfBytes = 0;
         }
     }
 
-    public void packetReceived(int size) {
-        update();
+    public void packetReceived(long now, int size) {
+        update(now);
         currentSecondNumOfBytes += size;
     }
 
-    public long speed() {
-        update();
+    public long speed(long now) {
+        update(now);
         return throughPutHistory.getLast();
     }
     
-    public long currentSpeed() {
-        update();
+    public long currentSpeed(long now) {
+        update(now);
         return currentSecondNumOfBytes;
     }
 }
