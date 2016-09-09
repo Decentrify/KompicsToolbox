@@ -16,51 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.tracking.load;
+package se.sics.ktoolbox.util.predict;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MovingAvg {
+public class ExpMovingAvg {
 
     //**************************************************************************
     private final double alpha = 0.125;
-    private final double beta = 0.25;
-    private final long K = 4;
     //**************************************************************************
-    private final double min;
     private double avg;
-    private double var;
-    private double val;
 
-    public MovingAvg(double first, double min) {
-        this.min = min;
-        avg = 0.0;
-        var = 0.0;
-        val = -1.0;
+    public ExpMovingAvg() {
+        avg = Double.NaN;
     }
 
     public void update(double instVal) {
-        if (val == -1) {
-            // SRTT <- R, RTTVAR <- R/2, RTO <- SRTT + max (G, KRTTVAR)
-            this.avg = instVal;
-            this.var = instVal / 2.0;
-            this.val = avg + (K * var);
-        } else {
-            // RTTVAR <- (1 - beta) * RTTVAR + beta * |SRTT - R'|
-            this.var = (1 - beta) * var + beta * Math.abs((avg - instVal));
-            // SRTT <- (1 - alpha) * SRTT + alpha * R'
-            this.avg = (1 - alpha) * avg + alpha * instVal;
-            // RTO = AVG + K x VAR;
-            this.val = avg + K * var;
-        }
+       if(Double.isNaN(avg)) {
+           avg = instVal;
+       } else {
+           avg = avg + alpha * (instVal-avg);
+       }
     }
     
     public double get() {
-        if (this.val < min) {
-            return min;
-        } else {
-            return val;
-        }
+        return avg;
     }
 }

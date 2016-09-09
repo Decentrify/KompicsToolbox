@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.tracking.load;
 
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -32,7 +33,6 @@ import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
-import se.sics.ktoolbox.util.tracking.load.util.StatusState;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -44,24 +44,26 @@ public class NetworkQueueLoadProxy {
 
     private final ComponentProxy proxy;
     private final QueueLoad loadTracker;
+    private double adjustment;
 
     public NetworkQueueLoadProxy(String queueName, ComponentProxy proxy, QueueLoadConfig loadConfig) {
         this.proxy = proxy;
-        this.loadTracker = new QueueLoad(loadConfig);
-        this.logPrefix = queueName;
+        loadTracker = new QueueLoad(loadConfig);
+        adjustment = 0.0;
+        logPrefix = queueName;
         proxy.subscribe(handleTrackingTimeout, proxy.getNegative(Timer.class).getPair());
         proxy.subscribe(handleTrackingMsg, proxy.getNegative(Network.class).getPair());
     }
-    
+
     public void startTracking() {
         scheduleLoadCheck();
     }
-    
-    public StatusState state() {
-        return loadTracker.state();
+
+    public double adjustment() {
+        return adjustment;
     }
-    
-    public long queueDelay() {
+
+    public Pair<Integer, Integer> queueDelay() {
         return loadTracker.queueDelay();
     }
 
@@ -80,10 +82,9 @@ public class NetworkQueueLoadProxy {
                 @Override
                 public void handle(LoadTrackingEvent content, KContentMsg<KAddress, KHeader<KAddress>, LoadTrackingEvent> context) {
                     long now = System.currentTimeMillis();
-                    long queueDelay = now - content.sentAt;
-                    loadTracker.adjustState(queueDelay);
-
-                    LOG.info("{}component state:{} queue delay:{}", new Object[]{logPrefix, loadTracker.state(), loadTracker.queueDelay()});
+                    int queueDelay = (int)(now - content.sentAt);
+                    adjustment = loadTracker.adjustState(queueDelay);
+                    LOG.info("{}component adjustment:{} qd:{} avg qd:{}", new Object[]{logPrefix, adjustment, queueDelay, loadTracker.queueDelay()});
                     scheduleLoadCheck();
                 }
             };

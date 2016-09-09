@@ -109,6 +109,10 @@ public class CongestionWindowHandler {
     public double getInitialCwnd() {
         return ledbatConfig.initCwnd * ledbatConfig.mss;
     }
+    
+    public double getMinCwnd() {
+        return ledbatConfig.raw * ledbatConfig.mss;
+    }
 
     public void dumpState() {
         logger.error("cwnd size :" + cwnd);
@@ -147,7 +151,7 @@ public class CongestionWindowHandler {
             //cwnd += bytes_newly_acked;
             cwnd += ledbatConfig.mss;
             //consider raw in slow start
-            cwnd = Math.min(cwnd, ledbatConfig.raw * ledbatConfig.mss);
+            cwnd = Math.min(cwnd, getMinCwnd());
             //logger.warn("------------In SlowStart Mode------------- cwnd: " + cwnd + "queuing delay :" + queuing_delay + " and target :" + target);
             logCwndChanges(queuing_delay, flightSize, bytes_newly_acked);
         } else { //slow start is not enabled or in congestion avoidance phase
@@ -170,7 +174,7 @@ public class CongestionWindowHandler {
             //cwnd = cwnd > max_allowed_cwnd ? max_allowed_cwnd : cwnd;
             cwnd = cwnd > ledbatConfig.minCwnd * ledbatConfig.mss ? cwnd : ledbatConfig.minCwnd * ledbatConfig.mss;
 
-            cwnd = Math.min(cwnd, ledbatConfig.raw * ledbatConfig.mss);
+            cwnd = Math.min(cwnd, getMinCwnd());
 
             logCwndChanges(queuing_delay, flightSize, bytes_newly_acked);
         }

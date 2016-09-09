@@ -18,58 +18,50 @@
  */
 package se.sics.ktoolbox.util.tracking.load;
 
-import java.util.Random;
-import se.sics.ktoolbox.util.tracking.load.util.FuzzyState;
-import se.sics.ktoolbox.util.tracking.load.util.StatusState;
+import org.javatuples.Pair;
+import se.sics.ktoolbox.util.predict.ExpMovingAvg;
+import se.sics.ktoolbox.util.predict.STGMAvg;
+import se.sics.ktoolbox.util.predict.SimpleSmoothing;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class QueueLoad {
+
     //**************************************************************************
+
     private final QueueLoadConfig loadConfig;
+    private static final double IDLE = 0.1;
     //**************************************************************************
+    private final STGMAvg avgQueueDelay;
+    private int instQueueDelay;
     private long checkPeriod;
-    private MovingAvg delay;
-    private final FuzzyState fuzzyState;
-    private StatusState state;
-    
+
     public QueueLoad(QueueLoadConfig loadConfig) {
         this.loadConfig = loadConfig;
-        double targetLoad = (double) loadConfig.targetQueueDelay / loadConfig.maxQueueDelay;
-        this.fuzzyState = new FuzzyState(targetLoad, new Random(loadConfig.seed));
+        this.avgQueueDelay = new STGMAvg(new ExpMovingAvg(), Pair.with(0.0, (double)loadConfig.targetQueueDelay), new SimpleSmoothing());
+        this.instQueueDelay = 0;
         this.checkPeriod = loadConfig.maxQueueDelay;
-        this.delay = new MovingAvg(0, 0);
-        this.state = StatusState.MAINTAIN;
     }
-    
-    public StatusState state() {
-        return state;
-    }
-    
+
     public long nextCheckPeriod() {
         return checkPeriod;
     }
-    
-    public void adjustState(long queueDelay) {
-        delay.update(queueDelay);
 
-        StatusState old = state;
-        if (delay.get() > loadConfig.maxQueueDelay) {
-            state = StatusState.SLOW_DOWN;
-        } else {
-            state = fuzzyState.state(delay.get() / loadConfig.maxQueueDelay);
-        }
-        
-        if (!old.equals(state)) {
+    public double adjustState(int queueDelay) {
+        double adjustment = avgQueueDelay.update(queueDelay);
+        this.instQueueDelay = queueDelay;
+        if (avgQueueDelay.get() < IDLE * loadConfig.targetQueueDelay) {
             checkPeriod = loadConfig.maxQueueDelay;
         } else {
-            checkPeriod = 2 * loadConfig.maxQueueDelay;
+            checkPeriod = loadConfig.targetQueueDelay;
         }
+        
+        return adjustment;
     }
-    
-    public long queueDelay() {
-        return (long)delay.get();
+
+    public Pair<Integer, Integer> queueDelay() {
+        return Pair.with((int)avgQueueDelay.get(), instQueueDelay);
     }
 }
