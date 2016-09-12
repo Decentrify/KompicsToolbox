@@ -86,7 +86,7 @@ public class Leecher extends ComponentDefinition {
 
         @Override
         public void handle(Start event) {
-            networkLoad.startTracking();
+            networkLoad.start();
             trySend();
 
             SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(5000, 5000);
@@ -133,7 +133,7 @@ public class Leecher extends ComponentDefinition {
 
     private void trySend() {
         long now = System.currentTimeMillis();
-        conn.appState(now, networkLoad.adjustment());
+        conn.adjustState(networkLoad.adjustment());
         while (conn.canSend()) {
             conn.request(now, ledbatConfig.mss);
         }

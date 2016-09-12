@@ -55,8 +55,11 @@ public class NetworkQueueLoadProxy {
         proxy.subscribe(handleTrackingMsg, proxy.getNegative(Network.class).getPair());
     }
 
-    public void startTracking() {
+    public void start() {
         scheduleLoadCheck();
+    }
+    
+    public void tearDown() {
     }
 
     public double adjustment() {

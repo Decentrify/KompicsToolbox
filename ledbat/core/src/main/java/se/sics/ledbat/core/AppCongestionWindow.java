@@ -34,7 +34,6 @@ public class AppCongestionWindow {
     private final ConnHistory connHistory;
     //**************************************************************************
     private double appCwnd;
-    private long lastChangeTime;
     /**
      * flightsize is the amount of data outsanding .It is updated after updating
      * cwnd size on each ack by updateFlightsize();
@@ -46,33 +45,32 @@ public class AppCongestionWindow {
         appRttEstimator = new RTTEstimator(ledbatConfig, RTO_MIN);
         connHistory = new ConnHistory(connectionId);
         flightSize = 0;
-        lastChangeTime = 0;
         appCwnd = ledbatCwnd.getCwnd();
     }
 
     //**************************************************************************
-    public void appState(long now, double adjustment) {
-        double multiplier_const;
+    public void adjustState(double adjustment) {
+        double multiplier_const = getMultplier(adjustment);
+        appCwnd = Math.min(Math.max(multiplier_const * appCwnd, ledbatCwnd.getInitialCwnd()), ledbatCwnd.getCwnd());
+    }
+    
+    private double getMultplier(double adjustment) {
         if (adjustment <= -0.7) {
-            multiplier_const = 0.5;
+            return 0.5;
         } else if (adjustment <= -0.4) {
-            multiplier_const = 0.6;
+            return 0.6;
         } else if (adjustment <= -0.1) {
-            multiplier_const = 0.7;
+            return 0.7;
         } else if (adjustment <= 0) {
-            multiplier_const = 1;
+            return 1;
         } else if (adjustment <= 0.1) {
-            multiplier_const = 1.1;
+            return 1.1;
         } else if (adjustment <= 0.4) {
-            multiplier_const = 1.4;
+            return 1.4;
         } else if (adjustment <= 0.7) {
-            multiplier_const = 1.7;
+            return 1.7;
         } else {
-            multiplier_const = 2;
-        }
-
-        if (change(now)) {
-            appCwnd = Math.min(Math.max(multiplier_const * appCwnd, ledbatCwnd.getInitialCwnd()), ledbatCwnd.getCwnd());
+            return 2;
         }
     }
 
@@ -131,15 +129,6 @@ public class AppCongestionWindow {
     }
 
     //**************************************************************************
-    private boolean change(long now) { //time in ms
-        if (now - lastChangeTime > 1000) {
-//        if (now - lastChangeTime > appRttEstimator.getRetransmissionTimeout()) {
-            lastChangeTime = now;
-            return true;
-        }
-        return false;
-    }
-
     public static class ConnHistory {
 
         private final ThroughputHandler receivedThroughput;
