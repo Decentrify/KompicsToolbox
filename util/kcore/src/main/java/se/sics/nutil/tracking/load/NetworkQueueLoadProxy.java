@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.tracking.load;
+package se.sics.nutil.tracking.load;
 
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
@@ -33,6 +34,7 @@ import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import se.sics.ktoolbox.util.network.ports.ChannelFilter;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -42,6 +44,21 @@ public class NetworkQueueLoadProxy {
     private final static Logger LOG = LoggerFactory.getLogger(NetworkQueueLoadProxy.class);
     private String logPrefix = "";
 
+    private static final ChannelFilter filter = new ChannelFilter() {
+
+        @Override
+        public boolean filter(KompicsEvent event) {
+            if(!(event instanceof KContentMsg)) {
+                return false;
+            }
+            KContentMsg msg = (KContentMsg)event;
+            if(msg.getContent() instanceof LoadTrackingEvent) {
+                return true;
+            }
+            return false;
+        }
+    };
+            
     private final ComponentProxy proxy;
     private final QueueLoad loadTracker;
     private double adjustment;
@@ -60,6 +77,10 @@ public class NetworkQueueLoadProxy {
     }
     
     public void tearDown() {
+    }
+    
+    public ChannelFilter getFilter() {
+        return filter;
     }
 
     public double adjustment() {
@@ -88,6 +109,9 @@ public class NetworkQueueLoadProxy {
                     int queueDelay = (int)(now - content.sentAt);
                     adjustment = loadTracker.adjustState(queueDelay);
                     LOG.info("{}component adjustment:{} qd:{} avg qd:{}", new Object[]{logPrefix, adjustment, queueDelay, loadTracker.queueDelay()});
+                    if(adjustment < -0.8) {
+                        LOG.warn("{}overloaded", logPrefix);
+                    }
                     scheduleLoadCheck();
                 }
             };

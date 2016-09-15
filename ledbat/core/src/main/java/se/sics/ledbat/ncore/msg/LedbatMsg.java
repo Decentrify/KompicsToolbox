@@ -18,8 +18,9 @@
  */
 package se.sics.ledbat.ncore.msg;
 
+import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.overlays.OverlayEvent;
+import se.sics.nutil.ContentWrapper;
 
 /**
  *
@@ -27,62 +28,72 @@ import se.sics.ktoolbox.util.overlays.OverlayEvent;
  */
 public class LedbatMsg {
 
-    public static class Request<P extends OverlayEvent> implements OverlayEvent {
+    public static class Request<C extends Identifiable> implements Identifiable, ContentWrapper<C> {
 
-        public final P payload;
+        public final C content;
         public final long leecherAppReqSendT;
 
-        protected Request(P payload, long leecherAppReqSendT) {
-            this.payload = payload;
+        protected Request(C content, long leecherAppReqSendT) {
+            this.content = content;
             this.leecherAppReqSendT = leecherAppReqSendT;
         }
 
-        public Request(P payload) {
-            this(payload, System.currentTimeMillis());
+        public Request(C content) {
+            this(content, System.currentTimeMillis());
         }
-
-        public <PP extends OverlayEvent> Response answer(PP answerPayload) {
-            return new Response(this, answerPayload);
-        }
-
-        @Override
-        public Identifier overlayId() {
-            return payload.overlayId();
-        }
-
+        
         @Override
         public Identifier getId() {
-            return payload.getId();
+            return content.getId();
+        }
+
+        @Override
+        public C getWrappedContent() {
+            return content;
+        }
+
+        @Override
+        public String toString() {
+            return "Ledbat.Request<" + content.toString() + ">";
+        }
+        
+        public <AC extends Identifiable> Response answer(AC answerContent) {
+            return new Response(this, answerContent);
         }
     }
 
-    public static class Response<P extends OverlayEvent> implements OverlayEvent {
+    public static class Response<C extends Identifiable> implements Identifiable, ContentWrapper<C> {
 
-        public final P payload;
+        public final C content;
         public final long leecherAppReqSendT;
         public final long seederNetRespSendT;
         public final long leechedNetRespT;
 
-        protected Response(P payload, long leecherAppReqSendT, long seederNetRespSendT, long leechedNetRespT) {
-            this.payload = payload;
+        protected Response(C content, long leecherAppReqSendT, long seederNetRespSendT, long leechedNetRespT) {
+            this.content = content;
             this.leecherAppReqSendT = leecherAppReqSendT;
             this.seederNetRespSendT = seederNetRespSendT;
             this.leechedNetRespT = leechedNetRespT;
         }
 
-        private Response(Request req, P payload) {
+        private Response(Request req, C content) {
             //-1 set in serializer - as close as possible to network so we best estimate network delay and not kompics delay
-            this(payload, req.leecherAppReqSendT, -1, -1);
-        }
-
-        @Override
-        public Identifier overlayId() {
-            return payload.overlayId();
+            this(content, req.leecherAppReqSendT, -1, -1);
         }
 
         @Override
         public Identifier getId() {
-            return payload.getId();
+            return content.getId();
+        }
+
+        @Override
+        public C getWrappedContent() {
+            return content;
+        }
+        
+        @Override
+        public String toString() {
+            return "Ledbat.Response<" + content.toString() + ">";
         }
     }
 }

@@ -55,11 +55,13 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     // Use HashMap for now and switch to a more efficient datastructure if necessary
     private final Multimap<Identifier, PortCore<P>> nPorts = HashMultimap.create();
     private final ChannelIdExtractor<KompicsEvent, Identifier> channelSelector;
+    private final ChannelFilter filter;
 
-    private One2NChannel(String channelName, PortCore<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
+    private One2NChannel(String channelName, PortCore<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector, ChannelFilter filter) {
         this.logPrefix = channelName + " ";
         this.sourcePort = sourcePort;
         this.channelSelector = (ChannelIdExtractor<KompicsEvent, Identifier>) channelSelector;
+        this.filter = filter;
         id = UUIDIdentifier.randomId();
         StringBuilder detailsSB = new StringBuilder();
         detailsSB.append("<").append(id).append("> ");
@@ -119,6 +121,10 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     private void forwardTo(KompicsEvent event, int wid, boolean positive) {
         Identifier overlayId;
 
+        if(filter.filter(event)) {
+            LOG.debug("{}filtered:{}", logPrefix, event);
+            return;
+        }
         if (channelSelector.getEventType().isAssignableFrom(event.getClass())) {
             overlayId = channelSelector.getValue(event);
             if (overlayId == null) {
@@ -233,13 +239,27 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
 
     public static <P extends PortType> One2NChannel<P> getChannel(String channelName, Negative<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
-        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector);
+        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector, NoChannelFilter.instance);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }
 
     public static <P extends PortType> One2NChannel<P> getChannel(String channelName, Positive<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector) {
-        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector);
+        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector, NoChannelFilter.instance);
+        sourcePort.addChannel(one2NC);
+        return one2NC;
+    }
+    
+    public static <P extends PortType> One2NChannel<P> getChannel(String channelName, 
+            Negative<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector, ChannelFilter filter) {
+        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector, filter);
+        sourcePort.addChannel(one2NC);
+        return one2NC;
+    }
+
+    public static <P extends PortType> One2NChannel<P> getChannel(String channelName, 
+            Positive<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector, ChannelFilter filter) {
+        One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector, filter);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }

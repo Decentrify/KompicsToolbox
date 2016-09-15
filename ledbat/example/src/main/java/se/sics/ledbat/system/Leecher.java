@@ -41,11 +41,11 @@ import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
-import se.sics.ktoolbox.util.tracking.load.NetworkQueueLoadProxy;
-import se.sics.ktoolbox.util.tracking.load.QueueLoadConfig;
 import se.sics.ledbat.core.AppCongestionWindow;
 import se.sics.ledbat.core.LedbatConfig;
 import se.sics.ledbat.ncore.msg.LedbatMsg;
+import se.sics.nutil.tracking.load.NetworkQueueLoadProxy;
+import se.sics.nutil.tracking.load.QueueLoadConfig;
 
 /**
  *
@@ -120,8 +120,8 @@ public class Leecher extends ComponentDefinition {
                 @Override
                 public void handle(LedbatMsg.Response<ExMsg.Response> content, KContentMsg<KAddress, KHeader<KAddress>, LedbatMsg.Response<ExMsg.Response>> context) {
                     LOG.trace("{}received resp", logPrefix);
-                    if (ongoing.remove(content.payload.eventId)) {
-                        cancelTimeout(content.payload.eventId);
+                    if (ongoing.remove(content.getWrappedContent().eventId)) {
+                        cancelTimeout(content.getWrappedContent().eventId);
                         conn.success(System.currentTimeMillis(), ledbatConfig.mss, content);
                         trySend();
                     } else {
@@ -136,6 +136,7 @@ public class Leecher extends ComponentDefinition {
         conn.adjustState(networkLoad.adjustment());
         while (conn.canSend()) {
             conn.request(now, ledbatConfig.mss);
+            request();
         }
     }
 

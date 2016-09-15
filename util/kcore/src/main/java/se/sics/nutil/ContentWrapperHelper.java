@@ -16,28 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.idextractor;
-
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.KHeader;
-import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
+package se.sics.nutil;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class DestinationHostIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier> {
-
-    public DestinationHostIdExtractor() {
-        super(KContentMsg.class);
+public class ContentWrapperHelper {
+    public static Object getBaseContent(ContentWrapper wrapperContent) {
+        return getBaseContent(wrapperContent, Object.class);
     }
-
-    @Override
-    public Identifier getValue(KContentMsg msg) {
-        KContentMsg<KAddress, KHeader<KAddress>, Object> message = (KContentMsg<KAddress, KHeader<KAddress>, Object>)msg;
-        KAddress destination = message.getHeader().getDestination();
-        return destination == null ? null : destination.getId();
+    
+    public static <C extends Object> C getBaseContent(ContentWrapper wrapperContent, Class<C> contentType) {
+        ContentWrapper wc = wrapperContent;
+        while(wc.getWrappedContent() instanceof ContentWrapper) {
+            wc = (ContentWrapper)wc.getWrappedContent();
+        }
+        return (C)wc.getWrappedContent();
+    }
+    
+    public static <C extends Object> C removeOneWrapper(ContentWrapper wrapperContent, Class<C> contentType) {
+        return (C)wrapperContent.getWrappedContent();
     }
 }

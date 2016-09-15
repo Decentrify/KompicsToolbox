@@ -19,32 +19,25 @@
 package se.sics.ktoolbox.util.idextractor;
 
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
-import se.sics.ktoolbox.util.overlays.OverlayEvent;
-import se.sics.nutil.ContentWrapper;
-import se.sics.nutil.ContentWrapperHelper;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MsgOverlayIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier> {
+public class SourceHostIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier> {
 
-    public MsgOverlayIdExtractor() {
+    public SourceHostIdExtractor() {
         super(KContentMsg.class);
     }
 
     @Override
     public Identifier getValue(KContentMsg msg) {
-        Object baseContent = msg.getContent();
-        Identifier overlayId = null;
-        if(baseContent instanceof ContentWrapper) {
-            baseContent = ContentWrapperHelper.getBaseContent((ContentWrapper)baseContent, Object.class);
-        }
-        if(baseContent instanceof OverlayEvent) {
-            overlayId = ((OverlayEvent)baseContent).overlayId();
-        }
-        
-        return overlayId;
+        KContentMsg<KAddress, KHeader<KAddress>, Object> message = (KContentMsg<KAddress, KHeader<KAddress>, Object>)msg;
+        KAddress source = message.getHeader().getSource();
+        return source == null ? null : source.getId();
     }
 }

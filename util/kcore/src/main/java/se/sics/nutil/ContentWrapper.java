@@ -16,17 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.tracking.load;
-
-import se.sics.kompics.KompicsEvent;
+package se.sics.nutil;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class LoadTrackingEvent implements KompicsEvent {
-    public final long sentAt;
-    
-    public LoadTrackingEvent() {
-        this.sentAt = System.currentTimeMillis();
-    }
+public interface ContentWrapper<C extends Object> {
+    public C getWrappedContent();
 }

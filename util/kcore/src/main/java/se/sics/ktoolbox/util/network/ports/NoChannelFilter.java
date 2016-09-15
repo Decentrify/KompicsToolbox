@@ -16,28 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.idextractor;
+package se.sics.ktoolbox.util.network.ports;
 
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.KHeader;
-import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
+import se.sics.kompics.KompicsEvent;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class DestinationHostIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier> {
-
-    public DestinationHostIdExtractor() {
-        super(KContentMsg.class);
-    }
+public class NoChannelFilter implements ChannelFilter {
+    public static final NoChannelFilter instance = new NoChannelFilter();
 
     @Override
-    public Identifier getValue(KContentMsg msg) {
-        KContentMsg<KAddress, KHeader<KAddress>, Object> message = (KContentMsg<KAddress, KHeader<KAddress>, Object>)msg;
-        KAddress destination = message.getHeader().getDestination();
-        return destination == null ? null : destination.getId();
+    public boolean filter(KompicsEvent event) {
+        return false;
     }
 }
