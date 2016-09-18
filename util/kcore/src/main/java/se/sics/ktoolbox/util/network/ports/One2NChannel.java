@@ -121,7 +121,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     private void forwardTo(KompicsEvent event, int wid, boolean positive) {
         Identifier overlayId;
 
-        if(filter.filter(event)) {
+        if (filter.filter(event)) {
             LOG.debug("{}filtered:{}", logPrefix, event);
             return;
         }
@@ -131,7 +131,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
                 LOG.info("{}traffic not processable in:{}", logPrefix, details);
                 return;
             }
-        } else if (event instanceof MessageNotify.Req && channelSelector.getEventType().isAssignableFrom((((MessageNotify.Req)event).msg).getClass())) {
+        } else if (event instanceof MessageNotify.Req && channelSelector.getEventType().isAssignableFrom((((MessageNotify.Req) event).msg).getClass())) {
             overlayId = channelSelector.getValue(event);
             if (overlayId == null) {
                 LOG.info("{}traffic not processable in:{}", logPrefix, details);
@@ -175,15 +175,14 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
                 return;
             }
             destroyed = true;
+            sourcePort.removeChannel(this);
+            for (Positive<P> port : nPorts.values()) {
+                port.removeChannel(this);
+            }
+            nPorts.clear();
         } finally {
             rwlock.writeLock().unlock();
         }
-
-        sourcePort.removeChannel(this);
-        for (Positive<P> port : nPorts.values()) {
-            port.removeChannel(this);
-        }
-        nPorts.clear();
     }
 
     public void addChannel(Identifier channelId, Negative<P> endPoint) {
@@ -249,15 +248,15 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         sourcePort.addChannel(one2NC);
         return one2NC;
     }
-    
-    public static <P extends PortType> One2NChannel<P> getChannel(String channelName, 
+
+    public static <P extends PortType> One2NChannel<P> getChannel(String channelName,
             Negative<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector, ChannelFilter filter) {
         One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector, filter);
         sourcePort.addChannel(one2NC);
         return one2NC;
     }
 
-    public static <P extends PortType> One2NChannel<P> getChannel(String channelName, 
+    public static <P extends PortType> One2NChannel<P> getChannel(String channelName,
             Positive<P> sourcePort, ChannelIdExtractor<?, Identifier> channelSelector, ChannelFilter filter) {
         One2NChannel<P> one2NC = new One2NChannel(channelName, (PortCore) sourcePort, channelSelector, filter);
         sourcePort.addChannel(one2NC);

@@ -60,12 +60,22 @@ public class BestEffortMsg {
         public Timeout timeout() {
             return new Timeout(content);
         }
+        
+        @Override
+        public String toString() {
+            return "BE_Request<" + content.toString() + ">";
+        }
     }
 
     public static class Timeout<C extends Identifiable> extends Base<C> {
 
         private Timeout(C content) {
             super(content);
+        }
+        
+        @Override
+        public String toString() {
+            return "BE_Timeout<" + content.toString() + ">";
         }
     }
 
