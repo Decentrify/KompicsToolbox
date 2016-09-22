@@ -162,5 +162,14 @@ public class AppCongestionWindow {
         public long avgThroughput(long now) {
             return receivedThroughput.speed(now);
         }
+        
+        public DownloadThroughput report() {
+            long now = System.currentTimeMillis();
+            return new DownloadThroughput(requestedThroughput.currentSpeed(now), receivedThroughput.currentSpeed(now), lateThroughput.currentSpeed(now), timeoutThroughput.currentSpeed(now));
+        }
+    }
+    
+    public DownloadThroughput report() {
+        return connHistory.report();
     }
 }

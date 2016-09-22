@@ -16,35 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.predict;
+package se.sics.ledbat.core;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ExpMovingAvg {
+public class DownloadThroughput {
 
-    //**************************************************************************
-    private final double alpha = 0.125;
-    //**************************************************************************
-    private double avg;
+    public final double reqThroughput;
+    public final double inTimeThroughput;
+    public final double lateThroughput;
+    public final double timedOutThroughput;
 
-    public ExpMovingAvg(double init) {
-        avg = init;
-    }
-    
-    public ExpMovingAvg() {
-        avg = Double.NaN;
-    }
-
-    public void update(double instVal) {
-       if(Double.isNaN(avg)) {
-           avg = instVal;
-       } else {
-           avg = avg + alpha * (instVal-avg);
-       }
-    }
-    
-    public double get() {
-        return avg;
+    public DownloadThroughput(double reqThroughput, double inTimeThroughput, double lateThroughput, double timedOutThroughput) {
+        this.reqThroughput = reqThroughput;
+        this.inTimeThroughput = inTimeThroughput;
+        this.lateThroughput = lateThroughput;
+        this.timedOutThroughput = timedOutThroughput;
     }
 }
