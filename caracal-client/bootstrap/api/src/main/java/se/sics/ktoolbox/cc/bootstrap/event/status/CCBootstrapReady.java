@@ -21,23 +21,23 @@ package se.sics.ktoolbox.cc.bootstrap.event.status;
 
 import se.sics.caracaldb.global.SchemaData;
 import se.sics.ktoolbox.cc.event.CCEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCBootstrapReady implements CCEvent {
-    public final Identifier id;
+    public final Identifier eventId;
     public final SchemaData caracalSchemaData;
     
     public CCBootstrapReady(SchemaData caracalSchemaData) {
-        this.id = UUIDIdentifier.randomId();
+        this.eventId = BasicIdentifiers.eventId();
         this.caracalSchemaData = caracalSchemaData;
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
     }
 }

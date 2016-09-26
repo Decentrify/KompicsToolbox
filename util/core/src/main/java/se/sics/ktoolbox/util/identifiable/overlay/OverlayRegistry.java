@@ -16,29 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.overlays.id;
+package se.sics.ktoolbox.util.identifiable.overlay;
 
-import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
 import com.google.common.io.BaseEncoding;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayIdRegistry {
+public class OverlayRegistry {
     private static final Map<String, ByteBuffer> reservedOverlayPrefixes = new HashMap<>();
+    private static OverlayId.TypeComparator typeComparator = null;
+    private static OverlayId.TypeFactory typeFactory = null;
 
+    //TODO Alex - fix with a proper singleton later - should be done in the beginning
+    public static synchronized void initiate(OverlayId.TypeFactory tf, OverlayId.TypeComparator tc) {
+        typeComparator = tc;
+        typeFactory = tf;
+    }
+    
     public static synchronized boolean registerPrefix(String owner, byte prefix) {
-        if(prefix != (prefix >> 4 << 4)) {
-            // make sure last 4 bits are 0
-            //currently allow only 4 bits to be used as prefix
-            //we don't do variable length and care about one prefix being a possible prefix of another
-            throw new RuntimeException("bad prefix - accepted prefix needs to have last 4 bits 0");
-        }
         if(reservedOverlayPrefixes.containsKey(owner)) {
             throw new RuntimeException("owner name clash");
         }
@@ -49,9 +48,16 @@ public class OverlayIdRegistry {
         return true;
     }
     
-    public static synchronized boolean isRegistered(Identifier id) {
-        byte owner = OverlayIdFactory.getOwner(id);
-        return reservedOverlayPrefixes.values().contains(ByteBuffer.wrap(new byte[]{owner}));
+    public static synchronized OverlayId.TypeComparator getTypeComparator() {
+        return typeComparator;
+    }
+    
+    public static synchronized OverlayId.TypeFactory getTypeFactory() {
+        return typeFactory;
+    }
+    
+    public static synchronized boolean isRegistered(OverlayId id) {
+        return reservedOverlayPrefixes.values().contains(ByteBuffer.wrap(new byte[]{id.owner}));
     }
     
     public static synchronized String print() {

@@ -34,7 +34,6 @@ import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.MessageNotify;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -44,8 +43,6 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     private final static Logger LOG = LoggerFactory.getLogger(One2NChannel.class);
     private String logPrefix = "";
     private String details = "";
-
-    private final Identifier id;
 
     private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
@@ -62,9 +59,7 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
         this.sourcePort = sourcePort;
         this.channelSelector = (ChannelIdExtractor<KompicsEvent, Identifier>) channelSelector;
         this.filter = filter;
-        id = UUIDIdentifier.randomId();
         StringBuilder detailsSB = new StringBuilder();
-        detailsSB.append("<").append(id).append("> ");
         detailsSB.append("type:").append(sourcePort.getPortType().getClass().getName()).append(" ");
         detailsSB.append("owner:").append(sourcePort.getOwner().getComponent().getClass().getName()).append(" ");
         details = detailsSB.toString();

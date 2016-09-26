@@ -21,6 +21,7 @@ package se.sics.ktoolbox.aggregator.msg;
 import java.util.Map;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
@@ -33,6 +34,10 @@ public class NodeWindow implements AggregatorEvent {
     public NodeWindow(Identifier eventId, Map<Class, AggregatorPacket> window) {
         this.eventId = eventId;
         this.window = window;
+    }
+    
+    public NodeWindow(Map<Class, AggregatorPacket> window) {
+        this(BasicIdentifiers.eventId(), window);
     }
     
     @Override

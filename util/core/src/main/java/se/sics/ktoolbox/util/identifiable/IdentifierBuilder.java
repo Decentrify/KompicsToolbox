@@ -16,37 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.identifiable.basic;
-
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.netty.serialization.Serializer;
+package se.sics.ktoolbox.util.identifiable;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class IntIdentifierSerializer implements Serializer {
-    private final int id;
-    
-    public IntIdentifierSerializer(int id) {
-        this.id = id;
-    }
-    
-    @Override
-    public int identifier() {
-        return id;
-    }
-
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        IntIdentifier obj = (IntIdentifier)o;
-        buf.writeInt(obj.id);
-    }
-
-    @Override
-    public IntIdentifier fromBinary(ByteBuf buf, Optional<Object> hint) {
-        int identifier = buf.readInt();
-        return new IntIdentifier(identifier);
-    }
-    
+public interface IdentifierBuilder {
 }

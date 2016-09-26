@@ -1,8 +1,8 @@
 package se.sics.ktoolbox.election.event;
 
 
-import java.util.Collection;
 import java.util.List;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -19,17 +19,21 @@ public class LeaderState {
      */
     public static class ElectedAsLeader implements ElectionEvent {
 
-        public final Identifier id;
+        public final Identifier eventId;
         public final List<KAddress> leaderGroup;
 
-        public ElectedAsLeader(Identifier id, List<KAddress> leaderGroup){
-            this.id = id;
+        public ElectedAsLeader(Identifier eventId, List<KAddress> leaderGroup){
+            this.eventId = eventId;
             this.leaderGroup = leaderGroup;
+        }
+        
+        public ElectedAsLeader(List<KAddress> leaderGroup){
+            this(BasicIdentifiers.eventId(), leaderGroup);
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
 

@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.netmngr.core;
 
 import java.nio.ByteBuffer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.basic.ContentPattern;
 import se.sics.ktoolbox.util.network.other.Chunkable;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
@@ -29,39 +30,39 @@ import se.sics.ktoolbox.util.overlays.OverlayEvent;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ChunkableData implements OverlayEvent, Chunkable, ContentPattern<Chunkable> {
-    public final Identifier eventId;
-    public final Identifier overlayId;
+    public final Identifier msgId;
+    public final OverlayId overlayId;
     public final int counter;
     public final ByteBuffer data;
     
-    public ChunkableData(Identifier eventId, Identifier overlayId, int counter, ByteBuffer data) {
-        this.eventId = eventId;
+    public ChunkableData(Identifier msgId, OverlayId overlayId, int counter, ByteBuffer data) {
+        this.msgId = msgId;
         this.overlayId = overlayId;
         this.counter = counter;
         this.data = data;
     }
     
-    public ChunkableData(Identifier overlayId, int counter, ByteBuffer data) {
-        this(UUIDIdentifier.randomId(), overlayId, counter, data);
+    public ChunkableData(OverlayId overlayId, int counter, ByteBuffer data) {
+        this(BasicIdentifiers.msgId(), overlayId, counter, data);
     }
             
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
 
     @Override
     public Identifier getId() {
-        return eventId;
+        return msgId;
     }
 
     @Override
     public String toString() {
-        return "ChunkableData<" + overlayId + ", " + eventId + "> ";
+        return "ChunkableData<" + overlayId + ", " + msgId + "> ";
     }
     
     public Ack answer() {
-        return new Ack(eventId, overlayId, counter);
+        return new Ack(msgId, overlayId, counter);
     }
 
     @Override

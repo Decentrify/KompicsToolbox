@@ -1,8 +1,8 @@
 package se.sics.ledbat.core.msg;
 
 import java.util.UUID;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -27,7 +27,7 @@ public class AckSegment extends LedbatMsg {
 //    private int recvAdWin;
 
     public AckSegment(UUID connectionId, KAddress sender, KAddress receiver) {
-        this.eventId = UUIDIdentifier.randomId();
+        this.eventId = BasicIdentifiers.eventId();
         this.connectionId = connectionId;
         this.sender = sender;
         this.receiver = receiver;

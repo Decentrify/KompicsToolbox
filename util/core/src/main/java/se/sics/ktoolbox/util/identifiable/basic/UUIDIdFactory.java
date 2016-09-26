@@ -1,10 +1,8 @@
 /*
- * This file is part of the Kompics Simulator.
+ * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
+ * 2009 Royal Institute of Technology (KTH)
  *
- * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) 
- * Copyright (C) 2009 Royal Institute of Technology (KTH)
- *
- * This program is free software; you can redistribute it and/or
+ * KompicsToolbox is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -20,27 +18,59 @@
  */
 package se.sics.ktoolbox.util.identifiable.basic;
 
-import com.google.common.collect.ImmutableSet;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.util.UUID;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.identifiable.IdentifierBuilder;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UUIDIdFactory implements IdentifierFactory {
+public class UUIDIdFactory implements IdentifierFactory<UUIDId> {
+
+    private String registeredName;
 
     @Override
-    public UUIDIdentifier newId() {
-        return new UUIDIdentifier(UUID.randomUUID());
+    public synchronized UUIDId randomId() {
+        return new UUIDId(UUID.randomUUID());
     }
 
     @Override
-    public ImmutableSet<UUIDIdentifier> newIds(int nr) {
-        ImmutableSet.Builder<UUIDIdentifier> ids = new ImmutableSet.Builder<>();
-        while (nr > 0) {
-            nr--;
-            ids.add(new UUIDIdentifier(UUID.randomUUID()));
+    public UUIDId id(IdentifierBuilder builder) {
+        UUID base;
+        if (builder instanceof BasicBuilders.UUIDBuilder) {
+            base = ((BasicBuilders.UUIDBuilder) builder).base;
+        } else if (builder instanceof BasicBuilders.ByteBuilder) {
+            BasicBuilders.ByteBuilder aux = (BasicBuilders.ByteBuilder) builder;
+            ByteBuf buf = Unpooled.wrappedBuffer(aux.base);
+            long mostSignificat = buf.readLong();
+            long leastSignificant = buf.readLong();
+            base = new UUID(mostSignificat, leastSignificant);
+        } else if (builder instanceof BasicBuilders.StringBuilder) {
+            BasicBuilders.StringBuilder aux = (BasicBuilders.StringBuilder) builder;
+            base = UUID.fromString(aux.base);
+        } else if (builder instanceof BasicBuilders.IntBuilder) {
+            throw new UnsupportedOperationException("UUIDIdFactory does not support int builder");
+        } else {
+            throw new UnsupportedOperationException("UUIDIdFactory does not support builder:" + builder.getClass());
         }
-        return ids.build();
+        return new UUIDId(base);
+    }
+
+    @Override
+    public Class<UUIDId> idType() {
+        return UUIDId.class;
+    }
+
+    @Override
+    public void setRegisteredName(String name) {
+        this.registeredName = name;
+    }
+    
+    @Override
+    public String getRegisteredName() {
+        return registeredName;
     }
 }

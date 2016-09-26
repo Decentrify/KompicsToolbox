@@ -1,7 +1,15 @@
 package se.sics.ktoolbox.election;
 
 import java.security.PublicKey;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -12,27 +20,27 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
+import se.sics.kompics.network.Network;
+import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.kompics.network.Network;
-import se.sics.kompics.network.Transport;
 import se.sics.ktoolbox.election.aggregation.LeaderHistoryReducer;
 import se.sics.ktoolbox.election.aggregation.LeaderUpdatePacket;
-import se.sics.ktoolbox.election.util.LCPeerView;
-import se.sics.ktoolbox.election.util.LEContainer;
+import se.sics.ktoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.ktoolbox.election.event.ExtensionUpdate;
 import se.sics.ktoolbox.election.event.LeaderState;
 import se.sics.ktoolbox.election.event.ViewUpdate;
 import se.sics.ktoolbox.election.junk.MockedGradientUpdate;
-import se.sics.ktoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.ktoolbox.election.junk.TestPort;
-import se.sics.ktoolbox.election.rules.LCRuleSet;
 import se.sics.ktoolbox.election.msg.ExtensionRequest;
 import se.sics.ktoolbox.election.msg.LeaseCommitUpdated;
 import se.sics.ktoolbox.election.msg.Promise;
+import se.sics.ktoolbox.election.rules.LCRuleSet;
 import se.sics.ktoolbox.election.util.ElectionHelper;
+import se.sics.ktoolbox.election.util.LCPeerView;
+import se.sics.ktoolbox.election.util.LEContainer;
 import se.sics.ktoolbox.election.util.PromiseResponseTracker;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.GradientSample;
@@ -40,7 +48,6 @@ import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
@@ -398,7 +405,7 @@ public class ElectionLeader extends ComponentDefinition {
             return;
         }
 
-        Promise.Request request = new Promise.Request(UUIDIdentifier.randomId(), self, selfLCView, electionRoundId);
+        Promise.Request request = new Promise.Request(self, selfLCView, electionRoundId);
         // Add SELF to the leader group nodes.
         leaderGroupAddress.add(self);
 
@@ -437,7 +444,7 @@ public class ElectionLeader extends ComponentDefinition {
                         if (electionRoundTracker.isAccepted()) {
 
                             LOG.info("{}: All the leader group nodes have promised.", logPrefix);
-                            LeaseCommitUpdated.Request request = new LeaseCommitUpdated.Request(UUIDIdentifier.randomId(), self,
+                            LeaseCommitUpdated.Request request = new LeaseCommitUpdated.Request(self,
                                     publicKey, selfLCView, electionRoundTracker.getRoundId());
 
                             for (KAddress address : electionRoundTracker.getLeaderGroupInformation()) {
@@ -488,7 +495,7 @@ public class ElectionLeader extends ComponentDefinition {
                         if (electionRoundTracker.isLeaseCommitAccepted()) {
 
                             LOG.warn("{}: All the leader group nodes have committed the lease.", logPrefix);
-                            trigger(new LeaderState.ElectedAsLeader(UUIDIdentifier.randomId(), electionRoundTracker.getLeaderGroupInformation()), election);
+                            trigger(new LeaderState.ElectedAsLeader(electionRoundTracker.getLeaderGroupInformation()), election);
                             compTracker.updateState(LeaderUpdatePacket.update(self.getId(), new ArrayList<>(electionRoundTracker.getLeaderGroupInformation())));
 
                             ScheduleTimeout st = new ScheduleTimeout(electionConfig.leaderLeaseTime);
@@ -599,7 +606,7 @@ public class ElectionLeader extends ComponentDefinition {
 
                     lgNodes.add(self);
                     UUID roundId = UUID.randomUUID();
-                    ExtensionRequest request = new ExtensionRequest(UUIDIdentifier.randomId(), self, publicKey, selfLCView, roundId);
+                    ExtensionRequest request = new ExtensionRequest(self, publicKey, selfLCView, roundId);
 
                     for (KAddress memberAddress : lgNodes) {
                         BasicHeader header = new BasicHeader(self, memberAddress, Transport.UDP);
@@ -609,7 +616,7 @@ public class ElectionLeader extends ComponentDefinition {
 
                     //TODO Alex - inform app about leadergroup before they answer?
                     // Inform the application about the updated group membership.
-                    ExtensionUpdate extensionUpdate = new ExtensionUpdate(UUIDIdentifier.randomId(), new ArrayList<>(lgNodes));
+                    ExtensionUpdate extensionUpdate = new ExtensionUpdate(new ArrayList<>(lgNodes));
                     trigger(extensionUpdate, election);
                     compTracker.updateState(LeaderUpdatePacket.update(self.getId(), new ArrayList<>(lgNodes)));
 

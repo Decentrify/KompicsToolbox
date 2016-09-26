@@ -27,15 +27,15 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UUIDIdentifier implements Identifier {
+public class UUIDId implements Identifier {
 
     public final UUID id;
 
-    public UUIDIdentifier(UUID id) {
+    UUIDId(UUID id) {
         this.id = id;
     }
 
-    public UUIDIdentifier() {
+    UUIDId() {
         this(UUID.randomUUID());
     }
 
@@ -59,7 +59,7 @@ public class UUIDIdentifier implements Identifier {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final UUIDIdentifier other = (UUIDIdentifier) obj;
+        final UUIDId other = (UUIDId) obj;
         if (!Objects.equals(this.id, other.id)) {
             return false;
         }
@@ -71,13 +71,9 @@ public class UUIDIdentifier implements Identifier {
         return id.toString();
     }
     
-    public static UUIDIdentifier randomId() {
-        return new UUIDIdentifier(UUID.randomUUID());
-    }
-
     @Override
     public int compareTo(Identifier o) {
-        UUIDIdentifier that = (UUIDIdentifier)o;
+        UUIDId that = (UUIDId)o;
         return this.id.compareTo(that.id);
     }
 }

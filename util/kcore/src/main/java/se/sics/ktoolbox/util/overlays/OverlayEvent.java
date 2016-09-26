@@ -20,11 +20,11 @@ package se.sics.ktoolbox.util.overlays;
 
 import se.sics.kompics.KompicsEvent;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface OverlayEvent extends KompicsEvent, Identifiable {
-    public Identifier overlayId();
+    public OverlayId overlayId();
 }

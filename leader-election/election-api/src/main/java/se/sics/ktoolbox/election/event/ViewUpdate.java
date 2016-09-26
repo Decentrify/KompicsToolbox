@@ -2,8 +2,8 @@ package se.sics.ktoolbox.election.event;
 
 import java.util.UUID;
 import se.sics.ktoolbox.election.util.LCPeerView;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * Event from application in the system, indicating
@@ -13,22 +13,22 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
  */
 public class ViewUpdate implements ElectionEvent {
     
-    public final Identifier id;
+    public final Identifier eventId;
     public final LCPeerView selfPv;
     public final UUID electionRoundId;
     
-    public ViewUpdate(Identifier id, UUID electionRoundId, LCPeerView pv){
-        this.id = id;
+    public ViewUpdate(Identifier eventId, UUID electionRoundId, LCPeerView pv){
+        this.eventId = eventId;
         this.selfPv = pv;
         this.electionRoundId = electionRoundId;
     }
     
     public ViewUpdate(UUID electionRoundId, LCPeerView pv) {
-        this(UUIDIdentifier.randomId(), electionRoundId, pv);
+        this(BasicIdentifiers.eventId(), electionRoundId, pv);
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
     }
 }

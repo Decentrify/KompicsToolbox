@@ -2,8 +2,8 @@ package se.sics.ledbat.core.msg.event;
 
 
 import java.util.UUID;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 public class ChangePriority implements LedbatEvent {
     public final Identifier eventId;
@@ -12,7 +12,7 @@ public class ChangePriority implements LedbatEvent {
     PriorityLevel priority;
 
     public ChangePriority(UUID connectionId, PriorityLevel priority) {
-        this.eventId = UUIDIdentifier.randomId();
+        this.eventId = BasicIdentifiers.eventId();
         this.connectionId = connectionId;
         this.priority = priority;
     }

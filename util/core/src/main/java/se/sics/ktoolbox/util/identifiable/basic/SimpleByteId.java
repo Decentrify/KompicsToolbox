@@ -18,37 +18,11 @@
  */
 package se.sics.ktoolbox.util.identifiable.basic;
 
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.netty.serialization.Serializer;
-
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayIdentifierSerializer implements Serializer {
-    public final int id;
-    
-    public OverlayIdentifierSerializer(int id) {
-        this.id = id;
+public class SimpleByteId extends ByteIdentifier {
+    SimpleByteId(byte[] id) {
+        super(id);
     }
-    
-    @Override
-    public int identifier() {
-        return id;
-    }
-
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        OverlayIdentifier obj = (OverlayIdentifier)o;
-        buf.writeBytes(obj.id);
-    }
-
-    @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        byte[] idBytes = new byte[OverlayIdentifier.LENGTH];
-        buf.readBytes(idBytes);
-        return new OverlayIdentifier(idBytes);
-    }
-    
 }

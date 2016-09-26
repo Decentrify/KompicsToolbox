@@ -1,6 +1,7 @@
 package se.sics.ktoolbox.election.event;
 
 import java.security.PublicKey;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -18,18 +19,22 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class LeaderUpdate implements ElectionEvent {
 
-    public final Identifier id;
+    public final Identifier eventId;
     public final PublicKey leaderPublicKey;
     public final KAddress leaderAddress;
     
-    public LeaderUpdate(Identifier id, PublicKey leaderPublicKey, KAddress leaderAddress){
-        this.id = id;
+    public LeaderUpdate(Identifier eventId, PublicKey leaderPublicKey, KAddress leaderAddress){
+        this.eventId = eventId;
         this.leaderPublicKey = leaderPublicKey;
         this.leaderAddress = leaderAddress;
+    }
+    
+    public LeaderUpdate(PublicKey leaderPublicKey, KAddress leaderAddress){
+        this(BasicIdentifiers.eventId(), leaderPublicKey, leaderAddress);
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
     }
 }

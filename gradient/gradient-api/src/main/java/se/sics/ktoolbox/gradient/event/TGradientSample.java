@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.gradient.event;
 
 import java.util.List;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 
@@ -31,15 +32,15 @@ import se.sics.ktoolbox.util.other.Container;
 public class TGradientSample<C extends Object> extends GradientSample<C>{
     public final List<Container<KAddress, C>> gradientFingers;
     
-    public TGradientSample(Identifier eventId, Identifier overlayId, C selfView, 
+    public TGradientSample(Identifier eventId, OverlayId overlayId, C selfView, 
             List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
         super(eventId, overlayId, selfView, gradientNeighbours);
         this.gradientFingers = gradientFingers;
     }
     
-    public TGradientSample(Identifier overlayId, C selfView, 
+    public TGradientSample(OverlayId overlayId, C selfView, 
             List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        this(UUIDIdentifier.randomId(), overlayId, selfView, gradientNeighbours, gradientFingers);
+        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours, gradientFingers);
     }
 
     public List<Container<KAddress, C>> getGradientFingers() {

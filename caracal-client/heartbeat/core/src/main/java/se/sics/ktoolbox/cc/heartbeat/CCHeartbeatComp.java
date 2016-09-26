@@ -63,7 +63,6 @@ import se.sics.ktoolbox.cc.operation.event.CCOpResponse;
 import se.sics.ktoolbox.cc.operation.event.CCOpTimeout;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
@@ -132,7 +131,7 @@ public class CCHeartbeatComp extends ComponentDefinition implements CCOpManager 
                         LOG.info("{}starting...", logPrefix);
                         scheduleHeartbeat();
                         scheduleSanityCheck();
-                        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCHeartbeatReady()), myStatus);
+                        trigger(new Status.Internal(new CCHeartbeatReady()), myStatus);
                     }
                     schemaPrefix = status.caracalSchemaData.getId(heartbeatConfig.heartbeatSchema);
                     if (schemaPrefix == null) {

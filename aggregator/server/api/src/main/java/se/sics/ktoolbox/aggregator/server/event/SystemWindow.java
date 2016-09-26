@@ -21,6 +21,7 @@ package se.sics.ktoolbox.aggregator.server.event;
 import com.google.common.collect.Table;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 
@@ -31,21 +32,25 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  * Created by babbarshaer on 2015-09-02.
  */
 public class SystemWindow implements AggregatorEvent {
-    public final Identifier id;
+    public final Identifier eventId;
     public final Table<Identifier, Class, AggregatorPacket> systemWindow;
 
-    public SystemWindow(Identifier id, Table<Identifier, Class, AggregatorPacket> systemWindow){
-        this.id = id;
+    public SystemWindow(Identifier eventId, Table<Identifier, Class, AggregatorPacket> systemWindow){
+        this.eventId = eventId;
         this.systemWindow = systemWindow;
+    }
+    
+    public SystemWindow(Table<Identifier, Class, AggregatorPacket> systemWindow){
+        this(BasicIdentifiers.eventId(), systemWindow);
     }
 
     @Override
     public String toString() {
-        return getClass() + "<" + id + ">";
+        return getClass() + "<" + eventId + ">";
     }
 
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
     }
 }

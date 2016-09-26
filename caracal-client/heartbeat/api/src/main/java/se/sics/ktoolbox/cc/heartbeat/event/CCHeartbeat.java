@@ -20,40 +20,41 @@
 package se.sics.ktoolbox.cc.heartbeat.event;
 
 import se.sics.ktoolbox.cc.event.CCEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface CCHeartbeat {
     public static class Start implements CCEvent {
-        public final Identifier id;
-        public final Identifier overlayId;
+        public final Identifier eventId;
+        public final OverlayId overlayId;
         
-        public Start(Identifier overlayId) {
-            this.id = UUIDIdentifier.randomId();
+        public Start(OverlayId overlayId) {
+            this.eventId = BasicIdentifiers.eventId();
             this.overlayId = overlayId;
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
     
     public static class Stop implements CCEvent {
-        public final Identifier id;
-        public final Identifier overlayId;
+        public final Identifier eventId;
+        public final OverlayId overlayId;
         
-        public Stop(Identifier overlayId) {
-            this.id = UUIDIdentifier.randomId();
+        public Stop(OverlayId overlayId) {
+            this.eventId = BasicIdentifiers.eventId();
             this.overlayId = overlayId;
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
 }

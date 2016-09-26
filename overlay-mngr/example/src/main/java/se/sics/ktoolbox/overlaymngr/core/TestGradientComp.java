@@ -30,7 +30,7 @@ import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.TGradientSample;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
@@ -48,7 +48,7 @@ public class TestGradientComp extends ComponentDefinition {
     private final Negative viewUpdatePort = provides(OverlayViewUpdatePort.class);
     
     private final int id;
-    private final Identifier tgradientId;
+    private final OverlayId tgradientId;
     
     public TestGradientComp(TestGradientInit init) {
         id = init.id;
@@ -89,9 +89,9 @@ public class TestGradientComp extends ComponentDefinition {
     
     public static class TestGradientInit extends Init<TestGradientComp> {
         public final int id;
-        public final Identifier tgradientId;
+        public final OverlayId tgradientId;
         
-        public TestGradientInit(int id, Identifier tgradientId) {
+        public TestGradientInit(int id, OverlayId tgradientId) {
             this.id = id;
             this.tgradientId = tgradientId;
         }

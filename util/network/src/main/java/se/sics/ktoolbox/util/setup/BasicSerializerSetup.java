@@ -19,14 +19,16 @@
 package se.sics.ktoolbox.util.setup;
 
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifierSerializer;
-import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifier;
-import se.sics.ktoolbox.util.identifiable.basic.OverlayIdentifierSerializer;
-import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdentifier;
-import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdentifierSerializer;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifierSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.IntId;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.SimpleByteId;
+import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.StringByteId;
+import se.sics.ktoolbox.util.identifiable.basic.StringByteIdSerializer;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDId;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdSerializer;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdSerializer;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddressSerializer;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
@@ -46,13 +48,16 @@ import se.sics.ktoolbox.util.result.ResultSerializer;
  */
 public class BasicSerializerSetup {
 
-    public static final int serializerIds = 11;
+     //You may add up to max serializers without the need to recompile all the projects that use the serializer space after gvod
+    public static int maxSerializers = 20;
+    public static final int serializerIds = 12;
 
     public static enum BasicSerializers {
-        SimpleByteIdentifier(SimpleByteIdentifier.class, "simpleByteIdentifierSerializer"),
-        IntIdentifier(IntIdentifier.class, "intIdentifierSerializer"),
-        UUIDIdentifier(UUIDIdentifier.class, "uuidIdentifierSerializer"),
-        OverlayIdentifier(OverlayIdentifier.class, "overlayIdentifierSerializer"),
+        SimpleByteIdentifier(SimpleByteId.class, "simpleByteIdentifierSerializer"),
+        StringByteIdentifier(StringByteId.class, "stringByteIdentifierSerializer"),
+        IntIdentifier(IntId.class, "intIdentifierSerializer"),
+        UUIDIdentifier(UUIDId.class, "uuidIdentifierSerializer"),
+        OverlayIdentifier(OverlayId.class, "overlayIdentifierSerializer"),
         BasicAddress(BasicAddress.class, "basicAddressSerializer"),
         NatAwareAddressImpl(NatAwareAddressImpl.class, "strippedNAAddressSerializer"),
         BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
@@ -85,19 +90,23 @@ public class BasicSerializerSetup {
         }
         int currentId = startingId;
         
-        SimpleByteIdentifierSerializer simpleByteIdentifierSerializer = new SimpleByteIdentifierSerializer(currentId++);
+        SimpleByteIdSerializer simpleByteIdentifierSerializer = new SimpleByteIdSerializer(currentId++);
         Serializers.register(simpleByteIdentifierSerializer, BasicSerializers.SimpleByteIdentifier.serializerName);
         Serializers.register(BasicSerializers.SimpleByteIdentifier.serializedClass, BasicSerializers.SimpleByteIdentifier.serializerName);
+        
+        StringByteIdSerializer stringByteIdentifierSerializer = new StringByteIdSerializer(currentId++);
+        Serializers.register(stringByteIdentifierSerializer, BasicSerializers.StringByteIdentifier.serializerName);
+        Serializers.register(BasicSerializers.StringByteIdentifier.serializedClass, BasicSerializers.StringByteIdentifier.serializerName);
 
-        IntIdentifierSerializer intIdentifierSerializer = new IntIdentifierSerializer(currentId++);
+        IntIdSerializer intIdentifierSerializer = new IntIdSerializer(currentId++);
         Serializers.register(intIdentifierSerializer, BasicSerializers.IntIdentifier.serializerName);
         Serializers.register(BasicSerializers.IntIdentifier.serializedClass, BasicSerializers.IntIdentifier.serializerName);
 
-        UUIDIdentifierSerializer uuidIdentifierSerializer = new UUIDIdentifierSerializer(currentId++);
+        UUIDIdSerializer uuidIdentifierSerializer = new UUIDIdSerializer(currentId++);
         Serializers.register(uuidIdentifierSerializer, BasicSerializers.UUIDIdentifier.serializerName);
         Serializers.register(BasicSerializers.UUIDIdentifier.serializedClass, BasicSerializers.UUIDIdentifier.serializerName);
 
-        OverlayIdentifierSerializer overlayIdentifierSerializer = new OverlayIdentifierSerializer(currentId++);
+        OverlayIdSerializer overlayIdentifierSerializer = new OverlayIdSerializer(currentId++);
         Serializers.register(overlayIdentifierSerializer, BasicSerializers.OverlayIdentifier.serializerName);
         Serializers.register(BasicSerializers.OverlayIdentifier.serializedClass, BasicSerializers.OverlayIdentifier.serializerName);
 
@@ -130,6 +139,7 @@ public class BasicSerializerSetup {
         Serializers.register(BasicSerializers.ResultStatusSerializer.serializedClass, BasicSerializers.ResultStatusSerializer.serializerName);
         
         assert startingId + serializerIds == currentId;
-        return currentId;
+        assert serializerIds <= maxSerializers;
+        return startingId + maxSerializers;
     }
 }

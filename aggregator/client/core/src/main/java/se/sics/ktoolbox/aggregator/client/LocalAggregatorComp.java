@@ -37,13 +37,10 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.aggregator.client.events.ComponentPacketEvent;
-import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.msg.NodeWindow;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.aggregator.util.AggregatorProcessor;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
@@ -118,7 +115,7 @@ public class LocalAggregatorComp extends ComponentDefinition {
     
     private void sendWindow() {
         BasicHeader header = new BasicHeader(aggregatorConfig.localAddress, aggregatorConfig.globalAddress, Transport.UDP);
-        NodeWindow content = new NodeWindow(UUIDIdentifier.randomId(), currentWindow);
+        NodeWindow content = new NodeWindow(currentWindow);
         BasicContentMsg msg = new BasicContentMsg(header, content);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, msg.getContent(), msg.getDestination()});
         trigger(msg, network);
@@ -141,7 +138,7 @@ public class LocalAggregatorComp extends ComponentDefinition {
         aggregationTid = agt.getTimeoutId();
     }
 
-    public static class AggregationTimeout extends Timeout implements AggregatorEvent {
+    public static class AggregationTimeout extends Timeout {
 
         public AggregationTimeout(SchedulePeriodicTimeout request) {
             super(request);
@@ -150,11 +147,6 @@ public class LocalAggregatorComp extends ComponentDefinition {
         @Override
         public String toString() {
             return getClass() + "<" + getTimeoutId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
         }
     }
 }

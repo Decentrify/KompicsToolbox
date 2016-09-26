@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.overlaymngr.bootstrap;
 
 import se.sics.ktoolbox.overlaymngr.events.OverlayMngrEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
@@ -29,10 +30,10 @@ import se.sics.ktoolbox.util.overlays.OverlayEvent;
  */
 public class OMCroupierBootstrap implements OverlayMngrEvent, OverlayEvent {
     public final Identifier eventId;
-    public final Identifier overlayId;
+    public final OverlayId overlayId;
     
-    public OMCroupierBootstrap(Identifier overlayId) {
-        this.eventId = UUIDIdentifier.randomId();
+    public OMCroupierBootstrap(OverlayId overlayId) {
+        this.eventId = BasicIdentifiers.eventId();
         this.overlayId = overlayId;
     }
     
@@ -42,7 +43,7 @@ public class OMCroupierBootstrap implements OverlayMngrEvent, OverlayEvent {
     }
 
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
     

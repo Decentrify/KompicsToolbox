@@ -48,12 +48,12 @@ import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
 import se.sics.ktoolbox.tgradient.TreeGradientComp;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.idextractor.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.idextractor.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
-import se.sics.ktoolbox.util.overlays.id.OverlayIdRegistry;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
@@ -143,7 +143,7 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(OMngrCroupier.ConnectRequest req) {
             LOG.info("{}{}", new Object[]{logPrefix, req});
 
-            if(!OverlayIdRegistry.isRegistered(req.croupierId)) {
+            if(!OverlayRegistry.isRegistered(req.croupierId)) {
                 throw new RuntimeException("unregisterd id:" + req.croupierId);
             }
             
@@ -179,11 +179,11 @@ public class OverlayMngrComp extends ComponentDefinition {
         public void handle(OMngrTGradient.ConnectRequest req) {
             LOG.info("{}{}", new Object[]{logPrefix, req});
             
-            if(!OverlayIdRegistry.isRegistered(req.tgradientId)) {
+            if(!OverlayRegistry.isRegistered(req.tgradientId)) {
                 throw new RuntimeException("unregisterd id:" + req.tgradientId);
             }
-            Identifier croupierId = OverlayIdFactory.changeType(req.tgradientId, OverlayIdFactory.Type.CROUPIER);
-            Identifier gradientId = OverlayIdFactory.changeType(req.tgradientId, OverlayIdFactory.Type.GRADIENT);
+            OverlayId croupierId = req.tgradientId.changeType(OverlayId.BasicTypes.CROUPIER);
+            OverlayId gradientId = req.tgradientId.changeType(OverlayId.BasicTypes.GRADIENT);
             if (tgradientLayers.containsKey(req.tgradientId)
                     || croupierLayers.containsKey(croupierId)
                     || tgradientLayers.containsKey(gradientId)) {

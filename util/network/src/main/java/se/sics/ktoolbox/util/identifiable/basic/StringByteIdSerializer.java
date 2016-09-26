@@ -21,16 +21,19 @@ package se.sics.ktoolbox.util.identifiable.basic;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SimpleByteIdentifierSerializer implements Serializer {
+public class StringByteIdSerializer implements Serializer {
 
     public final int id;
+    private final StringByteIdFactory factory;
 
-    public SimpleByteIdentifierSerializer(int id) {
+    public StringByteIdSerializer(int id) {
         this.id = id;
+        this.factory = new StringByteIdFactory(null, 0);
     }
 
     @Override
@@ -40,7 +43,7 @@ public class SimpleByteIdentifierSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        SimpleByteIdentifier obj = (SimpleByteIdentifier) o;
+        StringByteId obj = (StringByteId) o;
         buf.writeInt(obj.id.length);
         buf.writeBytes(obj.id);
     }
@@ -50,6 +53,7 @@ public class SimpleByteIdentifierSerializer implements Serializer {
         int idLength = buf.readInt();
         byte[] idBytes = new byte[idLength];
         buf.readBytes(idBytes);
-        return new SimpleByteIdentifier(idBytes);
+        StringByteId stringByteId = factory.id(new BasicBuilders.ByteBuilder(idBytes));
+        return stringByteId;
     }
 }

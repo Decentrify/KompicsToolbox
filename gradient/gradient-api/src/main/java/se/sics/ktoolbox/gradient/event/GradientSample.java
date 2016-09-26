@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.gradient.event;
 
 import java.util.List;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 
@@ -32,11 +33,11 @@ import se.sics.ktoolbox.util.other.Container;
 public class GradientSample<C extends Object> implements GradientEvent {
 
     public final Identifier eventId;
-    public final Identifier overlayId;
+    public final OverlayId overlayId;
     public final C selfView;
     public final List<Container<KAddress, C>> gradientNeighbours;
 
-    public GradientSample(Identifier eventId, Identifier overlayId,
+    public GradientSample(Identifier eventId, OverlayId overlayId,
             C selfView, List<Container<KAddress, C>> gradientNeighbours) {
         this.eventId = eventId;
         this.overlayId = overlayId;
@@ -44,8 +45,8 @@ public class GradientSample<C extends Object> implements GradientEvent {
         this.gradientNeighbours = gradientNeighbours;
     }
 
-    public GradientSample(Identifier overlayId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this(UUIDIdentifier.randomId(), overlayId, selfView, gradientNeighbours);
+    public GradientSample(OverlayId overlayId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
+        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours);
     }
 
     public List<Container<KAddress, C>> getGradientNeighbours() {
@@ -58,7 +59,7 @@ public class GradientSample<C extends Object> implements GradientEvent {
     }
 
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
 

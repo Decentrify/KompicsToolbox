@@ -21,8 +21,9 @@ package se.sics.ktoolbox.cc.heartbeat.event;
 import java.util.List;
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.cc.event.CCEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -31,16 +32,16 @@ import se.sics.ktoolbox.util.network.KAddress;
 public class CCOverlaySample {
 
     public static class Request extends Direct.Request<Response> implements CCEvent {
-        public final Identifier id;
-        public final Identifier overlayId;
+        public final Identifier eventId;
+        public final OverlayId overlayId;
         
-        public Request(Identifier id, Identifier overlayId) {
-            this.id = id;
+        public Request(Identifier eventId, OverlayId overlayId) {
+            this.eventId = eventId;
             this.overlayId = overlayId;
         }
         
-        public Request(Identifier overlayId) {
-            this(UUIDIdentifier.randomId(), overlayId);
+        public Request(OverlayId overlayId) {
+            this(BasicIdentifiers.eventId(), overlayId);
         }
         
         public Response answer(List<KAddress> overlaySample) {
@@ -50,7 +51,7 @@ public class CCOverlaySample {
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
 

@@ -20,19 +20,20 @@
 package se.sics.ktoolbox.croupier.event;
 
 import se.sics.ktoolbox.croupier.util.CroupierSpeed;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class CroupierControl implements CroupierEvent {
     public final Identifier eventId;
-    public final Identifier overlayId;
+    public final OverlayId overlayId;
     public final CroupierSpeed speed;
     
-    public CroupierControl(Identifier overlayId, CroupierSpeed speed) {
-        this.eventId = UUIDIdentifier.randomId();
+    public CroupierControl(OverlayId overlayId, CroupierSpeed speed) {
+        this.eventId = BasicIdentifiers.eventId();
         this.overlayId = overlayId;
         this.speed = speed;
     }
@@ -43,7 +44,7 @@ public class CroupierControl implements CroupierEvent {
     }
 
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
     

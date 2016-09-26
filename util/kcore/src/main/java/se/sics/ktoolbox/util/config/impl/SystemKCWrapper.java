@@ -21,10 +21,11 @@ package se.sics.ktoolbox.util.config.impl;
 import com.google.common.base.Optional;
 import java.util.Random;
 import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -39,13 +40,15 @@ public class SystemKCWrapper {
     public SystemKCWrapper(Config config) {
         this.config = config;
         seed = KConfigHelper.read(config, SystemKConfig.seed);
-        Optional<IntIdentifier> idVal = SystemKConfig.id.readValue(config);
-        if(idVal.isPresent()) {
-            id = idVal.get();
+        Optional<Integer> idOpt = SystemKConfig.id.readValue(config);
+        int idVal = 0;
+        if(idOpt.isPresent()) {
+            idVal = idOpt.get();
         } else {
             Random rand = new Random(seed);
-            id = new IntIdentifier(rand.nextInt());
+            idVal = rand.nextInt();
         }
+        id = BasicIdentifiers.nodeId(new BasicBuilders.IntBuilder(idVal));
         port = KConfigHelper.read(config, SystemKConfig.port);
         aggregator = SystemKConfig.aggregator.readValue(config);
     }

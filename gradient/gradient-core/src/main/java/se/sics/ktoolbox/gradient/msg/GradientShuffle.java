@@ -1,11 +1,11 @@
 package se.sics.ktoolbox.gradient.msg;
 
-import java.util.Collection;
 import java.util.List;
 import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * Wrapper class used by Gradient Service in order to encapsulate the Data
@@ -17,41 +17,41 @@ public class GradientShuffle {
 
     public static abstract class Basic implements GradientEvent {
 
-        public final Identifier eventId;
-        public final Identifier overlayId;
+        public final Identifier msgId;
+        public final OverlayId overlayId;
         public final GradientContainer selfGC;
         public final List<GradientContainer> exchangeGC;
         
-        public Basic(Identifier eventId, Identifier overlayId,
+        public Basic(Identifier msgId, OverlayId overlayId,
                 GradientContainer selfGC, List<GradientContainer> exchangeGC) {
-            this.eventId = eventId;
+            this.msgId = msgId;
             this.overlayId = overlayId;
             this.selfGC = selfGC;
             this.exchangeGC = exchangeGC;
         }
         
-        public Basic(Identifier overlayId, GradientContainer selfGC, List<GradientContainer> exchangeNodes) {
-            this(UUIDIdentifier.randomId(), overlayId, selfGC, exchangeNodes);
+        public Basic(OverlayId overlayId, GradientContainer selfGC, List<GradientContainer> exchangeNodes) {
+            this(BasicIdentifiers.msgId(), overlayId, selfGC, exchangeNodes);
         }
         
         @Override
-        public Identifier overlayId() {
+        public OverlayId overlayId() {
             return overlayId;
         }
         
         @Override
         public Identifier getId() {
-            return eventId;
+            return msgId;
         }
     }
     
     public static class Request extends Basic {
-        public Request(Identifier eventId, Identifier overlayId, 
+        public Request(Identifier msgId, OverlayId overlayId, 
                 GradientContainer selfGC, List<GradientContainer> exchangeGC) {
-            super(eventId, overlayId, selfGC, exchangeGC);
+            super(msgId, overlayId, selfGC, exchangeGC);
         }
         
-        public Request(Identifier overlayId, 
+        public Request(OverlayId overlayId, 
                 GradientContainer selfGC, List<GradientContainer> exchangeGC) {
             super(overlayId, selfGC, exchangeGC);
         }
@@ -62,17 +62,17 @@ public class GradientShuffle {
         }
         
         public Response answer(GradientContainer selfGC, List<GradientContainer> exchangeGC) {
-            return new Response(eventId, overlayId, selfGC, exchangeGC);
+            return new Response(msgId, overlayId, selfGC, exchangeGC);
         }
     }
     
     public static class Response extends Basic {
-        public Response(Identifier eventId, Identifier overlayId, GradientContainer selfGC, 
+        public Response(Identifier msgId, OverlayId overlayId, GradientContainer selfGC, 
                 List<GradientContainer> exchangeGC) {
-            super(eventId, overlayId, selfGC, exchangeGC);
+            super(msgId, overlayId, selfGC, exchangeGC);
         }
         
-        public Response(Identifier overlayId, GradientContainer selfGC, List<GradientContainer> exchangeGC) {
+        public Response(OverlayId overlayId, GradientContainer selfGC, List<GradientContainer> exchangeGC) {
             super(overlayId, selfGC, exchangeGC);
         }
         

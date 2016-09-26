@@ -29,8 +29,10 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
 import se.sics.ktoolbox.util.idextractor.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 
@@ -71,7 +73,10 @@ public class TestHostComp extends ComponentDefinition {
     };
     //******************************CONNECTIONS*********************************
     private void connectTest1Comp() {
-        Identifier overlayId = new IntIdentifier(1);
+        byte ownerId = 1;
+        IntIdFactory intIdFactory = new IntIdFactory(null);
+        OverlayIdFactory overlayIdFactory = new OverlayIdFactory(intIdFactory, OverlayId.BasicTypes.OTHER, ownerId);
+        OverlayId overlayId = overlayIdFactory.id(new BasicBuilders.IntBuilder(1));
         Component test1Comp = create(TestComp.class, new TestComp.Init(hostConfig.partner, overlayId));
         Channel[] test1Channel = new Channel[1];
         test1Channel[0] = connect(test1Comp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
@@ -80,7 +85,10 @@ public class TestHostComp extends ComponentDefinition {
     }
     
     private void connectTest2Comp() {
-        Identifier overlayId = new IntIdentifier(2);
+        byte ownerId = 1;
+        IntIdFactory intIdFactory = new IntIdFactory(null);
+        OverlayIdFactory overlayIdFactory = new OverlayIdFactory(intIdFactory, OverlayId.BasicTypes.OTHER, ownerId);
+        OverlayId overlayId = overlayIdFactory.id(new BasicBuilders.IntBuilder(2));
         Component test2Comp = create(TestComp.class, new TestComp.Init(hostConfig.partner, overlayId));
         Channel[] test2Channel = new Channel[1];
         test2Channel[0] = connect(test2Comp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);

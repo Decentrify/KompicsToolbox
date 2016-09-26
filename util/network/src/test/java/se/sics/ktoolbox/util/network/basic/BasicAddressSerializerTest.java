@@ -28,8 +28,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.basic.BasicAddress;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -38,6 +39,7 @@ import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 public class BasicAddressSerializerTest {
     @BeforeClass
     public static void setup() {
+        BasicIdentifiers.registerDefaults(1234l);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -48,7 +50,8 @@ public class BasicAddressSerializerTest {
         BasicAddress original, copy;
         ByteBuf buf;
 
-        original = new BasicAddress(InetAddress.getLocalHost(), 10000, new IntIdentifier(1));
+        Identifier nodeId = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString()).randomId();
+        original = new BasicAddress(InetAddress.getLocalHost(), 10000, nodeId);
         buf = Unpooled.buffer();
         serializer.toBinary(original, buf);
         

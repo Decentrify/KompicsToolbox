@@ -18,36 +18,18 @@
  */
 package se.sics.ktoolbox.util.identifiable.basic;
 
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
-import java.util.UUID;
-import se.sics.kompics.network.netty.serialization.Serializer;
-import se.sics.kompics.network.netty.serialization.Serializers;
-
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UUIDIdentifierSerializer implements Serializer {
-    private final int id;
-    
-    public UUIDIdentifierSerializer(int id) {
-        this.id = id;
+public class StringByteId extends ByteIdentifier {
+    private final String sId;
+    StringByteId(byte[] bId, String sId) {
+        super(bId);
+        this.sId = sId;
     }
     
     @Override
-    public int identifier() {
-        return id;
-    }
-
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        UUIDIdentifier obj = (UUIDIdentifier)o;
-        Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
-    }
-
-    @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        UUID identifier = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
-        return new UUIDIdentifier(identifier);
+    public String toString() {
+        return sId;
     }
 }

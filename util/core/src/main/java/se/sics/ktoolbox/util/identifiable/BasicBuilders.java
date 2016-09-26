@@ -16,32 +16,49 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.config.options;
+package se.sics.ktoolbox.util.identifiable;
 
-import com.google.common.base.Optional;
-import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.util.config.KConfigOption;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import java.util.UUID;
+import se.sics.ktoolbox.util.identifiable.IdentifierBuilder;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class IntIdentifierOption extends KConfigOption.Base<IntIdentifier> {
+public class BasicBuilders {
 
-    public IntIdentifierOption(String optionName) {
-        super(optionName, IntIdentifier.class);
+    public static class IntBuilder implements IdentifierBuilder {
+
+        public final int base;
+
+        public IntBuilder(int base) {
+            this.base = base;
+        }
+    }
+
+    public static class StringBuilder implements IdentifierBuilder {
+
+        public final String base;
+
+        public StringBuilder(String base) {
+            this.base = base;
+        }
+    }
+
+    public static class ByteBuilder implements IdentifierBuilder {
+
+        public final byte[] base;
+
+        public ByteBuilder(byte[] base) {
+            this.base = base;
+        }
     }
     
-    @Override
-    public Optional<IntIdentifier> readValue(Config config) {
-        Optional id = config.readValue(name);
-        if(id.isPresent()) {
-            if(id.get() instanceof IntIdentifier) {
-                return id;
-            } else if(id.get() instanceof Integer) {
-                return Optional.of(new IntIdentifier((Integer)id.get()));
-            }
+    public static class UUIDBuilder implements IdentifierBuilder {
+        public final UUID base;
+        
+        public UUIDBuilder(UUID base) {
+            this.base = base;
         }
-        return Optional.absent();
     }
 }

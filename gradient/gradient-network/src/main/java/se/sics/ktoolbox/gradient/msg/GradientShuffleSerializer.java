@@ -22,14 +22,15 @@ package se.sics.ktoolbox.gradient.msg;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.javatuples.Quartet;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -37,9 +38,11 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class GradientShuffleSerializer {
     public abstract static class Basic implements Serializer {
         private final int id;
+        private final Class msgIdType;
         
         Basic(int id) {
             this.id = id;
+            this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
         }
         
         @Override
@@ -50,8 +53,8 @@ public class GradientShuffleSerializer {
         @Override
         public void toBinary(Object o, ByteBuf buf) {
             GradientShuffle.Basic obj = (GradientShuffle.Basic)o;
-            Serializers.toBinary(obj.getId(), buf);
-            Serializers.toBinary(obj.overlayId(), buf);
+            Serializers.lookupSerializer(msgIdType).toBinary(obj.getId(), buf);
+            Serializers.lookupSerializer(OverlayId.class).toBinary(obj.overlayId(), buf);
             
             Serializers.lookupSerializer(GradientContainer.class).toBinary(obj.selfGC, buf);
             buf.writeByte(obj.exchangeGC.size());
@@ -60,9 +63,9 @@ public class GradientShuffleSerializer {
             }
         }
 
-        public Quartet<Identifier, Identifier, GradientContainer, List<GradientContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
-            Identifier eventId = (Identifier)Serializers.fromBinary(buf, hint);
-            Identifier overlayId = (Identifier)Serializers.fromBinary(buf, hint);
+        public Quartet<Identifier, OverlayId, GradientContainer, List<GradientContainer>> fromBinaryBase(ByteBuf buf, Optional<Object> hint) {
+            Identifier msgId = (Identifier)Serializers.lookupSerializer(msgIdType).fromBinary(buf, hint);
+            OverlayId overlayId = (OverlayId)Serializers.lookupSerializer(OverlayId.class).fromBinary(buf, hint);
             
             GradientContainer selfGC = (GradientContainer)Serializers.lookupSerializer(GradientContainer.class).fromBinary(buf, hint);
             int exchangedNodesSize = buf.readByte();
@@ -73,7 +76,7 @@ public class GradientShuffleSerializer {
                 exchangedNodesSize--;
             }
             
-            return Quartet.with(eventId, overlayId, selfGC, exchangedNodes);
+            return Quartet.with(msgId, overlayId, selfGC, exchangedNodes);
         }
     }
     
@@ -85,7 +88,7 @@ public class GradientShuffleSerializer {
         
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Quartet<Identifier, Identifier, GradientContainer, List<GradientContainer>> contents = fromBinaryBase(buf, hint);
+            Quartet<Identifier, OverlayId, GradientContainer, List<GradientContainer>> contents = fromBinaryBase(buf, hint);
             return new GradientShuffle.Request(contents.getValue0(), contents.getValue1(), 
                     contents.getValue2(), contents.getValue3());
         }
@@ -99,7 +102,7 @@ public class GradientShuffleSerializer {
         
         @Override
         public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-            Quartet<Identifier, Identifier, GradientContainer, List<GradientContainer>> contents = fromBinaryBase(buf, hint);
+            Quartet<Identifier, OverlayId, GradientContainer, List<GradientContainer>> contents = fromBinaryBase(buf, hint);
             return new GradientShuffle.Response(contents.getValue0(), contents.getValue1(), 
                     contents.getValue2(), contents.getValue3());
         }

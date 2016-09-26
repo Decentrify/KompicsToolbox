@@ -35,7 +35,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -73,7 +73,8 @@ public class Leecher extends ComponentDefinition {
         this.self = init.self;
         this.seeder = init.seeder;
         this.ledbatConfig = new LedbatConfig(config());
-        this.conn = new AppCongestionWindow(ledbatConfig, UUIDIdentifier.randomId());
+        UUIDIdFactory uuidFactory = new UUIDIdFactory();
+        this.conn = new AppCongestionWindow(ledbatConfig, uuidFactory.randomId());
         this.networkLoad = new NetworkQueueLoadProxy("leechNetwork", this.proxy, new QueueLoadConfig(config()));
 
         subscribe(handleStart, control);

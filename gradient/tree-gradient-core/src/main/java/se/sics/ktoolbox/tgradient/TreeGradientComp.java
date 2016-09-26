@@ -48,7 +48,6 @@ import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.gradient.GradientFilter;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
 import se.sics.ktoolbox.gradient.GradientPort;
-import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.event.GradientSample;
 import se.sics.ktoolbox.gradient.event.TGradientSample;
 import se.sics.ktoolbox.gradient.msg.GradientShuffle;
@@ -57,22 +56,20 @@ import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.gradient.util.GradientLocalView;
 import se.sics.ktoolbox.gradient.util.ViewConfig;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
-import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
-import se.sics.ktoolbox.util.network.basic.BasicHeader;
-import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
-import se.sics.ktoolbox.util.other.AgingAdrContainer;
-import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 import se.sics.ktoolbox.tgradient.util.TGParentView;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.basic.OverlayIdFactory;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.other.Container;
+import se.sics.ktoolbox.util.other.AgingAdrContainer;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 import se.sics.ktoolbox.util.update.View;
 
 /**
@@ -100,7 +97,7 @@ public class TreeGradientComp extends ComponentDefinition {
     //******************************CONFIG**************************************
     private final GradientKCWrapper gradientConfig;
     private final TGradientKCWrapper tgradientConfig;
-    private final Identifier overlayId;
+    private final OverlayId overlayId;
     private GradientFilter filter;
     //******************************SELF****************************************
     private GradientContainer selfView;
@@ -187,7 +184,7 @@ public class TreeGradientComp extends ComponentDefinition {
             }
             selfView = selfView.changeView(update.view);
 
-            Identifier gradientId = OverlayIdFactory.changeType(overlayId, OverlayIdFactory.Type.GRADIENT);
+            OverlayId gradientId = overlayId.changeType(OverlayId.BasicTypes.GRADIENT);
             trigger(update.changeOverlay(gradientId), gradientViewUpdate);
         }
     };
@@ -381,7 +378,7 @@ public class TreeGradientComp extends ComponentDefinition {
                     LOG.debug("{} received:{}", new Object[]{logPrefix, container});
 
                     if (shuffleTimeoutId == null) {
-                        LOG.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.eventId, respSrc});
+                        LOG.debug("{} req:{}  already timed out", new Object[]{logPrefix, content.msgId, respSrc});
                         return;
                     }
                     cancelShuffleTimeout();
@@ -414,7 +411,7 @@ public class TreeGradientComp extends ComponentDefinition {
             return;
         }
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(gradientConfig.shufflePeriod, gradientConfig.shufflePeriod);
-        ShuffleCycle sc = new ShuffleCycle(spt);
+        ShuffleCycle sc = new ShuffleCycle(spt, overlayId);
         spt.setTimeoutEvent(sc);
         shuffleCycleId = sc.getTimeoutId();
         trigger(spt, timer);
@@ -436,7 +433,7 @@ public class TreeGradientComp extends ComponentDefinition {
             return;
         }
         ScheduleTimeout spt = new ScheduleTimeout(gradientConfig.shufflePeriod / 2);
-        ShuffleTimeout sc = new ShuffleTimeout(spt, dest);
+        ShuffleTimeout sc = new ShuffleTimeout(spt, dest, overlayId);
         spt.setTimeoutEvent(sc);
         shuffleTimeoutId = sc.getTimeoutId();
         trigger(spt, timer);
@@ -451,60 +448,46 @@ public class TreeGradientComp extends ComponentDefinition {
         trigger(cpt, timer);
     }
 
-    public class ShuffleCycle extends Timeout implements GradientEvent {
+    public static class ShuffleCycle extends Timeout {
 
-        public ShuffleCycle(SchedulePeriodicTimeout request) {
+        public final OverlayId overlayId;
+                
+        public ShuffleCycle(SchedulePeriodicTimeout request, OverlayId overlayId) {
             super(request);
+            this.overlayId = overlayId;
         }
 
         @Override
         public String toString() {
-            return "TGradient<" + overlayId() + ">ShuffleCycle<" + getId() + ">";
+            return "TGradient<" + overlayId + ">ShuffleCycle<" + getTimeoutId()+ ">";
         }
 
-        @Override
-        public Identifier overlayId() {
-            return overlayId;
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
-        }
     }
 
-    public class ShuffleTimeout extends Timeout implements GradientEvent {
+    public static class ShuffleTimeout extends Timeout {
 
         public final KAddress dest;
+        public final OverlayId overlayId;
 
-        public ShuffleTimeout(ScheduleTimeout request, KAddress dest) {
+        public ShuffleTimeout(ScheduleTimeout request, KAddress dest, OverlayId overlayId) {
             super(request);
             this.dest = dest;
+            this.overlayId = overlayId;
         }
 
         @Override
         public String toString() {
-            return "TGradient<" + overlayId() + ">ShuffleTimeout<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
-        }
-
-        @Override
-        public Identifier overlayId() {
-            return overlayId;
+            return "TGradient<" + overlayId + ">ShuffleTimeout<" + getTimeoutId()+ ">";
         }
     }
 
     public static class Init extends se.sics.kompics.Init<TreeGradientComp> {
 
         public final KAddress selfAdr;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
         public final GradientFilter gradientFilter;
 
-        public Init(KAddress selfAdr, Identifier overlayId, GradientFilter gradientFilter) {
+        public Init(KAddress selfAdr, OverlayId overlayId, GradientFilter gradientFilter) {
             this.selfAdr = selfAdr;
             this.overlayId = overlayId;
             this.gradientFilter = gradientFilter;
