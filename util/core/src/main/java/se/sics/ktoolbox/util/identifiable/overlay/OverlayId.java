@@ -126,7 +126,6 @@ public class OverlayId implements Identifier {
 
     public static class BasicTypeFactory implements TypeFactory {
 
-        private final byte startWith;
         private final byte croupier;
         private final byte gradient;
         private final byte tgradient;
@@ -134,7 +133,6 @@ public class OverlayId implements Identifier {
 
         public BasicTypeFactory(byte startWith) {
             assert startWith < 252;
-            this.startWith = startWith;
             this.croupier = (byte) (startWith + 1);
             this.gradient = (byte) (startWith + 2);
             this.tgradient = (byte) (startWith + 3);
