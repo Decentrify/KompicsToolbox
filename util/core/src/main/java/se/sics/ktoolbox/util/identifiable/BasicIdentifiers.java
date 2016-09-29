@@ -20,6 +20,7 @@ package se.sics.ktoolbox.util.identifiable;
 
 import java.util.Random;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
+import se.sics.ktoolbox.util.identifiable.basic.StringByteIdFactory;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 
 /**
@@ -88,7 +89,15 @@ public class BasicIdentifiers {
         IdentifierRegistry.register(Values.OVERLAY.toString(), new UUIDIdFactory());
         IdentifierRegistry.register(Values.NODE.toString(), new IntIdFactory(rand));
     }
-
+    
+    public static void registerDefaults2(long seed) {
+        Random rand = new Random(seed);
+        IdentifierRegistry.register(Values.EVENT.toString(), new UUIDIdFactory());
+        IdentifierRegistry.register(Values.MSG.toString(), new UUIDIdFactory());
+        IdentifierRegistry.register(Values.OVERLAY.toString(), new StringByteIdFactory(rand, 64));
+        IdentifierRegistry.register(Values.NODE.toString(), new IntIdFactory(rand));
+    }
+    
     public static boolean checkBasicIdentifiers() {
         if (IdentifierRegistry.lookup(Values.EVENT.toString()) == null) {
             return false;

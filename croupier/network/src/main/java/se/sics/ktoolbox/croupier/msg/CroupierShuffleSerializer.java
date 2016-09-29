@@ -44,7 +44,7 @@ public class CroupierShuffleSerializer {
 
         Basic(int id) {
             this.id = id;
-            this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString()).idType();
+            this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
         }
 
         @Override
