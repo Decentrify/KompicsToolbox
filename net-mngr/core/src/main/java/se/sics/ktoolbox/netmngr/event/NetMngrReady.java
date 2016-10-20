@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.netmngr.event;
 
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
@@ -37,7 +37,7 @@ public class NetMngrReady implements NetMngrEvent {
     }
     
     public NetMngrReady(NatAwareAddress systemAdr) {
-        this(UUIDIdentifier.randomId(), systemAdr);
+        this(BasicIdentifiers.eventId(), systemAdr);
     }
     
     @Override

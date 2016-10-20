@@ -21,8 +21,11 @@ package se.sics.ktoolbox.cc.operation.event;
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.operations.CaracalOp;
 import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders.UUIDBuilder;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -31,10 +34,14 @@ public class CCOpRequest extends Direct.Request<CCOperationIndication> implement
 
     public final CaracalOp opReq;
     public final Key forwardTo;
+    public final Identifier eventId;
 
     public CCOpRequest(CaracalOp opReq, Key forwardTo) {
         this.opReq = opReq;
         this.forwardTo = forwardTo;
+        //TODO Alex - temp fix till i remove this
+        IdentifierFactory factory = IdentifierRegistry.lookup(BasicIdentifiers.Values.EVENT.toString());
+        eventId = factory.id(new UUIDBuilder(opReq.id));
     }
 
     @Override
@@ -52,6 +59,6 @@ public class CCOpRequest extends Direct.Request<CCOperationIndication> implement
 
     @Override
     public Identifier getId() {
-        return new UUIDIdentifier(opReq.id);
+        return eventId;
     }
 }

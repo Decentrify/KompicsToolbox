@@ -20,21 +20,27 @@ package se.sics.ktoolbox.epfd.msg;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.util.UUID;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class EPFDPingSerializer implements Serializer {
+
     private final int id;
-    
+    private final Class msgIdType;
+
     public EPFDPingSerializer(int id) {
         this.id = id;
+        this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
     }
-    
+
     @Override
     public int identifier() {
         return id;
@@ -42,15 +48,17 @@ public class EPFDPingSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        EPFDPing obj =  (EPFDPing)o;
-        Serializers.toBinary(obj.id, buf);
+        EPFDPing obj = (EPFDPing) o;
+        Serializers.lookupSerializer(msgIdType).toBinary(obj.msgId, buf);
+        Serializers.lookupSerializer(UUID.class).toBinary(obj.timeoutId, buf);
         buf.writeLong(obj.ts);
     }
 
     @Override
     public EPFDPing fromBinary(ByteBuf buf, Optional<Object> hint) {
-        Identifier msgId = (Identifier)Serializers.fromBinary(buf, hint);
+        Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
+        UUID timeoutId = (UUID) Serializers.fromBinary(buf, hint);
         long ts = buf.readLong();
-        return new EPFDPing(msgId, ts);
+        return new EPFDPing(msgId, timeoutId, ts);
     }
 }

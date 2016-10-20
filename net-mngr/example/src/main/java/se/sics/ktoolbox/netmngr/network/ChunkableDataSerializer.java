@@ -24,7 +24,10 @@ import java.nio.ByteBuffer;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.netmngr.core.ChunkableData;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  *
@@ -32,9 +35,11 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class ChunkableDataSerializer implements Serializer {
     public final int id;
+    private final Class msgIdType;
 
     public ChunkableDataSerializer(int id) {
         this.id = id;
+        this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
     }
 
     @Override
@@ -45,8 +50,8 @@ public class ChunkableDataSerializer implements Serializer {
     @Override
     public void toBinary(Object o, ByteBuf buf) {
         ChunkableData obj = (ChunkableData) o;
-        Serializers.toBinary(obj.eventId, buf);
-        Serializers.toBinary(obj.overlayId, buf);
+        Serializers.lookupSerializer(msgIdType).toBinary(obj.msgId, buf);
+        Serializers.lookupSerializer(OverlayId.class).toBinary(obj.overlayId, buf);
         buf.writeInt(obj.counter);
         buf.writeInt(obj.data.array().length);
         buf.writeBytes(obj.data);
@@ -54,12 +59,12 @@ public class ChunkableDataSerializer implements Serializer {
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        Identifier eventId = (Identifier) Serializers.fromBinary(buf, hint);
-        Identifier overlayId = (Identifier) Serializers.fromBinary(buf, hint);
+        Identifier msgIdId = (Identifier) Serializers.lookupSerializer(msgIdType).fromBinary(buf, hint);
+        OverlayId overlayId = (OverlayId) Serializers.lookupSerializer(OverlayId.class).fromBinary(buf, hint);
         int counter = buf.readInt();
         int dataSize = buf.readInt();
         byte[] data = new byte[dataSize];
         buf.readBytes(data);
-        return new ChunkableData(eventId, overlayId, counter, ByteBuffer.wrap(data));
+        return new ChunkableData(msgIdId, overlayId, counter, ByteBuffer.wrap(data));
     }
 }

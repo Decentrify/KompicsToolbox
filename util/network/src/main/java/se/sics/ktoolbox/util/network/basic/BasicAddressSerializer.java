@@ -22,13 +22,14 @@ import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
 import io.netty.buffer.ByteBuf;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -36,11 +37,13 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class BasicAddressSerializer implements Serializer {
 
     private static final Logger log = LoggerFactory.getLogger(Serializer.class);
-    
+
     private final int id;
+    private final Class nodeIdType;
 
     public BasicAddressSerializer(int id) {
         this.id = id;
+        this.nodeIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString()).idType();
     }
 
     @Override
@@ -62,7 +65,7 @@ public class BasicAddressSerializer implements Serializer {
         buf.writeByte(portBytes[2]);
         buf.writeByte(portBytes[3]);
         // Id
-        Serializers.toBinary(adr.getId(), buf);
+        Serializers.lookupSerializer(nodeIdType).toBinary(adr.getId(), buf);
     }
 
     @Override
@@ -82,14 +85,15 @@ public class BasicAddressSerializer implements Serializer {
         byte portUpper = buf.readByte();
         byte portLower = buf.readByte();
         int addressPort = Ints.fromBytes((byte) 0, (byte) 0, portUpper, portLower);
-        Identifier addressId = (Identifier)Serializers.fromBinary(buf, hint);
-        
-        if(hint.isPresent() && hint.get() instanceof InetSocketAddress) {
-            InetSocketAddress adr = (InetSocketAddress)hint.get();
-            addressIp = adr.getAddress();
-            addressPort = adr.getPort();
-        } 
-        
+        Identifier addressId = (Identifier)Serializers.lookupSerializer(nodeIdType).fromBinary(buf, hint);
+
+        //TODO Alex - this should be handled in  NatAwareAddress
+//        if (hint.isPresent() && hint.get() instanceof InetSocketAddress) {
+//            InetSocketAddress adr = (InetSocketAddress) hint.get();
+//            addressIp = adr.getAddress();
+//            addressPort = adr.getPort();
+//        }
+
         return new BasicAddress(addressIp, addressPort, addressId);
     }
 }

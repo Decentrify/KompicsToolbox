@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.overlaymngr.events;
 
 import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -30,17 +31,17 @@ public class OMngrCroupier {
     public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
         public final Identifier eventId;
-        public final Identifier croupierId;
+        public final OverlayId croupierId;
         public final boolean observer;
 
-        public ConnectRequest(Identifier eventId, Identifier croupierId, boolean observer) {
+        public ConnectRequest(Identifier eventId, OverlayId croupierId, boolean observer) {
             this.eventId = eventId;
             this.croupierId = croupierId;
             this.observer = observer;
         }
         
-        public ConnectRequest(Identifier croupierId, boolean observer) {
-            this(UUIDIdentifier.randomId(), croupierId, observer);
+        public ConnectRequest(OverlayId croupierId, boolean observer) {
+            this(BasicIdentifiers.eventId(), croupierId, observer);
         }
         
         public ConnectResponse answer() {
@@ -80,10 +81,10 @@ public class OMngrCroupier {
     public static class Disconnect implements OverlayMngrEvent {
 
         public final Identifier eventId;
-        public final Identifier croupierId;
+        public final OverlayId croupierId;
 
-        public Disconnect(Identifier id, Identifier croupierId) {
-            this.eventId = id;
+        public Disconnect(Identifier eventId, OverlayId croupierId) {
+            this.eventId = eventId;
             this.croupierId = croupierId;
         }
 

@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.cc.operation.event;
 
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

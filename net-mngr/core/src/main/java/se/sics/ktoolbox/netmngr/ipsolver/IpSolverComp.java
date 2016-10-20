@@ -20,8 +20,8 @@ package se.sics.ktoolbox.netmngr.ipsolver;
 
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +32,7 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
 import se.sics.ktoolbox.netmngr.ipsolver.util.IpAddressStatus;
+import se.sics.ktoolbox.netmngr.ipsolver.util.IpHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -45,7 +46,7 @@ public class IpSolverComp extends ComponentDefinition {
 
     public IpSolverComp(IpSolverInit init) {
         LOG.info("{}initiating...", logPrefix);
-        if (System.getProperty("java.net.preferIPv4Stack") == null 
+        if (System.getProperty("java.net.preferIPv4Stack") == null
                 || !System.getProperty("java.net.preferIPv4Stack").equals("true")) {
             LOG.error("{}java.net.preferIPv4Stack not set", logPrefix);
             throw new RuntimeException("java.net.preferIPv4Stack not set");
@@ -76,21 +77,37 @@ public class IpSolverComp extends ComponentDefinition {
             LOG.debug("{}GetIp request", logPrefix);
             try {
                 Set<IpAddressStatus> niSet = IpSolver.getLocalNetworkInterfaces(req.netInterfaces);
+                if(niSet.isEmpty()) {
+                    niSet = IpSolver.getLocalNetworkInterfaces(EnumSet.of(IpSolve.NetworkInterfacesMask.ALL));
+                }
                 //TODO Alex - sort the addresses based on the IpComparator?
-                ArrayList<IpAddressStatus> addressList = new ArrayList<IpAddressStatus>(niSet);
-                InetAddress boundIp = InetAddress.getLocalHost();
+                InetAddress boundIp = resolveIp(req.netInterfaces, niSet);
                 LOG.debug("{}GetIp responding", logPrefix);
-                answer(req, req.answer(addressList, boundIp));
+                answer(req, req.answer(new ArrayList<IpAddressStatus>(niSet), boundIp));
             } catch (SocketException ex) {
                 LOG.error("socket error while scanning network interfaces");
                 throw new RuntimeException("socket error while scanning network interfaces", ex);
-            } catch (UnknownHostException ex) {
-                LOG.error("host error while scanning network interfaces");
-                throw new RuntimeException("host error while scanning network interfaces", ex);
             }
         }
     };
-    
+
+    private InetAddress resolveIp(EnumSet<IpSolve.NetworkInterfacesMask> preffered, Set<IpAddressStatus> found) {
+        InetAddress bestChoice = null;
+        for (IpSolve.NetworkInterfacesMask type : IpSolve.NetworkInterfacesMask.values()) {
+            for (IpAddressStatus adr : found) {
+                if (IpHelper.isType(adr.getAddr(), type)) {
+                    if (bestChoice == null) {
+                        bestChoice = adr.getAddr();
+                    }
+                    if (preffered.contains(type)) {
+                        return adr.getAddr();
+                    }
+                }
+            }
+        }
+        return bestChoice;
+    }
+
     //TODO Alex - eventually you might want to do periodic recheck of interfaces
 //    private UUID stateCheckTid = null;
 //    private EnumSet<GetIp.NetworkInterfacesMask> filters;
@@ -120,8 +137,7 @@ public class IpSolverComp extends ComponentDefinition {
 //            throw new RuntimeException("host error while rescanning network interfaces", ex);
 //        }
 //    }
-    
-        //TODO Alex - if you do any periodic rescaning.. might want to do state check for memory leaks
+    //TODO Alex - if you do any periodic rescaning.. might want to do state check for memory leaks
 //    private void schedulePeriodicStateCheck() {
 //        if (stateCheckTid != null) {
 //            LOG.warn("double starting periodic state check");
@@ -161,7 +177,6 @@ public class IpSolverComp extends ComponentDefinition {
 //            return "State Check Timeout";
 //        }
 //    }
-
     public static class IpSolverConfig {
 
         public static final int RECHECK_NETWORK_INTERFACES_PERIOD = 30 * 1000;

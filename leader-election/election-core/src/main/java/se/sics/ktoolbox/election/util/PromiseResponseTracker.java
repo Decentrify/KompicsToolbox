@@ -40,7 +40,7 @@ public class PromiseResponseTracker {
 
     /**
      * A new promise round has started, therefore the tracking of responses needs to be reset.
-     * @param promiseRoundCounter promise round id.
+     * @param promiseRoundCounter promise round msgId.
      */
     public void startTracking(UUID promiseRoundCounter, Collection<KAddress> leaderGroupInformation){
 

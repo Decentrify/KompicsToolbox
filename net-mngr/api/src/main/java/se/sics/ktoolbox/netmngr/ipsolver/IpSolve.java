@@ -92,11 +92,10 @@ public class IpSolve {
     };
 
     public static enum NetworkInterfacesMask {
-
-        PRIVATE,
-        TEN_DOT_PRIVATE,
-        LOOPBACK,
         PUBLIC,
+        TEN_DOT_PRIVATE,
+        PRIVATE,
+        LOOPBACK,
         ALL
     };
 }

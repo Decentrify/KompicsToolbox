@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.netmngr;
 
 import se.sics.kompics.Direct;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -37,7 +37,7 @@ public class NetMngrBind {
         }
         
         public Request(int port) {
-            this(UUIDIdentifier.randomId(), port);
+            this(BasicIdentifiers.eventId(), port);
         }
 
         @Override
@@ -64,6 +64,7 @@ public class NetMngrBind {
             this.boundAdr = boundAddress;
         }
         
+        @Override
         public Identifier getId() {
             return req.getId();
         }

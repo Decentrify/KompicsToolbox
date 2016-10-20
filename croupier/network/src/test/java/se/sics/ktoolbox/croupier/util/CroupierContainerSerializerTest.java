@@ -30,7 +30,11 @@ import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
@@ -43,6 +47,9 @@ public class CroupierContainerSerializerTest {
 
     @BeforeClass
     public static void setup() {
+        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+        BasicIdentifiers.registerDefaults(1234l);
+
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
@@ -65,7 +72,8 @@ public class CroupierContainerSerializerTest {
             throw new RuntimeException(ex);
         }
 
-        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, new IntIdentifier(1)));
+        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, nodeIdFactory.randomId()));
         original = new CroupierContainer(simpleAdr1, new TestHelper.TestContent1(1));
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
@@ -79,7 +87,7 @@ public class CroupierContainerSerializerTest {
         Assert.assertEquals(original.src.getPrivateAdr(), copy.src.getPrivateAdr());
         Assert.assertEquals(original.src.getPublicAdr(), copy.src.getPublicAdr());
         Assert.assertEquals(original.src.getNatType(), copy.src.getNatType());
-        Assert.assertTrue(Objects.equals(((NatAwareAddressImpl)original.src).getParents(), ((NatAwareAddressImpl)copy.src).getParents()));
+        Assert.assertTrue(Objects.equals(((NatAwareAddressImpl) original.src).getParents(), ((NatAwareAddressImpl) copy.src).getParents()));
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
 }

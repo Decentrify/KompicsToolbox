@@ -20,10 +20,11 @@ package se.sics.ktoolbox.util.overlays.view;
 
 import se.sics.kompics.Direct;
 import se.sics.kompics.PatternExtractor;
-import se.sics.ktoolbox.util.update.View;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -32,9 +33,9 @@ public class OverlayViewUpdate {
 
     public static class Request extends Direct.Request<Response> implements OverlayEvent {
         public final Identifier eventId;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
         
-        public Request(Identifier eventId, Identifier overlayId) {
+        public Request(Identifier eventId, OverlayId overlayId) {
             this.eventId = eventId;
             this.overlayId = overlayId;
         }
@@ -48,7 +49,7 @@ public class OverlayViewUpdate {
         }
 
         @Override
-        public Identifier overlayId() {
+        public OverlayId overlayId() {
             return overlayId;
         }
 
@@ -65,19 +66,19 @@ public class OverlayViewUpdate {
 
     public static class Indication<V extends View> implements OverlayEvent, PatternExtractor<Class<V>, V>  {
         public final Identifier eventId;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
         public final boolean observer;
         public final V view;
 
-        public Indication(Identifier eventId, Identifier overlayId, boolean observer, V view) {
+        public Indication(Identifier eventId, OverlayId overlayId, boolean observer, V view) {
             this.eventId = eventId;
             this.overlayId = overlayId;
             this.observer = observer;
             this.view = view;
         }
         
-        public Indication(Identifier overlayId, boolean observer, V view) {
-            this(UUIDIdentifier.randomId(), overlayId, observer, view);
+        public Indication(OverlayId overlayId, boolean observer, V view) {
+            this(BasicIdentifiers.eventId(), overlayId, observer, view);
         }
 
         @Override
@@ -86,7 +87,7 @@ public class OverlayViewUpdate {
         }
         
         @Override
-        public Identifier overlayId() {
+        public OverlayId overlayId() {
             return overlayId;
         }
 
@@ -100,7 +101,7 @@ public class OverlayViewUpdate {
             return view;
         }
         
-        public Indication changeOverlay(Identifier overlayId) {
+        public Indication changeOverlay(OverlayId overlayId) {
             return new Indication(eventId, overlayId, observer, view);
         }
         
@@ -111,7 +112,7 @@ public class OverlayViewUpdate {
     }
     
     public static class Response<V extends View> extends Indication<V> implements Direct.Response {
-        public Response(Identifier eventId, Identifier overlayId, boolean observer, V view) {
+        public Response(Identifier eventId, OverlayId overlayId, boolean observer, V view) {
             super(eventId, overlayId, observer, view);
         }
         

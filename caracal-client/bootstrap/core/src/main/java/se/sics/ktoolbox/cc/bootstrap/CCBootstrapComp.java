@@ -29,18 +29,18 @@ import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.caracaldb.Address;
+import se.sics.caracaldb.global.ForwardMessage;
 import se.sics.caracaldb.global.Sample;
 import se.sics.caracaldb.global.SampleRequest;
+import se.sics.caracaldb.global.SchemaData;
+import se.sics.caracaldb.operations.CaracalMsg;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.caracaldb.Address;
-import se.sics.caracaldb.global.ForwardMessage;
-import se.sics.caracaldb.global.SchemaData;
-import se.sics.caracaldb.operations.CaracalMsg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.CancelTimeout;
@@ -52,9 +52,7 @@ import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapDisconnected;
 import se.sics.ktoolbox.cc.bootstrap.event.status.CCBootstrapReady;
 import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
 
@@ -121,7 +119,7 @@ public class CCBootstrapComp extends ComponentDefinition {
         subscribe(operationTracker.handleCCOpRequest, ccop);
 
         LOG.info("{}caracal ready", logPrefix);
-        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCBootstrapReady(caracalTracker.schemas)), status);
+        trigger(new Status.Internal(new CCBootstrapReady(caracalTracker.schemas)), status);
     }
 
     private void disconnected() {
@@ -130,7 +128,7 @@ public class CCBootstrapComp extends ComponentDefinition {
         unsubscribe(operationTracker.handleCCOpResponse, network);
 
         LOG.info("{}caracal disconnected", logPrefix);
-        trigger(new Status.Internal(UUIDIdentifier.randomId(), new CCBootstrapDisconnected()), status);
+        trigger(new Status.Internal(new CCBootstrapDisconnected()), status);
     }
 
     //**************************************************************************

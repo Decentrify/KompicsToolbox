@@ -29,7 +29,12 @@ import org.junit.Test;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -39,6 +44,8 @@ public class BasicContentMsgSerializerTest {
 
     @BeforeClass
     public static void setup() {
+        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+        BasicIdentifiers.registerDefaults(1234l);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         TestSerializer testSerializer = new TestSerializer(serializerId++);
@@ -59,12 +66,16 @@ public class BasicContentMsgSerializerTest {
             throw new RuntimeException(ex);
         }
 
-        BasicAddress basicAdr1 = new BasicAddress(localHost, 10000, new IntIdentifier(1));
-        BasicAddress basicAdr2 = new BasicAddress(localHost, 10000, new IntIdentifier(2));
-        BasicAddress basicAdr3 = new BasicAddress(localHost, 10000, new IntIdentifier(3));
-        BasicAddress basicAdr4 = new BasicAddress(localHost, 10000, new IntIdentifier(4));
+        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        BasicAddress basicAdr1 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
+        BasicAddress basicAdr2 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
+        BasicAddress basicAdr3 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
+        BasicAddress basicAdr4 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
 
-        DecoratedHeader header = new DecoratedHeader(new BasicHeader(basicAdr1, basicAdr4, Transport.UDP), new IntIdentifier(10));
+        byte ownerId = 1;
+        IdentifierFactory baseOverlayIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        OverlayIdFactory overlayIdFactory = new OverlayIdFactory(baseOverlayIdFactory, OverlayId.BasicTypes.CROUPIER, ownerId);
+        DecoratedHeader header = new DecoratedHeader(new BasicHeader(basicAdr1, basicAdr4, Transport.UDP), overlayIdFactory.randomId());
         TestContent content = new TestContent(5);
 
         original = new BasicContentMsg(header, content);

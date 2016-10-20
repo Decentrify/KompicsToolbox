@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.util.network.basic;
 
 import se.sics.kompics.network.Transport;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KHeader;
 
@@ -29,9 +29,9 @@ import se.sics.ktoolbox.util.network.KHeader;
 public class DecoratedHeader<Adr extends KAddress> implements KHeader<Adr> {
 
     final BasicHeader<Adr> base;
-    final Identifier overlayId; 
+    final OverlayId overlayId; 
 
-    public DecoratedHeader(BasicHeader<Adr> base, Identifier overlayId) {
+    public DecoratedHeader(BasicHeader<Adr> base, OverlayId overlayId) {
         this.base = base;
         this.overlayId = overlayId;
     }
@@ -55,7 +55,7 @@ public class DecoratedHeader<Adr extends KAddress> implements KHeader<Adr> {
         return base;
     }
     
-    public Identifier getOverlayId() {
+    public OverlayId getOverlayId() {
         return overlayId;
     }
     

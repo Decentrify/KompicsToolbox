@@ -20,22 +20,23 @@ package se.sics.ktoolbox.util.idextractor;
 
 import se.sics.kompics.network.Msg;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SourcePortIdExtractor extends ChannelIdExtractor<Msg, Identifier>{
+public class SourcePortIdExtractor extends ChannelIdExtractor<Msg, Identifier> {
 
     public SourcePortIdExtractor() {
         super(Msg.class);
     }
-    
+
     @Override
     public Identifier getValue(Msg msg) {
-        return new IntIdentifier(msg.getHeader().getSource().getPort());
+        IntIdFactory intIdFactory = new IntIdFactory(null);
+        Identifier portId = intIdFactory.rawId(msg.getHeader().getSource().getPort());
+        return portId;
     }
 }

@@ -33,9 +33,9 @@ import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
 import se.sics.ktoolbox.netmngr.NetworkMngrComp;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.ports.One2NChannel;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.idextractor.SourcePortIdExtractor;
+import se.sics.ktoolbox.util.network.ports.One2NChannel;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -85,7 +85,8 @@ public class NxNetComp extends ComponentDefinition {
                 return;
             }
             Component network = create(NettyNetwork.class, new NettyInit(req.bindAdr));
-            networkEnd.addChannel(new IntIdentifier(req.bindAdr.getPort()), network.getPositive(Network.class));
+            IntIdFactory intIdFactory = new IntIdFactory(null);
+            networkEnd.addChannel(intIdFactory.rawId(req.bindAdr.getPort()), network.getPositive(Network.class));
             trigger(Start.event, network.control());
             networks.put(req.bindAdr.getPort(), network);
             LOG.info("{}binding port:{}", new Object[]{logPrefix, req.bindAdr.getPort()});
@@ -104,7 +105,8 @@ public class NxNetComp extends ComponentDefinition {
                 answer(req, req.answer());
                 return;
             }
-            networkEnd.removeChannel(new IntIdentifier(req.port), network.getPositive(Network.class));
+            IntIdFactory intIdFactory = new IntIdFactory(null);
+            networkEnd.removeChannel(intIdFactory.rawId(req.port), network.getPositive(Network.class));
             trigger(Kill.event, network.control());
             LOG.info("{}unbinding port:{}", new Object[]{logPrefix, req.port});
             answer(req, req.answer());

@@ -66,7 +66,7 @@ public class ElectionSerializerSetup {
      * Register the serializers that will be used as part of the Election Protocol.
      *
      * @param startId Id to start registering
-     * @return First free id after registeration.
+     * @return First free msgId after registeration.
      */
     public static int registerSerializers(int startId){
 

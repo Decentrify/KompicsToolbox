@@ -21,8 +21,9 @@ package se.sics.ktoolbox.overlaymngr.events;
 import java.util.Comparator;
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.gradient.GradientFilter;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -32,11 +33,11 @@ public class OMngrTGradient {
     public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
         public final Identifier eventId;
-        public final Identifier tgradientId;
+        public final OverlayId tgradientId;
         public final Comparator utilityComparator;
         public final GradientFilter gradientFilter;
 
-        public ConnectRequest(Identifier eventId, Identifier tgradientId,
+        public ConnectRequest(Identifier eventId, OverlayId tgradientId,
                 Comparator utilityComparator, GradientFilter gradientFilter) {
             this.eventId = eventId;
             this.tgradientId = tgradientId;
@@ -44,8 +45,8 @@ public class OMngrTGradient {
             this.gradientFilter = gradientFilter;
         }
         
-        public ConnectRequest(Identifier tgradientId, Comparator utilityComparator, GradientFilter gradientFilter) {
-            this(UUIDIdentifier.randomId(), tgradientId, utilityComparator, gradientFilter);
+        public ConnectRequest(OverlayId tgradientId, Comparator utilityComparator, GradientFilter gradientFilter) {
+            this(BasicIdentifiers.eventId(), tgradientId, utilityComparator, gradientFilter);
         }
 
         public ConnectResponse answer() {

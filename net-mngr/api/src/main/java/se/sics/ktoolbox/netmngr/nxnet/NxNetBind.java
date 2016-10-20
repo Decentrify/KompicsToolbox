@@ -20,8 +20,8 @@ package se.sics.ktoolbox.netmngr.nxnet;
 
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -39,7 +39,7 @@ public class NxNetBind {
         }
         
         public Request(KAddress bindAdr) {
-            this(UUIDIdentifier.randomId(), bindAdr);
+            this(BasicIdentifiers.eventId(), bindAdr);
         }
 
         @Override
@@ -64,6 +64,7 @@ public class NxNetBind {
             this.req = req;
         }
         
+        @Override
         public Identifier getId() {
             return req.getId();
         }

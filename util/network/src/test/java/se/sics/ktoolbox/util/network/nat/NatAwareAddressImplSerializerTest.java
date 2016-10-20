@@ -31,7 +31,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
@@ -43,6 +48,8 @@ public class NatAwareAddressImplSerializerTest {
 
     @BeforeClass
     public static void setup() {
+        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+        BasicIdentifiers.registerDefaults(1234l);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -53,7 +60,8 @@ public class NatAwareAddressImplSerializerTest {
         NatAwareAddressImpl original, copy;
         ByteBuf buf;
 
-        BasicAddress address = new BasicAddress(InetAddress.getLocalHost(), 10000, new IntIdentifier(1));
+        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        BasicAddress address = new BasicAddress(InetAddress.getLocalHost(), 10000, nodeIdFactory.randomId());
         original = NatAwareAddressImpl.open(address);
         buf = Unpooled.buffer();
         serializer.toBinary(original, buf);
@@ -74,15 +82,17 @@ public class NatAwareAddressImplSerializerTest {
         NatAwareAddressImpl original, copy;
         ByteBuf buf, copyBuf;
 
-        BasicAddress privateAdr = new BasicAddress(InetAddress.getByName("192.100.100.2"), 10000, new IntIdentifier(2));
-        BasicAddress publicAdr = new BasicAddress(InetAddress.getByName("193.200.200.2"), 20000, new IntIdentifier(2));
+        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        Identifier nodeId =  nodeIdFactory.randomId();
+        BasicAddress privateAdr = new BasicAddress(InetAddress.getByName("192.100.100.2"), 10000, nodeId);
+        BasicAddress publicAdr = new BasicAddress(InetAddress.getByName("193.200.200.2"), 20000, nodeId);
         NatType natType = NatType.nated(Nat.MappingPolicy.HOST_DEPENDENT, Nat.AllocationPolicy.PORT_CONTIGUITY, 1,
                 Nat.FilteringPolicy.HOST_DEPENDENT, 10000);
         ArrayList<BasicAddress> parents = new ArrayList<>();
         BasicAddress parent;
-        parent = new BasicAddress(InetAddress.getByName("193.200.200.3"), 10000, new IntIdentifier(3));
+        parent = new BasicAddress(InetAddress.getByName("193.200.200.3"), 10000, nodeIdFactory.randomId());
         parents.add(parent);
-        parent = new BasicAddress(InetAddress.getByName("193.200.200.4"), 10001, new IntIdentifier(4));
+        parent = new BasicAddress(InetAddress.getByName("193.200.200.4"), 10001, nodeIdFactory.randomId());
         parents.add(parent);
         original = NatAwareAddressImpl.nated(privateAdr, publicAdr, natType, parents);
         buf = Unpooled.buffer();

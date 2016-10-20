@@ -26,7 +26,7 @@ import se.sics.kompics.network.netty.serialization.DatagramSerializer;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.BitBuffer;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -54,7 +54,7 @@ public class DecoratedHeaderSerializer implements DatagramSerializer {
         buf.writeBytes(flags.finalise());
 
         if (obj.getOverlayId() != null) {
-            Serializers.toBinary(obj.getOverlayId(), buf);
+            Serializers.lookupSerializer(OverlayId.class).toBinary(obj.getOverlayId(), buf);
         }
     }
 
@@ -72,13 +72,13 @@ public class DecoratedHeaderSerializer implements DatagramSerializer {
         DatagramSerializer dHeaderS = (DatagramSerializer)headerS;
         BasicHeader base = (BasicHeader) dHeaderS.fromBinary(buf, datagram);
 
-        Identifier overlayId = null;
+        OverlayId overlayId = null;
 
         byte[] bFlags = new byte[1];
         buf.readBytes(bFlags);
         boolean[] flags = BitBuffer.extract(1, bFlags);
         if (flags[0]) {
-            overlayId = (Identifier)Serializers.fromBinary(buf, Optional.absent());
+            overlayId = (OverlayId)Serializers.lookupSerializer(OverlayId.class).fromBinary(buf, Optional.absent());
         }
         return new DecoratedHeader(base, overlayId);
     }

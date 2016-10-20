@@ -24,9 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.KConfigOption.Base;
-import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.config.KConfigOption.Basic;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -58,7 +60,8 @@ public class BasicAddressOption extends Base<BasicAddress> {
             LOG.debug("missing:{}", idOpt.name);
             return Optional.absent();
         }
-        BasicAddress adr = new BasicAddress(ip.get(), port.get(), new IntIdentifier(id.get()));
+        Identifier nodeId = BasicIdentifiers.nodeId(new BasicBuilders.IntBuilder(id.get()));
+        BasicAddress adr = new BasicAddress(ip.get(), port.get(), nodeId);
         return Optional.of(adr);
     }
 }

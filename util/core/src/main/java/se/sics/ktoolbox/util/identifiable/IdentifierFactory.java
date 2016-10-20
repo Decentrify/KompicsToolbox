@@ -20,12 +20,14 @@
  */
 package se.sics.ktoolbox.util.identifiable;
 
-import com.google.common.collect.ImmutableSet;
-
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface  IdentifierFactory {
-    public Identifier newId();
-    public ImmutableSet<? extends Identifier> newIds(int nr);
+public interface IdentifierFactory<I extends Identifier> {
+    public I randomId();
+    public I id(IdentifierBuilder builder);
+    public Class<I> idType();
+    //set by the IdentifierRegistry and used to track where the factory is coming from - who created/registered it
+    public void setRegisteredName(String name);
+    public String getRegisteredName();
 }

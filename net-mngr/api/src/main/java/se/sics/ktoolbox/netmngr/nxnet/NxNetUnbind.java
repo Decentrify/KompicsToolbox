@@ -20,8 +20,8 @@ package se.sics.ktoolbox.netmngr.nxnet;
 
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  *
@@ -38,7 +38,7 @@ public class NxNetUnbind {
         }
         
         public Request(int port) {
-            this(UUIDIdentifier.randomId(), port);
+            this(BasicIdentifiers.eventId(), port);
         }
 
         @Override
@@ -63,6 +63,7 @@ public class NxNetUnbind {
             this.req = req;
         }
         
+        @Override
         public Identifier getId() {
             return req.getId();
         }

@@ -23,16 +23,21 @@ import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.netmngr.core.Data;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class DataSerializer implements Serializer {
     public final int id;
+    private final Class msgIdType;
 
     public DataSerializer(int id) {
         this.id = id;
+        this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
     }
 
     @Override
@@ -43,16 +48,16 @@ public class DataSerializer implements Serializer {
     @Override
     public void toBinary(Object o, ByteBuf buf) {
         Data obj = (Data) o;
-        Serializers.toBinary(obj.eventId, buf);
-        Serializers.toBinary(obj.overlayId, buf);
+        Serializers.lookupSerializer(msgIdType).toBinary(obj.msgId, buf);
+        Serializers.lookupSerializer(OverlayId.class).toBinary(obj.overlayId, buf);
         buf.writeInt(obj.counter);
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        Identifier eventId = (Identifier) Serializers.fromBinary(buf, hint);
-        Identifier overlayId = (Identifier) Serializers.fromBinary(buf, hint);
+        Identifier msgId = (Identifier) Serializers.lookupSerializer(msgIdType).fromBinary(buf, hint);
+        OverlayId overlayId = (OverlayId) Serializers.lookupSerializer(OverlayId.class).fromBinary(buf, hint);
         int counter = buf.readInt();
-        return new Data(eventId, overlayId, counter);
+        return new Data(msgId, overlayId, counter);
     }
 }

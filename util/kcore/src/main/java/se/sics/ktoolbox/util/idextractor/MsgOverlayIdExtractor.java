@@ -18,10 +18,12 @@
  */
 package se.sics.ktoolbox.util.idextractor;
 
-import se.sics.ktoolbox.util.overlays.OverlayEvent;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
+import se.sics.ktoolbox.util.overlays.OverlayEvent;
+import se.sics.nutil.ContentWrapper;
+import se.sics.nutil.ContentWrapperHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -34,9 +36,15 @@ public class MsgOverlayIdExtractor extends ChannelIdExtractor<KContentMsg, Ident
 
     @Override
     public Identifier getValue(KContentMsg msg) {
-        if (msg.getContent() instanceof OverlayEvent) {
-            return ((OverlayEvent) msg.getContent()).overlayId();
+        Object baseContent = msg.getContent();
+        Identifier overlayId = null;
+        if(baseContent instanceof ContentWrapper) {
+            baseContent = ContentWrapperHelper.getBaseContent((ContentWrapper)baseContent, Object.class);
         }
-        return null;
+        if(baseContent instanceof OverlayEvent) {
+            overlayId = ((OverlayEvent)baseContent).overlayId();
+        }
+        
+        return overlayId;
     }
 }
