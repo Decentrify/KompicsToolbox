@@ -21,8 +21,8 @@ package se.sics.ktoolbox.util.identifiable.basic;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SimpleByteIdentifier extends ByteIdentifier {
-    public SimpleByteIdentifier(byte[] id) {
+public class SimpleByteId extends ByteIdentifier {
+    SimpleByteId(byte[] id) {
         super(id);
     }
 }

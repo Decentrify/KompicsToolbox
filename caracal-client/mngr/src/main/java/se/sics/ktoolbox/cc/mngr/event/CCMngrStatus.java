@@ -19,11 +19,10 @@
 package se.sics.ktoolbox.cc.mngr.event;
 
 import se.sics.caracaldb.global.SchemaData;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCMngrStatus {
@@ -39,7 +38,7 @@ public class CCMngrStatus {
         }
 
         public Ready(SchemaData schemas) {
-            this(UUIDIdentifier.randomId(), schemas);
+            this(BasicIdentifiers.eventId(), schemas);
         }
 
         @Override
@@ -62,7 +61,7 @@ public class CCMngrStatus {
         }
 
         public Disconnected() {
-            this(UUIDIdentifier.randomId());
+            this(BasicIdentifiers.eventId());
         }
         
         @Override

@@ -18,24 +18,32 @@
  */
 package se.sics.ktoolbox.epfd.msg;
 
+import java.util.UUID;
 import se.sics.ktoolbox.epfd.event.EPFDEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class EPFDPing implements EPFDEvent {
-    public final Identifier id;
+    public final Identifier msgId;
+    public final UUID timeoutId;
     public final long ts;
     
-    public EPFDPing(Identifier id, long ts) {
-        this.id = id;
+    public EPFDPing(Identifier msgId, UUID timeoutId, long ts) {
+        this.msgId = msgId;
+        this.timeoutId = timeoutId;
         this.ts = ts;
+    }
+    
+    public EPFDPing(UUID timeoutId, long ts) {
+        this(BasicIdentifiers.msgId(), timeoutId, ts);
     }
     
     @Override
     public String toString() {
-        return "EPFDPing<" + id + ">";
+        return "EPFDPing<" + msgId + ">";
     }
     
     public EPFDPong pong() {
@@ -44,6 +52,6 @@ public class EPFDPing implements EPFDEvent {
 
     @Override
     public Identifier getId() {
-        return id;
+        return msgId;
     }
 }

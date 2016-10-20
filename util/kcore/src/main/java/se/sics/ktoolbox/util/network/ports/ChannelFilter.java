@@ -16,22 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.identifiable.basic;
+package se.sics.ktoolbox.util.network.ports;
 
-import com.google.common.primitives.Ints;
+import se.sics.kompics.KompicsEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayIdentifier extends ByteIdentifier {
-    public static final int LENGTH = 4;
-
-    public OverlayIdentifier(byte[] id) {
-        super(id);
-        assert id.length == LENGTH;
-    }
-
-    public int getInt() {
-        return Ints.fromByteArray(id);
-    }
+public interface ChannelFilter {
+    public boolean filter(KompicsEvent event);
 }

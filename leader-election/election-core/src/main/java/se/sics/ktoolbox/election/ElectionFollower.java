@@ -1,6 +1,10 @@
 package se.sics.ktoolbox.election;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -17,25 +21,24 @@ import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.election.aggregation.LeaderGroupHistoryReducer;
 import se.sics.ktoolbox.election.aggregation.LeaderGroupUpdatePacket;
-import se.sics.ktoolbox.election.util.LCPeerView;
-import se.sics.ktoolbox.election.util.LEContainer;
+import se.sics.ktoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.ktoolbox.election.event.ElectionState;
 import se.sics.ktoolbox.election.event.LeaderUpdate;
 import se.sics.ktoolbox.election.event.ViewUpdate;
 import se.sics.ktoolbox.election.junk.MockedGradientUpdate;
-import se.sics.ktoolbox.election.api.ports.LeaderElectionPort;
 import se.sics.ktoolbox.election.junk.TestPort;
-import se.sics.ktoolbox.election.rules.CohortsRuleSet;
 import se.sics.ktoolbox.election.msg.ExtensionRequest;
 import se.sics.ktoolbox.election.msg.LeaseCommitUpdated;
 import se.sics.ktoolbox.election.msg.Promise;
+import se.sics.ktoolbox.election.rules.CohortsRuleSet;
 import se.sics.ktoolbox.election.util.ElectionHelper;
+import se.sics.ktoolbox.election.util.LCPeerView;
+import se.sics.ktoolbox.election.util.LEContainer;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.GradientSample;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
@@ -286,7 +289,7 @@ public class ElectionFollower extends ComponentDefinition {
                 }
             }
 
-            // Update the election round eventId only if I decide to accept the candidate.
+            // Update the election round msgId only if I decide to accept the candidate.
             if (acceptCandidate) {
 
                 electionRoundId = container.getContent().electionRoundId;
@@ -299,7 +302,7 @@ public class ElectionFollower extends ComponentDefinition {
                 trigger(st, timer);
             }
 
-            Promise.Response response = new Promise.Response(UUIDIdentifier.randomId(), acceptCandidate, isConverged, container.getContent().electionRoundId);
+            Promise.Response response = request.answer(acceptCandidate, isConverged, container.getContent().electionRoundId);
             BasicContentMsg promiseResponse = container.answer(response);
             trigger(promiseResponse, network);
 
@@ -320,7 +323,7 @@ public class ElectionFollower extends ComponentDefinition {
                 // Might be triggered even if the response is handled.
                 inElection = false;
                 electionRoundId = null;
-                trigger(new ElectionState.DisableLGMembership(UUIDIdentifier.randomId(), event.electionRoundId), election);
+                trigger(new ElectionState.DisableLGMembership(event.electionRoundId), election);
 
             } else {
                 LOG.debug("Timeout triggered even though the cancel was sent.");
@@ -338,7 +341,7 @@ public class ElectionFollower extends ComponentDefinition {
 
     /**
      * Received the lease commit request from the node trying to assert itself
-     * as leader. Accept the request in case it is from the same round eventId.
+     * as leader. Accept the request in case it is from the same round msgId.
      */
     ClassMatchedHandler commitRequestHandler = new ClassMatchedHandler<LeaseCommitUpdated.Request, BasicContentMsg<KAddress, BasicHeader<KAddress>, LeaseCommitUpdated.Request>>() {
         @Override
@@ -365,8 +368,8 @@ public class ElectionFollower extends ComponentDefinition {
 
                 LOG.info("{}My new leader: {}", logPrefix, request.leaderAddress);
                 leaderAddress = request.leaderAddress;
-                trigger(new ElectionState.EnableLGMembership(UUIDIdentifier.randomId(), electionRoundId), election);
-                trigger(new LeaderUpdate(UUIDIdentifier.randomId(), request.leaderPublicKey, request.leaderAddress), election);
+                trigger(new ElectionState.EnableLGMembership(electionRoundId), election);
+                trigger(new LeaderUpdate(request.leaderPublicKey, request.leaderAddress), election);
                 compTracker.updateState(new LeaderGroupUpdatePacket(request.leaderAddress.getId()));
 
                 ScheduleTimeout st = new ScheduleTimeout(electionConfig.followerLeaseTime);
@@ -412,7 +415,7 @@ public class ElectionFollower extends ComponentDefinition {
 
         leaderAddress = null;
         resetElectionMetaData();
-        trigger(new ElectionState.DisableLGMembership(UUIDIdentifier.randomId(), null), election); // round is doesnt matter at this moment.
+        trigger(new ElectionState.DisableLGMembership(null), election); // round is doesnt matter at this moment.
         compTracker.updateState(new LeaderGroupUpdatePacket(null));
     }
 
@@ -441,10 +444,10 @@ public class ElectionFollower extends ComponentDefinition {
             // to get a response back from the application representing the information and therefore in that time something fishy can happen.
             inElection = true;
             electionRoundId = leaseExtensionRequest.electionRoundId;
-            trigger(new ElectionState.EnableLGMembership(UUIDIdentifier.randomId(), electionRoundId), election);
+            trigger(new ElectionState.EnableLGMembership(electionRoundId), election);
 
             // Inform the component listening about the leader and schedule a new lease.
-            trigger(new LeaderUpdate(UUIDIdentifier.randomId(), leaseExtensionRequest.leaderPublicKey, leaseExtensionRequest.leaderAddress), election);
+            trigger(new LeaderUpdate(leaseExtensionRequest.leaderPublicKey, leaseExtensionRequest.leaderAddress), election);
 
             compTracker.updateState(new LeaderGroupUpdatePacket(leaseExtensionRequest.leaderAddress.getId()));
 

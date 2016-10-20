@@ -28,6 +28,10 @@ public class ExpMovingAvg {
     //**************************************************************************
     private double avg;
 
+    public ExpMovingAvg(double init) {
+        avg = init;
+    }
+    
     public ExpMovingAvg() {
         avg = Double.NaN;
     }

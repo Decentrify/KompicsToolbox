@@ -38,7 +38,6 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.epfd.event.EPFDEvent;
 import se.sics.ktoolbox.epfd.event.EPFDFollow;
 import se.sics.ktoolbox.epfd.event.EPFDIndication;
 import se.sics.ktoolbox.epfd.event.EPFDUnfollow;
@@ -47,7 +46,6 @@ import se.sics.ktoolbox.epfd.msg.EPFDPong;
 import se.sics.ktoolbox.epfd.util.HostProber;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
@@ -200,10 +198,10 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
                 @Override
                 public void handle(EPFDPong content, BasicContentMsg<KAddress, BasicHeader<KAddress>, EPFDPong> container) {
                     LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource().getId()});
-                    cancelPongTimeout(((UUIDIdentifier)content.ping.id).id);
+                    cancelPongTimeout(content.ping.timeoutId);
                     HostProber hostProber = hostProbers.get(container.getSource().getId());
                     if (hostProber != null) {
-                        hostProber.pong(content.ping.id, content.ping.ts);
+                        hostProber.pong(content.ping.msgId, content.ping.ts);
                     } else {
                         LOG.debug("{}host:{} is not currently being probed (GOT_PONG)", 
                                 logPrefix, container.getSource().getId());
@@ -224,23 +222,23 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
     }
 
     @Override
-    public Identifier nextPing(boolean suspected, KAddress probedHost) {
+    public UUID nextPing(boolean suspected, KAddress probedHost) {
         long timeout = suspected ? epfdConfig.deadPingInterval : epfdConfig.livePingInterval;
-        return new UUIDIdentifier(scheduleNextPingTimeout(timeout, probedHost));
+        return scheduleNextPingTimeout(timeout, probedHost);
     }
 
     @Override
-    public Identifier ping(long ts, KAddress probedHost, long expectedRtt) {
+    public UUID ping(long ts, KAddress probedHost, long expectedRtt) {
         long timeout = expectedRtt + epfdConfig.pingTimeoutIncrement;
-        Identifier pingTid = new UUIDIdentifier(schedulePongTimeout(timeout, probedHost));
+        UUID pingTid = schedulePongTimeout(timeout, probedHost);
         send(new EPFDPing(pingTid, ts), probedHost);
         return pingTid;
     }
 
     @Override
-    public void stop(Identifier nextPingTid, Identifier pongTid) {
-        cancelNextPingTimeout(((UUIDIdentifier)nextPingTid).id);
-        cancelPongTimeout(((UUIDIdentifier)pongTid).id);
+    public void stop(UUID nextPingTid, UUID pongTid) {
+        cancelNextPingTimeout(nextPingTid);
+        cancelPongTimeout(pongTid);
     }
 
     public static class EPFDInit extends Init<EPFDComp> {
@@ -267,7 +265,7 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         }
     }
 
-    public static class NextPingTimeout extends Timeout implements EPFDEvent {
+    public static class NextPingTimeout extends Timeout {
 
         public final KAddress target;
 
@@ -279,11 +277,6 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         @Override
         public String toString() {
             return "PING_TIMEOUT<" + getTimeoutId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
         }
     }
 
@@ -303,7 +296,7 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         }
     }
 
-    public static class PongTimeout extends Timeout implements EPFDEvent {
+    public static class PongTimeout extends Timeout {
 
         public final KAddress target;
 
@@ -315,11 +308,6 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         @Override
         public String toString() {
             return "PONG_TIMEOUT<" + getTimeoutId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
         }
     }
     
@@ -345,15 +333,10 @@ public class EPFDComp extends ComponentDefinition implements EPFDService {
         trigger(cpt, timer);
     }
 
-    public static class PeriodicStateCheck extends Timeout implements EPFDEvent {
+    public static class PeriodicStateCheck extends Timeout {
 
         public PeriodicStateCheck(SchedulePeriodicTimeout spt) {
             super(spt);
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
         }
     }
 }

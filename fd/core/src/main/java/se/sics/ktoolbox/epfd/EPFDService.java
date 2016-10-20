@@ -18,9 +18,9 @@
  */
 package se.sics.ktoolbox.epfd;
 
+import java.util.UUID;
 import se.sics.ktoolbox.epfd.event.EPFDFollow;
 import se.sics.ktoolbox.epfd.event.EPFDIndication;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -28,7 +28,7 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public interface EPFDService {
     public void answerRequest(EPFDFollow request, EPFDIndication indication);
-    public Identifier nextPing(boolean suspected, KAddress probedHost);
-    public Identifier ping(long ts, KAddress probedHost, long expectedRtt);
-    public void stop(Identifier nextPingTid, Identifier pongTid);
+    public UUID nextPing(boolean suspected, KAddress probedHost);
+    public UUID ping(long ts, KAddress probedHost, long expectedRtt);
+    public void stop(UUID nextPingTid, UUID pongTid);
 }

@@ -19,9 +19,9 @@
 package se.sics.ktoolbox.util.status;
 
 import se.sics.kompics.PatternExtractor;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -38,7 +38,7 @@ public class Status {
         }
         
         public Internal(S status) {
-            this(UUIDIdentifier.randomId(), status);
+            this(BasicIdentifiers.eventId(), status);
         }
 
         @Override
@@ -67,7 +67,7 @@ public class Status {
         }
         
         public External(S status) {
-            this(UUIDIdentifier.randomId(), status);
+            this(BasicIdentifiers.eventId(), status);
         }
 
         @Override

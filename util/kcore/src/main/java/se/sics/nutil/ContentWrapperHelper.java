@@ -16,37 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.identifiable.basic;
-
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.netty.serialization.Serializer;
+package se.sics.nutil;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class IntIdentifierSerializer implements Serializer {
-    private final int id;
-    
-    public IntIdentifierSerializer(int id) {
-        this.id = id;
+public class ContentWrapperHelper {
+    public static Object getBaseContent(ContentWrapper wrapperContent) {
+        return getBaseContent(wrapperContent, Object.class);
     }
     
-    @Override
-    public int identifier() {
-        return id;
-    }
-
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        IntIdentifier obj = (IntIdentifier)o;
-        buf.writeInt(obj.id);
-    }
-
-    @Override
-    public IntIdentifier fromBinary(ByteBuf buf, Optional<Object> hint) {
-        int identifier = buf.readInt();
-        return new IntIdentifier(identifier);
+    public static <C extends Object> C getBaseContent(ContentWrapper wrapperContent, Class<C> contentType) {
+        ContentWrapper wc = wrapperContent;
+        while(wc.getWrappedContent() instanceof ContentWrapper) {
+            wc = (ContentWrapper)wc.getWrappedContent();
+        }
+        return (C)wc.getWrappedContent();
     }
     
+    public static <C extends Object> C removeOneWrapper(ContentWrapper wrapperContent, Class<C> contentType) {
+        return (C)wrapperContent.getWrappedContent();
+    }
 }

@@ -35,17 +35,17 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
-import se.sics.ktoolbox.util.tracking.load.NetworkQueueLoadProxy;
-import se.sics.ktoolbox.util.tracking.load.QueueLoadConfig;
 import se.sics.ledbat.core.AppCongestionWindow;
 import se.sics.ledbat.core.LedbatConfig;
 import se.sics.ledbat.ncore.msg.LedbatMsg;
+import se.sics.nutil.tracking.load.NetworkQueueLoadProxy;
+import se.sics.nutil.tracking.load.QueueLoadConfig;
 
 /**
  *
@@ -73,7 +73,8 @@ public class Leecher extends ComponentDefinition {
         this.self = init.self;
         this.seeder = init.seeder;
         this.ledbatConfig = new LedbatConfig(config());
-        this.conn = new AppCongestionWindow(ledbatConfig, UUIDIdentifier.randomId());
+        UUIDIdFactory uuidFactory = new UUIDIdFactory();
+        this.conn = new AppCongestionWindow(ledbatConfig, uuidFactory.randomId());
         this.networkLoad = new NetworkQueueLoadProxy("leechNetwork", this.proxy, new QueueLoadConfig(config()));
 
         subscribe(handleStart, control);
@@ -86,7 +87,7 @@ public class Leecher extends ComponentDefinition {
 
         @Override
         public void handle(Start event) {
-            networkLoad.startTracking();
+            networkLoad.start();
             trySend();
 
             SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(5000, 5000);
@@ -120,8 +121,8 @@ public class Leecher extends ComponentDefinition {
                 @Override
                 public void handle(LedbatMsg.Response<ExMsg.Response> content, KContentMsg<KAddress, KHeader<KAddress>, LedbatMsg.Response<ExMsg.Response>> context) {
                     LOG.trace("{}received resp", logPrefix);
-                    if (ongoing.remove(content.payload.eventId)) {
-                        cancelTimeout(content.payload.eventId);
+                    if (ongoing.remove(content.getWrappedContent().eventId)) {
+                        cancelTimeout(content.getWrappedContent().eventId);
                         conn.success(System.currentTimeMillis(), ledbatConfig.mss, content);
                         trySend();
                     } else {
@@ -133,9 +134,10 @@ public class Leecher extends ComponentDefinition {
 
     private void trySend() {
         long now = System.currentTimeMillis();
-        conn.appState(now, networkLoad.adjustment());
+        conn.adjustState(networkLoad.adjustment());
         while (conn.canSend()) {
             conn.request(now, ledbatConfig.mss);
+            request();
         }
     }
 

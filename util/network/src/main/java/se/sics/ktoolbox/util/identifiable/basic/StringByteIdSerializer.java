@@ -21,18 +21,21 @@ package se.sics.ktoolbox.util.identifiable.basic;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OverlayIdentifierSerializer implements Serializer {
+public class StringByteIdSerializer implements Serializer {
+
     public final int id;
-    
-    public OverlayIdentifierSerializer(int id) {
+    private final StringByteIdFactory factory;
+
+    public StringByteIdSerializer(int id) {
         this.id = id;
+        this.factory = new StringByteIdFactory(null, 0);
     }
-    
+
     @Override
     public int identifier() {
         return id;
@@ -40,15 +43,17 @@ public class OverlayIdentifierSerializer implements Serializer {
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        OverlayIdentifier obj = (OverlayIdentifier)o;
+        StringByteId obj = (StringByteId) o;
+        buf.writeInt(obj.id.length);
         buf.writeBytes(obj.id);
     }
 
     @Override
     public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        byte[] idBytes = new byte[OverlayIdentifier.LENGTH];
+        int idLength = buf.readInt();
+        byte[] idBytes = new byte[idLength];
         buf.readBytes(idBytes);
-        return new OverlayIdentifier(idBytes);
+        StringByteId stringByteId = factory.id(new BasicBuilders.ByteBuilder(idBytes));
+        return stringByteId;
     }
-    
 }

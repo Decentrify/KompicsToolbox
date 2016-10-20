@@ -30,9 +30,10 @@ import org.junit.Test;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
@@ -43,6 +44,7 @@ public class BasicHeaderSerializerTest {
 
     @BeforeClass
     public static void setup() {
+        BasicIdentifiers.registerDefaults(1234l);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -59,8 +61,9 @@ public class BasicHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        BasicAddress simpleAdr1 = new BasicAddress(localHost, 10000, new IntIdentifier(1));
-        BasicAddress simpleAdr2 = new BasicAddress(localHost, 10000, new IntIdentifier(2));
+        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        BasicAddress simpleAdr1 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
+        BasicAddress simpleAdr2 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
         original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
@@ -74,7 +77,7 @@ public class BasicHeaderSerializerTest {
         Assert.assertEquals(original.getProtocol(), copy.getProtocol());
         Assert.assertEquals(0, serializedCopy.readableBytes());
     }
-    
+
     @Test
     public void testNatAwareOpenAddress() throws UnknownHostException {
         Serializer serializer = Serializers.lookupSerializer(BasicHeader.class);
@@ -87,8 +90,9 @@ public class BasicHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, new IntIdentifier(1)));
-        NatAwareAddressImpl simpleAdr2 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, new IntIdentifier(2)));
+        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, nodeIdFactory.randomId()));
+        NatAwareAddressImpl simpleAdr2 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, nodeIdFactory.randomId()));
         original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);

@@ -18,8 +18,9 @@
  */
 package se.sics.ktoolbox.netmngr.core;
 
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
@@ -27,36 +28,36 @@ import se.sics.ktoolbox.util.overlays.OverlayEvent;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Data implements OverlayEvent {
-    public final Identifier eventId;
-    public final Identifier overlayId;
+    public final Identifier msgId;
+    public final OverlayId overlayId;
     public final int counter;
     
-    public Data(Identifier eventId, Identifier overlayId, int counter) {
-        this.eventId = eventId;
+    public Data(Identifier msgId, OverlayId overlayId, int counter) {
+        this.msgId = msgId;
         this.overlayId = overlayId;
         this.counter = counter;
     }
     
-    public Data(Identifier overlayId, int counter) {
-        this(UUIDIdentifier.randomId(), overlayId, counter);
+    public Data(OverlayId overlayId, int counter) {
+        this(BasicIdentifiers.msgId(), overlayId, counter);
     }
     
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
 
     @Override
     public Identifier getId() {
-        return eventId;
+        return msgId;
     }
     
     @Override
     public String toString() {
-        return "Data<" + overlayId + ", " + eventId + ">";
+        return "Data<" + overlayId + ", " + msgId + ">";
     }
     
     public Ack answer() {
-        return new Ack(eventId, overlayId, counter);
+        return new Ack(msgId, overlayId, counter);
     }
 }

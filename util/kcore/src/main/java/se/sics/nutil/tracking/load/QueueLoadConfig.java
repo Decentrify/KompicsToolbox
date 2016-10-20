@@ -16,32 +16,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.config.options;
+package se.sics.nutil.tracking.load;
 
-import com.google.common.base.Optional;
 import se.sics.kompics.config.Config;
-import se.sics.ktoolbox.util.config.KConfigOption;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class IntIdentifierOption extends KConfigOption.Base<IntIdentifier> {
+public class QueueLoadConfig {
+    public static final long seed = 1234;
 
-    public IntIdentifierOption(String optionName) {
-        super(optionName, IntIdentifier.class);
+    public static class Names {
+        public static String TARGET_QUEUE_DELAY = "load.queue.target_queue_delay";
+        public static String MAX_QUEUE_DELAY = "load.queue.max_queue_delay";
     }
+    /**
+     * queue delay - low delay means lower throughput, high delay means higher latency
+     */
+    /**
+     * we strive to stay around this targetQueueDelay - allowing us for a good throughput and an addition of this much to the latency
+     */
+    public final long targetQueueDelay; //ms
+    /**
+     * at this point we force a slow down
+     */
+    public final long maxQueueDelay; //ms
     
-    @Override
-    public Optional<IntIdentifier> readValue(Config config) {
-        Optional id = config.readValue(name);
-        if(id.isPresent()) {
-            if(id.get() instanceof IntIdentifier) {
-                return id;
-            } else if(id.get() instanceof Integer) {
-                return Optional.of(new IntIdentifier((Integer)id.get()));
-            }
-        }
-        return Optional.absent();
+    public QueueLoadConfig(Config config) {
+        this.targetQueueDelay = config.getValue(Names.TARGET_QUEUE_DELAY, Long.class);
+        this.maxQueueDelay = config.getValue(Names.MAX_QUEUE_DELAY, Long.class);
     }
 }

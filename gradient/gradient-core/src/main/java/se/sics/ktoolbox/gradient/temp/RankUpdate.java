@@ -20,25 +20,26 @@
 package se.sics.ktoolbox.gradient.temp;
 
 import se.sics.ktoolbox.gradient.event.GradientEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
 public class RankUpdate implements GradientEvent {
     public final Identifier eventId;
-    public final Identifier overlayId;
+    public final OverlayId overlayId;
     public final int rank;
     
-    public RankUpdate(Identifier eventId, Identifier overlayId, int rank) {
+    public RankUpdate(Identifier eventId, OverlayId overlayId, int rank) {
         this.eventId = eventId;
         this.overlayId = overlayId;
         this.rank = rank;
     }
 
-    public RankUpdate(Identifier overlayId, int rank) {
-        this(UUIDIdentifier.randomId(), overlayId, rank);
+    public RankUpdate(OverlayId overlayId, int rank) {
+        this(BasicIdentifiers.eventId(), overlayId, rank);
     }
     
     @Override
@@ -47,7 +48,7 @@ public class RankUpdate implements GradientEvent {
     }
 
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
 }

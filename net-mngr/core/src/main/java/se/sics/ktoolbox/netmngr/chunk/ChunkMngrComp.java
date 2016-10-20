@@ -20,7 +20,6 @@
  */
 package se.sics.ktoolbox.netmngr.chunk;
 
-import se.sics.ktoolbox.util.network.other.Chunkable;
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -42,19 +41,18 @@ import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.netmngr.chunk.Chunk;
-import se.sics.ktoolbox.netmngr.chunk.ChunkMngrEvent;
 import se.sics.ktoolbox.netmngr.chunk.util.ChunkPrefixHelper;
-import se.sics.ktoolbox.netmngr.chunk.util.IncompleteChunkTracker;
 import se.sics.ktoolbox.netmngr.chunk.util.CompleteChunkTracker;
+import se.sics.ktoolbox.netmngr.chunk.util.IncompleteChunkTracker;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.other.Chunkable;
 
 /**
  * Created by alidar on 10/21/14.
@@ -126,7 +124,7 @@ public class ChunkMngrComp extends ComponentDefinition {
                     if(content instanceof Identifiable) {
                         originId = ((Identifiable)content).getId();
                     } else {
-                        originId = UUIDIdentifier.randomId();
+                        originId = BasicIdentifiers.eventId();
                     }
                     CompleteChunkTracker cct = new CompleteChunkTracker(originId, contentBytes, datagramContentSize);
                     for (Chunk chunk : cct.chunks.values()) {
@@ -200,7 +198,7 @@ public class ChunkMngrComp extends ComponentDefinition {
         }
     }
 
-    public static class CleanupTrackerTimeout extends Timeout implements ChunkMngrEvent {
+    public static class CleanupTrackerTimeout extends Timeout {
 
         public final Identifier originId;
 
@@ -211,12 +209,7 @@ public class ChunkMngrComp extends ComponentDefinition {
 
         @Override
         public String toString() {
-            return "ChunkMngr_CleanupTracker<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
+            return "ChunkMngr_CleanupTracker<" + getTimeoutId()+ ">";
         }
     }
 }

@@ -21,10 +21,11 @@ package se.sics.ktoolbox.croupier.msg;
 import com.google.common.base.Optional;
 import java.util.Map;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
-import se.sics.ktoolbox.util.update.View;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.update.View;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -33,16 +34,16 @@ public class CroupierShuffle {
 
     public static abstract class Basic implements CroupierEvent {
 
-        public final Identifier eventId;
-        public final Identifier overlayId;
+        public final Identifier msgId;
+        public final OverlayId overlayId;
         public final Optional<View> selfView;
         public final Map<Identifier, CroupierContainer> publicNodes;
         public final Map<Identifier, CroupierContainer> privateNodes;
 
-        Basic(Identifier eventId, Identifier overlayId,
+        Basic(Identifier msgId, OverlayId overlayId,
                 Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
-            this.eventId = eventId;
+            this.msgId = msgId;
             this.overlayId = overlayId;
             this.selfView = selfView;
             this.publicNodes = publicNodes;
@@ -52,32 +53,32 @@ public class CroupierShuffle {
             }
         }
 
-        Basic(Identifier overlayId,
+        Basic(OverlayId overlayId,
                 Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
-            this(UUIDIdentifier.randomId(), overlayId, selfView, publicNodes, privateNodes);
+            this(BasicIdentifiers.msgId(), overlayId, selfView, publicNodes, privateNodes);
         }
 
         @Override
-        public Identifier overlayId() {
+        public OverlayId overlayId() {
             return overlayId;
         }
 
         @Override
         public Identifier getId() {
-            return eventId;
+            return msgId;
         }
     }
 
     public static class Request extends Basic {
 
-        public Request(Identifier eventId, Identifier overlayId,
+        public Request(Identifier msgId, OverlayId overlayId,
                 Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
-            super(eventId, overlayId, selfView, publicNodes, privateNodes);
+            super(msgId, overlayId, selfView, publicNodes, privateNodes);
         }
 
-        public Request(Identifier overlayId,
+        public Request(OverlayId overlayId,
                 Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
             super(overlayId, selfView, publicNodes, privateNodes);
@@ -85,25 +86,25 @@ public class CroupierShuffle {
 
         @Override
         public String toString() {
-            return "Croupier<" + overlayId() + ">ShuffleReq<" + eventId + ">";
+            return "Croupier<" + overlayId() + ">ShuffleReq<" + msgId + ">";
         }
         
         public Response answer(Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
-            return new Response(eventId, overlayId, selfView, publicNodes, privateNodes);
+            return new Response(msgId, overlayId, selfView, publicNodes, privateNodes);
         }
     }
 
     public static class Response extends Basic {
 
-        public Response(Identifier eventId, Identifier overlayId,
+        public Response(Identifier msgId, OverlayId overlayId,
                 Optional<View> selfView, 
                 Map<Identifier, CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
-            super(eventId, overlayId, selfView, publicNodes, privateNodes);
+            super(msgId, overlayId, selfView, publicNodes, privateNodes);
         }
         
-         public Response(Identifier overlayId,
+         public Response(OverlayId overlayId,
                 Optional<View> selfView, Map<Identifier, 
                         CroupierContainer> publicNodes,
                 Map<Identifier, CroupierContainer> privateNodes) {
@@ -112,7 +113,7 @@ public class CroupierShuffle {
 
         @Override
         public String toString() {
-            return "Croupier<" + overlayId() + ">ShuffleResp<" + eventId + ">";
+            return "Croupier<" + overlayId() + ">ShuffleResp<" + msgId + ">";
         }
     }
 }

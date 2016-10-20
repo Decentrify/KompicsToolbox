@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.croupier.event;
 
 import java.util.List;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
@@ -28,11 +29,11 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
  */
 public class CroupierJoin implements CroupierEvent {
     public final Identifier eventId;
-    public final Identifier overlayId;
+    public final OverlayId overlayId;
     public final List<NatAwareAddress> bootstrap;
     
-    public CroupierJoin(Identifier overlayId, List bootstrap) {
-        this.eventId = UUIDIdentifier.randomId();
+    public CroupierJoin(OverlayId overlayId, List bootstrap) {
+        this.eventId = BasicIdentifiers.eventId();
         this.overlayId = overlayId;
         this.bootstrap = bootstrap;
     }
@@ -43,7 +44,7 @@ public class CroupierJoin implements CroupierEvent {
     }
 
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
     

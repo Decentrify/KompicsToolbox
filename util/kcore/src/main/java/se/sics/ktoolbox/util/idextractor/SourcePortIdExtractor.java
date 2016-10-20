@@ -18,31 +18,25 @@
  */
 package se.sics.ktoolbox.util.idextractor;
 
-import se.sics.kompics.KompicsEvent;
-import se.sics.kompics.network.MessageNotify;
+import se.sics.kompics.network.Msg;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SourcePortIdExtractor extends ChannelIdExtractor<KompicsEvent, Identifier> {
+public class SourcePortIdExtractor extends ChannelIdExtractor<Msg, Identifier> {
 
     public SourcePortIdExtractor() {
-        super(KompicsEvent.class);
+        super(Msg.class);
     }
 
     @Override
-    public Identifier getValue(KompicsEvent msg) {
-        if (msg instanceof KContentMsg) {
-            return new IntIdentifier(((KContentMsg)msg).getHeader().getSource().getPort());
-        } else if(msg instanceof MessageNotify.Req && ((MessageNotify.Req)msg).msg instanceof KContentMsg) {
-            return new IntIdentifier(((KContentMsg)((MessageNotify.Req)msg).msg).getHeader().getSource().getPort());
-        } else {
-            return null;
-        }
+    public Identifier getValue(Msg msg) {
+        IntIdFactory intIdFactory = new IntIdFactory(null);
+        Identifier portId = intIdFactory.rawId(msg.getHeader().getSource().getPort());
+        return portId;
     }
 }

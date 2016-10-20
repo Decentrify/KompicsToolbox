@@ -35,8 +35,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -60,7 +59,7 @@ public class TestComp extends ComponentDefinition {
     //****************************EXTERNAL_STATE********************************
     private KAddress selfAdr;
     private final KAddress partnerAdr;
-    private final Identifier overlayId;
+    private final OverlayId overlayId;
     //****************************INTERNAL_STATE********************************
     private int counter = 0;
     //********************************AUX***************************************
@@ -148,9 +147,9 @@ public class TestComp extends ComponentDefinition {
     public static class Init extends se.sics.kompics.Init<TestComp> {
 
         public final KAddress partnerAdr;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
 
-        public Init(KAddress partner, Identifier overlayId) {
+        public Init(KAddress partner, OverlayId overlayId) {
             this.partnerAdr = partner;
             this.overlayId = overlayId;
         }
@@ -189,12 +188,7 @@ public class TestComp extends ComponentDefinition {
 
         @Override
         public String toString() {
-            return "DataTimeout<" + getId() + ">";
+            return "DataTimeout<" + getTimeoutId()+ ">";
         }
-
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
-        }
-
     }
 }

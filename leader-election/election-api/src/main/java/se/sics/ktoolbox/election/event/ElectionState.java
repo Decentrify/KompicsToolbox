@@ -1,8 +1,8 @@
 package se.sics.ktoolbox.election.event;
 
-import se.sics.kompics.KompicsEvent;
-
 import java.util.UUID;
+import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
@@ -14,25 +14,33 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class ElectionState{
 
     public static class EnableLGMembership implements ElectionEvent {
-        public final Identifier id;
+        public final Identifier eventId;
         public final UUID electionRoundId;
-        public EnableLGMembership(Identifier id, UUID electionRoundId){
-            this.id = id;
+        public EnableLGMembership(Identifier eventId, UUID electionRoundId){
+            this.eventId = eventId;
             this.electionRoundId = electionRoundId;
+        }
+        
+        public EnableLGMembership(UUID electionRoundId){
+            this(BasicIdentifiers.eventId(), electionRoundId);
         }
 
         @Override
         public Identifier getId() {
-            return id;
+            return eventId;
         }
     }
 
     public static class DisableLGMembership implements KompicsEvent{
-        public final Identifier id;
+        public final Identifier eventId;
         public final UUID  electionRoundId;
-        public DisableLGMembership(Identifier id, UUID electionRoundId){
-            this.id = id;
+        public DisableLGMembership(Identifier eventId, UUID electionRoundId){
+            this.eventId = eventId;
             this.electionRoundId = electionRoundId;
+        }
+        
+        public DisableLGMembership(UUID electionRoundId){
+            this(BasicIdentifiers.eventId(), electionRoundId);
         }
     }
 }

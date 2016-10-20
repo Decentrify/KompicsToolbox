@@ -16,17 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.tracking.load;
-
-import se.sics.kompics.KompicsEvent;
+package se.sics.ledbat.core;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class LoadTrackingEvent implements KompicsEvent {
-    public final long sentAt;
-    
-    public LoadTrackingEvent() {
-        this.sentAt = System.currentTimeMillis();
+public class DownloadThroughput {
+
+    public final double reqThroughput;
+    public final double inTimeThroughput;
+    public final double lateThroughput;
+    public final double timedOutThroughput;
+
+    public DownloadThroughput(double reqThroughput, double inTimeThroughput, double lateThroughput, double timedOutThroughput) {
+        this.reqThroughput = reqThroughput;
+        this.inTimeThroughput = inTimeThroughput;
+        this.lateThroughput = lateThroughput;
+        this.timedOutThroughput = timedOutThroughput;
     }
 }

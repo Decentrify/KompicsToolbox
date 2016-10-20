@@ -20,21 +20,21 @@
 package se.sics.ktoolbox.cc.bootstrap.event.status;
 
 import se.sics.ktoolbox.cc.event.CCEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CCBootstrapDisconnected implements CCEvent {
-    public final Identifier id;
+    public final Identifier eventId;
     
     public CCBootstrapDisconnected() {
-        this.id = UUIDIdentifier.randomId();
+        this.eventId = BasicIdentifiers.eventId();
     }
     
     @Override
     public Identifier getId() {
-        return id;
+        return eventId;
     }
 }

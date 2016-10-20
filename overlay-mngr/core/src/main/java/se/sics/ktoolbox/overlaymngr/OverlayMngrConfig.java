@@ -20,8 +20,11 @@ package se.sics.ktoolbox.overlaymngr;
 
 import java.util.Arrays;
 import se.sics.ktoolbox.util.config.options.BasicAddressBootstrapOption;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -34,7 +37,8 @@ public class OverlayMngrConfig {
     public final static BasicAddressBootstrapOption bootstrap = new BasicAddressBootstrapOption("globalcroupier.bootstrap");
     
     public static Identifier getGlobalCroupierIntegerId() {
-        return new IntIdentifier(0);
+        IdentifierFactory baseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        return baseIdFactory.id(new BasicBuilders.IntBuilder(0));
     }
     
     public static boolean isGlobalCroupier(Identifier overlayId) {

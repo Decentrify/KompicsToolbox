@@ -19,8 +19,9 @@
 package se.sics.ktoolbox.omngr.bootstrap.event;
 
 import java.util.List;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -31,15 +32,15 @@ public class Sample {
     public static class Request implements BootstrapEvent {
 
         public final Identifier eventId;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
 
-        public Request(Identifier eventId, Identifier overlayId) {
+        public Request(Identifier eventId, OverlayId overlayId) {
             this.eventId = eventId;
             this.overlayId = overlayId;
         }
 
-        public Request(Identifier overlayId) {
-            this(UUIDIdentifier.randomId(), overlayId);
+        public Request(OverlayId overlayId) {
+            this(BasicIdentifiers.eventId(), overlayId);
         }
 
         @Override
@@ -59,10 +60,10 @@ public class Sample {
 
     public static class Response implements BootstrapEvent {
         public final Identifier eventId;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
         public final List<KAddress> sample;
 
-        Response(Identifier eventId, Identifier overlayId, List<KAddress> sample) {
+        Response(Identifier eventId, OverlayId overlayId, List<KAddress> sample) {
             this.eventId = eventId;
             this.overlayId = overlayId;
             this.sample = sample;

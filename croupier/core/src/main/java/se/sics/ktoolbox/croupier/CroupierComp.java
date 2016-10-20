@@ -47,20 +47,19 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewPacket;
 import se.sics.ktoolbox.croupier.aggregation.CroupierViewReducer;
-import se.sics.ktoolbox.croupier.aggregation.SelfViewReducer;
 import se.sics.ktoolbox.croupier.aggregation.SelfViewPacket;
-import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
-import se.sics.ktoolbox.croupier.event.CroupierSample;
-import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
+import se.sics.ktoolbox.croupier.aggregation.SelfViewReducer;
 import se.sics.ktoolbox.croupier.behaviour.CroupierBehaviour;
 import se.sics.ktoolbox.croupier.behaviour.CroupierObserver;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
-import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
+import se.sics.ktoolbox.croupier.event.CroupierSample;
+import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
 import se.sics.ktoolbox.croupier.view.LocalView;
+import se.sics.ktoolbox.util.aggregation.CompTracker;
+import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
@@ -68,11 +67,9 @@ import se.sics.ktoolbox.util.network.basic.DecoratedHeader;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatType;
 import se.sics.ktoolbox.util.other.AdrContainer;
-import se.sics.ktoolbox.util.aggregation.CompTracker;
-import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.overlays.view.archive.BootstrapView;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
+import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
+import se.sics.ktoolbox.util.overlays.view.archive.BootstrapView;
 import se.sics.ktoolbox.util.update.View;
 
 /**
@@ -98,7 +95,7 @@ public class CroupierComp extends ComponentDefinition {
     //******************************CONFIG**************************************
     private final SystemKCWrapper systemConfig;
     private final CroupierKCWrapper croupierConfig;
-    private final Identifier overlayId;
+    private final OverlayId overlayId;
     private final NatAwareAddress selfAdr;
     //******************************SELF****************************************
     private CroupierBehaviour behaviour;
@@ -356,9 +353,6 @@ public class CroupierComp extends ComponentDefinition {
                 retainPrivate = Triplet.with(partnerAdr, partnerView.get(), true);
             }
         }
-        if (overlayId.equals(new IntIdentifier(48833153))) {
-            System.out.println(1);
-        }
         publicView.selectToKeep(selfAdr, retainPublic, publicSample);
         privateView.selectToKeep(selfAdr, retainPrivate, privateSample);
     }
@@ -417,9 +411,9 @@ public class CroupierComp extends ComponentDefinition {
     public static class Init extends se.sics.kompics.Init<CroupierComp> {
 
         public final NatAwareAddress selfAdr;
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
 
-        public Init(NatAwareAddress selfAdr, Identifier overlayId) {
+        public Init(NatAwareAddress selfAdr, OverlayId overlayId) {
             this.selfAdr = selfAdr;
             this.overlayId = overlayId;
         }
@@ -432,7 +426,7 @@ public class CroupierComp extends ComponentDefinition {
             return;
         }
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(period, period);
-        ShuffleCycle sc = new ShuffleCycle(spt);
+        ShuffleCycle sc = new ShuffleCycle(spt, overlayId);
         spt.setTimeoutEvent(sc);
         trigger(spt, timer);
 
@@ -450,28 +444,20 @@ public class CroupierComp extends ComponentDefinition {
         shuffleCycle.setAt0(null);
     }
 
-    private class ShuffleCycle extends Timeout implements CroupierEvent {
+    private static class ShuffleCycle extends Timeout {
 
-        final long period;
-
-        ShuffleCycle(SchedulePeriodicTimeout request) {
+        public final long period;
+        public final OverlayId overlayId;
+        
+        ShuffleCycle(SchedulePeriodicTimeout request, OverlayId overlayId) {
             super(request);
             period = request.getPeriod();
+            this.overlayId = overlayId;
         }
 
         @Override
         public String toString() {
-            return "Croupier<" + overlayId() + ">ShuffleCycle<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
-        }
-
-        @Override
-        public Identifier overlayId() {
-            return overlayId;
+            return "Croupier<" + overlayId + ">ShuffleCycle<" + getTimeoutId() + ">";
         }
     }
 
@@ -480,7 +466,7 @@ public class CroupierComp extends ComponentDefinition {
             LOG.warn("{} double starting shuffle timeout", logPrefix);
         }
         ScheduleTimeout spt = new ScheduleTimeout(croupierConfig.shufflePeriod / 2);
-        ShuffleTimeout sc = new ShuffleTimeout(spt, dest);
+        ShuffleTimeout sc = new ShuffleTimeout(spt, dest, overlayId);
         spt.setTimeoutEvent(sc);
         shuffleTid = sc.getTimeoutId();
         trigger(spt, timer);
@@ -496,28 +482,20 @@ public class CroupierComp extends ComponentDefinition {
 
     }
 
-    private class ShuffleTimeout extends Timeout implements CroupierEvent {
+    private static class ShuffleTimeout extends Timeout {
 
-        final NatAwareAddress dest;
+        public final NatAwareAddress dest;
+        public final OverlayId overlayId;
 
-        ShuffleTimeout(ScheduleTimeout request, NatAwareAddress dest) {
+        ShuffleTimeout(ScheduleTimeout request, NatAwareAddress dest, OverlayId overlayId) {
             super(request);
             this.dest = dest;
+            this.overlayId = overlayId;
         }
 
         @Override
         public String toString() {
-            return "Croupier<" + overlayId() + ">ShuffleTimeout<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
-        }
-
-        @Override
-        public Identifier overlayId() {
-            return overlayId;
+            return "Croupier<" + overlayId + ">ShuffleTimeout<" + getTimeoutId() + ">";
         }
     }
 }

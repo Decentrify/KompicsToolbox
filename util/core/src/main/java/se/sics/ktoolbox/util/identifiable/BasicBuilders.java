@@ -16,38 +16,49 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.identifiable.basic;
+package se.sics.ktoolbox.util.identifiable;
 
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
 import java.util.UUID;
-import se.sics.kompics.network.netty.serialization.Serializer;
-import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.identifiable.IdentifierBuilder;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class UUIDIdentifierSerializer implements Serializer {
-    private final int id;
-    
-    public UUIDIdentifierSerializer(int id) {
-        this.id = id;
-    }
-    
-    @Override
-    public int identifier() {
-        return id;
+public class BasicBuilders {
+
+    public static class IntBuilder implements IdentifierBuilder {
+
+        public final int base;
+
+        public IntBuilder(int base) {
+            this.base = base;
+        }
     }
 
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        UUIDIdentifier obj = (UUIDIdentifier)o;
-        Serializers.lookupSerializer(UUID.class).toBinary(obj.id, buf);
+    public static class StringBuilder implements IdentifierBuilder {
+
+        public final String base;
+
+        public StringBuilder(String base) {
+            this.base = base;
+        }
     }
 
-    @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        UUID identifier = (UUID)Serializers.lookupSerializer(UUID.class).fromBinary(buf, hint);
-        return new UUIDIdentifier(identifier);
+    public static class ByteBuilder implements IdentifierBuilder {
+
+        public final byte[] base;
+
+        public ByteBuilder(byte[] base) {
+            this.base = base;
+        }
+    }
+    
+    public static class UUIDBuilder implements IdentifierBuilder {
+        public final UUID base;
+        
+        public UUIDBuilder(UUID base) {
+            this.base = base;
+        }
     }
 }

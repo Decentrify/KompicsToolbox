@@ -37,6 +37,10 @@ public class EventContentValidator implements EventValidator {
         this.foundEvent = foundEvent;
     }
     
+    public KompicsEvent getFound() {
+        return foundEvent;
+    }
+    
     @Override
     public boolean isValid() {
         return eventComp.isEqual(expectedEvent, foundEvent);

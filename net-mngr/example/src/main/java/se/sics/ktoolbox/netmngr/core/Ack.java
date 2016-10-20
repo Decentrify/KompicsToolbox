@@ -19,34 +19,35 @@
 package se.sics.ktoolbox.netmngr.core;
 
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Ack implements OverlayEvent {
-    public final Identifier eventId;
-    public final Identifier overlayId;
+    public final Identifier msgId;
+    public final OverlayId overlayId;
     public final int counter;
     
-    public Ack(Identifier eventId, Identifier overlayId, int counter) {
-        this.eventId = eventId;
+    public Ack(Identifier msgId, OverlayId overlayId, int counter) {
+        this.msgId = msgId;
         this.overlayId = overlayId;
         this.counter = counter;
     }
     
     @Override
-    public Identifier overlayId() {
+    public OverlayId overlayId() {
         return overlayId;
     }
 
     @Override
     public Identifier getId() {
-        return eventId;
+        return msgId;
     }
     
     @Override
     public String toString() {
-        return "Ack<" + overlayId + ", " + eventId + ">";
+        return "Ack<" + overlayId + ", " + msgId + ">";
     }
 }

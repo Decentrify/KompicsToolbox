@@ -44,7 +44,7 @@ public class LedbatMsgSerializer {
         public void toBinary(Object o, ByteBuf buf) {
             LedbatMsg.Request obj = (LedbatMsg.Request)o;
             buf.writeLong(obj.leecherAppReqSendT);
-            Serializers.toBinary(obj.payload, buf);
+            Serializers.toBinary(obj.content, buf);
         }
 
         @Override
@@ -72,7 +72,7 @@ public class LedbatMsgSerializer {
             LedbatMsg.Response obj = (LedbatMsg.Response)o;
             buf.writeLong(obj.leecherAppReqSendT);
             buf.writeLong(System.currentTimeMillis());
-            Serializers.toBinary(obj.payload, buf);
+            Serializers.toBinary(obj.content, buf);
         }
 
         @Override

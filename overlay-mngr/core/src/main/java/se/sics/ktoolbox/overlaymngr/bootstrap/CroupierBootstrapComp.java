@@ -19,10 +19,8 @@
 package se.sics.ktoolbox.overlaymngr.bootstrap;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +41,8 @@ import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrConfig;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -144,7 +141,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
 
     }
 
-    private void scheduleNextRebootstrap(Identifier overlayId, int multiplier) {
+    private void scheduleNextRebootstrap(OverlayId overlayId, int multiplier) {
         if (multiplier < rebootMaxMult) {
             rebootstrap.put(overlayId, multiplier + 1);
         }
@@ -158,23 +155,18 @@ public class CroupierBootstrapComp extends ComponentDefinition {
         trigger(spt, timerPort);
     }
 
-    private class RebootstrapTimeout extends Timeout implements Identifiable<Identifier> {
+    private class RebootstrapTimeout extends Timeout {
 
-        public final Identifier overlayId;
+        public final OverlayId overlayId;
 
-        RebootstrapTimeout(ScheduleTimeout request, Identifier overlayId) {
+        RebootstrapTimeout(ScheduleTimeout request, OverlayId overlayId) {
             super(request);
             this.overlayId = overlayId;
         }
 
         @Override
         public String toString() {
-            return "Rebootstrap<" + overlayId + "><Timeout<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
+            return "Rebootstrap<" + overlayId + "><Timeout<" + getTimeoutId()+ ">";
         }
     }
 

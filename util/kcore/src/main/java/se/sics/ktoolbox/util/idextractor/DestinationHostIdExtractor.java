@@ -37,6 +37,7 @@ public class DestinationHostIdExtractor extends ChannelIdExtractor<KContentMsg, 
     @Override
     public Identifier getValue(KContentMsg msg) {
         KContentMsg<KAddress, KHeader<KAddress>, Object> message = (KContentMsg<KAddress, KHeader<KAddress>, Object>)msg;
-        return message.getHeader().getDestination().getId();
+        KAddress destination = message.getHeader().getDestination();
+        return destination == null ? null : destination.getId();
     }
 }

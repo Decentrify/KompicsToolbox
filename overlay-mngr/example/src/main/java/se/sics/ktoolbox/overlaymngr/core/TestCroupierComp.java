@@ -29,7 +29,7 @@ import se.sics.kompics.Start;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.overlaymngr.util.ServiceView;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
@@ -45,7 +45,7 @@ public class TestCroupierComp extends ComponentDefinition {
     private final Positive croupierPort = requires(CroupierPort.class);
     private final Negative viewUpdatePort = provides(OverlayViewUpdatePort.class);
     
-    private final Identifier croupierId;
+    private final OverlayId croupierId;
     
     public TestCroupierComp(TestCroupierInit init) {
         croupierId = init.croupierId;
@@ -74,9 +74,9 @@ public class TestCroupierComp extends ComponentDefinition {
     
     
     public static class TestCroupierInit extends Init<TestCroupierComp> {
-        public final Identifier croupierId;
+        public final OverlayId croupierId;
         
-        public TestCroupierInit(Identifier croupierId) {
+        public TestCroupierInit(OverlayId croupierId) {
             this.croupierId = croupierId;
         }
     }

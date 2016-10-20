@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
@@ -43,13 +44,11 @@ import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
 import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
-import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
 import se.sics.ktoolbox.omngr.bootstrap.event.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.event.Sample;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdentifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
@@ -78,10 +77,10 @@ public class BootstrapClientComp extends ComponentDefinition {
     private KAddress bootstrapServer;
     //*****************************INTERNAL_STATE*******************************
     private Random rand;
-    private Set<Identifier> heartbeats = new HashSet<>();
+    private Set<OverlayId> heartbeats = new HashSet<>();
     //********************************AUX_STATE*********************************
     private UUID heartbeatTimeout;
-    private Map<Identifier, CCOverlaySample.Request> pendingRequests = new HashMap<>();
+    private Map<Identifier, Pair<CCOverlaySample.Request, UUID>> pendingRequests = new HashMap<>();
 
     public BootstrapClientComp(Init init) {
         SystemKCWrapper systemConfig = new SystemKCWrapper(config());
@@ -90,7 +89,7 @@ public class BootstrapClientComp extends ComponentDefinition {
         LOG.info("{}initiating with seed:{}", logPrefix, systemConfig.seed);
 
         bootstrapServer = init.bootstrapServer;
-        
+
         rand = new Random(systemConfig.seed);
 
         subscribe(handleStart, control);
@@ -113,7 +112,7 @@ public class BootstrapClientComp extends ComponentDefinition {
         @Override
         public void handle(HeartbeatTimeout event) {
             LOG.debug("{}heartbeating", logPrefix);
-            for (Identifier overlayId : heartbeats) {
+            for (OverlayId overlayId : heartbeats) {
                 Heartbeat content = new Heartbeat(overlayId, rand.nextInt(maxSampleSize));
 //                Heartbeat content = new Heartbeat(overlayId, ((IntIdentifier) selfAdr.getId()).id);
                 KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
@@ -136,10 +135,9 @@ public class BootstrapClientComp extends ComponentDefinition {
         public void handle(CCOverlaySample.Request req) {
             LOG.debug("{}sample request for:{}", logPrefix, req.overlayId);
 
-            Identifier eventId = scheduleSampleReqTimeout();
-            pendingRequests.put(eventId, req);
-
-            Sample.Request content = new Sample.Request(eventId, req.overlayId);
+            Sample.Request content = new Sample.Request(req.overlayId);
+            UUID tId = scheduleSampleReqTimeout(content.getId());
+            pendingRequests.put(content.getId(), Pair.with(req, tId));
             KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
             LOG.trace("{}sending:{}", logPrefix, container);
             trigger(container, networkPort);
@@ -152,14 +150,14 @@ public class BootstrapClientComp extends ComponentDefinition {
                 @Override
                 public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> container) {
                     LOG.trace("{}received:{}", logPrefix, container);
-                    CCOverlaySample.Request req = pendingRequests.remove(content.getId());
+                    Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(content.getId());
                     if (req == null) {
                         LOG.trace("{}late:{}", logPrefix, container);
                         return;
                     }
-                    cancelTimeout(content.getId());
-                    LOG.debug("{}sample response for:{}", logPrefix, req.overlayId);
-                    answer(req, req.answer(content.sample));
+                    cancelTimeout(req.getValue1());
+                    LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
+                    answer(req.getValue0(), req.getValue0().answer(content.sample));
                 }
             };
 
@@ -167,21 +165,17 @@ public class BootstrapClientComp extends ComponentDefinition {
         @Override
         public void handle(SampleRequestTimeout timeout) {
             LOG.debug("{}timeout on sample request", logPrefix);
-            CCOverlaySample.Request req = pendingRequests.remove(timeout.getId());
+            Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(timeout.eventId);
             if (req == null) {
                 LOG.trace("{}late:{}", logPrefix, timeout);
                 return;
             }
-            LOG.debug("{}sample response for:{}", logPrefix, req.overlayId);
-            answer(req, req.answer(new ArrayList<KAddress>()));
+            LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
+            answer(req.getValue0(), req.getValue0().answer(new ArrayList<KAddress>()));
         }
     };
 
     //*******************************TIMEOUTS***********************************
-    private void cancelTimeout(Identifier timeout) {
-        cancelTimeout(((UUIDIdentifier) timeout).id);
-    }
-
     private void cancelTimeout(UUID timeout) {
         CancelTimeout cpt = new CancelTimeout(timeout);
         trigger(cpt, timerPort);
@@ -208,7 +202,7 @@ public class BootstrapClientComp extends ComponentDefinition {
 
     }
 
-    private class HeartbeatTimeout extends Timeout implements BootstrapEvent {
+    private class HeartbeatTimeout extends Timeout {
 
         HeartbeatTimeout(SchedulePeriodicTimeout request) {
             super(request);
@@ -216,37 +210,30 @@ public class BootstrapClientComp extends ComponentDefinition {
 
         @Override
         public String toString() {
-            return "HeartbeatTimeout<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
+            return "HeartbeatTimeout<" + getTimeoutId() + ">";
         }
     }
 
-    private Identifier scheduleSampleReqTimeout() {
+    private UUID scheduleSampleReqTimeout(Identifier eventId) {
         ScheduleTimeout spt = new ScheduleTimeout(msgTimeout);
-        SampleRequestTimeout sc = new SampleRequestTimeout(spt);
+        SampleRequestTimeout sc = new SampleRequestTimeout(spt, eventId);
         spt.setTimeoutEvent(sc);
         trigger(spt, timerPort);
-        return sc.getId();
+        return sc.getTimeoutId();
     }
 
-    private class SampleRequestTimeout extends Timeout implements BootstrapEvent {
+    private class SampleRequestTimeout extends Timeout {
 
-        SampleRequestTimeout(ScheduleTimeout request) {
+        public final Identifier eventId;
+
+        SampleRequestTimeout(ScheduleTimeout request, Identifier eventId) {
             super(request);
+            this.eventId = eventId;
         }
 
         @Override
         public String toString() {
-            return "SampleRequestTimeout<" + getId() + ">";
-        }
-
-        @Override
-        public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
+            return "SampleRequestTimeout<" + getTimeoutId() + ">";
         }
     }
 

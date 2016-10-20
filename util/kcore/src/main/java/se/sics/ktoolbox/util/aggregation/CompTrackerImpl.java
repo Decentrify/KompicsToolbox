@@ -31,16 +31,17 @@ import org.slf4j.Logger;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
 import se.sics.kompics.KompicsEvent;
-import se.sics.kompics.Negative;
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -82,7 +83,8 @@ public class CompTrackerImpl implements CompTracker {
 
     @Override
     public Identifier registerNegativePort(final Port<? extends PortType> port) {
-        Identifier portId = UUIDIdentifier.randomId();
+        UUIDIdFactory uuidFactory = new UUIDIdFactory();
+        Identifier portId = uuidFactory.randomId();
         for (final Class<? extends KompicsEvent> eventType : AggregationRegistry.getNegative(port.getPortType().getClass())) {
             Handler handleEvent = new Handler(eventType) {
                 @Override
@@ -98,7 +100,8 @@ public class CompTrackerImpl implements CompTracker {
 
     @Override
     public Identifier registerPositivePort(final Port<? extends PortType> port) {
-        Identifier portId = UUIDIdentifier.randomId();
+        UUIDIdFactory uuidFactory = new UUIDIdFactory();
+        Identifier portId = uuidFactory.randomId();
         for (final Class<? extends KompicsEvent> eventType : AggregationRegistry.getPositive(port.getPortType().getClass())) {
             Handler handleEvent = new Handler(eventType) {
                 @Override
@@ -191,7 +194,7 @@ public class CompTrackerImpl implements CompTracker {
 
         @Override
         public Identifier getId() {
-            return new UUIDIdentifier(getTimeoutId());
+            return BasicIdentifiers.eventId(new BasicBuilders.UUIDBuilder(getTimeoutId()));
         }
 
         @Override

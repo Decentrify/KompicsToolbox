@@ -20,8 +20,8 @@ package se.sics.ktoolbox.netmngr.event;
 
 import se.sics.kompics.Direct;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdentifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -37,7 +37,7 @@ public class NetMngrUnbind {
         }
         
         public Request(int port) {
-            this(UUIDIdentifier.randomId(), port);
+            this(BasicIdentifiers.eventId(), port);
         }
 
         @Override
@@ -62,6 +62,7 @@ public class NetMngrUnbind {
             this.req = req;
         }
         
+        @Override
         public Identifier getId() {
             return req.getId();
         }

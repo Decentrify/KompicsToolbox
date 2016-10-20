@@ -16,40 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.identifiable.basic;
-
-import com.google.common.base.Optional;
-import io.netty.buffer.ByteBuf;
-import se.sics.kompics.network.netty.serialization.Serializer;
+package se.sics.nutil;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class SimpleByteIdentifierSerializer implements Serializer {
-
-    public final int id;
-
-    public SimpleByteIdentifierSerializer(int id) {
-        this.id = id;
-    }
-
-    @Override
-    public int identifier() {
-        return id;
-    }
-
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        SimpleByteIdentifier obj = (SimpleByteIdentifier) o;
-        buf.writeInt(obj.id.length);
-        buf.writeBytes(obj.id);
-    }
-
-    @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        int idLength = buf.readInt();
-        byte[] idBytes = new byte[idLength];
-        buf.readBytes(idBytes);
-        return new SimpleByteIdentifier(idBytes);
-    }
+public interface ContentWrapper<C extends Object> {
+    public C getWrappedContent();
 }

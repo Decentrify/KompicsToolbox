@@ -20,18 +20,16 @@
  */
 package se.sics.ktoolbox.util.identifiable.basic;
 
-import com.google.common.io.BaseEncoding;
-import com.google.common.primitives.Ints;
 import java.util.Objects;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class IntIdentifier implements Identifier {
+public class IntId implements Identifier {
     public final Integer id;
     
-    public IntIdentifier(Integer id) {
+    IntId(Integer id) {
         this.id = id;
     }
     
@@ -55,7 +53,7 @@ public class IntIdentifier implements Identifier {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final IntIdentifier other = (IntIdentifier) obj;
+        final IntId other = (IntId) obj;
         if (!Objects.equals(this.id, other.id)) {
             return false;
         }
@@ -69,7 +67,7 @@ public class IntIdentifier implements Identifier {
 
     @Override
     public int compareTo(Identifier o) {
-        IntIdentifier that = (IntIdentifier)o;
+        IntId that = (IntId)o;
         return this.id.compareTo(that.id);
     }
 }

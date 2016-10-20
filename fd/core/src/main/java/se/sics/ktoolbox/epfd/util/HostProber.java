@@ -21,6 +21,7 @@
 package se.sics.ktoolbox.epfd.util;
 
 import java.util.HashMap;
+import java.util.UUID;
 import se.sics.ktoolbox.epfd.EPFDService;
 import se.sics.ktoolbox.epfd.event.EPFDFollow;
 import se.sics.ktoolbox.util.identifiable.Identifier;
@@ -36,8 +37,8 @@ public class HostProber {
     private final HostResponseTime times;
     private final HashMap<Identifier, EPFDFollow> requests = new HashMap<>();
 
-    private Identifier nextPingTid;
-    private Identifier pongTid;
+    private UUID nextPingTid;
+    private UUID pongTid;
     private boolean suspected;
 
     public HostProber(EPFDService epfd, KAddress probedHost, long minRto) {

@@ -21,6 +21,7 @@ package se.sics.ledbat.system;
 import java.util.UUID;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
@@ -40,7 +41,7 @@ public class ExMsg {
         }
 
         @Override
-        public Identifier overlayId() {
+        public OverlayId overlayId() {
             return null;
         }
 
@@ -60,7 +61,7 @@ public class ExMsg {
         }
 
         @Override
-        public Identifier overlayId() {
+        public OverlayId overlayId() {
             return null;
         }
 
