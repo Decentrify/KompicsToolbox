@@ -37,6 +37,10 @@ public class OverlayRegistry {
         typeFactory = tf;
     }
     
+    public static synchronized boolean isRegistered(OverlayId id) {
+        return reservedOverlayPrefixes.values().contains(ByteBuffer.wrap(new byte[]{id.owner}));
+    }
+    
     public static synchronized boolean registerPrefix(String owner, byte prefix) {
         if(reservedOverlayPrefixes.containsKey(owner)) {
             throw new RuntimeException("owner name clash");
@@ -48,16 +52,20 @@ public class OverlayRegistry {
         return true;
     }
     
+    public static byte getPrefix(String owner) {
+        ByteBuffer prefix = reservedOverlayPrefixes.get(owner);
+        if(prefix == null) {
+            throw new RuntimeException("ups");
+        }
+        return prefix.array()[0];
+    }
+    
     public static synchronized OverlayId.TypeComparator getTypeComparator() {
         return typeComparator;
     }
     
     public static synchronized OverlayId.TypeFactory getTypeFactory() {
         return typeFactory;
-    }
-    
-    public static synchronized boolean isRegistered(OverlayId id) {
-        return reservedOverlayPrefixes.values().contains(ByteBuffer.wrap(new byte[]{id.owner}));
     }
     
     public static synchronized String print() {

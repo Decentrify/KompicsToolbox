@@ -26,7 +26,6 @@ import se.sics.ktoolbox.util.Either;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlayId implements Identifier {
@@ -51,7 +50,7 @@ public class OverlayId implements Identifier {
 
     @Override
     public String toString() {
-        return type.toString() + ":" + sOwner + ":" + baseId.toString();
+        return type.toString() + ",o:" + sOwner + ",bId:" + baseId.toString();
     }
 
     @Override
@@ -150,7 +149,7 @@ public class OverlayId implements Identifier {
             } else if (overlayType == other) {
                 return BasicTypes.OTHER;
             } else {
-                throw new RuntimeException("unknown type:" + overlayType);
+                throw new UnknownTypeException(overlayType);
             }
         }
 
