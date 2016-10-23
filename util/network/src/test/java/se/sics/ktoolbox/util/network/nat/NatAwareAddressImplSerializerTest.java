@@ -48,7 +48,7 @@ public class NatAwareAddressImplSerializerTest {
 
     @BeforeClass
     public static void setup() {
-        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte) 0), new OverlayId.BasicTypeComparator());
         BasicIdentifiers.registerDefaults(1234l);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
@@ -83,7 +83,7 @@ public class NatAwareAddressImplSerializerTest {
         ByteBuf buf, copyBuf;
 
         IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
-        Identifier nodeId =  nodeIdFactory.randomId();
+        Identifier nodeId = nodeIdFactory.randomId();
         BasicAddress privateAdr = new BasicAddress(InetAddress.getByName("192.100.100.2"), 10000, nodeId);
         BasicAddress publicAdr = new BasicAddress(InetAddress.getByName("193.200.200.2"), 20000, nodeId);
         NatType natType = NatType.nated(Nat.MappingPolicy.HOST_DEPENDENT, Nat.AllocationPolicy.PORT_CONTIGUITY, 1,
@@ -104,12 +104,13 @@ public class NatAwareAddressImplSerializerTest {
         Assert.assertEquals(original.getPublicAdr(), copy.getPublicAdr());
         Assert.assertEquals(original.getNatType(), copy.getNatType());
         Assert.assertTrue(Objects.equals(original.parents, copy.parents));
-        Assert.assertFalse(copy.getPrivateAdr().isPresent());
+        Assert.assertTrue(copy.getPrivateAdr().isPresent());
+        Assert.assertEquals(original.getPrivateAdr().get(), copy.getPrivateAdr().get());
         Assert.assertEquals(0, copyBuf.readableBytes());
 
         copyBuf = Unpooled.buffer();
         buf.getBytes(0, copyBuf, buf.readableBytes());
-        InetSocketAddress isa = new InetSocketAddress(privateAdr.getIp(), privateAdr.getPort());
+        InetSocketAddress isa = new InetSocketAddress(publicAdr.getIp(), publicAdr.getPort());
         copy = (NatAwareAddressImpl) serializer.fromBinary(copyBuf, Optional.of((Object) isa));
         Assert.assertEquals(original.getPublicAdr(), copy.getPublicAdr());
         Assert.assertEquals(original.getNatType(), copy.getNatType());
