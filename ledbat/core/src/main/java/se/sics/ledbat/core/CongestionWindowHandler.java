@@ -165,9 +165,10 @@ public class CongestionWindowHandler {
             double off_target = (target - queuing_delay) / target;
 
             if (off_target < 0) {
-                 LOG.info("cwnd:{} history current:{} base:{}", new Object[]{cwnd, current_history, base_history});
+                 LOG.info("slow down cwnd:{} history current:{} base:{}", new Object[]{cwnd, current_history, base_history});
                 cwnd = cwnd * ledbatConfig.beta;
             } else {
+                LOG.debug("offTarget:{} gain:{}", off_target, (ledbatConfig.gain * off_target * bytes_newly_acked * ledbatConfig.mss) / cwnd);
                 cwnd = cwnd + ((ledbatConfig.gain * off_target * bytes_newly_acked * ledbatConfig.mss) / cwnd);
             }
 
@@ -225,7 +226,7 @@ public class CongestionWindowHandler {
 //                //logger.error("   TARGET UPDATED TO " + target);
 
         } else if (System.currentTimeMillis() - lastTimeCwndHalved >= rtt) { //At most once per RTT
-
+            LOG.info("halving");
             cwnd = cwnd * 0.5;
             lastTimeCwndHalved = System.currentTimeMillis();
             cwnd = cwnd > ledbatConfig.minCwnd * ledbatConfig.mss ? cwnd : ledbatConfig.minCwnd * ledbatConfig.mss;
