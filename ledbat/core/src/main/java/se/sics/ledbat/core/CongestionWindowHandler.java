@@ -275,7 +275,7 @@ public class CongestionWindowHandler {
         long nowMinute = roundToMinute(System.currentTimeMillis());
         long lastRolloverMinute = roundToMinute(last_rollover);
         if (nowMinute != lastRolloverMinute) {
-            LOG.info("base history:{}", base_history);
+            LOG.info("history current:{} base:{}", current_history, base_history);
 // base_delay_idx = (base_delay_idx + 1) % BASE_DELAY_SIZE;
             if (base_lastUpdatedIndex + 1 == ledbatConfig.base_history_size) {
                 base_history[0] = delay;
