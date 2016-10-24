@@ -165,6 +165,7 @@ public class CongestionWindowHandler {
             double off_target = (target - queuing_delay) / target;
 
             if (off_target < 0) {
+                 LOG.info("cwnd:{} history current:{} base:{}", new Object[]{cwnd, current_history, base_history});
                 cwnd = cwnd * ledbatConfig.beta;
             } else {
                 cwnd = cwnd + ((ledbatConfig.gain * off_target * bytes_newly_acked * ledbatConfig.mss) / cwnd);
@@ -275,7 +276,7 @@ public class CongestionWindowHandler {
         long nowMinute = roundToMinute(System.currentTimeMillis());
         long lastRolloverMinute = roundToMinute(last_rollover);
         if (nowMinute != lastRolloverMinute) {
-            LOG.info("history current:{} base:{}", current_history, base_history);
+            LOG.info("cwnd:{} history current:{} base:{}", new Object[]{cwnd, current_history, base_history});
 // base_delay_idx = (base_delay_idx + 1) % BASE_DELAY_SIZE;
             if (base_lastUpdatedIndex + 1 == ledbatConfig.base_history_size) {
                 base_history[0] = delay;
