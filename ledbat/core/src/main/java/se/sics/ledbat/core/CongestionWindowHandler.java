@@ -32,7 +32,7 @@ import se.sics.ktoolbox.util.tracking.load.util.FuzzyTimeoutCounter;
  */
 public class CongestionWindowHandler {
 
-    private Logger logger = LoggerFactory.getLogger(CongestionWindowHandler.class);
+    private Logger LOG = LoggerFactory.getLogger(CongestionWindowHandler.class);
 
     private final LedbatConfig ledbatConfig;
     private final FuzzyTimeoutCounter timeoutCounter;
@@ -100,7 +100,7 @@ public class CongestionWindowHandler {
 
         thresholdIsSet = false;
         sumOfTotalSentBytes = 0;
-        logger.debug(" Time (in seconds), " + "cwnd (in bytes), queuing_delay(in miliseconds), flight_size(in bytes), bytes_to_send(in bytes)");
+        LOG.debug(" Time (in seconds), " + "cwnd (in bytes), queuing_delay(in miliseconds), flight_size(in bytes), bytes_to_send(in bytes)");
     }
 
     /**
@@ -115,7 +115,7 @@ public class CongestionWindowHandler {
     }
 
     public void dumpState() {
-        logger.error("cwnd size :" + cwnd);
+        LOG.error("cwnd size :" + cwnd);
     }
 
     /* private boolean doLogSlowstart = false;
@@ -160,7 +160,7 @@ public class CongestionWindowHandler {
             if (!thresholdIsSet) {
                 ssThreshold = (long) (cwnd / ledbatConfig.mss);
                 thresholdIsSet = true;
-                logger.warn("Initial ssthreshold is reached !   threshold set to  " + ssThreshold);
+                LOG.warn("Initial ssthreshold is reached !   threshold set to  " + ssThreshold);
             }
             double off_target = (target - queuing_delay) / target;
 
@@ -217,7 +217,7 @@ public class CongestionWindowHandler {
             cwnd = cwnd * 0.5;
             lastTimeCwndHalved = System.currentTimeMillis();
             ssThreshold = (long) (cwnd / ledbatConfig.mss);
-            logger.warn("First loss!   threshold set to  " + ssThreshold);
+            LOG.warn("First loss!   threshold set to  " + ssThreshold);
             // This will work for the first flow, but not for subsequent flows (if there are
             // existing flows).
 //                target = currentDelay();
@@ -275,7 +275,7 @@ public class CongestionWindowHandler {
         long nowMinute = roundToMinute(System.currentTimeMillis());
         long lastRolloverMinute = roundToMinute(last_rollover);
         if (nowMinute != lastRolloverMinute) {
-
+            LOG.info("base history:{}", base_history);
 // base_delay_idx = (base_delay_idx + 1) % BASE_DELAY_SIZE;
             if (base_lastUpdatedIndex + 1 == ledbatConfig.base_history_size) {
                 base_history[0] = delay;
@@ -430,12 +430,12 @@ public class CongestionWindowHandler {
     }
 
     public void setTarget(double target) {
-        logger.warn("Target set from " + this.target + " to " + target);
+        LOG.warn("Target set from " + this.target + " to " + target);
         this.target = target;
     }
 
     public void setAllowed_increase(double allowedIncrease) {
-        logger.warn("Allowed Increase set from " + this.allowedIncrease + " to " + allowedIncrease);
+        LOG.warn("Allowed Increase set from " + this.allowedIncrease + " to " + allowedIncrease);
         this.allowedIncrease = allowedIncrease;
     }
 }
