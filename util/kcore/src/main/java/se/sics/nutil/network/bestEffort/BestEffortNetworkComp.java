@@ -143,7 +143,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
             } else {
                 if (timeout.retriesLeft == 0) {
                     BasicContentMsg msg = timeout.msg.answer(timeout.req.timeout());
-                    LOG.debug("{}retry timeout:{}", logPrefix, msg);
+                    LOG.info("{}retry timeout rto:{} of:{}", new Object[]{logPrefix, timeout.req.rto, msg});
                     trigger(msg, incomingNetworkPort);
                 } else {
                     LOG.debug("{}sending retry msg:{}", logPrefix, timeout.msg);
