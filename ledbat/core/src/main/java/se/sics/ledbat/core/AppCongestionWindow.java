@@ -55,7 +55,7 @@ public class AppCongestionWindow {
     }
     
     private void adjustStateMult(double multiplier) {
-        appCwnd = Math.min(Math.max(multiplier * appCwnd, ledbatCwnd.getCwnd()), ledbatCwnd.getCwnd());
+        appCwnd = Math.min(Math.max(multiplier * appCwnd, ledbatCwnd.getMinCwnd()), ledbatCwnd.getCwnd());
     }
     
     private double getMultplier(double adjustment) {
