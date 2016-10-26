@@ -102,7 +102,7 @@ public class CongestionWindowHandler {
         return ledbatConfig.initCwnd * ledbatConfig.mss;
     }
 
-    private double getMinCwnd() {
+    public double getMinCwnd() {
         return ledbatConfig.minCwnd * ledbatConfig.mss;
     }
 
