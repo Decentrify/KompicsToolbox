@@ -51,7 +51,11 @@ public class AppCongestionWindow {
     //**************************************************************************
     public void adjustState(double adjustment) {
         double multiplier_const = getMultplier(adjustment);
-        appCwnd = Math.min(Math.max(multiplier_const * appCwnd, ledbatCwnd.getInitialCwnd()), ledbatCwnd.getCwnd());
+        adjustStateMult(multiplier_const);
+    }
+    
+    private void adjustStateMult(double multiplier) {
+        appCwnd = Math.min(Math.max(multiplier * appCwnd, ledbatCwnd.getCwnd()), ledbatCwnd.getCwnd());
     }
     
     private double getMultplier(double adjustment) {
@@ -96,6 +100,7 @@ public class AppCongestionWindow {
 
         int oneWayDelay = (int) (resp.leechedNetRespT - resp.seederNetRespSendT);
         ledbatCwnd.updateCWND(oneWayDelay, flightSize, msgSize);
+        adjustStateMult(1);
     }
 
     public void late(long now, int msgSize, LedbatMsg.Response resp) {
@@ -106,6 +111,7 @@ public class AppCongestionWindow {
 
         int oneWayDelay = (int) (resp.leechedNetRespT - resp.seederNetRespSendT);
         ledbatCwnd.updateCWND(oneWayDelay, flightSize, msgSize);
+        adjustStateMult(1);
     }
 
     public void timeout(long now, int msgSize) {
@@ -113,6 +119,7 @@ public class AppCongestionWindow {
         connHistory.timeout(now, msgSize);
 
         ledbatCwnd.handleLoss(appRttEstimator.getRetransmissionTimeout());
+        adjustStateMult(1);
     }
 
     //**************************************************************************
