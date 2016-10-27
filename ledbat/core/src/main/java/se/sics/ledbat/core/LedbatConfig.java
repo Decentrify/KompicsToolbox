@@ -77,7 +77,7 @@ public class LedbatConfig {
      * Roberto's DTL paper, AIMD
      */
     public final double beta = 0.99;
-
+    
     public LedbatConfig(Config config) {
         retransmission_timeout = config.getValue(Names.RETRANSMISSION_TIMEOUT, Long.class);
         base_history_size = config.getValue(Names.BASE_HISTORY_SIZE, Integer.class);

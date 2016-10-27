@@ -20,6 +20,9 @@ package se.sics.ledbat.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.util.tracking.load.util.LinkLearner;
+import se.sics.ktoolbox.util.tracking.load.util.TimeoutCounter;
+import se.sics.ktoolbox.util.tracking.load.util.TimeoutCounterRollingWindow;
 
 /**
  * Main algorithm for calculating congestion window. Each connection has one
@@ -43,7 +46,7 @@ public class CongestionWindowHandler {
      * not we are in LEDBAT phase
      */
     private long ssThreshold;
-    
+
     private long[] base_history;
     private long[] current_history;
     private long startingTime;
@@ -51,14 +54,15 @@ public class CongestionWindowHandler {
     private long lastTimeCwndHalved;
     private int base_lastUpdatedIndex;
     private int current_lastUpdatedIndex;
+    private final TimeoutCounter timeoutCounter;
+    private final LinkLearner linkLearner;
 
     /**
      * congestion window in bytes
      */
     private double cwnd;
-    
-    private boolean thresholdIsSet;
 
+    private boolean thresholdIsSet;
 
     public CongestionWindowHandler(LedbatConfig ledbatConfig) {
         this.ledbatConfig = ledbatConfig;
@@ -66,6 +70,9 @@ public class CongestionWindowHandler {
         this.target = ledbatConfig.target;
         this.allowedIncrease = ledbatConfig.allowed_increase;
         this.ssThreshold = ledbatConfig.ssThreshold;
+
+        this.timeoutCounter = new TimeoutCounterRollingWindow();
+        this.linkLearner = new LinkLearner();
 
         initialize();
     }
@@ -80,7 +87,7 @@ public class CongestionWindowHandler {
         startingTime = System.currentTimeMillis();
         last_rollover = Long.MIN_VALUE;
         lastTimeCwndHalved = Long.MIN_VALUE;
-        
+
         current_lastUpdatedIndex = 0;
         base_lastUpdatedIndex = 0;
         current_history = new long[ledbatConfig.current_history_size];
@@ -120,6 +127,8 @@ public class CongestionWindowHandler {
      * @param bytes_newly_acked : number of bytes that is acked in this last ack
      */
     public void updateCWND(long one_way_delay, long flightSize, long bytes_newly_acked) {
+        timeoutCounter.success();
+
         updateBaseDelay(one_way_delay);
         updateCurrentDelay(one_way_delay);
         long queuing_delay = currentDelay() - baseDelay();
@@ -158,15 +167,21 @@ public class CongestionWindowHandler {
      * should be halved and cwnddecresed too minimum value. If we don't use slow
      * start or we are not in this phase, cwnd is halved.
      */
-    public double handleLoss(long rtt) {
-        long now = System.currentTimeMillis();
+    public double handleLoss(long now, long rtt) {
         if (ledbatConfig.slowStartEnabled && (cwnd <= ssThreshold * ledbatConfig.mss) && !thresholdIsSet) { // if in slow-start phase and first time loss happens
             lossHalving(now);
             finishSlowStart();
         } else if (now - lastTimeCwndHalved >= rtt) { //At most once per RTT
-            lossHalving(now);
+            long estimatedBandwidth = (long) (cwnd * 1000 / rtt);
+            double nextAcceptableLoss = linkLearner.next(estimatedBandwidth, timeoutCounter.getAcceptableLoss());
+            timeoutCounter.setAcceptableLoss(nextAcceptableLoss);
+            LOG.info("acceptable loss:{}", nextAcceptableLoss);
+            if (timeoutCounter.timeout()) {
+                lossHalving(now);
+            }
         } else {
             LOG.debug("cwnd:loss - nothing");
+            timeoutCounter.timeout();
         }
         return cwnd;
     }
@@ -202,6 +217,7 @@ public class CongestionWindowHandler {
 
     /**
      * returns the minimum of the delays in current_delay_history
+     *
      * @return current delay
      */
     private long currentDelay() {
@@ -211,6 +227,7 @@ public class CongestionWindowHandler {
     //todo:After a long peiod of silence ....
     /**
      * updates base_delay history list with the new delay received
+     *
      * @param delay : the new one_way_delay received
      */
     private void updateBaseDelay(long delay) {
@@ -263,7 +280,7 @@ public class CongestionWindowHandler {
     public double getCwnd() {
         return cwnd;
     }
-    
+
     public int getMss() {
         return ledbatConfig.mss;
     }

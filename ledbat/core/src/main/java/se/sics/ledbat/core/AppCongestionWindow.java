@@ -118,7 +118,7 @@ public class AppCongestionWindow {
         flightSize -= msgSize;
         connHistory.timeout(now, msgSize);
 
-        ledbatCwnd.handleLoss(appRttEstimator.getRetransmissionTimeout());
+        ledbatCwnd.handleLoss(now, appRttEstimator.getRetransmissionTimeout());
         adjustStateMult(1);
     }
 
