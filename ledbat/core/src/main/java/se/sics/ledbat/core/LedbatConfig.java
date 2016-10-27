@@ -94,6 +94,6 @@ public class LedbatConfig {
         slowStartAlways = config.getValue(Names.SLOW_START_ALWAYS, Boolean.class);
         ssThreshold = config.getValue(Names.SSTHRESHOLD, Long.class);
         raw = config.getValue(Names.RECEIVER_ADVERTISED_WINDOW, Integer.class);
-        acceptableLoss = config.getValue(Names.ACCEPTABLE_LOSS, Integer.class);
+        acceptableLoss = config.getValue(Names.ACCEPTABLE_LOSS, Double.class);
     }
 }
