@@ -26,12 +26,17 @@ import org.javatuples.Triplet;
 public class LossLearner {
 
     private Triplet<Long, Double, Integer> current = null;
+    private Triplet<Long, Double, Integer> previous = null;
     private Triplet<Long, Double, Integer> left = null;
     private Triplet<Long, Double, Integer> right = null;
 
     public Double next(long bandwidth, double acceptableLoss) {
         if (current == null) {
-            current = Triplet.with(bandwidth, acceptableLoss, 2);
+            if (previous == null) {
+                current = Triplet.with(bandwidth, acceptableLoss, 2);
+            } else {
+                current = previous.setAt0(bandwidth);
+            }
             return current.getValue1() - current.getValue1() / current.getValue2();
         }
         if (acceptableLoss > current.getValue1()) {
@@ -39,30 +44,35 @@ public class LossLearner {
         } else {
             left = Triplet.with(bandwidth, acceptableLoss, current.getValue2());
             if (right == null) {
-                return current.getValue1() + current.getValue2() / current.getValue2();
+                return current.getValue1() + current.getValue1() / current.getValue2();
             }
         }
         if (left == null || right == null) {
             throw new RuntimeException("should not happen - first explore left, then right");
         }
-        if (current.getValue0() < left.getValue0()) {
+        long currentBandwidth = (long) (current.getValue0() * (1 - current.getValue1()));
+        long leftBandwidth = (long) (left.getValue0() * (1 - left.getValue1()));
+        long rightBandwidth = (long) (right.getValue0() * (1 - right.getValue1()));
+
+        if (0.8 * currentBandwidth <= leftBandwidth) {
             //more throughput with less loss - we want this
             current = current.setAt2(decreaseFactor(current.getValue2()));
             right = null;
             left = null;
             return current.getValue1() - current.getValue1() / current.getValue2();
         }
-        if (current.getValue0() < right.getValue0()) {
+        if (1.2 * currentBandwidth < rightBandwidth) {
             //more throughput with more loss - acceptable
             current = current.setAt2(decreaseFactor(current.getValue2()));
             left = null;
             right = null;
-            return current.getValue1() - current.getValue2() / current.getValue2();
+            return current.getValue1() - current.getValue1() / current.getValue2();
         }
-        current = current.setAt2(increaseFactor(current.getValue2()));
+        previous = current.setAt2(increaseFactor(current.getValue2()));
+        current = null;
         right = null;
         left = null;
-        return current.getValue1() - current.getValue1() / current.getValue2();
+        return previous.getValue1();
     }
 
     private int increaseFactor(int factor) {
