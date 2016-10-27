@@ -20,7 +20,7 @@ package se.sics.ledbat.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.ktoolbox.util.tracking.load.util.LinkLearner;
+import se.sics.ktoolbox.util.tracking.load.util.LossLearner;
 import se.sics.ktoolbox.util.tracking.load.util.TimeoutCounter;
 import se.sics.ktoolbox.util.tracking.load.util.TimeoutCounterRollingWindow;
 
@@ -55,7 +55,7 @@ public class CongestionWindowHandler {
     private int base_lastUpdatedIndex;
     private int current_lastUpdatedIndex;
     private final TimeoutCounter timeoutCounter;
-    private final LinkLearner linkLearner;
+    private final LossLearner lossLearner;
 
     /**
      * congestion window in bytes
@@ -72,7 +72,7 @@ public class CongestionWindowHandler {
         this.ssThreshold = ledbatConfig.ssThreshold;
 
         this.timeoutCounter = new TimeoutCounterRollingWindow();
-        this.linkLearner = new LinkLearner();
+        this.lossLearner = new LossLearner();
 
         initialize();
     }
@@ -173,7 +173,7 @@ public class CongestionWindowHandler {
             finishSlowStart();
         } else if (now - lastTimeCwndHalved >= rtt) { //At most once per RTT
             long estimatedBandwidth = (long) (cwnd * 1000 / rtt);
-            double nextAcceptableLoss = linkLearner.next(estimatedBandwidth, timeoutCounter.getAcceptableLoss());
+            double nextAcceptableLoss = lossLearner.next(estimatedBandwidth, timeoutCounter.getAcceptableLoss());
             timeoutCounter.setAcceptableLoss(nextAcceptableLoss);
             LOG.info("acceptable loss:{}", nextAcceptableLoss);
             if (timeoutCounter.timeout()) {

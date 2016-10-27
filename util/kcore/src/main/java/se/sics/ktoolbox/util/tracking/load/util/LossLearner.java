@@ -23,7 +23,7 @@ import org.javatuples.Triplet;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class LinkLearner {
+public class LossLearner {
 
     private Triplet<Long, Double, Integer> current = null;
     private Triplet<Long, Double, Integer> left = null;
@@ -47,15 +47,15 @@ public class LinkLearner {
         }
         if (current.getValue0() < left.getValue0()) {
             //more throughput with less loss - we want this
-            right = current.setAt2(decreaseFactor(current.getValue2()));
-            current = null;
+            current = current.setAt2(decreaseFactor(current.getValue2()));
+            right = null;
             left = null;
             return current.getValue1() - current.getValue1() / current.getValue2();
         }
         if (current.getValue0() < right.getValue0()) {
             //more throughput with more loss - acceptable
-            left = current.setAt2(decreaseFactor(current.getValue2()));
-            current = null;
+            current = current.setAt2(decreaseFactor(current.getValue2()));
+            left = null;
             right = null;
             return current.getValue1() - current.getValue2() / current.getValue2();
         }
