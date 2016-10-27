@@ -172,10 +172,10 @@ public class CongestionWindowHandler {
             lossHalving(now);
             finishSlowStart();
         } else if (now - lastTimeCwndHalved >= rtt) { //At most once per RTT
-            long estimatedBandwidth = (long) (cwnd * 1000 / rtt);
-            double nextAcceptableLoss = lossLearner.next(estimatedBandwidth, timeoutCounter.getAcceptableLoss());
-            timeoutCounter.setAcceptableLoss(nextAcceptableLoss);
-            LOG.info("acceptable loss:{}", nextAcceptableLoss);
+//            long estimatedBandwidth = (long) (cwnd * 1000 / rtt);
+//            double nextAcceptableLoss = lossLearner.next(estimatedBandwidth, timeoutCounter.getAcceptableLoss());
+//            timeoutCounter.setAcceptableLoss(nextAcceptableLoss);
+//            LOG.info("acceptable loss:{}", nextAcceptableLoss);
             if (timeoutCounter.timeout()) {
                 lossHalving(now);
             }
