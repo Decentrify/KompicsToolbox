@@ -71,8 +71,9 @@ public class CongestionWindowHandler {
         this.allowedIncrease = ledbatConfig.allowed_increase;
         this.ssThreshold = ledbatConfig.ssThreshold;
 
-        this.timeoutCounter = new TimeoutCounterRollingWindow();
-        this.lossLearner = new LossLearner();
+        timeoutCounter = new TimeoutCounterRollingWindow();
+        timeoutCounter.setAcceptableLoss(ledbatConfig.acceptableLoss);
+        lossLearner = new LossLearner();
 
         initialize();
     }

@@ -42,6 +42,7 @@ public class LedbatConfig {
         public static String SLOW_START_ENABLED = "ledbat.slow_start_enabled";
         public static String SSTHRESHOLD = "ledbat.ss_threshold";
         public static String SLOW_START_ALWAYS = "ledbat.slow_start_always";
+        public static String ACCEPTABLE_LOSS = "ledbat.acceptable_loss";
     }
 
     public final long retransmission_timeout;
@@ -77,6 +78,7 @@ public class LedbatConfig {
      * Roberto's DTL paper, AIMD
      */
     public final double beta = 0.99;
+    public final double acceptableLoss;
     
     public LedbatConfig(Config config) {
         retransmission_timeout = config.getValue(Names.RETRANSMISSION_TIMEOUT, Long.class);
@@ -92,5 +94,6 @@ public class LedbatConfig {
         slowStartAlways = config.getValue(Names.SLOW_START_ALWAYS, Boolean.class);
         ssThreshold = config.getValue(Names.SSTHRESHOLD, Long.class);
         raw = config.getValue(Names.RECEIVER_ADVERTISED_WINDOW, Integer.class);
+        acceptableLoss = config.getValue(Names.ACCEPTABLE_LOSS, Integer.class);
     }
 }
