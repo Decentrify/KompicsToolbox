@@ -28,7 +28,7 @@ public class TimeoutCounterRollingWindow implements TimeoutCounter {
 
     public static final int HISTORY_SIZE = 100;
     public static final int WINDOW_SIZE = 100;
-    private double acceptableTimeoutsPercentage = 0.0001; // between 0 and 1
+    private double acceptableTimeoutsPercentage = 0.001; // between 0 and 1
 
     private final LinkedList<Pair<Integer, Integer>> history = new LinkedList<>();
     private int currentSuccess = 0;
