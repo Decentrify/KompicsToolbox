@@ -60,7 +60,6 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     Positive<Timer> timerPort = requires(Timer.class);
 
     private final KAddress self;
-    private long timeoutsNotLate = 0;
 
     //turn into a wheel
     //<contentId, targetId>
@@ -143,7 +142,6 @@ public class BestEffortNetworkComp extends ComponentDefinition {
                 LOG.trace("{}late retry:{}", logPrefix, timeout.msg);
             } else {
                 if (timeout.retriesLeft == 0) {
-                    timeoutsNotLate++;
                     BasicContentMsg msg = timeout.msg.answer(timeout.req.timeout());
                     LOG.info("{}retry timeout rto:{} of:{}", new Object[]{logPrefix, timeout.req.rto, msg});
                     trigger(msg, incomingNetworkPort);
@@ -198,9 +196,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
             LOG.debug("{}forwarding response:{}", logPrefix, msg.getContent());
             trigger(new CancelTimeout(tid), timerPort);
         } else {
-            LOG.debug("{}forwarding incoming:{}", logPrefix, msg.getContent());
-            timeoutsNotLate--;
-            LOG.info("{}timeoutsnotlate:{}", logPrefix, timeoutsNotLate);
+            LOG.debug("{}forwarding late incoming:{}", logPrefix, msg.getContent());
         }
         trigger(msg, incomingNetworkPort);
     }
