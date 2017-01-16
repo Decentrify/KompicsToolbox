@@ -26,6 +26,8 @@ import se.sics.kompics.Kompics;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 import se.sics.ledbat.LedbatSerializerSetup;
 import se.sics.ledbat.core.LedbatConfig;
@@ -36,7 +38,7 @@ import se.sics.ledbat.core.LedbatConfig;
  */
 public class SeederLauncher extends ComponentDefinition {
     public SeederLauncher() {
-        registerSerializers();
+        systemSetup();
         
         SeederLauncherConfig seederConfig = new SeederLauncherConfig(config());
         LedbatConfig ledbatConfig = new LedbatConfig(config());
@@ -49,7 +51,22 @@ public class SeederLauncher extends ComponentDefinition {
         connect(seeder.getNegative(Network.class), network.getPositive(Network.class), Channel.TWO_WAY);
     }
     
-    private void registerSerializers() {
+    private void systemSetup() {
+        overlaysSetup();
+        serializersSetup();
+    }
+    
+    private void overlaysSetup() {
+        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+        
+        byte torrentOwnerId = 1;
+        OverlayRegistry.registerPrefix(TorrentIds.TORRENT_OVERLAYS, torrentOwnerId);
+        
+        IdentifierFactory torrentBaseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        torrentIdFactory = new OverlayIdFactory(torrentBaseIdFactory, TorrentIds.Types.TORRENT, torrentOwnerId);
+    }
+    
+    private void serializersSetup() {
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         serializerId = LedbatSerializerSetup.registerSerializers(serializerId);
