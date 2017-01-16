@@ -221,7 +221,7 @@ public class CroupierComp extends ComponentDefinition {
             }
             LOG.info("{}bootstraping with:{}", new Object[]{logPrefix, join.bootstrap});
             for (NatAwareAddress bootstrap : join.bootstrap) {
-                if (!selfAdr.getId().equals(bootstrap.getId())) {
+                if (!checkIfSelf(bootstrap)) {
                     bootstrapNodes.add(bootstrap);
                 }
             }
@@ -234,7 +234,7 @@ public class CroupierComp extends ComponentDefinition {
             while (bootstrapNodes.size() < croupierConfig.viewSize) {
                 for (AdrContainer<KAddress, BootstrapView> container : sample.publicSample.values()) {
                     if (container.getContent().memberOf(overlayId)
-                            && !container.getSource().getId().equals(selfAdr.getId())) {
+                            && !checkIfSelf(container.getSource())) {
                         LOG.debug("{}rebootstrap node:{}", logPrefix, container.getSource());
                         bootstrapNodes.add((NatAwareAddress) container.getSource());
                     }
@@ -242,6 +242,16 @@ public class CroupierComp extends ComponentDefinition {
             }
         }
     };
+    
+    private boolean checkIfSelf(KAddress adr) {
+        if(adr.getId().equals(selfAdr.getId())) {
+            return true;
+        }
+        if(adr.getIp().equals(selfAdr.getIp()) && adr.getPort() == selfAdr.getPort()) {
+            return true;
+        }
+        return false;
+    }
 
     //**************************************************************************
     private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
@@ -288,8 +298,10 @@ public class CroupierComp extends ComponentDefinition {
                         return;
                     }
                     if (selfAdr.getId().equals(shufflePartner.getId())) {
-                        LOG.error("{} Tried to shuffle with myself", logPrefix);
-                        throw new RuntimeException("tried to shuffle with myself");
+                        LOG.warn("{} Tried to shuffle with myself", logPrefix);
+                        cancelShuffleTimeout();
+                        bootstrapNodes.remove(container.getDestination());
+                        return;
                     }
                     Map publicSample = publicView.receiverSample(shufflePartner);
                     Map privateSample = privateView.receiverSample(shufflePartner);
