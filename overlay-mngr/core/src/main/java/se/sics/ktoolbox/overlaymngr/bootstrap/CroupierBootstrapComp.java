@@ -59,8 +59,8 @@ public class CroupierBootstrapComp extends ComponentDefinition {
     private final Negative bootstrapPort = provides(CroupierBootstrapPort.class);
     //******************************INTERNAL_STATE******************************
     //TODO move as config - rebootstraping
-    private static long rebootPeriod = 2000;
-    private static int rebootMaxMult = 5;
+    private static long rebootPeriod = 10000;
+    private static int rebootMaxMult = 6 * 60;//if overlay is stable - rebootstrap every 1h-3h(based on the radom spread) to make sure overlay is healthy - nodes that might get disconnected
     //*****
     private Random rand;
     private Map<Identifier, Integer> rebootstrap = new HashMap<>();
@@ -146,8 +146,8 @@ public class CroupierBootstrapComp extends ComponentDefinition {
             rebootstrap.put(overlayId, multiplier + 1);
         }
         //introduce some randomness - to spread the rebootstrap load
-        //delay between rebootPeriod * [multiplier, multiplier^3] 
-        long delay = rebootPeriod * multiplier * (rand.nextInt(multiplier) + 1) * (rand.nextInt(multiplier) + 1);
+        //delay between rebootPeriod * [multiplier, 3*multiplier] 
+        long delay = rebootPeriod * multiplier * (rand.nextInt(3));
         
         ScheduleTimeout spt = new ScheduleTimeout(delay);
         RebootstrapTimeout sc = new RebootstrapTimeout(spt, overlayId);

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr.util;
+package se.sics.ktoolbox.omngr.util;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.ktoolbox.overlaymngr.util.ServiceView;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

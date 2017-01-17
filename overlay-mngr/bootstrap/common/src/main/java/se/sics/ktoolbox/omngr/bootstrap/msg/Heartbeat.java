@@ -16,8 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.omngr.bootstrap.event;
+package se.sics.ktoolbox.omngr.bootstrap.msg;
 
+import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
@@ -26,27 +27,27 @@ import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Heartbeat implements BootstrapEvent {
-    public final Identifier eventId;
+    public final Identifier msgId;
     public final OverlayId overlayId;
     public final int position;
 
-    public Heartbeat(Identifier eventId, OverlayId overlayId, int position) {
-        this.eventId = eventId;
+    public Heartbeat(Identifier msgId, OverlayId overlayId, int position) {
+        this.msgId = msgId;
         this.overlayId = overlayId;
         this.position = position;
     }
     
     public Heartbeat(OverlayId overlayId, int position) {
-        this(BasicIdentifiers.eventId(), overlayId, position);
+        this(BasicIdentifiers.msgId(), overlayId, position);
     }
     
     @Override
     public Identifier getId() {
-        return eventId;
+        return msgId;
     }
     
     @Override
     public String toString() {
-        return "Heartbeat<" + overlayId + ", " + eventId + ">";
+        return "Heartbeat<" + overlayId + ", " + msgId + ">";
     }
 }

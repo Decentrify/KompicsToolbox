@@ -202,3 +202,10 @@ netty-test/target/
 /ledbat/core/target/
 /ledbat/example/target/
 /ledbat/network/target/
+
+.DS_Store
+/simulator/dsl/target/
+/simulator/example/src/test/resources/
+/util/core/target/
+/network/core/target/
+/overlay-mngr/bootstrap/system/target/

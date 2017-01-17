@@ -27,7 +27,7 @@ import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
-import se.sics.ktoolbox.overlaymngr.OMngrSerializerSetup;
+import se.sics.ktoolbox.omngr.OMngrSerializerSetup;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrComp;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
