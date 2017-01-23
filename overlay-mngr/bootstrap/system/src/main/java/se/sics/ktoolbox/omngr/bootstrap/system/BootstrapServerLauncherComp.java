@@ -2,7 +2,7 @@
  * Copyright (C) 2009 Swedish Institute of Computer Science (SICS) Copyright (C)
  * 2009 Royal Institute of Technology (KTH)
  *
- * KompicsToolbox is free software; you can redistribute it and/or
+ * NatTraverser is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -16,10 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.overlaymngr;
+package se.sics.ktoolbox.omngr.bootstrap.system;
 
-import se.sics.ktoolbox.omngr.OMngrSerializerSetup;
-import se.sics.ktoolbox.overlaymngr.core.OMngrHostComp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.caracaldb.MessageRegistrator;
@@ -35,19 +33,17 @@ import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
-import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
-import se.sics.ktoolbox.cc.mngr.CCMngrComp;
-import se.sics.ktoolbox.cc.mngr.event.CCMngrStatus;
-import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
-import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.GradientSerializerSetup;
 import se.sics.ktoolbox.netmngr.NetworkMngrComp;
 import se.sics.ktoolbox.netmngr.NetworkMngrSerializerSetup;
 import se.sics.ktoolbox.netmngr.event.NetMngrReady;
-import se.sics.ktoolbox.overlaymngr.core.network.TestSerializerSetup;
+import se.sics.ktoolbox.omngr.bootstrap.BootstrapServerComp;
+import se.sics.ktoolbox.omngr.OMngrSerializerSetup;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
-import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 import se.sics.ktoolbox.util.status.Status;
 import se.sics.ktoolbox.util.status.StatusPort;
@@ -55,29 +51,26 @@ import se.sics.ktoolbox.util.status.StatusPort;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class OMngrLauncher extends ComponentDefinition {
+public class BootstrapServerLauncherComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OMngrLauncher.class);
-    private String logPrefix = " ";
+    private static final Logger LOG = LoggerFactory.getLogger(BootstrapServerLauncherComp.class);
+    private String logPrefix = "";
 
     //******************************CONNECTIONS*********************************
     //*************************INTERNAL_NO_CONNECTION***************************
     private Positive<StatusPort> externalStatusPort = requires(StatusPort.class);
     //****************************EXTRENAL_STATE********************************
-    private NatAwareAddress selfAdr;
+    private NatAwareAddress systemAdr;
     //********************************CLEANUP***********************************
     private Component timerComp;
     private Component netMngrComp;
-    private Component ccMngrComp;
-    private Component oMngrComp;
-    private Component hostComp;
-
-    public OMngrLauncher() {
+    private Component bootstrapServerComp; 
+    
+    public BootstrapServerLauncherComp() {
         LOG.info("initiating...");
 
         subscribe(handleStart, control);
         subscribe(handleNetReady, externalStatusPort);
-        subscribe(handleCCReady, externalStatusPort);
     }
 
     private Handler handleStart = new Handler<Start>() {
@@ -104,49 +97,27 @@ public class OMngrLauncher extends ComponentDefinition {
                 @Override
                 public void handle(NetMngrReady content, Status.Internal<NetMngrReady> container) {
                     LOG.info("{}network mngr ready", logPrefix);
-                    selfAdr = content.systemAdr;
-                    setCCMngr();
-                    trigger(Start.event, ccMngrComp.control());
+                    systemAdr = content.systemAdr;
+                    setBootstrapServer();
+                    trigger(Start.event, bootstrapServerComp.control());
                 }
             };
 
-    private void setCCMngr() {
-        LOG.info("{}setting up caracal client", logPrefix);
-        CCMngrComp.ExtPort ccMngrExtPorts = new CCMngrComp.ExtPort(timerComp.getPositive(Timer.class),
-                netMngrComp.getPositive(Network.class));
-        ccMngrComp = create(CCMngrComp.class, new CCMngrComp.Init(selfAdr, ccMngrExtPorts));
-        connect(ccMngrComp.getPositive(StatusPort.class), externalStatusPort.getPair(), Channel.TWO_WAY);
+    private void setBootstrapServer() {
+        LOG.info("{}setting up bootstrap server", logPrefix);
+        bootstrapServerComp = create(BootstrapServerComp.class, new BootstrapServerComp.Init(systemAdr));
+        connect(bootstrapServerComp.getNegative(Timer.class), timerComp.getPositive(Timer.class), Channel.TWO_WAY);
+        connect(bootstrapServerComp.getNegative(Network.class), netMngrComp.getPositive(Network.class), Channel.TWO_WAY);
     }
-
-    ClassMatchedHandler handleCCReady
-            = new ClassMatchedHandler<CCMngrStatus.Ready, Status.Internal<CCMngrStatus.Ready>>() {
-                @Override
-                public void handle(CCMngrStatus.Ready content, Status.Internal<CCMngrStatus.Ready> container) {
-                    LOG.info("{}caracal client ready", logPrefix);
-                    setOMngr();
-                    setHost();
-                    trigger(Start.event, oMngrComp.control());
-                    trigger(Start.event, hostComp.control());
-                }
-            };
-
-    private void setOMngr() {
-        LOG.info("{}setting up overlay mngr", logPrefix);
-        OverlayMngrComp.ExtPort oMngrExtPorts = new OverlayMngrComp.ExtPort(timerComp.getPositive(Timer.class),
-                netMngrComp.getPositive(Network.class), ccMngrComp.getPositive(CCHeartbeatPort.class));
-        oMngrComp = create(OverlayMngrComp.class, new OverlayMngrComp.Init(selfAdr, oMngrExtPorts));
+    
+     private static void systemSetup() {
+        BasicIdentifiers.registerDefaults2(1234l);
+        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+        
+        serializerSetup();
     }
-
-    private void setHost() {
-        LOG.info("{}setting up host", logPrefix);
-        OMngrHostComp.ExtPort hostExtPorts = new OMngrHostComp.ExtPort(timerComp.getPositive(Timer.class),
-                netMngrComp.getPositive(Network.class), oMngrComp.getPositive(CroupierPort.class), oMngrComp.getPositive(GradientPort.class),
-                oMngrComp.getNegative(OverlayViewUpdatePort.class));
-        hostComp = create(OMngrHostComp.class, new OMngrHostComp.Init(selfAdr, hostExtPorts));
-        connect(hostComp.getNegative(OverlayMngrPort.class), oMngrComp.getPositive(OverlayMngrPort.class), Channel.TWO_WAY);
-    }
-
-    private static void systemSetup() {
+    
+    private static void serializerSetup() {
         //serializers setup
         int serializerId = 128;
         MessageRegistrator.register();
@@ -155,7 +126,6 @@ public class OMngrLauncher extends ComponentDefinition {
         serializerId = GradientSerializerSetup.registerSerializers(serializerId);
         serializerId = OMngrSerializerSetup.registerSerializers(serializerId);
         serializerId = NetworkMngrSerializerSetup.registerSerializers(serializerId);
-        serializerId = TestSerializerSetup.registerSerializers(serializerId);
 
         if (serializerId > 255) {
             throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
@@ -179,10 +149,11 @@ public class OMngrLauncher extends ComponentDefinition {
         if (Kompics.isOn()) {
             Kompics.shutdown();
         }
-        Kompics.createAndStart(OMngrLauncher.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
+        Kompics.createAndStart(BootstrapServerLauncherComp.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
     }
 
     public static void stop() {
         Kompics.shutdown();
     }
+
 }

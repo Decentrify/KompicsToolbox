@@ -44,8 +44,8 @@ import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
 import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
-import se.sics.ktoolbox.omngr.bootstrap.event.Heartbeat;
-import se.sics.ktoolbox.omngr.bootstrap.event.Sample;
+import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
+import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
@@ -61,7 +61,7 @@ public class BootstrapClientComp extends ComponentDefinition {
 
     //hack - change to config later
     private final static int maxSampleSize = 10;
-    private final static long heartbeatPeriod = 1000;
+    private final static long heartbeatPeriod = 60 * 1000;
     private final static long msgTimeout = 2000;
     //**************************************************************************
 
@@ -113,20 +113,25 @@ public class BootstrapClientComp extends ComponentDefinition {
         public void handle(HeartbeatTimeout event) {
             LOG.debug("{}heartbeating", logPrefix);
             for (OverlayId overlayId : heartbeats) {
-                Heartbeat content = new Heartbeat(overlayId, rand.nextInt(maxSampleSize));
-//                Heartbeat content = new Heartbeat(overlayId, ((IntIdentifier) selfAdr.getId()).id);
-                KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
-                LOG.trace("{}sending:{}", logPrefix, container);
-                trigger(container, networkPort);
+                sendHeartbeat(overlayId);
             }
         }
     };
+
+    private void sendHeartbeat(OverlayId overlayId) {
+        Heartbeat content = new Heartbeat(overlayId, rand.nextInt(maxSampleSize));
+        //Heartbeat content = new Heartbeat(overlayId, ((IntIdentifier) selfAdr.getId()).id);
+        KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
+        LOG.trace("{}sending:{}", logPrefix, container);
+        trigger(container, networkPort);
+    }
 
     Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
         @Override
         public void handle(CCHeartbeat.Start heartbeat) {
             LOG.info("{}heartbeat on:{}", logPrefix, heartbeat.overlayId);
             heartbeats.add(heartbeat.overlayId);
+            sendHeartbeat(heartbeat.overlayId);
         }
     };
 

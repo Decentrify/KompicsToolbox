@@ -14,5 +14,6 @@
         <module>server</module>
         <module>common</module>
         <module>client</module>
+        <module>system</module>
     </modules>
 </project>

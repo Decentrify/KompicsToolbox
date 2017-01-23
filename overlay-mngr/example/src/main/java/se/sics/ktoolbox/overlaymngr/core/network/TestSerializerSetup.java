@@ -21,7 +21,7 @@ package se.sics.ktoolbox.overlaymngr.core.network;
 import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
-import se.sics.ktoolbox.overlaymngr.OMngrSerializerSetup;
+import se.sics.ktoolbox.omngr.OMngrSerializerSetup;
 import se.sics.ktoolbox.overlaymngr.core.IdView;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 

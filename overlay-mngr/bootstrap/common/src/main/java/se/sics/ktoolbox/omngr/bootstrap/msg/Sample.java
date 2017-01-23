@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.omngr.bootstrap.event;
+package se.sics.ktoolbox.omngr.bootstrap.msg;
 
 import java.util.List;
+import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
@@ -31,52 +32,52 @@ public class Sample {
 
     public static class Request implements BootstrapEvent {
 
-        public final Identifier eventId;
+        public final Identifier msgId;
         public final OverlayId overlayId;
 
-        public Request(Identifier eventId, OverlayId overlayId) {
-            this.eventId = eventId;
+        public Request(Identifier msgId, OverlayId overlayId) {
+            this.msgId = msgId;
             this.overlayId = overlayId;
         }
 
         public Request(OverlayId overlayId) {
-            this(BasicIdentifiers.eventId(), overlayId);
+            this(BasicIdentifiers.msgId(), overlayId);
         }
 
         @Override
         public Identifier getId() {
-            return eventId;
+            return msgId;
         }
 
         @Override
         public String toString() {
-            return "Sample<" + overlayId + ">Request<" + eventId + ">";
+            return "Sample<" + overlayId + ">Request<" + msgId + ">";
         }
         
         public Response answer(List<KAddress> sample) {
-            return new Response(eventId, overlayId, sample);
+            return new Response(msgId, overlayId, sample);
         }
     }
 
     public static class Response implements BootstrapEvent {
-        public final Identifier eventId;
+        public final Identifier msgId;
         public final OverlayId overlayId;
         public final List<KAddress> sample;
 
-        Response(Identifier eventId, OverlayId overlayId, List<KAddress> sample) {
-            this.eventId = eventId;
+        Response(Identifier msgId, OverlayId overlayId, List<KAddress> sample) {
+            this.msgId = msgId;
             this.overlayId = overlayId;
             this.sample = sample;
         }
 
         @Override
         public Identifier getId() {
-            return eventId;
+            return msgId;
         }
 
         @Override
         public String toString() {
-            return "Sample<" + overlayId + ">Response<" + eventId + ">";
+            return "Sample<" + overlayId + ">Response<" + msgId + ">";
         }
     }
 }
