@@ -110,6 +110,10 @@ public class NatType {
     public boolean isOpen() {
         return type.equals(Nat.Type.OPEN);
     }
+    
+    public boolean isBlocked() {
+        return type.equals(Nat.Type.UDP_BLOCKED);
+    }
 
     public static NatType open() {
         return new NatType(Nat.Type.OPEN, null, null, 0, null, 0);
