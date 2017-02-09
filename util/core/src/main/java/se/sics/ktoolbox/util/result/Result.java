@@ -25,111 +25,132 @@ import se.sics.ktoolbox.util.Either;
  */
 public class Result<V extends Object> {
 
-    /**
-     * UNSAFE - might have side effects
-     */
-    public static enum Status {
+  /**
+   * UNSAFE - might have side effects
+   */
+  public static enum Status {
 
-        SUCCESS((byte) 0), BUSY((byte) 1), TIMEOUT((byte) 2), BAD_REQUEST((byte) 3), INT_FAILURE((byte) 4), SAFE_EXT_FAILURE((byte) 5), UNSAFE_EXT_FAILURE((byte) 6);
+    SUCCESS((byte) 0),
+    BUSY((byte) 1),
+    TIMEOUT((byte) 2),
+    BAD_REQUEST((byte) 3),
+    INT_FAILURE((byte) 4),
+    SAFE_EXT_FAILURE((byte) 5),
+    UNSAFE_EXT_FAILURE((byte) 6),
+    CONTINUE((byte) 7);
 
-        public final byte code;
+    public final byte code;
 
-        Status(byte code) {
-            this.code = code;
-        }
-
-        public boolean isSuccess() {
-            return SUCCESS.equals(this);
-        }
-        
-        public static boolean isSuccess(Status status) {
-            return SUCCESS.equals(status);
-        }
-
-        public static Status statusFrom(byte code) {
-            switch (code) {
-                case 0:
-                    return SUCCESS;
-                case 1:
-                    return BUSY;
-                case 2:
-                    return TIMEOUT;
-                case 3:
-                    return BAD_REQUEST;
-                case 4:
-                    return INT_FAILURE;
-                case 5:
-                    return SAFE_EXT_FAILURE;
-                case 6:
-                    return UNSAFE_EXT_FAILURE;
-                default:
-                    throw new RuntimeException("unknown status code");
-            }
-        }
-    }
-
-    public final Status status;
-    /**
-     * SUCCESS leads to the existance of an actual value of type V in value.
-     * Failure of any kind leads to the existance of an Exception in the value
-     * fields
-     */
-    private final Either<V, Exception> value;
-
-    public Result(Status status, Either<V, Exception> value) {
-        this.status = status;
-        this.value = value;
+    Status(byte code) {
+      this.code = code;
     }
 
     public boolean isSuccess() {
-        return status.equals(Status.SUCCESS);
+      return SUCCESS.equals(this);
     }
 
-    public V getValue() {
-        return value.getLeft();
+    public static boolean isSuccess(Status status) {
+      return SUCCESS.equals(status);
     }
 
-    public Exception getException() {
-        return value.getRight();
+    public static Status statusFrom(byte code) {
+      switch (code) {
+        case 0:
+          return SUCCESS;
+        case 1:
+          return BUSY;
+        case 2:
+          return TIMEOUT;
+        case 3:
+          return BAD_REQUEST;
+        case 4:
+          return INT_FAILURE;
+        case 5:
+          return SAFE_EXT_FAILURE;
+        case 6:
+          return UNSAFE_EXT_FAILURE;
+        case 7:
+          return CONTINUE;
+        default:
+          throw new RuntimeException("unknown status code");
+      }
     }
+  }
 
-    public String getExceptionDescription() {
-        return value.getRight().getMessage();
-    }
+  public final Status status;
+  /**
+   * SUCCESS leads to the existance of an actual value of type V in value.
+   * Failure of any kind leads to the existance of an Exception in the value
+   * fields
+   */
+  private final Either<V, Exception> value;
 
-    public static <V extends Object> Result<V> success(V value) {
-        Either<V, String> evalue = Either.left(value);
-        return new Result(Status.SUCCESS, evalue);
-    }
+  public Result(Status status, Either<V, Exception> value) {
+    this.status = status;
+    this.value = value;
+  }
 
-    public static Result failure(Status status, Exception ex) {
-        Either evalue = Either.right(ex);
-        return new Result(status, evalue);
-    }
+  public boolean isSuccess() {
+    return status.equals(Status.SUCCESS);
+  }
+  
+  public boolean isContinue() {
+    return status.equals(Status.CONTINUE);
+  }
 
-    public static Result timeout(Exception ex) {
-        return failure(Result.Status.TIMEOUT, ex);
-    }
+  public V getValue() {
+    return value.getLeft();
+  }
 
-    public static Result badArgument(String cause) {
-        return failure(Result.Status.BAD_REQUEST, new IllegalArgumentException(cause));
-    }
-    public static Result badRequest(Exception ex) {
-        return failure(Result.Status.BAD_REQUEST, ex);
-    }
+  public Exception getException() {
+    return value.getRight();
+  }
 
-    public static Result internalStateFailure(String msg) {
-        return failure(Result.Status.INT_FAILURE, new IllegalStateException(msg));
-    }
-    public static Result internalFailure(Exception ex) {
-        return failure(Result.Status.INT_FAILURE, ex);
-    }
+  public String getExceptionDescription() {
+    return value.getRight().getMessage();
+  }
 
-    public static Result externalSafeFailure(Exception ex) {
-        return failure(Result.Status.SAFE_EXT_FAILURE, ex);
-    }
+  public static <V extends Object> Result<V> success(V value) {
+    Either<V, String> evalue = Either.left(value);
+    return new Result(Status.SUCCESS, evalue);
+  }
 
-    public static Result externalUnsafeFailure(Exception ex) {
-        return failure(Result.Status.UNSAFE_EXT_FAILURE, ex);
-    }
+  public static <V extends Object> Result<V> successContinue(V partial) {
+    Either<V, String> evalue = Either.left(partial);
+    return new Result(Status.CONTINUE, evalue);
+  }
+
+  public static Result failure(Status status, Exception ex) {
+    Either evalue = Either.right(ex);
+    return new Result(status, evalue);
+  }
+
+  public static Result timeout(Exception ex) {
+    return failure(Result.Status.TIMEOUT, ex);
+  }
+
+  public static Result badArgument(String cause) {
+    return failure(Result.Status.BAD_REQUEST,
+            new IllegalArgumentException(cause));
+  }
+
+  public static Result badRequest(Exception ex) {
+    return failure(Result.Status.BAD_REQUEST, ex);
+  }
+
+  public static Result internalStateFailure(String msg) {
+    return failure(Result.Status.INT_FAILURE, new IllegalStateException(msg));
+  }
+
+  public static Result internalFailure(Exception ex) {
+    return failure(Result.Status.INT_FAILURE, ex);
+  }
+
+  public static Result externalSafeFailure(Exception ex) {
+    return failure(Result.Status.SAFE_EXT_FAILURE, ex);
+  }
+
+  public static Result externalUnsafeFailure(Exception ex) {
+    return failure(Result.Status.UNSAFE_EXT_FAILURE, ex);
+  }
 }

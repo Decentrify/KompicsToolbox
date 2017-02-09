@@ -209,3 +209,4 @@ netty-test/target/
 /util/core/target/
 /network/core/target/
 /overlay-mngr/bootstrap/system/target/
+/util/examples/target/

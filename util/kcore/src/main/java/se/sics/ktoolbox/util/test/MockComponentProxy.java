@@ -232,6 +232,16 @@ public class MockComponentProxy implements ComponentProxy {
         return new MockPort();
     }
 
+  @Override
+  public <P extends PortType> Positive<P> requires(Class<P> portType) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public <P extends PortType> Negative<P> provides(Class<P> portType) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
     public static class MockPort<P extends PortType> implements Negative<P>, Positive<P> {
 
         @Override
