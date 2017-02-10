@@ -47,7 +47,14 @@ public class MultiFSM {
   private final List<Pair<Class, List<Class>>> positivePorts;
   private final List<Pair<Class, List<Class>>> negativePorts;
 
-  public final OnEventAction oea = new OnEventAction<FSMEvent>() {
+  private final FSMOnKillAction oka = new FSMOnKillAction() {
+    @Override
+    public void kill(FSMId fsmId) {
+      fsms.remove(fsmId);
+    }
+  };
+  
+  private final OnEventAction oea = new OnEventAction<FSMEvent>() {
     @Override
     public void handle(FSMEvent event) {
       FSMDefId fsmdId = FSMIds.getDefId(event.getFSMName());
@@ -59,7 +66,7 @@ public class MultiFSM {
           throw new RuntimeException("illdefined fsm - critical logical error");
         }
         try {
-          fsm = fsmd.build(event.getBaseId(), es, isb.newInternalState(fsmId));
+          fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
           fsms.put(fsmId, fsm);
         } catch (FSMException ex) {
           throw new RuntimeException(ex);
@@ -74,15 +81,15 @@ public class MultiFSM {
       }
     }
   };
-
- // Class1 - ? extends PortType , Class2 - ? extends FSMEvent(KompicsEvent)
+  
+  // Class1 - ? extends PortType , Class2 - ? extends FSMEvent(KompicsEvent)
   public MultiFSM(Map<FSMDefId, FSMachineDef> fsmds, FSMExternalState es, FSMInternalStateBuilders isb,
     List<Pair<Class, List<Class>>> positivePorts, List<Pair<Class, List<Class>>> negativePorts) {
     this.fsmds = fsmds;
     this.es = es;
     this.isb = isb;
     this.positivePorts = positivePorts;
-      this.negativePorts = negativePorts;
+    this.negativePorts = negativePorts;
   }
 
   public void setProxy(ComponentProxy proxy) {
@@ -93,12 +100,12 @@ public class MultiFSM {
     Pair<List, List> ports = preparePorts();
     GenericSetup.portsAndHandledEvents(es.getProxy(), ports.getValue0(), ports.getValue1());
   }
-  
+
   public void setupHandlers() {
     Pair<List, List> ports = preparePorts();
     GenericSetup.handledEvents(es.getProxy(), ports.getValue0(), ports.getValue1());
   }
-  
+
   private Pair<List, List> preparePorts() {
     List pPorts = new LinkedList<>();
     List nPorts = new LinkedList<>();

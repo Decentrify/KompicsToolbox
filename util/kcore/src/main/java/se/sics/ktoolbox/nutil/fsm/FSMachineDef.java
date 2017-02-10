@@ -95,7 +95,7 @@ public class FSMachineDef {
     sealed = true;
   }
   
-  public FSMachine build(Identifier baseId, FSMExternalState es, FSMInternalState is) throws FSMException {
+  public FSMachine build(Identifier baseId, FSMOnKillAction oka, FSMExternalState es, FSMInternalState is) throws FSMException {
     if(!sealed) {
       throw new FSMException("Trying to build an unsealed definition"); 
     }
@@ -113,7 +113,7 @@ public class FSMachineDef {
       tt.put(e.getKey(), Pair.with(from, to));
     }
     FSMState initS = states.get(initState.getStateId(baseId));
-    return new FSMachine(id.getFSMId(baseId), states, tt, initS);
+    return new FSMachine(id.getFSMId(baseId), oka, states, tt, initS);
   }
   
   public static FSMachineDef instance(String fsmName) {

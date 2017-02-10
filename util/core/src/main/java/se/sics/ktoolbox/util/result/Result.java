@@ -37,7 +37,8 @@ public class Result<V extends Object> {
     INT_FAILURE((byte) 4),
     SAFE_EXT_FAILURE((byte) 5),
     UNSAFE_EXT_FAILURE((byte) 6),
-    CONTINUE((byte) 7);
+    CONTINUE((byte) 7),
+    LOGICAL_FAIL((byte) 8);
 
     public final byte code;
 
@@ -71,6 +72,8 @@ public class Result<V extends Object> {
           return UNSAFE_EXT_FAILURE;
         case 7:
           return CONTINUE;
+        case 8:
+          return LOGICAL_FAIL;
         default:
           throw new RuntimeException("unknown status code");
       }
@@ -93,7 +96,7 @@ public class Result<V extends Object> {
   public boolean isSuccess() {
     return status.equals(Status.SUCCESS);
   }
-  
+
   public boolean isContinue() {
     return status.equals(Status.CONTINUE);
   }
@@ -130,8 +133,7 @@ public class Result<V extends Object> {
   }
 
   public static Result badArgument(String cause) {
-    return failure(Result.Status.BAD_REQUEST,
-            new IllegalArgumentException(cause));
+    return failure(Result.Status.BAD_REQUEST, new IllegalArgumentException(cause));
   }
 
   public static Result badRequest(Exception ex) {
@@ -152,5 +154,9 @@ public class Result<V extends Object> {
 
   public static Result externalUnsafeFailure(Exception ex) {
     return failure(Result.Status.UNSAFE_EXT_FAILURE, ex);
+  }
+
+  public static Result logicalFail(String reason) {
+    return failure(Result.Status.LOGICAL_FAIL, new IllegalStateException(reason));
   }
 }

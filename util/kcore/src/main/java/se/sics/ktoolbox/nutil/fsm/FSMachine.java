@@ -20,7 +20,6 @@ package se.sics.ktoolbox.nutil.fsm;
 
 import com.google.common.base.Optional;
 import java.util.Map;
-import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +35,15 @@ public class FSMachine {
   private String logPrefix = "";
 
   public final FSMId id;
+  private final FSMOnKillAction oka;
   private FSMState currentState;
   private final Map<FSMStateId, FSMState> states;
   private final Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable;
 
-  public FSMachine(FSMId id, Map<FSMStateId, FSMState> states, Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable,
+  public FSMachine(FSMId id, FSMOnKillAction oka, Map<FSMStateId, FSMState> states, Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable,
     FSMState initState) {
     this.id = id;
+    this.oka = oka;
     this.states = states;
     this.transitionTable = transitionTable;
     this.currentState = initState;
@@ -55,6 +56,10 @@ public class FSMachine {
     if (!transition.isPresent()) {
       LOG.info("{}state:{} dropped event:{}", new Object[]{logPrefix, currentState.id, event});
       return false;
+    }
+    if(FSMTransitions.KILL.equals(transition.get())) {
+      oka.kill(id);
+      return true;
     }
     Pair<FSMStateId, FSMStateId> t = transitionTable.get(transition.get());
     if (t == null) {
