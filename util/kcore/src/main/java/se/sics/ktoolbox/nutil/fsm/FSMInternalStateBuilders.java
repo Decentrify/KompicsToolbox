@@ -21,6 +21,7 @@ package se.sics.ktoolbox.nutil.fsm;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -30,16 +31,16 @@ public class FSMInternalStateBuilders {
   
   public void register(FSMDefId id, FSMInternalStateBuilder builder) throws FSMException {
     if(stateBuilders.containsKey(id)) {
-      throw new FSMException("key:" + id +" already registered");
+      throw new FSMException("fsmd:" + id +" already registered");
     }
     stateBuilders.put(id, builder);
   }
   
-  public FSMInternalState newInternalState(FSMDefId id) throws FSMException {
-    FSMInternalStateBuilder sb = stateBuilders.get(id);
+  public FSMInternalState newInternalState(FSMId fsmId) throws FSMException {
+    FSMInternalStateBuilder sb = stateBuilders.get(fsmId.getDefId());
     if(sb == null) {
-      throw new FSMException("key:" + id +" already registered");
+      throw new FSMException("fsmd:" + fsmId.getDefId() +" not registered");
     }
-    return sb.newState();
+    return sb.newState(fsmId);
   }
 }

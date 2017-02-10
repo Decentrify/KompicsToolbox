@@ -23,7 +23,8 @@ package se.sics.ktoolbox.nutil.fsm.ids;
  */
 public class FSMIds {
   public static FSMDefId getDefId(String owner) {
-    byte fsmdId = FSMIdRegistry.getPrefix(owner);
+    byte[] fsmdId = new byte[1];
+    fsmdId[0] = FSMIdRegistry.getPrefix(owner);
     return new FSMDefId(fsmdId);
   }
 }

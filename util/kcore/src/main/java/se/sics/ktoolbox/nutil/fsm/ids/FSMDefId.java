@@ -26,10 +26,10 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMDefId {
-  public final byte[] fsmDefId = new byte[1];
-  
-  public FSMDefId(byte fsmDefId) {
-    this.fsmDefId[0] = fsmDefId;
+  public final byte[] fsmDefId;
+
+  public FSMDefId(byte[] fsmDefId) {
+    this.fsmDefId = fsmDefId;
   }
   
   public FSMId getFSMId(Identifier baseId) {

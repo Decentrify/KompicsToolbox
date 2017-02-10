@@ -21,6 +21,7 @@ package se.sics.ktoolbox.nutil.fsm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.events.Event1;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
 
 /**
@@ -106,7 +107,7 @@ public class FSM1 {
   public static class Builder implements FSMInternalStateBuilder {
 
     @Override
-    public FSMInternalState newState() {
+    public FSMInternalState newState(FSMId fsmId) {
       return new InternalState();
     }
   }

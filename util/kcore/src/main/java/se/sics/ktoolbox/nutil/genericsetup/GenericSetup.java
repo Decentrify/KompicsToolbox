@@ -33,24 +33,41 @@ import se.sics.kompics.Positive;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class GenericSetup {
+
   private static final Logger LOG = LoggerFactory.getLogger(GenericSetup.class);
 
   public static void portsAndHandledEvents(ComponentProxy proxy,
     List<Pair<Class, List<Pair<OnEventAction, Class>>>> positivePorts,
     List<Pair<Class, List<Pair<OnEventAction, Class>>>> negativePorts) {
 
-    for(Pair<Class, List<Pair<OnEventAction, Class>>> e : positivePorts) {
+    for (Pair<Class, List<Pair<OnEventAction, Class>>> e : positivePorts) {
       LOG.info("positive port:{}", e.getValue0());
       Positive port = proxy.requires(e.getValue0());
       setupPort(proxy, port, e.getValue1());
     }
-    for(Pair<Class, List<Pair<OnEventAction, Class>>> e : negativePorts) {
+    for (Pair<Class, List<Pair<OnEventAction, Class>>> e : negativePorts) {
       LOG.info("negative port:{}", e.getValue0());
       Negative port = proxy.provides(e.getValue0());
       setupPort(proxy, port, e.getValue1());
     }
   }
+  
+  public static void handledEvents(ComponentProxy proxy,
+    List<Pair<Class, List<Pair<OnEventAction, Class>>>> positivePorts,
+    List<Pair<Class, List<Pair<OnEventAction, Class>>>> negativePorts) {
 
+    for (Pair<Class, List<Pair<OnEventAction, Class>>> e : positivePorts) {
+      LOG.info("positive port:{}", e.getValue0());
+      Positive port = proxy.getNegative(e.getValue0()).getPair();
+      setupPort(proxy, port, e.getValue1());
+    }
+    for (Pair<Class, List<Pair<OnEventAction, Class>>> e : negativePorts) {
+      LOG.info("negative port:{}", e.getValue0());
+      Negative port = proxy.getPositive(e.getValue0()).getPair();
+      setupPort(proxy, port, e.getValue1());
+    }
+  }
+  
   private static void setupPort(ComponentProxy proxy, Port port, List<Pair<OnEventAction, Class>> handledEvents) {
     for (final Pair<OnEventAction, Class> e : handledEvents) {
       Handler handler = new Handler(e.getValue1()) {

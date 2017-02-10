@@ -34,6 +34,10 @@ public class FSMId {
     this.fsmDefId = fsmdId;
     this.baseId = baseId;
   }
+  
+  public FSMDefId getDefId() {
+    return new FSMDefId(fsmDefId);
+  }
 
   @Override
   public int hashCode() {

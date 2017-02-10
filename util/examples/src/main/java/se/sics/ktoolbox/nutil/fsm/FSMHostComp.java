@@ -49,10 +49,10 @@ public class FSMHostComp extends ComponentDefinition {
   private static final Logger LOG = LoggerFactory.getLogger(FSMHostComp.class);
   private String logPrefix = "";
 
-  private Negative port1 = provides(Port1.class);
-  private Positive port2 = requires(Port2.class);
+  private final Negative port1 = provides(Port1.class);
+  private final Positive port2 = requires(Port2.class);
   private Component multiFSMComp;
-  private IdentifierFactory idFact;
+  private final IdentifierFactory idFact;
 
   public FSMHostComp() {
     idFact = new UUIDIdFactory();
@@ -108,8 +108,8 @@ public class FSMHostComp extends ComponentDefinition {
       throw new RuntimeException(ex);
     }
 
-    multiFSMComp = create(MultiFSMComp.class, new MultiFSMComp.Init(fsms, events.getValue0(), events.getValue1(),
-      new MyExternalState(), builders));
+    MultiFSM fsm = new MultiFSM(fsms, new MyExternalState(), builders, events.getValue0(), events.getValue1());
+    multiFSMComp = create(MultiFSMComp.class, new MultiFSMComp.Init(fsm));
     connect(multiFSMComp.getNegative(Port1.class), port1.getPair(), Channel.TWO_WAY);
     connect(multiFSMComp.getPositive(Port2.class), port2.getPair(), Channel.TWO_WAY);
   }

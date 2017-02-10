@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.events.Event2;
 import se.sics.ktoolbox.nutil.fsm.events.Port2;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
 
 /**
@@ -64,7 +65,7 @@ public class FSM2 {
   public static class Builder implements FSMInternalStateBuilder {
 
     @Override
-    public FSMInternalState newState() {
+    public FSMInternalState newState(FSMId fsmId) {
       return new InternalState();
     }
   }

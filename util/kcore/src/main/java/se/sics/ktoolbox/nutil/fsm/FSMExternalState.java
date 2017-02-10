@@ -25,4 +25,5 @@ import se.sics.kompics.ComponentProxy;
  */
 public interface FSMExternalState {
   public void setProxy(ComponentProxy proxy);
+  public ComponentProxy getProxy();
 }
