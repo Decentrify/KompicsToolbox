@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
+import com.google.common.base.Optional;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,11 +27,11 @@ import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentProxy;
+import se.sics.ktoolbox.nutil.fsm.genericsetup.GenericSetup;
+import se.sics.ktoolbox.nutil.fsm.genericsetup.OnEventAction;
+import se.sics.ktoolbox.nutil.fsm.genericsetup.OnFSMExceptionAction;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMIds;
-import se.sics.ktoolbox.nutil.genericsetup.GenericSetup;
-import se.sics.ktoolbox.nutil.genericsetup.OnEventAction;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -40,6 +41,8 @@ public class MultiFSM {
   private static final Logger LOG = LoggerFactory.getLogger(MultiFSMComp.class);
   private String logPrefix = "";
 
+  private final OnFSMExceptionAction oexa;
+  private final FSMIdExtractor fsmIdExtractor;
   private final Map<FSMDefId, FSMachineDef> fsmds;
   private final Map<FSMId, FSMachine> fsms = new HashMap<>();
   private final FSMExternalState es;
@@ -53,38 +56,41 @@ public class MultiFSM {
       fsms.remove(fsmId);
     }
   };
-  
+
   private final OnEventAction oea = new OnEventAction<FSMEvent>() {
     @Override
     public void handle(FSMEvent event) {
-      FSMDefId fsmdId = FSMIds.getDefId(event.getFSMName());
-      FSMId fsmId = fsmdId.getFSMId(event.getBaseId());
-      FSMachine fsm = fsms.get(fsmId);
-      if (fsm == null) {
-        FSMachineDef fsmd = fsmds.get(fsmdId);
-        if (fsmd == null) {
-          throw new RuntimeException("illdefined fsm - critical logical error");
+      try {
+        Optional<FSMId> optFsmId = fsmIdExtractor.fromEvent(event);
+        if (!optFsmId.isPresent()) {
+          LOG.warn("{}fsm did not handle event:{}", new Object[]{logPrefix, event});
+          return;
         }
-        try {
+        FSMId fsmId = optFsmId.get();
+        FSMachine fsm = fsms.get(fsmId);
+        if (fsm == null) {
+          FSMachineDef fsmd = fsmds.get(fsmId.getDefId());
+          if (fsmd == null) {
+            throw new RuntimeException("illdefined fsm - critical logical error");
+          }
           fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
           fsms.put(fsmId, fsm);
-        } catch (FSMException ex) {
-          throw new RuntimeException(ex);
         }
-      }
-      try {
         if (!fsm.handle(event)) {
-          LOG.warn("{}fsm:{} did not handle event:{}", new Object[]{logPrefix, fsmId, event});
+          LOG.warn("{}fsm:{} did not handle event:{}", new Object[]{logPrefix, optFsmId, event});
         }
       } catch (FSMException ex) {
-        throw new RuntimeException(ex);
+        oexa.handle(ex);
       }
     }
   };
-  
+
   // Class1 - ? extends PortType , Class2 - ? extends FSMEvent(KompicsEvent)
-  public MultiFSM(Map<FSMDefId, FSMachineDef> fsmds, FSMExternalState es, FSMInternalStateBuilders isb,
-    List<Pair<Class, List<Class>>> positivePorts, List<Pair<Class, List<Class>>> negativePorts) {
+  public MultiFSM(OnFSMExceptionAction oexa, FSMIdExtractor fsmIdExtractor, Map<FSMDefId, FSMachineDef> fsmds,
+    FSMExternalState es, FSMInternalStateBuilders isb, List<Pair<Class, List<Class>>> positivePorts,
+    List<Pair<Class, List<Class>>> negativePorts) {
+    this.oexa = oexa;
+    this.fsmIdExtractor = fsmIdExtractor;
     this.fsmds = fsmds;
     this.es = es;
     this.isb = isb;

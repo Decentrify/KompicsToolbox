@@ -16,13 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.genericsetup;
+package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.kompics.KompicsEvent;
+import com.google.common.base.Optional;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface OnEventAction<E extends KompicsEvent> {
-  public void handle(E event);
+public interface FSMIdExtractor {
+  public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException;
 }

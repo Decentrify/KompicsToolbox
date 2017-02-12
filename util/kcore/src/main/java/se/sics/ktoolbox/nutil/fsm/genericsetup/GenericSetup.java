@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.genericsetup;
+package se.sics.ktoolbox.nutil.fsm.genericsetup;
 
 import java.util.List;
 import org.javatuples.Pair;
@@ -68,7 +68,7 @@ public class GenericSetup {
     }
   }
   
-  private static void setupPort(ComponentProxy proxy, Port port, List<Pair<OnEventAction, Class>> handledEvents) {
+  private static void setupPort(ComponentProxy proxy, Port port, List<Pair<OnEventAction, Class>> handledEvents)  {
     for (final Pair<OnEventAction, Class> e : handledEvents) {
       Handler handler = new Handler(e.getValue1()) {
         @Override

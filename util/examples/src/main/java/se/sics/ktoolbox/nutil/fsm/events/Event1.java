@@ -29,21 +29,14 @@ public class Event1 {
   public static class E1 implements FSMEvent {
 
     public final Identifier baseId;
-    public final String fsmName;
 
-    public E1(Identifier baseId, String fsmName) {
+    public E1(Identifier baseId) {
       this.baseId = baseId;
-      this.fsmName = fsmName;
     }
 
     @Override
     public Identifier getBaseId() {
       return baseId;
-    }
-
-    @Override
-    public String getFSMName() {
-      return fsmName;
     }
 
     @Override
@@ -55,21 +48,14 @@ public class Event1 {
   public static class E2 implements FSMEvent {
 
     public final Identifier baseId;
-    public final String fsmName;
 
-    public E2(Identifier baseId, String fsmName) {
+    public E2(Identifier baseId) {
       this.baseId = baseId;
-      this.fsmName = fsmName;
     }
 
     @Override
     public Identifier getBaseId() {
       return baseId;
-    }
-
-    @Override
-    public String getFSMName() {
-      return fsmName;
     }
 
     @Override
@@ -81,21 +67,14 @@ public class Event1 {
   public static class E3 implements FSMEvent {
 
     public final Identifier baseId;
-    public final String fsmName;
 
-    public E3(Identifier baseId, String fsmName) {
+    public E3(Identifier baseId) {
       this.baseId = baseId;
-      this.fsmName = fsmName;
     }
 
     @Override
     public Identifier getBaseId() {
       return baseId;
-    }
-
-    @Override
-    public String getFSMName() {
-      return fsmName;
     }
 
     @Override
@@ -107,11 +86,9 @@ public class Event1 {
   public static class E4 implements FSMEvent {
 
     public final Identifier baseId;
-    public final String fsmName;
 
-    public E4(Identifier baseId, String fsmName) {
+    public E4(Identifier baseId) {
       this.baseId = baseId;
-      this.fsmName = fsmName;
     }
 
     @Override
@@ -120,14 +97,8 @@ public class Event1 {
     }
 
     @Override
-    public String getFSMName() {
-      return fsmName;
-    }
-
-    @Override
     public String toString() {
       return "E4<" + baseId + ">";
     }
   }
-
 }

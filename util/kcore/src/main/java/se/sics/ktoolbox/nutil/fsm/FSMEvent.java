@@ -27,5 +27,4 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public interface FSMEvent extends KompicsEvent {
   //identifies all messages belonging to same FSM
   public Identifier getBaseId();
-  public String getFSMName();
 }

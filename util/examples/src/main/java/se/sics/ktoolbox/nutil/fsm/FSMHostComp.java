@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
+import com.google.common.base.Optional;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +37,9 @@ import se.sics.ktoolbox.nutil.fsm.events.Event1;
 import se.sics.ktoolbox.nutil.fsm.events.Event2;
 import se.sics.ktoolbox.nutil.fsm.events.Port1;
 import se.sics.ktoolbox.nutil.fsm.events.Port2;
+import se.sics.ktoolbox.nutil.fsm.genericsetup.OnFSMExceptionAction;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
@@ -93,12 +96,33 @@ public class FSMHostComp extends ComponentDefinition {
 
   private void connectFSM() throws FSMException {
     Map<FSMDefId, FSMachineDef> fsms = new HashMap<>();
-    FSMachineDef fsm1 = FSM1.build();
+    final FSMachineDef fsm1 = FSM1.build();
     fsms.put(fsm1.id, fsm1);
-    FSMachineDef fsm2 = FSM2.build();
+    final FSMachineDef fsm2 = FSM2.build();
     fsms.put(fsm2.id, fsm2);
 
     Pair<List<Pair<Class, List<Class>>>, List<Pair<Class, List<Class>>>> events = defineFSMEvents();
+
+    FSMIdExtractor fsmIdExtractor = new FSMIdExtractor() {
+      Map<Class, FSMDefId> eventToFSM = new HashMap<>();
+
+      {
+        eventToFSM.put(Event1.E1.class, fsm1.id);
+        eventToFSM.put(Event1.E2.class, fsm1.id);
+        eventToFSM.put(Event1.E3.class, fsm1.id);
+        eventToFSM.put(Event1.E4.class, fsm1.id);
+        eventToFSM.put(Event2.Req.class, fsm2.id);
+      }
+
+      @Override
+      public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException {
+        FSMDefId fsmDefId = eventToFSM.get(event.getClass());
+        if (fsmDefId == null) {
+          return Optional.absent();
+        }
+        return Optional.of(fsmDefId.getFSMId(event.getBaseId()));
+      }
+    };
 
     FSMInternalStateBuilders builders = new FSMInternalStateBuilders();
     try {
@@ -108,7 +132,15 @@ public class FSMHostComp extends ComponentDefinition {
       throw new RuntimeException(ex);
     }
 
-    MultiFSM fsm = new MultiFSM(fsms, new MyExternalState(), builders, events.getValue0(), events.getValue1());
+    OnFSMExceptionAction oexa = new OnFSMExceptionAction() {
+      @Override
+      public void handle(FSMException ex) {
+        throw new RuntimeException(ex);
+      }
+    };
+    
+    MultiFSM fsm = new MultiFSM(oexa, fsmIdExtractor, fsms, new MyExternalState(), builders, events.getValue0(), 
+      events.getValue1());
     multiFSMComp = create(MultiFSMComp.class, new MultiFSMComp.Init(fsm));
     connect(multiFSMComp.getNegative(Port1.class), port1.getPair(), Channel.TWO_WAY);
     connect(multiFSMComp.getPositive(Port2.class), port2.getPair(), Channel.TWO_WAY);
@@ -118,9 +150,9 @@ public class FSMHostComp extends ComponentDefinition {
     trigger(Start.event, multiFSMComp.control());
     Identifier fsm1_v1 = idFact.randomId();
     Identifier fsm1_v2 = idFact.randomId();
-    trigger(new Event1.E1(fsm1_v1, FSMs.fsm1), port1);
-    trigger(new Event1.E1(fsm1_v2, FSMs.fsm1), port1);
-    trigger(new Event1.E3(fsm1_v1, FSMs.fsm1), port1);
-    trigger(new Event1.E2(fsm1_v1, FSMs.fsm1), port1);
+    trigger(new Event1.E1(fsm1_v1), port1);
+    trigger(new Event1.E1(fsm1_v2), port1);
+    trigger(new Event1.E3(fsm1_v1), port1);
+    trigger(new Event1.E2(fsm1_v1), port1);
   }
 }

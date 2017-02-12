@@ -29,11 +29,9 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class Event2 {
   public static class Req extends Direct.Request<Resp> implements FSMEvent {
     public final Identifier baseId;
-    public final String fsmName;
     
-    public Req(Identifier baseId, String fsmName) {
+    public Req(Identifier baseId) {
       this.baseId = baseId;
-      this.fsmName = fsmName;
     }
     
     @Override
@@ -41,13 +39,8 @@ public class Event2 {
       return baseId;
     }
 
-    @Override
-    public String getFSMName() {
-      return fsmName;
-    }
-    
     public Resp answer() {
-      return new Resp(baseId, fsmName);
+      return new Resp(baseId);
     }
     
     @Override
@@ -58,11 +51,9 @@ public class Event2 {
   
   public static class Resp implements Direct.Response, FSMEvent {
     public final Identifier baseId;
-    public final String fsmName;
     
-    public Resp(Identifier baseId, String fsmName) {
+    public Resp(Identifier baseId) {
       this.baseId = baseId;
-      this.fsmName = fsmName;
     }
     
     @Override
@@ -70,11 +61,6 @@ public class Event2 {
       return baseId;
     }
 
-    @Override
-    public String getFSMName() {
-      return fsmName;
-    }
-    
     @Override
     public String toString() {
       return "Resp<" + baseId + ">";
