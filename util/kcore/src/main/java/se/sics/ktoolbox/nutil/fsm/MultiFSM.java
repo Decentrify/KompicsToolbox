@@ -42,7 +42,6 @@ public class MultiFSM {
   private String logPrefix = "";
 
   private final OnFSMExceptionAction oexa;
-  private final FSMOnWrongStateAction owsa;
   private final FSMIdExtractor fsmIdExtractor;
   private final Map<FSMDefId, FSMachineDef> fsmds;
   private final Map<FSMId, FSMachine> fsms = new HashMap<>();
@@ -76,10 +75,8 @@ public class MultiFSM {
           }
           fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
           fsms.put(fsmId, fsm);
-          fsm.handle(event);
-        } else {
-          owsa.handle(fsmId.getInitStateId(), event, es, isb.newInternalState(fsmId));
         }
+        fsm.handle(event);
       } catch (FSMException ex) {
         oexa.handle(ex);
       }
@@ -87,12 +84,10 @@ public class MultiFSM {
   };
 
   // Class1 - ? extends PortType , Class2 - ? extends FSMEvent(KompicsEvent)
-  //the owsa here is to deal with non-init events given to the multifsm when the particular fsm doesn't even exist
-  public MultiFSM(OnFSMExceptionAction oexa, FSMOnWrongStateAction owsa, FSMIdExtractor fsmIdExtractor,
+  public MultiFSM(OnFSMExceptionAction oexa,  FSMIdExtractor fsmIdExtractor,
     Map<FSMDefId, FSMachineDef> fsmds, FSMExternalState es, FSMInternalStateBuilders isb, 
     List<Pair<Class, List<Class>>> positivePorts, List<Pair<Class, List<Class>>> negativePorts) {
     this.oexa = oexa;
-    this.owsa = owsa;
     this.fsmIdExtractor = fsmIdExtractor;
     this.fsmds = fsmds;
     this.es = es;
