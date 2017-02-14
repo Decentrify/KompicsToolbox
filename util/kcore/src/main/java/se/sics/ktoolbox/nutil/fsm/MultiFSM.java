@@ -77,7 +77,7 @@ public class MultiFSM {
           fsms.put(fsmId, fsm);
         }
         if (!fsm.handle(event)) {
-          LOG.warn("{}fsm:{} did not handle event:{}", new Object[]{logPrefix, optFsmId, event});
+          LOG.warn("{}fsm:{} did not handle event:{}", new Object[]{logPrefix, fsmId, event});
         }
       } catch (FSMException ex) {
         oexa.handle(ex);
