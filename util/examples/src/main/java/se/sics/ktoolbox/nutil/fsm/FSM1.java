@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.events.Event1;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,10 +36,17 @@ public class FSM1 {
   }
   
   public static FSMachineDef build() throws FSMException {
+    FSMOnWrongStateAction owsa = new FSMOnWrongStateAction<MyExternalState, InternalState>() {
+
+      @Override
+      public void handle(FSMStateId stateId, FSMEvent event, MyExternalState es, InternalState is) {
+        LOG.warn("state:{} does not handle event:{}", stateId, event);
+      }
+    };
     FSMachineDef fsm = FSMachineDef.instance(FSMs.fsm1);
-    FSMStateDefId id1 = fsm.registerInitState(initState());
-    FSMStateDefId id2 = fsm.registerState(state2());
-    FSMStateDefId id3 = fsm.registerState(state3());
+    FSMStateDefId id1 = fsm.registerInitState(initState(owsa));
+    FSMStateDefId id2 = fsm.registerState(state2(owsa));
+    FSMStateDefId id3 = fsm.registerState(state3(owsa));
     fsm.register(Transition.T1, id1, id2);
     fsm.register(Transition.T2, id1, id3);
     fsm.register(Transition.T3, id2, id1);
@@ -47,8 +55,9 @@ public class FSM1 {
     return fsm;
   }
 
-  private static FSMStateDef initState() throws FSMException {
+  private static FSMStateDef initState(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
+    state.setOnWrongStateAction(owsa);
     state.register(Event1.E1.class, initHandler1);
     state.register(Event1.E2.class, initHandler2);
     state.seal();
@@ -71,8 +80,9 @@ public class FSM1 {
     }
   };
     
-  private static FSMStateDef state2() throws FSMException {
+  private static FSMStateDef state2(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
+    state.setOnWrongStateAction(owsa);
     state.register(Event1.E3.class, state2Handler1);
     state.seal();
     return state;
@@ -86,8 +96,9 @@ public class FSM1 {
     }
   };
   
-  private static FSMStateDef state3() throws FSMException {
+  private static FSMStateDef state3(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
+    state.setOnWrongStateAction(owsa);
     state.register(Event1.E4.class, state3Handler1);
     state.seal();
     return state;

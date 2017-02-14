@@ -40,7 +40,8 @@ public class FSMachine {
   private final Map<FSMStateId, FSMState> states;
   private final Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable;
 
-  public FSMachine(FSMId id, FSMOnKillAction oka, Map<FSMStateId, FSMState> states, Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable,
+  public FSMachine(FSMId id, FSMOnKillAction oka, Map<FSMStateId, FSMState> states,
+    Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable,
     FSMState initState) {
     this.id = id;
     this.oka = oka;
@@ -50,16 +51,16 @@ public class FSMachine {
     this.logPrefix = id.toString();
   }
 
-  public boolean handle(FSMEvent event) throws FSMException {
+  public void handle(FSMEvent event) throws FSMException {
     LOG.trace("{}state:{} handle event:{}", new Object[]{logPrefix, currentState.id, event});
     Optional<FSMTransition> transition = currentState.handle(event);
     if (!transition.isPresent()) {
-      LOG.info("{}state:{} dropped event:{}", new Object[]{logPrefix, currentState.id, event});
-      return false;
+      LOG.info("{}state:{} does not handle event:{}", new Object[]{logPrefix, currentState.id, event});
+      return;
     }
-    if(FSMTransitions.KILL.equals(transition.get())) {
+    if (FSMTransitions.KILL.equals(transition.get())) {
       oka.kill(id);
-      return true;
+      return;
     }
     Pair<FSMStateId, FSMStateId> t = transitionTable.get(transition.get());
     if (t == null) {
@@ -74,6 +75,5 @@ public class FSMachine {
     currentState = states.get(t.getValue1());
     LOG.trace("{}state:{} event:{} resulted in transition:{} to state:{}",
       new Object[]{logPrefix, currentState.id, event, transition.get(), t.getValue1()});
-    return true;
   }
 }

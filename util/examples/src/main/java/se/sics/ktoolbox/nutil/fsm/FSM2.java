@@ -24,6 +24,7 @@ import se.sics.ktoolbox.nutil.fsm.events.Event2;
 import se.sics.ktoolbox.nutil.fsm.events.Port2;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -36,15 +37,22 @@ public class FSM2 {
   }
   
   public static FSMachineDef build() throws FSMException {
+    FSMOnWrongStateAction owsa = new FSMOnWrongStateAction<MyExternalState, InternalState>() {
+      @Override
+      public void handle(FSMStateId state, FSMEvent event, MyExternalState es, InternalState is) {
+        LOG.warn("state:{} does not handle event:{}", state, event);
+      }
+    };
     FSMachineDef fsm = FSMachineDef.instance(FSMs.fsm2);
-    FSMStateDefId id1 = fsm.registerInitState(initState());
+    FSMStateDefId id1 = fsm.registerInitState(initState(owsa));
     fsm.register(Transition.T1, id1, id1);
     fsm.seal();
     return fsm;
   }
 
-  private static FSMStateDef initState() throws FSMException {
+  private static FSMStateDef initState(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
+    state.setOnWrongStateAction(owsa);
     state.register(Event2.Req.class, initHandler1);
     state.seal();
     return state;

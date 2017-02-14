@@ -76,9 +76,7 @@ public class MultiFSM {
           fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
           fsms.put(fsmId, fsm);
         }
-        if (!fsm.handle(event)) {
-          LOG.warn("{}fsm:{} did not handle event:{}", new Object[]{logPrefix, fsmId, event});
-        }
+        fsm.handle(event);
       } catch (FSMException ex) {
         oexa.handle(ex);
       }

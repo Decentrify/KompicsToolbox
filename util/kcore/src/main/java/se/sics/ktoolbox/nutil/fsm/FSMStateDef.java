@@ -21,47 +21,58 @@ package se.sics.ktoolbox.nutil.fsm;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMStateDef {
+
   private FSMStateDefId id = null;
+  private FSMOnWrongStateAction owsa = new FSMOnWrongStateAction() {
+    @Override
+    public void handle(FSMStateId state, FSMEvent event, FSMExternalState es, FSMInternalState is) {
+      //default drop msgs silently
+    }
+  };
   //Class is a FSMEvent subtype
-  private final Map<Class, FSMEventHandler> handlers = new HashMap<>(); 
+  private final Map<Class, FSMEventHandler> handlers = new HashMap<>();
   private boolean sealed = false;
-  
+
   //set upon registration with FSMDef
   void setId(FSMStateDefId setId) throws FSMException {
-    if(id != null) {
+    if (id != null) {
       throw new FSMException("double use of state def within the same fsm - not allowed");
     }
     this.id = setId;
   }
-  
+
   public FSMStateDefId getId() {
     return id;
   }
-  
+
+  public void setOnWrongStateAction(FSMOnWrongStateAction owsa) {
+    this.owsa = owsa;
+  }
   public void register(Class<? extends FSMEvent> event, FSMEventHandler handler) throws FSMException {
-    if(sealed) {
+    if (sealed) {
       throw new FSMException("Trying to register handler after definition has been sealed");
     }
-    if(handlers.containsKey(event)) {
+    if (handlers.containsKey(event)) {
       throw new FSMException("Handler already registered for event:" + event);
     }
     handlers.put(event, handler);
   }
-  
+
   public void seal() {
     sealed = true;
   }
-  
+
   protected FSMState build(Identifier baseId, FSMExternalState es, FSMInternalState is) throws FSMException {
-    if(!sealed) {
+    if (!sealed) {
       throw new FSMException("trying to build an unsealed definition");
     }
-    return new FSMState(id.getStateId(baseId), es, is, handlers);
+    return new FSMState(id.getStateId(baseId), owsa, es, is, handlers);
   }
 }

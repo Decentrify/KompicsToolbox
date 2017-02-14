@@ -18,37 +18,11 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import com.google.common.base.Optional;
-import java.util.Map;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FSMState {
-
-  public final FSMStateId id;
-  private final FSMOnWrongStateAction owsa;
-  private final FSMExternalState es;
-  private final FSMInternalState is;
-  private final Map<Class, FSMEventHandler> handlers;
-
-  public FSMState(FSMStateId id, FSMOnWrongStateAction owsa, FSMExternalState es, FSMInternalState is,
-    Map<Class, FSMEventHandler> handlers) {
-    this.id = id;
-    this.owsa = owsa;
-    this.es = es;
-    this.is = is;
-    this.handlers = handlers;
-  }
-
-  public Optional<FSMTransition> handle(FSMEvent event) {
-    FSMEventHandler handler = handlers.get(event.getClass());
-    if (handler == null) {
-      owsa.handle(id, event, es, is);
-      return Optional.absent();
-    }
-    FSMTransition next = handler.handle(es, is, event);
-    return Optional.of(next);
-  }
+public interface FSMOnWrongStateAction<E extends FSMExternalState, I extends FSMInternalState> {
+  public void handle(FSMStateId state, FSMEvent event, E es, I is);
 }
