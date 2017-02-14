@@ -40,6 +40,7 @@ import se.sics.ktoolbox.nutil.fsm.events.Port2;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnFSMExceptionAction;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
@@ -139,7 +140,14 @@ public class FSMHostComp extends ComponentDefinition {
       }
     };
     
-    MultiFSM fsm = new MultiFSM(oexa, fsmIdExtractor, fsms, new MyExternalState(), builders, events.getValue0(), 
+    FSMOnWrongStateAction owsa = new FSMOnWrongStateAction<MyExternalState, FSM1.InternalState>() {
+
+      @Override
+      public void handle(FSMStateId stateId, FSMEvent event, MyExternalState es, FSM1.InternalState is) {
+        LOG.warn("state:{} does not handle event:{}", stateId, event);
+      }
+    };
+    MultiFSM fsm = new MultiFSM(oexa, owsa, fsmIdExtractor, fsms, new MyExternalState(), builders, events.getValue0(), 
       events.getValue1());
     multiFSMComp = create(MultiFSMComp.class, new MultiFSMComp.Init(fsm));
     connect(multiFSMComp.getNegative(Port1.class), port1.getPair(), Channel.TWO_WAY);

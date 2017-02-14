@@ -35,6 +35,12 @@ public class FSMId {
     this.baseId = baseId;
   }
   
+  public FSMStateId getInitStateId() {
+    byte[] initId = new byte[1];
+    initId[0] = 0;
+    return new FSMStateId(fsmDefId, initId, baseId);
+  }
+  
   public FSMDefId getDefId() {
     return new FSMDefId(fsmDefId);
   }
