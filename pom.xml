@@ -60,6 +60,7 @@
         <logger.version>1.7.5</logger.version>
         <netty.version>5.0.0.Alpha2</netty.version>
         <caracal.version>0.0.8-SNAPSHOT</caracal.version>
+        <apachec.version>3.6.1</apachec.version>
     </properties>
 
     <distributionManagement>

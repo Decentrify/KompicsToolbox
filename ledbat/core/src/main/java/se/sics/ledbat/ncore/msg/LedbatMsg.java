@@ -67,13 +67,13 @@ public class LedbatMsg {
         public final C content;
         public final long leecherAppReqSendT;
         public final long seederNetRespSendT;
-        public final long leechedNetRespT;
+        public final long leecherNetRespT;
 
-        protected Response(C content, long leecherAppReqSendT, long seederNetRespSendT, long leechedNetRespT) {
+        protected Response(C content, long leecherAppReqSendT, long seederNetRespSendT, long leecherNetRespT) {
             this.content = content;
             this.leecherAppReqSendT = leecherAppReqSendT;
             this.seederNetRespSendT = seederNetRespSendT;
-            this.leechedNetRespT = leechedNetRespT;
+            this.leecherNetRespT = leecherNetRespT;
         }
 
         private Response(Request req, C content) {

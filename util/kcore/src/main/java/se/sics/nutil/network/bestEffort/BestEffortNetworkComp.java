@@ -25,6 +25,7 @@ import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
@@ -44,7 +45,6 @@ import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.nutil.network.bestEffort.event.BestEffortMsg;
 import se.sics.nutil.tracking.load.NetworkQueueLoadProxy;
-import se.sics.nutil.tracking.load.QueueLoadConfig;
 
 /**
  *
@@ -52,190 +52,199 @@ import se.sics.nutil.tracking.load.QueueLoadConfig;
  */
 public class BestEffortNetworkComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BestEffortNetworkComp.class);
-    private String logPrefix;
+  private static final Logger LOG = LoggerFactory.getLogger(BestEffortNetworkComp.class);
+  private String logPrefix;
+  //******************************************************************************************************************
+  Negative<Network> incomingNetworkPort = provides(Network.class);
+  Positive<Network> outgoingNetworkPort = requires(Network.class);
+  Positive<Timer> timerPort = requires(Timer.class);
+  //******************************************************************************************************************
+  private final KAddress self;
+  //******************************************************************************************************************
+  //turn into a wheel
+  //<contentId, targetId>
+  private final Map<Pair<Identifier, Identifier>, UUID> pendingMsgs = new HashMap<>();
+  //******************************************************************************************************************
+  private final NetworkQueueLoadProxy loadTracking;
 
-    Negative<Network> incomingNetworkPort = provides(Network.class);
-    Positive<Network> outgoingNetworkPort = requires(Network.class);
-    Positive<Timer> timerPort = requires(Timer.class);
+  public BestEffortNetworkComp(Init init) {
+    this.self = init.self;
+    this.logPrefix = "<" + init.id + ">";
 
-    private final KAddress self;
+    BestEffortNetworkConfig beConfig = new BestEffortNetworkConfig(config());
+    loadTracking = NetworkQueueLoadProxy.instance("be_" + logPrefix, init.id, init.proxy, config(), beConfig.reportDir);
 
-    //turn into a wheel
-    //<contentId, targetId>
-    private final Map<Pair<Identifier, Identifier>, UUID> pendingMsgs = new HashMap<>();
+    subscribe(handleStart, control);
+    subscribe(handleRetry, timerPort);
+    //TODO Alex - once shortcircuit channels work replace these handler with proper ClassMatchers + shortcircuit channel
+    subscribe(handleOutgoingMsg, incomingNetworkPort);
+    subscribe(handleIncomingMsg, outgoingNetworkPort);
+    subscribe(handleForwardMessageNotifyReq, incomingNetworkPort);
+    subscribe(handleForwardMessageNotifyResp, outgoingNetworkPort);
+  }
 
-    private final NetworkQueueLoadProxy loadTracking;
-
-    public BestEffortNetworkComp(Init init) {
-        this.self = init.self;
-        this.logPrefix = "<nid:" + self.getId() + ">";
-
-        loadTracking = new NetworkQueueLoadProxy("retry network", proxy, new QueueLoadConfig(config()));
-
-        subscribe(handleStart, control);
-        subscribe(handleRetry, timerPort);
-        //TODO Alex - once shortcircuit channels work replace these handler with proper ClassMatchers + shortcircuit channel
-        subscribe(handleOutgoingMsg, incomingNetworkPort);
-        subscribe(handleIncomingMsg, outgoingNetworkPort);
-        subscribe(handleForwardMessageNotifyReq, incomingNetworkPort);
-        subscribe(handleForwardMessageNotifyResp, outgoingNetworkPort);
-    }
-
-    Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start event) {
-            LOG.info("{}starting...", logPrefix);
-            loadTracking.start();
-        }
-    };
-
+  Handler handleStart = new Handler<Start>() {
     @Override
-    public void tearDown() {
-        loadTracking.tearDown();
+    public void handle(Start event) {
+      LOG.info("{}starting...", logPrefix);
+      loadTracking.start();
     }
+  };
 
-    Handler handleOutgoingMsg = new Handler<Msg>() {
-        @Override
-        public void handle(Msg msg) {
-            if (!(msg instanceof BasicContentMsg)) {
-                LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
-                trigger(msg, outgoingNetworkPort);
-            }
-            BasicContentMsg contentMsg = (BasicContentMsg) msg;
-            if (contentMsg.getContent() instanceof BestEffortMsg.Request) {
-                handleRequest(contentMsg);
-            } else if (contentMsg.getContent() instanceof BestEffortMsg.Cancel) {
-                handleCancel(contentMsg);
-            } else {
-                LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
-                trigger(msg, outgoingNetworkPort);
-            }
-        }
-    };
+  @Override
+  public void tearDown() {
+    loadTracking.tearDown();
+  }
 
-    Handler handleIncomingMsg = new Handler<Msg>() {
-        @Override
-        public void handle(Msg msg) {
-            if (loadTracking.getFilter().filter(msg)) {
-                return;
-            }
-            if (!(msg instanceof BasicContentMsg)) {
-                LOG.trace("{}forwarding incoming:{}", logPrefix, msg);
-                trigger(msg, incomingNetworkPort);
-                return;
-            }
-            BasicContentMsg contentMsg = (BasicContentMsg) msg;
-            if (contentMsg.getContent() instanceof Identifiable) {
-                handleResponse(contentMsg);
-            } else {
-                LOG.trace("{}forwarding incoming:{}", logPrefix, msg);
-                trigger(msg, incomingNetworkPort);
-            }
-        }
-    };
-
-    Handler handleRetry = new Handler<RetryTimeout>() {
-        @Override
-        public void handle(RetryTimeout timeout) {
-            if (pendingMsgs.remove(timeout.msgId) == null) {
-                LOG.trace("{}late retry:{}", logPrefix, timeout.msg);
-            } else {
-                if (timeout.retriesLeft == 0) {
-                    BasicContentMsg msg = timeout.msg.answer(timeout.req.timeout());
-                    LOG.debug("{}retry timeout:{}", logPrefix, msg);
-                    trigger(msg, incomingNetworkPort);
-                } else {
-                    LOG.debug("{}sending retry msg:{}", logPrefix, timeout.msg);
-                    doRetry(timeout.msgId, timeout.msg, timeout.req, timeout.retriesLeft - 1);
-                }
-            }
-        }
-    };
-
-    Handler handleForwardMessageNotifyReq = new Handler<MessageNotify.Req>() {
-        @Override
-        public void handle(MessageNotify.Req req) {
-            trigger(req, outgoingNetworkPort);
-        }
-    };
-
-    Handler handleForwardMessageNotifyResp = new Handler<MessageNotify.Resp>() {
-        @Override
-        public void handle(MessageNotify.Resp resp) {
-            trigger(resp, incomingNetworkPort);
-        }
-    };
-
-    private void doRetry(Pair<Identifier, Identifier> msgId, BasicContentMsg msg, BestEffortMsg.Request retryContent, int retriesLeft) {
-        ScheduleTimeout st = new ScheduleTimeout(retryContent.rto);
-        RetryTimeout rt = new RetryTimeout(st, retryContent, msg, msgId, retriesLeft);
-        st.setTimeoutEvent(rt);
-        LOG.debug("{}schedule retry in:{}", logPrefix, retryContent.rto);
-        trigger(st, timerPort);
-        pendingMsgs.put(msgId, rt.getTimeoutId());
+  Handler handleOutgoingMsg = new Handler<Msg>() {
+    @Override
+    public void handle(Msg msg) {
+      if (!(msg instanceof BasicContentMsg)) {
+        LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
         trigger(msg, outgoingNetworkPort);
+      }
+      BasicContentMsg contentMsg = (BasicContentMsg) msg;
+      if (contentMsg.getContent() instanceof BestEffortMsg.Request) {
+        handleRequest(contentMsg);
+      } else if (contentMsg.getContent() instanceof BestEffortMsg.Cancel) {
+        handleCancel(contentMsg);
+      } else {
+        LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
+        trigger(msg, outgoingNetworkPort);
+      }
     }
+  };
 
-    private <C extends Identifiable> void handleRequest(BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Request<C>> m) {
-        BestEffortMsg.Request<C> retryContent = m.getContent();
-        C baseContent = retryContent.getWrappedContent();
-        KAddress target = m.getHeader().getDestination();
-        Pair<Identifier, Identifier> msgId = Pair.with(baseContent.getId(), target.getId());
-        BasicContentMsg msg = new BasicContentMsg(m.getHeader(), baseContent);
-
-        LOG.debug("{}sending msg:{}", logPrefix, msg);
-        doRetry(msgId, msg, retryContent, retryContent.retries);
-    }
-
-    private void handleResponse(BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg) {
-        Identifier msgId = msg.getContent().getId();
-        Identifier targetId = msg.getHeader().getSource().getId();
-        UUID tid = pendingMsgs.remove(Pair.with(msgId, targetId));
-        if (tid != null) {
-            LOG.debug("{}forwarding response:{}", logPrefix, msg.getContent());
-            trigger(new CancelTimeout(tid), timerPort);
-        } else {
-            LOG.debug("{}forwarding incoming:{}", logPrefix, msg.getContent());
-        }
+  Handler handleIncomingMsg = new Handler<Msg>() {
+    @Override
+    public void handle(Msg msg) {
+      if (loadTracking.getFilter().filter(msg)) {
+        return;
+      }
+      if (!(msg instanceof BasicContentMsg)) {
+        LOG.trace("{}forwarding incoming:{}", logPrefix, msg);
         trigger(msg, incomingNetworkPort);
+        return;
+      }
+      BasicContentMsg contentMsg = (BasicContentMsg) msg;
+      if (contentMsg.getContent() instanceof Identifiable) {
+        handleResponse(contentMsg);
+      } else {
+        LOG.trace("{}forwarding incoming:{}", logPrefix, msg);
+        trigger(msg, incomingNetworkPort);
+      }
     }
+  };
 
-    private <C extends KompicsEvent & Identifiable> void handleCancel(BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Cancel<C>> m) {
-        C baseContent = m.getContent().content;
-        KAddress target = m.getHeader().getDestination();
-
-        UUID tid = pendingMsgs.remove(Pair.with(baseContent.getId(), target.getId()));
-        if (tid == null) {
-            LOG.trace("{}late cancel:{}", logPrefix, m);
+  Handler handleRetry = new Handler<RetryTimeout>() {
+    @Override
+    public void handle(RetryTimeout timeout) {
+      if (pendingMsgs.remove(timeout.msgId) == null) {
+        LOG.trace("{}late retry:{}", logPrefix, timeout.msg);
+      } else {
+        if (timeout.retriesLeft == 0) {
+          BasicContentMsg msg = timeout.msg.answer(timeout.req.timeout());
+          LOG.debug("{}retry timeout:{}", logPrefix, msg);
+          trigger(msg, incomingNetworkPort);
         } else {
-            LOG.debug("{}cancel:{}", logPrefix, m);
-            trigger(new CancelTimeout(tid), timerPort);
+          LOG.debug("{}sending retry msg:{}", logPrefix, timeout.msg);
+          doRetry(timeout.msgId, timeout.msg, timeout.req, timeout.retriesLeft - 1);
         }
+      }
     }
+  };
 
-    public static class Init extends se.sics.kompics.Init<BestEffortNetworkComp> {
-
-        public final KAddress self;
-
-        public Init(KAddress self) {
-            this.self = self;
-        }
+  Handler handleForwardMessageNotifyReq = new Handler<MessageNotify.Req>() {
+    @Override
+    public void handle(MessageNotify.Req req) {
+      trigger(req, outgoingNetworkPort);
     }
+  };
 
-    public static class RetryTimeout extends Timeout {
-
-        public final BestEffortMsg.Request req;
-        public final BasicContentMsg msg;
-        public final Pair<Identifier, Identifier> msgId;
-        public final int retriesLeft;
-
-        public RetryTimeout(ScheduleTimeout st, BestEffortMsg.Request req, BasicContentMsg msg, Pair<Identifier, Identifier> msgId, int retriesLeft) {
-            super(st);
-            this.req = req;
-            this.msg = msg;
-            this.msgId = msgId;
-            this.retriesLeft = retriesLeft;
-        }
+  Handler handleForwardMessageNotifyResp = new Handler<MessageNotify.Resp>() {
+    @Override
+    public void handle(MessageNotify.Resp resp) {
+      trigger(resp, incomingNetworkPort);
     }
+  };
+
+  private void doRetry(Pair<Identifier, Identifier> msgId, BasicContentMsg msg, BestEffortMsg.Request retryContent,
+    int retriesLeft) {
+    ScheduleTimeout st = new ScheduleTimeout(retryContent.rto);
+    RetryTimeout rt = new RetryTimeout(st, retryContent, msg, msgId, retriesLeft);
+    st.setTimeoutEvent(rt);
+    LOG.debug("{}schedule retry in:{}", logPrefix, retryContent.rto);
+    trigger(st, timerPort);
+    pendingMsgs.put(msgId, rt.getTimeoutId());
+    trigger(msg, outgoingNetworkPort);
+  }
+
+  private <C extends Identifiable> void handleRequest(
+    BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Request<C>> m) {
+    BestEffortMsg.Request<C> retryContent = m.getContent();
+    C baseContent = retryContent.getWrappedContent();
+    KAddress target = m.getHeader().getDestination();
+    Pair<Identifier, Identifier> msgId = Pair.with(baseContent.getId(), target.getId());
+    BasicContentMsg msg = new BasicContentMsg(m.getHeader(), baseContent);
+
+    LOG.debug("{}sending msg:{}", logPrefix, msg);
+    doRetry(msgId, msg, retryContent, retryContent.retries);
+  }
+
+  private void handleResponse(BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg) {
+    Identifier msgId = msg.getContent().getId();
+    Identifier targetId = msg.getHeader().getSource().getId();
+    UUID tid = pendingMsgs.remove(Pair.with(msgId, targetId));
+    if (tid != null) {
+      LOG.debug("{}forwarding response:{}", logPrefix, msg.getContent());
+      trigger(new CancelTimeout(tid), timerPort);
+    } else {
+      LOG.debug("{}forwarding incoming:{}", logPrefix, msg.getContent());
+    }
+    trigger(msg, incomingNetworkPort);
+  }
+
+  private <C extends KompicsEvent & Identifiable> void handleCancel(
+    BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Cancel<C>> m) {
+    C baseContent = m.getContent().content;
+    KAddress target = m.getHeader().getDestination();
+
+    UUID tid = pendingMsgs.remove(Pair.with(baseContent.getId(), target.getId()));
+    if (tid == null) {
+      LOG.trace("{}late cancel:{}", logPrefix, m);
+    } else {
+      LOG.debug("{}cancel:{}", logPrefix, m);
+      trigger(new CancelTimeout(tid), timerPort);
+    }
+  }
+
+  public static class Init extends se.sics.kompics.Init<BestEffortNetworkComp> {
+
+    public final KAddress self;
+    public final Identifier id;
+    public final ComponentProxy proxy;
+
+    public Init(KAddress self, Identifier id, ComponentProxy proxy) {
+      this.self = self;
+      this.id = id;
+      this.proxy = proxy;
+    }
+  }
+
+  public static class RetryTimeout extends Timeout {
+
+    public final BestEffortMsg.Request req;
+    public final BasicContentMsg msg;
+    public final Pair<Identifier, Identifier> msgId;
+    public final int retriesLeft;
+
+    public RetryTimeout(ScheduleTimeout st, BestEffortMsg.Request req, BasicContentMsg msg,
+      Pair<Identifier, Identifier> msgId, int retriesLeft) {
+      super(st);
+      this.req = req;
+      this.msg = msg;
+      this.msgId = msgId;
+      this.retriesLeft = retriesLeft;
+    }
+  }
 }

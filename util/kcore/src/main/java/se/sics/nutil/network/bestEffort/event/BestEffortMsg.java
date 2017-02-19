@@ -27,62 +27,65 @@ import se.sics.nutil.ContentWrapper;
  */
 public class BestEffortMsg {
 
-    public static abstract class Base<C extends Identifiable> implements ContentWrapper<C>, Identifiable {
+  public static abstract class Base<C extends Identifiable> implements ContentWrapper<C>, Identifiable {
 
-        public final C content;
+    public final C content;
 
-        public Base(C content) {
-            this.content = content;
-        }
-
-        @Override
-        public C getWrappedContent() {
-            return content;
-        }
-        
-        @Override
-        public Identifier getId() {
-            return content.getId();
-        }
+    public Base(C content) {
+      this.content = content;
     }
 
-    public static class Request<C extends Identifiable> extends Base<C> {
-
-        public final int retries;
-        public final long rto;
-
-        public Request(C content, int retries, long rto) {
-            super(content);
-            this.retries = retries;
-            this.rto = rto;
-        }
-
-        public Timeout timeout() {
-            return new Timeout(content);
-        }
-        
-        @Override
-        public String toString() {
-            return "BE_Request<" + content.toString() + ">";
-        }
+    @Override
+    public C getWrappedContent() {
+      return content;
     }
 
-    public static class Timeout<C extends Identifiable> extends Base<C> {
+    @Override
+    public Identifier getId() {
+      return content.getId();
+    }
+  }
 
-        private Timeout(C content) {
-            super(content);
-        }
-        
-        @Override
-        public String toString() {
-            return "BE_Timeout<" + content.toString() + ">";
-        }
+  public static class Request<C extends Identifiable> extends Base<C> {
+
+    public final int retries;
+    public final long rto;
+
+    public Request(C content, int retries, long rto) {
+      super(content);
+      this.retries = retries;
+      this.rto = rto;
     }
 
-    public static class Cancel<C extends Identifiable> extends Base<C> {
-
-        public Cancel(C content) {
-            super(content);
-        }
+    public Timeout timeout() {
+      return new Timeout(this, content);
     }
+
+    @Override
+    public String toString() {
+      return "BE_Request<" + content.toString() + ">";
+    }
+  }
+
+  public static class Timeout<C extends Identifiable> extends Base<C> {
+
+    public final Request req;
+
+    private Timeout(Request req, C content) {
+      super(content);
+      this.req = req;
+    }
+
+    @Override
+    public String toString() {
+      return "BE_Timeout<" + content.toString() + ">";
+    }
+  }
+
+  public static class Cancel<C extends Identifiable> extends Base<C> {
+
+    public Cancel(C content) {
+      super(content);
+    }
+  }
 }

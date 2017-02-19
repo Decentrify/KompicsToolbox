@@ -41,6 +41,10 @@ public class FuzzyTimeoutCounter {
     public void success() {
         success++;
     }
+    
+    public int getSuccess() {
+      return success;
+    }
 
     public void timeout() {
         timeout++;

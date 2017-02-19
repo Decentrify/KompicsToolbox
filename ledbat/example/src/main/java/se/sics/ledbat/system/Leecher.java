@@ -18,6 +18,7 @@
  */
 package se.sics.ledbat.system;
 
+import com.google.common.base.Optional;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -45,7 +46,6 @@ import se.sics.ledbat.core.AppCongestionWindow;
 import se.sics.ledbat.core.LedbatConfig;
 import se.sics.ledbat.ncore.msg.LedbatMsg;
 import se.sics.nutil.tracking.load.NetworkQueueLoadProxy;
-import se.sics.nutil.tracking.load.QueueLoadConfig;
 
 /**
  *
@@ -55,6 +55,7 @@ public class Leecher extends ComponentDefinition {
 
     private final static Logger LOG = LoggerFactory.getLogger(Leecher.class);
     private String logPrefix = "";
+    private static final long MIN_RTO = 100;
 
     //**************************************************************************
     Positive<Network> networkPort = requires(Network.class);
@@ -70,12 +71,13 @@ public class Leecher extends ComponentDefinition {
     private LedbatConfig ledbatConfig;
 
     public Leecher(Init init) {
-        this.self = init.self;
-        this.seeder = init.seeder;
-        this.ledbatConfig = new LedbatConfig(config());
+        self = init.self;
+        seeder = init.seeder;
+        ledbatConfig = new LedbatConfig(config());
+        logPrefix = "<" + self.getId().toString() +  ">";
         UUIDIdFactory uuidFactory = new UUIDIdFactory();
-        this.conn = new AppCongestionWindow(ledbatConfig, uuidFactory.randomId());
-        this.networkLoad = new NetworkQueueLoadProxy("leechNetwork", this.proxy, new QueueLoadConfig(config()));
+        this.conn = new AppCongestionWindow(ledbatConfig, uuidFactory.randomId(), MIN_RTO, Optional.fromNullable((String)null));
+        this.networkLoad = NetworkQueueLoadProxy.instance("leecher_" + logPrefix, self.getId(), proxy, config(), Optional.fromNullable((String)null));
 
         subscribe(handleStart, control);
         subscribe(handleAdvance, timerPort);

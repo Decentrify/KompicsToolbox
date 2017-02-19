@@ -106,10 +106,9 @@ public class RTTEstimator {
         this.minRTO = rtoMin;
     }
 
-    public void updateRTO(long rtt) {
-        long now = System.currentTimeMillis() / 1000;
+    public void updateRTO(long now, long rtt) {
         if (now > currentSecond + (TIME_STEP - 1)) {
-            LOG.info("RTT:{}", showedRTO);
+            LOG.debug("RTT:{}", showedRTO);
             currentSecond = now;
         }
 

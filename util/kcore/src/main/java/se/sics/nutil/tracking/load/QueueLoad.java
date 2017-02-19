@@ -55,7 +55,7 @@ public class QueueLoad {
         if (avgQueueDelay.get() < IDLE * loadConfig.targetQueueDelay) {
             checkPeriod = loadConfig.maxQueueDelay;
         } else {
-            checkPeriod = loadConfig.targetQueueDelay;
+          checkPeriod = loadConfig.targetQueueDelay;
         }
         
         return adjustment;
