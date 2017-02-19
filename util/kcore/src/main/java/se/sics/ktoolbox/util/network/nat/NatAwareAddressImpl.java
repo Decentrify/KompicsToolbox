@@ -25,104 +25,118 @@ import java.util.ArrayList;
 import java.util.List;
 import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NatAwareAddressImpl implements NatAwareAddress {
-    /**
-     * present only if different than publicAdr(nated adr) or if local(self)
-     */
-    final Optional<BasicAddress> privateAdr;
-    final BasicAddress publicAdr;
-    final NatType natType;
-    final List<BasicAddress> parents;
-    
-    private NatAwareAddressImpl(Optional<BasicAddress> privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
-        this.privateAdr = privateAdr;
-        this.publicAdr = publicAdr;
-        this.natType = natType;
-        this.parents = parents;
-    }
-    
-    public NatAwareAddressImpl(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
-        this(Optional.fromNullable(privateAdr), publicAdr, natType, parents);
-    }
 
-    @Override
-    public Optional<BasicAddress> getPrivateAdr() {
-        return privateAdr;
-    }
+  /**
+   * present only if different than publicAdr(nated adr) or if local(self)
+   */
+  final Optional<BasicAddress> privateAdr;
+  final BasicAddress publicAdr;
+  final NatType natType;
+  final List<BasicAddress> parents;
 
-    @Override
-    public BasicAddress getPublicAdr() {
-        return publicAdr;
-    }
-    
-    @Override
-    public NatType getNatType() {
-        return natType;
-    }
+  private NatAwareAddressImpl(Optional<BasicAddress> privateAdr, BasicAddress publicAdr, NatType natType,
+    List<BasicAddress> parents) {
+    this.privateAdr = privateAdr;
+    this.publicAdr = publicAdr;
+    this.natType = natType;
+    this.parents = parents;
+  }
 
-    public List<BasicAddress> getParents() {
-        return parents;
-    }
+  public NatAwareAddressImpl(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType,
+    List<BasicAddress> parents) {
+    this(Optional.fromNullable(privateAdr), publicAdr, natType, parents);
+  }
 
-    @Override
-    public InetAddress getIp() {
-        return (privateAdr.isPresent() ? privateAdr.get().getIp() : publicAdr.getIp());
-    }
+  @Override
+  public Optional<BasicAddress> getPrivateAdr() {
+    return privateAdr;
+  }
 
-    @Override
-    public int getPort() {
-        return (privateAdr.isPresent() ? privateAdr.get().getPort() : publicAdr.getPort());
-    }
+  @Override
+  public BasicAddress getPublicAdr() {
+    return publicAdr;
+  }
 
-    @Override
-    public InetSocketAddress asSocket() {
-        return (privateAdr.isPresent() ? privateAdr.get().asSocket() : publicAdr.asSocket());
-    }
+  @Override
+  public NatType getNatType() {
+    return natType;
+  }
 
-    @Override
-    public boolean sameHostAs(Address other) {
-        return (privateAdr.isPresent() ? privateAdr.get().sameHostAs(other) : publicAdr.sameHostAs(other));
-    }
+  public List<BasicAddress> getParents() {
+    return parents;
+  }
 
-    @Override
-    public Identifier getId() {
-        return publicAdr.getId();
+  @Override
+  public InetAddress getIp() {
+    return (privateAdr.isPresent() ? privateAdr.get().getIp() : publicAdr.getIp());
+  }
+
+  @Override
+  public int getPort() {
+    return (privateAdr.isPresent() ? privateAdr.get().getPort() : publicAdr.getPort());
+  }
+
+  @Override
+  public Identifier getId() {
+    return publicAdr.getId();
+  }
+
+  @Override
+  public KAddress withPort(int port) {
+    if(privateAdr.isPresent()) {
+      //TODO Alex - when time fix this
+      throw new RuntimeException("not sure how to do this - maybe 2 ports?");
     }
-    
-    public NatAwareAddress changePublicPort(int publicPort) {
-        return new NatAwareAddressImpl(privateAdr, 
-                new BasicAddress(publicAdr.getIp(), publicPort, publicAdr.getId()), natType, parents);
-    }
-    
-    public NatAwareAddress withPrivateAddress(BasicAddress privateAdr) {
-        return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
-    }
-    
-    public NatAwareAddress changeParents(List<BasicAddress> parents) {
-        return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
-    }
-    
-    public static NatAwareAddressImpl open(BasicAddress address) {
-        Optional<BasicAddress> privateAdr = Optional.absent();
-        return new NatAwareAddressImpl(privateAdr, address, NatType.open(), new ArrayList<BasicAddress>());
-    }
-    
-    public static NatAwareAddressImpl nated(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType, List<BasicAddress> parents) {
-        return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
-    }
-    
-    public static NatAwareAddressImpl unknown(BasicAddress adr) {
-        Optional<BasicAddress> privateAdr = Optional.absent();
-        return new NatAwareAddressImpl(privateAdr, adr, NatType.unknown(), new ArrayList<BasicAddress>());
-    }
-    
-    @Override
-    public String toString() {
-        return publicAdr.toString();
-    }
+    return new NatAwareAddressImpl(privateAdr, (BasicAddress)publicAdr.withPort(port), natType, parents);
+  }
+
+  @Override
+  public InetSocketAddress asSocket() {
+    return (privateAdr.isPresent() ? privateAdr.get().asSocket() : publicAdr.asSocket());
+  }
+
+  @Override
+  public boolean sameHostAs(Address other) {
+    return (privateAdr.isPresent() ? privateAdr.get().sameHostAs(other) : publicAdr.sameHostAs(other));
+  }
+
+  public NatAwareAddress changePublicPort(int publicPort) {
+    return new NatAwareAddressImpl(privateAdr,
+      new BasicAddress(publicAdr.getIp(), publicPort, publicAdr.getId()), natType, parents);
+  }
+
+  public NatAwareAddress withPrivateAddress(BasicAddress privateAdr) {
+    return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+  }
+
+  public NatAwareAddress changeParents(List<BasicAddress> parents) {
+    return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+  }
+
+  public static NatAwareAddressImpl open(BasicAddress address) {
+    Optional<BasicAddress> privateAdr = Optional.absent();
+    return new NatAwareAddressImpl(privateAdr, address, NatType.open(), new ArrayList<BasicAddress>());
+  }
+
+  public static NatAwareAddressImpl nated(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType,
+    List<BasicAddress> parents) {
+    return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+  }
+
+  public static NatAwareAddressImpl unknown(BasicAddress adr) {
+    Optional<BasicAddress> privateAdr = Optional.absent();
+    return new NatAwareAddressImpl(privateAdr, adr, NatType.unknown(), new ArrayList<BasicAddress>());
+  }
+
+  @Override
+  public String toString() {
+    return publicAdr.toString();
+  }
 }

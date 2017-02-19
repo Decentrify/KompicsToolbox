@@ -27,4 +27,5 @@ import se.sics.ktoolbox.util.identifiable.Identifiable;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface KAddress extends Address, Identifiable {
+  public KAddress withPort(int port);
 }

@@ -30,79 +30,84 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class BasicAddress implements KAddress {
 
-    private final Identifier id;
-    private final String printForm;
-    private final InetSocketAddress isa;
+  private final Identifier id;
+  private final String printForm;
+  private final InetSocketAddress isa;
 
-    public BasicAddress(InetAddress adr, int port, Identifier id) {
-        this.isa = new InetSocketAddress(adr, port);
-        this.id = id;
-        this.printForm = adr.getHostAddress() + ":" + port + "<" + id + ">";
-    }
-    
-    @Override
-    public InetAddress getIp() {
-        return this.isa.getAddress();
-    }
+  public BasicAddress(InetAddress adr, int port, Identifier id) {
+    this.isa = new InetSocketAddress(adr, port);
+    this.id = id;
+    this.printForm = adr.getHostAddress() + ":" + port + "<" + id + ">";
+  }
 
-    @Override
-    public int getPort() {
-        return this.isa.getPort();
-    }
+  @Override
+  public InetAddress getIp() {
+    return this.isa.getAddress();
+  }
 
-    @Override
-    public InetSocketAddress asSocket() {
-        return this.isa;
-    }
+  @Override
+  public int getPort() {
+    return this.isa.getPort();
+  }
 
-    @Override
-    public boolean sameHostAs(Address other) {
-        if(other == null) {
-            return false;
-        }
-        if(!this.isa.equals(other.asSocket())) {
-            return false;
-        }
-        return true;
-    }
-    
-    @Override
-    public Identifier getId() {
-        return id;
-    }
+  @Override
+  public KAddress withPort(int port) {
+    return new BasicAddress(isa.getAddress(), port, id);
+  }
 
-    @Override
-    public String toString() {
-        return printForm;
-    }
+  @Override
+  public InetSocketAddress asSocket() {
+    return this.isa;
+  }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 41 * hash + Objects.hashCode(this.id);
-        hash = 41 * hash + Objects.hashCode(this.printForm);
-        hash = 41 * hash + Objects.hashCode(this.isa);
-        return hash;
+  @Override
+  public boolean sameHostAs(Address other) {
+    if (other == null) {
+      return false;
     }
+    if (!this.isa.equals(other.asSocket())) {
+      return false;
+    }
+    return true;
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final BasicAddress other = (BasicAddress) obj;
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        if (!Objects.equals(this.printForm, other.printForm)) {
-            return false;
-        }
-        if (!Objects.equals(this.isa, other.isa)) {
-            return false;
-        }
-        return true;
+  @Override
+  public Identifier getId() {
+    return id;
+  }
+
+  @Override
+  public String toString() {
+    return printForm;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 5;
+    hash = 41 * hash + Objects.hashCode(this.id);
+    hash = 41 * hash + Objects.hashCode(this.printForm);
+    hash = 41 * hash + Objects.hashCode(this.isa);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
     }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final BasicAddress other = (BasicAddress) obj;
+    if (!Objects.equals(this.id, other.id)) {
+      return false;
+    }
+    if (!Objects.equals(this.printForm, other.printForm)) {
+      return false;
+    }
+    if (!Objects.equals(this.isa, other.isa)) {
+      return false;
+    }
+    return true;
+  }
 }
