@@ -67,6 +67,7 @@ public class CongestionWindowHandler {
   private boolean thresholdIsSet;
 
   private long lastTimeCwndHalved = 0;
+  private int altruisticCounter = 0;
 
   public CongestionWindowHandler(Identifier connId, LedbatConfig ledbatConfig, Optional<String> reportDir) {
     this.ledbatConfig = ledbatConfig;
@@ -75,7 +76,7 @@ public class CongestionWindowHandler {
     } else {
       tracker = Optional.absent();
     }
-    this.timeoutCounter = FuzzyTimeoutCounter.getInstance(Triplet.with(0.01, 0.005, 0.02), new Random(1234));
+    this.timeoutCounter = FuzzyTimeoutCounter.getInstance(Triplet.with(0.001, 0.0005, 0.005), new Random(1234));
 
     this.target = ledbatConfig.target;
     this.allowedIncrease = ledbatConfig.allowed_increase;
@@ -92,6 +93,7 @@ public class CongestionWindowHandler {
    */
   private void initialize() {
     cwnd = getInitialCwnd();
+    LOG.info("init cwnd:{}", cwnd);
 
     startingTime = System.currentTimeMillis();
     current_lastUpdatedIndex = 0;
@@ -188,14 +190,13 @@ public class CongestionWindowHandler {
       } else {
         cwnd = cwnd + ((ledbatConfig.gain * off_target * bytes_newly_acked * ledbatConfig.mss) / cwnd);
       }
-
-      //double max_allowed_cwnd = flightSize + allowedIncrease * mss;
-      //cwnd = cwnd > max_allowed_cwnd ? max_allowed_cwnd : cwnd;
-      cwnd = cwnd > ledbatConfig.minCwnd * ledbatConfig.mss ? cwnd : ledbatConfig.minCwnd * ledbatConfig.mss;
-
-//      logCwndChanges(queuing_delay, flightSize, bytes_newly_acked);
-//      loss(now);
     }
+    altruisticCounter++;
+    if(altruisticCounter == 1000) {
+      cwnd = 0.8 * cwnd;
+      altruisticCounter = 0;
+    }
+    
     cwnd = Math.max(cwnd, getMinCwnd());
     reportNormal(now, cwnd, queuing_delay);
   }
@@ -227,6 +228,7 @@ public class CongestionWindowHandler {
    * start or we are not in this phase, cwnd is halved.
    */
   public double handleLoss(long now, long rtt) {
+    altruisticCounter = 0;
     timeoutCounter.timeout();
     if (!timeoutCounter.trigger()) {
       return cwnd;
@@ -246,12 +248,12 @@ public class CongestionWindowHandler {
     } else if (now - lastTimeCwndHalved >= rtt) { //At most once per RTT
       cwnd = cwnd * 0.5;
       lastTimeCwndHalved = now;
-      cwnd = cwnd > ledbatConfig.minCwnd * ledbatConfig.mss ? cwnd : ledbatConfig.minCwnd * ledbatConfig.mss;
       //logger.info(" Loss !! and cwnd is halved: " + cwnd);
       reportLoss(now, cwnd);
     } else {
       //logger.info("Loss !! and cwnd NOT halved: " + cwnd);
     }
+    cwnd = Math.max(cwnd, getMinCwnd());
     return cwnd;
   }
 
@@ -333,11 +335,6 @@ public class CongestionWindowHandler {
       }
     }
     return min;
-  }
-
-  //just for testcases
-  public void setCwnd(double cwnd) {
-    this.cwnd = cwnd;
   }
 
   /**
@@ -433,6 +430,10 @@ public class CongestionWindowHandler {
   public void setAllowed_increase(double allowedIncrease) {
     LOG.warn("Allowed Increase set from " + this.allowedIncrease + " to " + allowedIncrease);
     this.allowedIncrease = allowedIncrease;
+  }
+  
+  public long getEstimatedQD() {
+    return currentDelay() - baseDelay();
   }
 
   //possible loss long queueing_delay, long flightSize, long bytes_newly_acked

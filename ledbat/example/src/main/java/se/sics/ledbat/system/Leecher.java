@@ -77,7 +77,7 @@ public class Leecher extends ComponentDefinition {
         logPrefix = "<" + self.getId().toString() +  ">";
         UUIDIdFactory uuidFactory = new UUIDIdFactory();
         this.conn = new AppCongestionWindow(ledbatConfig, uuidFactory.randomId(), MIN_RTO, Optional.fromNullable((String)null));
-        this.networkLoad = NetworkQueueLoadProxy.instance("leecher_" + logPrefix, self.getId(), proxy, config(), Optional.fromNullable((String)null));
+        this.networkLoad = NetworkQueueLoadProxy.instance("load_leecher" + logPrefix, proxy, config(), Optional.fromNullable((String)null));
 
         subscribe(handleStart, control);
         subscribe(handleAdvance, timerPort);

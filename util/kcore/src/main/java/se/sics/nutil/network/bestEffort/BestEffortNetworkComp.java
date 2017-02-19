@@ -72,7 +72,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     this.logPrefix = "<" + init.id + ">";
 
     BestEffortNetworkConfig beConfig = new BestEffortNetworkConfig(config());
-    loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix, init.id, init.proxy, config(), beConfig.reportDir);
+    loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix,init.proxy, config(), beConfig.reportDir);
 
     subscribe(handleStart, control);
     subscribe(handleRetry, timerPort);

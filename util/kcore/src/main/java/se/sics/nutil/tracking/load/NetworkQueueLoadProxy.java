@@ -40,7 +40,6 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -145,7 +144,7 @@ public class NetworkQueueLoadProxy {
   public void reportLoad(long now, long load) {
     if (loadFile.isPresent()) {
       try {
-        long expTime = now - start;
+        double expTime = (now - start)/1000;
         loadFile.get().write(expTime + "," + load + "\n");
         loadFile.get().flush();
       } catch (IOException ex) {
@@ -154,20 +153,20 @@ public class NetworkQueueLoadProxy {
     }
   }
 
-  public static NetworkQueueLoadProxy instance(String logPrefix, Identifier id, ComponentProxy proxy, Config config,
+  public static NetworkQueueLoadProxy instance(String name, ComponentProxy proxy, Config config,
     Optional<String> reportDir) {
     Optional<BufferedWriter> loadF = Optional.absent();
     if (reportDir.isPresent()) {
-      loadF = Optional.fromNullable(onDiskLoadTracker(reportDir.get(), id));
+      loadF = Optional.fromNullable(onDiskLoadTracker(reportDir.get(), name));
     }
-    return new NetworkQueueLoadProxy(logPrefix, proxy, new QueueLoadConfig(config), loadF);
+    return new NetworkQueueLoadProxy(name, proxy, new QueueLoadConfig(config), loadF);
   }
 
-  private static BufferedWriter onDiskLoadTracker(String dirPath, Identifier id) {
+  private static BufferedWriter onDiskLoadTracker(String dirPath, String name) {
     try {
       DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
       Date date = new Date();
-      String loadfName = "load_be_" + id + "_" + sdf.format(date) + ".csv";
+      String loadfName = name + "_" + sdf.format(date) + ".csv";
       File loadf = new File(dirPath + File.separator + loadfName);
       if (loadf.exists()) {
         loadf.delete();
