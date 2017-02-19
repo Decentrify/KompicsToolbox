@@ -35,22 +35,23 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class AppCwndTracker {
 
-  private final BufferedWriter adjustmentFile;
+  private final BufferedWriter cwndFile;
   private final BufferedWriter rttFile;
   private final long start;
-  private long lastReported = 0;
+  private long lastReported;
 
-  public AppCwndTracker(BufferedWriter adjustmentFile, BufferedWriter rttFile) {
-    this.adjustmentFile = adjustmentFile;
+  public AppCwndTracker(BufferedWriter cwndFile, BufferedWriter rttFile) {
+    this.cwndFile = cwndFile;
     this.rttFile = rttFile;
-    this.start = System.currentTimeMillis();
+    start = System.currentTimeMillis();
+    lastReported = start;
   }
 
   public void reportAdjustment(long now, double adjustment, double appCwnd) {
     try {
       long expTime = (now - start)/1000;
-      adjustmentFile.write(expTime + "," + adjustment + "," + appCwnd + "\n");
-      adjustmentFile.flush();
+      cwndFile.write(expTime + "," + adjustment + "," + appCwnd + "\n");
+      cwndFile.flush();
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -71,7 +72,7 @@ public class AppCwndTracker {
 
   public void close() {
     try {
-      adjustmentFile.close();
+      cwndFile.close();
       rttFile.close();
     } catch (IOException ex) {
       throw new RuntimeException(ex);
@@ -82,20 +83,20 @@ public class AppCwndTracker {
     try {
       DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
       Date date = new Date();
-      String afName = "app_cwnd_a_" + cwndId.toString() + "_" + sdf.format(date) + ".csv";
-      File af = new File(dirPath + File.separator + afName);
-      if (af.exists()) {
-        af.delete();
+      String cwndfName = "cwnd_app_" + cwndId.toString() + "_" + sdf.format(date) + ".csv";
+      File cwndf = new File(dirPath + File.separator + cwndfName);
+      if (cwndf.exists()) {
+        cwndf.delete();
       }
-      af.createNewFile();
+      cwndf.createNewFile();
       
-      String rfName = "app_cwnd_r_" + cwndId.toString() + "_" + sdf.format(date) + ".csv";
+      String rfName = "rtt_app_" + cwndId.toString() + "_" + sdf.format(date) + ".csv";
       File rf = new File(dirPath + File.separator + rfName);
       if (rf.exists()) {
         rf.delete();
       }
       rf.createNewFile();
-      return new AppCwndTracker(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(af))),
+      return new AppCwndTracker(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(cwndf))),
         new BufferedWriter(new OutputStreamWriter(new FileOutputStream(rf))));
     } catch (FileNotFoundException ex) {
       throw new RuntimeException(ex);

@@ -35,20 +35,21 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class LedbatCwndTracker {
 
-  private final BufferedWriter normalFile;
+  private final BufferedWriter cwndFile;
   private final BufferedWriter lossFile;
   private final BufferedWriter qdFile;
   private final long start;
   //********************************
-  private long lastReported = 0;
+  private long lastReported;
   private final SummaryStatistics cwndS = new SummaryStatistics();
   private final SummaryStatistics qdS = new SummaryStatistics();
 
-  public LedbatCwndTracker(BufferedWriter normalFile, BufferedWriter lossFile, BufferedWriter qdFile) {
-    this.normalFile = normalFile;
+  public LedbatCwndTracker(BufferedWriter cwndFile, BufferedWriter lossFile, BufferedWriter qdFile) {
+    this.cwndFile = cwndFile;
     this.lossFile = lossFile;
     this.qdFile = qdFile;
-    this.start = System.currentTimeMillis();
+    start = System.currentTimeMillis();
+    lastReported = start;
     resetS();
   }
 
@@ -63,8 +64,8 @@ public class LedbatCwndTracker {
 
       try {
         long expTime = (now - start) / 1000;
-        normalFile.write(expTime + "," + cwndS.getMean() + "," + cwndS.getMin() + "," + cwndS.getMax() + "\n");
-        normalFile.flush();
+        cwndFile.write(expTime + "," + cwndS.getMean() + "," + cwndS.getMin() + "," + cwndS.getMax() + "\n");
+        cwndFile.flush();
         qdFile.write(expTime + "," + qdS.getMean() + "," + qdS.getMin() + "," + qdS.getMax() + "\n");
         qdFile.flush();
       } catch (IOException ex) {
@@ -88,8 +89,9 @@ public class LedbatCwndTracker {
 
   public void close() {
     try {
-      normalFile.close();
+      cwndFile.close();
       lossFile.close();
+      qdFile.close();
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -106,7 +108,7 @@ public class LedbatCwndTracker {
       }
       cwndf.createNewFile();
 
-      String lossfName = "loss_cwnd_ledbat_" + id.toString() + "_" + sdf.format(date) + ".csv";
+      String lossfName = "loss_ledbat_" + id.toString() + "_" + sdf.format(date) + ".csv";
       File lossf = new File(dirPath + File.separator + lossfName);
       if (lossf.exists()) {
         lossf.delete();

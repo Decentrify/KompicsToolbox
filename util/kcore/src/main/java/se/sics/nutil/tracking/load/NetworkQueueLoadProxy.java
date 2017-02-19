@@ -146,7 +146,7 @@ public class NetworkQueueLoadProxy {
     if (loadFile.isPresent()) {
       try {
         long expTime = now - start;
-        loadFile.get().write(expTime + "," + load);
+        loadFile.get().write(expTime + "," + load + "\n");
         loadFile.get().flush();
       } catch (IOException ex) {
         throw new RuntimeException(ex);
@@ -167,7 +167,7 @@ public class NetworkQueueLoadProxy {
     try {
       DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
       Date date = new Date();
-      String loadfName = "load_dwnl_" + id + "_" + sdf.format(date) + ".csv";
+      String loadfName = "load_be_" + id + "_" + sdf.format(date) + ".csv";
       File loadf = new File(dirPath + File.separator + loadfName);
       if (loadf.exists()) {
         loadf.delete();
