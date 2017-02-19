@@ -144,7 +144,7 @@ public class Leecher extends ComponentDefinition {
     }
 
     private void request() {
-        ScheduleTimeout st = new ScheduleTimeout(conn.getRTO());
+        ScheduleTimeout st = new ScheduleTimeout(conn.getRTT());
         ExMsg.Timeout timeout = new ExMsg.Timeout(st);
         st.setTimeoutEvent(timeout);
         trigger(st, timerPort);

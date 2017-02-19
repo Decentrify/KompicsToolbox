@@ -20,6 +20,7 @@ package se.sics.ledbat.core;
 
 import com.google.common.base.Optional;
 import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.predict.ExpMovingAvg;
 import se.sics.ledbat.core.util.ThroughputHandler;
 import se.sics.ledbat.ncore.msg.LedbatMsg;
 
@@ -29,7 +30,10 @@ import se.sics.ledbat.ncore.msg.LedbatMsg;
 public class AppCongestionWindow {
 
   private final CongestionWindowHandler ledbatCwnd;
-  private final RTTEstimator appRttEstimator;
+//  private final RTTEstimator appRttEstimator;
+  private final ExpMovingAvg appRTTEstimator;
+  private final long minRTT;
+  
   private final ConnHistory connHistory;
   //**************************************************************************
   private final Optional<AppCwndTracker> tracker;
@@ -41,9 +45,11 @@ public class AppCongestionWindow {
    */
   private long flightSize;
 
-  public AppCongestionWindow(LedbatConfig ledbatConfig, Identifier connectionId, long minRTO, Optional<String> reportDir) {
+  public AppCongestionWindow(LedbatConfig ledbatConfig, Identifier connectionId, long minRTT, Optional<String> reportDir) {
     ledbatCwnd = new CongestionWindowHandler(connectionId, ledbatConfig, reportDir);
-    appRttEstimator = new RTTEstimator(ledbatConfig, minRTO);
+    this.minRTT = minRTT;
+//    appRttEstimator = new RTTEstimator(ledbatConfig, minRTO);
+    appRTTEstimator = new ExpMovingAvg(1000);//start with 1s RTT
     connHistory = new ConnHistory(connectionId);
     flightSize = 0;
     appCwnd = ledbatCwnd.getCwnd();
@@ -61,19 +67,37 @@ public class AppCongestionWindow {
     }
   }
 
+  public long getRTT() {
+    return Math.max(minRTT, (long)appRTTEstimator.get());
+  }
   //**************************************************************************
 
   public void adjustState(double adjustment) {
-    long rtt = appRttEstimator.getRetransmissionTimeout();
-    long qd = ledbatCwnd.getEstimatedQD();
-    if(rtt > 2 * (qd + 100)) {
-      adjustment = -0.7;
-    }
+    adjustment = Math.min(adjustment, rttAdjustment());
     double multiplier_const = getMultplier(adjustment);
     appCwnd = Math.min(Math.max(multiplier_const * appCwnd, ledbatCwnd.getMinCwnd()), ledbatCwnd.getCwnd());
     reportAdjustment(System.currentTimeMillis(), multiplier_const, appCwnd);
   }
-
+  
+  private double rttAdjustment() {
+    long trueRTT = (long)appRTTEstimator.get();
+    long oneWayQueueDelay = ledbatCwnd.getEstimatedQD();
+    int oneSideExecutionOverhead = 100;
+    if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead)) {//100ms
+      return -0.7;
+    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/2)) {//50ms
+      return -0.4;
+    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/4)) {//25ms
+      return -0.1;
+    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/10)) {//10ms
+      return 0.1;
+    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/20)) {//5ms
+      return 0.4;
+    } else {
+      return 0.7;
+    }
+  }
+  
   private double getMultplier(double adjustment) {
     if (adjustment <= -0.7) {
       return 0.5;
@@ -112,8 +136,8 @@ public class AppCongestionWindow {
     flightSize -= msgSize;
 
     int rtt = (int) (now - resp.leecherAppReqSendT);
-    appRttEstimator.updateRTO(now, rtt);
-    reportRTT(now, appRttEstimator.getRetransmissionTimeout());
+    appRTTEstimator.update(rtt);
+    reportRTT(now, getRTT());
 
     int oneWayDelay = (int) (resp.leecherNetRespT - resp.seederNetRespSendT);
     ledbatCwnd.updateCWND(now, oneWayDelay, flightSize, msgSize);
@@ -123,8 +147,8 @@ public class AppCongestionWindow {
     connHistory.late(now, msgSize);
 
     int rtt = (int) (now - resp.leecherAppReqSendT);
-    appRttEstimator.updateRTO(now, rtt);
-    reportRTT(now, appRttEstimator.getRetransmissionTimeout());
+    appRTTEstimator.update(rtt);
+    reportRTT(now, getRTT());
 
     int oneWayDelay = (int) (resp.leecherNetRespT - resp.seederNetRespSendT);
     ledbatCwnd.updateCWND(now, oneWayDelay, flightSize, msgSize);
@@ -134,14 +158,10 @@ public class AppCongestionWindow {
     flightSize -= msgSize;
     connHistory.timeout(now, msgSize);
 
-    ledbatCwnd.handleLoss(now, appRttEstimator.getRetransmissionTimeout());
+    ledbatCwnd.handleLoss(now, getRTT());
   }
 
   //**************************************************************************
-  public long getRTO() {
-    return appRttEstimator.getRetransmissionTimeout();
-  }
-
   public long downloadSpeed(long now) {
     return connHistory.avgThroughput(now);
   }

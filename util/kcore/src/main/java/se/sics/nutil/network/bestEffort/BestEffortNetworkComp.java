@@ -170,7 +170,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
 
   private void doRetry(Pair<Identifier, Identifier> msgId, BasicContentMsg msg, BestEffortMsg.Request retryContent,
     int retriesLeft) {
-    ScheduleTimeout st = new ScheduleTimeout(retryContent.rto);
+    ScheduleTimeout st = new ScheduleTimeout(2 * retryContent.rto);
     RetryTimeout rt = new RetryTimeout(st, retryContent, msg, msgId, retriesLeft);
     st.setTimeoutEvent(rt);
     LOG.debug("{}schedule retry in:{}", logPrefix, retryContent.rto);

@@ -191,14 +191,27 @@ public class CongestionWindowHandler {
         cwnd = cwnd + ((ledbatConfig.gain * off_target * bytes_newly_acked * ledbatConfig.mss) / cwnd);
       }
     }
-    altruisticCounter++;
-    if(altruisticCounter == 1000) {
-      cwnd = 0.8 * cwnd;
-      altruisticCounter = 0;
-    }
+//    altruisticCounter++;
+//    if(altruisticCounter == 1000) {
+//      cwnd = (1-getAltruisticPercentage()) * cwnd;
+//      altruisticCounter = 0;
+//    }
     
     cwnd = Math.max(cwnd, getMinCwnd());
     reportNormal(now, cwnd, queuing_delay);
+  }
+  
+  //TODO Alex - check correlation  to cwnd gain per 1000 msgs
+  private double getAltruisticPercentage() {
+    if(cwnd < 10 * ledbatConfig.mss) {
+      return 0.2;
+    } else if(cwnd < 100 * ledbatConfig.mss) {
+      return 0.005;
+    } else if(cwnd < 250 * ledbatConfig.mss) {
+      return 0.001;
+    } else {
+      return 0.000005;
+    }
   }
 
   /**
