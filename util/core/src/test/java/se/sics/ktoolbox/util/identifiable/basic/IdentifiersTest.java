@@ -43,11 +43,20 @@ public class IdentifiersTest {
     Identifier msgId2 = new UUIDId(id1);
     Identifier nodeId2 = new IntId(1);
     Pair<Identifier, Identifier> pairId2 = Pair.with(msgId2, nodeId2);
-    
+
     Assert.assertEquals(pairId1, pairId2);
-    
+
     Map<Pair<Identifier, Identifier>, Boolean> m = new HashMap<>();
     m.put(pairId1, true);
     Assert.assertTrue(m.containsKey(pairId2));
+  }
+
+  @Test
+  public void partitionTest() {
+    for (int i = 0; i < 100; i++) {
+      UUID id1 = UUID.randomUUID();
+      Identifier msgId1 = new UUIDId(id1);
+      System.out.println(msgId1.partition(2));
+    }
   }
 }

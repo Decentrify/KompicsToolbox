@@ -41,7 +41,7 @@ public class UUIDId implements Identifier {
 
     @Override
     public int partition(int nrPartitions) {
-        return (int)(id.getLeastSignificantBits() % Integer.MAX_VALUE) % nrPartitions;
+        return Math.floorMod((int)(id.getLeastSignificantBits() % Integer.MAX_VALUE), nrPartitions);
     }
 
     @Override
