@@ -126,7 +126,7 @@ public class CongestionWindowHandler {
   }
 
   public double getMinCwnd() {
-    return ledbatConfig.raw * ledbatConfig.mss;
+    return ledbatConfig.minCwnd * ledbatConfig.mss;
   }
 
   public void dumpState() {
@@ -171,7 +171,6 @@ public class CongestionWindowHandler {
       //cwnd += bytes_newly_acked;
       cwnd += ledbatConfig.mss;
       //consider raw in slow start
-      cwnd = Math.min(cwnd, getMinCwnd());
       //logger.warn("------------In SlowStart Mode------------- cwnd: " + cwnd + "queuing delay :" + queuing_delay + " and target :" + target);
 //      logCwndChanges(queuing_delay, flightSize, bytes_newly_acked);
     } else { //slow start is not enabled or in congestion avoidance phase
@@ -194,11 +193,11 @@ public class CongestionWindowHandler {
       //cwnd = cwnd > max_allowed_cwnd ? max_allowed_cwnd : cwnd;
       cwnd = cwnd > ledbatConfig.minCwnd * ledbatConfig.mss ? cwnd : ledbatConfig.minCwnd * ledbatConfig.mss;
 
-      cwnd = Math.min(cwnd, getMinCwnd());
-      reportNormal(now, cwnd, queuing_delay);
 //      logCwndChanges(queuing_delay, flightSize, bytes_newly_acked);
 //      loss(now);
     }
+    cwnd = Math.max(cwnd, getMinCwnd());
+    reportNormal(now, cwnd, queuing_delay);
   }
 
   /**
@@ -442,7 +441,7 @@ public class CongestionWindowHandler {
       tracker.get().loss(time, cwnd);
     }
   }
-  
+
   public void reportNormal(long time, double cwnd, long queuing_delay) {
     if (tracker.isPresent()) {
       tracker.get().normal(time, cwnd, queuing_delay);
