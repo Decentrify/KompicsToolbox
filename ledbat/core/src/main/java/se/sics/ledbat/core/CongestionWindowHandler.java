@@ -76,7 +76,7 @@ public class CongestionWindowHandler {
     } else {
       tracker = Optional.absent();
     }
-    this.timeoutCounter = FuzzyTimeoutCounter.getInstance(Triplet.with(0.001, 0.0005, 0.005), new Random(1234));
+    this.timeoutCounter = FuzzyTimeoutCounter.getInstance(Triplet.with(0.01, 0.005, 0.05), new Random(1234));
 
     this.target = ledbatConfig.target;
     this.allowedIncrease = ledbatConfig.allowed_increase;
@@ -196,18 +196,18 @@ public class CongestionWindowHandler {
 //      cwnd = (1-getAltruisticPercentage()) * cwnd;
 //      altruisticCounter = 0;
 //    }
-    
+
     cwnd = Math.max(cwnd, getMinCwnd());
     reportNormal(now, cwnd, queuing_delay);
   }
-  
+
   //TODO Alex - check correlation  to cwnd gain per 1000 msgs
   private double getAltruisticPercentage() {
-    if(cwnd < 10 * ledbatConfig.mss) {
+    if (cwnd < 10 * ledbatConfig.mss) {
       return 0.2;
-    } else if(cwnd < 100 * ledbatConfig.mss) {
+    } else if (cwnd < 100 * ledbatConfig.mss) {
       return 0.005;
-    } else if(cwnd < 250 * ledbatConfig.mss) {
+    } else if (cwnd < 250 * ledbatConfig.mss) {
       return 0.001;
     } else {
       return 0.000005;
@@ -240,11 +240,11 @@ public class CongestionWindowHandler {
    * should be halved and cwnddecresed too minimum value. If we don't use slow
    * start or we are not in this phase, cwnd is halved.
    */
-  public double handleLoss(long now, long rtt) {
+  public int handleLoss(long now, long rtt) {
     altruisticCounter = 0;
     timeoutCounter.timeout();
     if (!timeoutCounter.trigger()) {
-      return cwnd;
+      return 0;
     }
     //todo : at most once per RTT
     if (ledbatConfig.slowStartEnabled && (cwnd <= ssThreshold * ledbatConfig.mss) && !thresholdIsSet) { // if in slow-start phase and first time loss happens
@@ -258,16 +258,23 @@ public class CongestionWindowHandler {
 //                target = currentDelay();
 //                //logger.error("   TARGET UPDATED TO " + target);
       reportLoss(now, cwnd);
+      cwnd = Math.max(cwnd, getMinCwnd());
+      return 1;
     } else if (now - lastTimeCwndHalved >= rtt) { //At most once per RTT
       cwnd = cwnd * 0.5;
       lastTimeCwndHalved = now;
       //logger.info(" Loss !! and cwnd is halved: " + cwnd);
       reportLoss(now, cwnd);
+      cwnd = Math.max(cwnd, getMinCwnd());
+      return -1;
     } else {
       //logger.info("Loss !! and cwnd NOT halved: " + cwnd);
+      return 0;
     }
-    cwnd = Math.max(cwnd, getMinCwnd());
-    return cwnd;
+  }
+
+  public boolean thresholdIsSet() {
+    return thresholdIsSet;
   }
 
   //todo: after a long silent period, replace all entries older than 1 RTT with +INFINITY
@@ -444,9 +451,13 @@ public class CongestionWindowHandler {
     LOG.warn("Allowed Increase set from " + this.allowedIncrease + " to " + allowedIncrease);
     this.allowedIncrease = allowedIncrease;
   }
-  
+
   public long getEstimatedQD() {
     return currentDelay() - baseDelay();
+  }
+
+  public long getEstimatedOWD() {
+    return currentDelay();
   }
 
   //possible loss long queueing_delay, long flightSize, long bytes_newly_acked

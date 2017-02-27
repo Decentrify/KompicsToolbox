@@ -18,10 +18,7 @@
  */
 package se.sics.nutil.network.bestEffort;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import org.javatuples.Pair;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -34,10 +31,10 @@ import se.sics.kompics.Start;
 import se.sics.kompics.network.MessageNotify;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.timer.CancelTimeout;
-import se.sics.kompics.timer.ScheduleTimeout;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.nutil.timer.RingTimer;
 import se.sics.ktoolbox.util.identifiable.Identifiable;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -63,7 +60,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
   //******************************************************************************************************************
   //turn into a wheel
   //<contentId, targetId>
-  private final Map<Pair<Identifier, Identifier>, UUID> pendingMsgs = new HashMap<>();
+  private final RingTimer timer;
   //******************************************************************************************************************
   private final NetworkQueueLoadProxy loadTracking;
 
@@ -71,11 +68,12 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     this.self = init.self;
     this.logPrefix = "<" + init.id + ">";
 
+    timer = new RingTimer(50, 25000);
     BestEffortNetworkConfig beConfig = new BestEffortNetworkConfig(config());
-    loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix,init.proxy, config(), beConfig.reportDir);
+    loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix, init.proxy, config(), beConfig.reportDir);
 
     subscribe(handleStart, control);
-    subscribe(handleRetry, timerPort);
+    subscribe(handleRingTimer, timerPort);
     //TODO Alex - once shortcircuit channels work replace these handler with proper ClassMatchers + shortcircuit channel
     subscribe(handleOutgoingMsg, incomingNetworkPort);
     subscribe(handleIncomingMsg, outgoingNetworkPort);
@@ -88,6 +86,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     public void handle(Start event) {
       LOG.info("{}starting...", logPrefix);
       loadTracking.start();
+      scheduleRingPeriodicTimeout(50);
     }
   };
 
@@ -136,19 +135,19 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     }
   };
 
-  Handler handleRetry = new Handler<RetryTimeout>() {
+  Handler handleRingTimer = new Handler<RingTimeout>() {
     @Override
-    public void handle(RetryTimeout timeout) {
-      if (pendingMsgs.remove(timeout.msgId) == null) {
-        LOG.trace("{}late retry:{}", logPrefix, timeout.msg);
-      } else {
-        if (timeout.retriesLeft == 0) {
-          BasicContentMsg msg = timeout.msg.answer(timeout.req.timeout());
+    public void handle(RingTimeout timeout) {
+      LOG.debug("{}ring size:{}", logPrefix, timer.getSize());
+      List<RingContainer> timeouts = (List) timer.windowTick();
+      for (RingContainer tc : timeouts) {
+        if (tc.retriesLeft == 0) {
+          BasicContentMsg msg = tc.msg.answer(tc.req.timeout());
           LOG.debug("{}retry timeout:{}", logPrefix, msg);
           trigger(msg, incomingNetworkPort);
         } else {
-          LOG.debug("{}sending retry msg:{}", logPrefix, timeout.msg);
-          doRetry(timeout.msgId, timeout.msg, timeout.req, timeout.retriesLeft - 1);
+          LOG.debug("{}sending retry msg:{}", logPrefix, tc.msg);
+          doRetry(tc.msg, tc.req, tc.retriesLeft - 1);
         }
       }
     }
@@ -168,15 +167,13 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     }
   };
 
-  private void doRetry(Pair<Identifier, Identifier> msgId, BasicContentMsg msg, BestEffortMsg.Request retryContent,
-    int retriesLeft) {
-    ScheduleTimeout st = new ScheduleTimeout(2 * retryContent.rto);
-    RetryTimeout rt = new RetryTimeout(st, retryContent, msg, msgId, retriesLeft);
-    st.setTimeoutEvent(rt);
+  private void doRetry(BasicContentMsg msg, BestEffortMsg.Request retryContent, int retriesLeft) {
+    RingContainer rt = new RingContainer(retryContent, msg, retriesLeft);
     LOG.debug("{}schedule retry in:{}", logPrefix, retryContent.rto);
-    trigger(st, timerPort);
-    pendingMsgs.put(msgId, rt.getTimeoutId());
     trigger(msg, outgoingNetworkPort);
+    if(!timer.setTimeout(2 * retryContent.rto, rt)) {
+      throw new RuntimeException("fix me with long timer");
+    }
   }
 
   private <C extends Identifiable> void handleRequest(
@@ -184,23 +181,15 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     BestEffortMsg.Request<C> retryContent = m.getContent();
     C baseContent = retryContent.getWrappedContent();
     KAddress target = m.getHeader().getDestination();
-    Pair<Identifier, Identifier> msgId = Pair.with(baseContent.getId(), target.getId());
     BasicContentMsg msg = new BasicContentMsg(m.getHeader(), baseContent);
 
     LOG.debug("{}sending msg:{}", logPrefix, msg);
-    doRetry(msgId, msg, retryContent, retryContent.retries);
+    doRetry(msg, retryContent, retryContent.retries);
   }
 
   private void handleResponse(BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg) {
     Identifier msgId = msg.getContent().getId();
-    Identifier targetId = msg.getHeader().getSource().getId();
-    UUID tid = pendingMsgs.remove(Pair.with(msgId, targetId));
-    if (tid != null) {
-      LOG.debug("{}forwarding response:{}", logPrefix, msg.getContent());
-      trigger(new CancelTimeout(tid), timerPort);
-    } else {
-      LOG.debug("{}forwarding incoming:{}", logPrefix, msg.getContent());
-    }
+    timer.cancelTimeout(msgId);
     trigger(msg, incomingNetworkPort);
   }
 
@@ -208,14 +197,8 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Cancel<C>> m) {
     C baseContent = m.getContent().content;
     KAddress target = m.getHeader().getDestination();
-
-    UUID tid = pendingMsgs.remove(Pair.with(baseContent.getId(), target.getId()));
-    if (tid == null) {
-      LOG.trace("{}late cancel:{}", logPrefix, m);
-    } else {
-      LOG.debug("{}cancel:{}", logPrefix, m);
-      trigger(new CancelTimeout(tid), timerPort);
-    }
+    //TODO Alex URGENT - check if this id matches message
+    timer.cancelTimeout(baseContent.getId());
   }
 
   public static class Init extends se.sics.kompics.Init<BestEffortNetworkComp> {
@@ -231,20 +214,37 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     }
   }
 
-  public static class RetryTimeout extends Timeout {
+  public static class RingContainer implements RingTimer.Container {
 
     public final BestEffortMsg.Request req;
-    public final BasicContentMsg msg;
-    public final Pair<Identifier, Identifier> msgId;
+    public final BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg;
     public final int retriesLeft;
 
-    public RetryTimeout(ScheduleTimeout st, BestEffortMsg.Request req, BasicContentMsg msg,
-      Pair<Identifier, Identifier> msgId, int retriesLeft) {
-      super(st);
+    public RingContainer(BestEffortMsg.Request req, BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg,
+      int retriesLeft) {
       this.req = req;
       this.msg = msg;
-      this.msgId = msgId;
       this.retriesLeft = retriesLeft;
+    }
+
+    @Override
+    public Identifier getId() {
+      return msg.getContent().getId();
+    }
+  }
+
+  private void scheduleRingPeriodicTimeout(long period) {
+    SchedulePeriodicTimeout st = new SchedulePeriodicTimeout(period, period);
+    RingTimeout rt = new RingTimeout(st);
+    st.setTimeoutEvent(rt);
+    LOG.debug("{}schedule periodic ring timer", logPrefix);
+    trigger(st, timerPort);
+  }
+  
+  public static class RingTimeout extends Timeout {
+
+    public RingTimeout(SchedulePeriodicTimeout st) {
+      super(st);
     }
   }
 }

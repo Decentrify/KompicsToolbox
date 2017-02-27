@@ -33,7 +33,7 @@ public class AppCongestionWindow {
 //  private final RTTEstimator appRttEstimator;
   private final ExpMovingAvg appRTTEstimator;
   private final long minRTT;
-  
+
   private final ConnHistory connHistory;
   //**************************************************************************
   private final Optional<AppCwndTracker> tracker;
@@ -44,6 +44,8 @@ public class AppCongestionWindow {
    * cwnd size on each ack by updateFlightsize();
    */
   private long flightSize;
+  //*****
+  private RTTAdjustCtrl rttCtrl;
 
   public AppCongestionWindow(LedbatConfig ledbatConfig, Identifier connectionId, long minRTT, Optional<String> reportDir) {
     ledbatCwnd = new CongestionWindowHandler(connectionId, ledbatConfig, reportDir);
@@ -58,61 +60,135 @@ public class AppCongestionWindow {
     } else {
       tracker = Optional.absent();
     }
+    rttCtrl = new RTTAdjustCtrl();
   }
 
   public void close() {
     ledbatCwnd.close();
-    if(tracker.isPresent()) {
+    if (tracker.isPresent()) {
       tracker.get().close();
     }
   }
 
   public long getRTT() {
-    return Math.max(minRTT, (long)appRTTEstimator.get());
+    return Math.min(Math.max(minRTT, (long) appRTTEstimator.get()), 1000);
   }
-  //**************************************************************************
 
-  public void adjustState(double adjustment) {
-    adjustment = Math.min(adjustment, rttAdjustment());
+  //**************************************************************************
+  private static class RTTAdjustCtrl {
+
+    private long lastAdjusted;
+    private long rtt;
+    private boolean started;
+    private boolean onUp;
+
+    public RTTAdjustCtrl() {
+      this.started = false;
+      this.onUp = false;
+    }
+
+    public void start(long now) {
+      started = true;
+      lastAdjusted = now;
+      rtt = 0;
+      onUp = true;
+    }
+
+    public boolean isStarted() {
+      return started;
+    }
+
+    public boolean canGoUp(long now) {
+      if (now - lastAdjusted > rtt) {
+        return true;
+      }
+      return false;
+    }
+
+    public boolean canGoDown(long now) {
+      if (onUp) {
+        return true;
+      }
+      if (now - lastAdjusted > rtt / 2) {
+        return true;
+      }
+      return false;
+    }
+
+    public void goUp(long now, long newRtt) {
+      lastAdjusted = now;
+      rtt = newRtt;
+      onUp = true;
+    }
+
+    public void goDown(long now, long newRtt) {
+      lastAdjusted = now;
+      rtt = newRtt;
+      onUp = false;
+    }
+  }
+
+  public void adjustState(long now, double adjustment) {
+    if (rttCtrl.isStarted()) {
+      adjustment = Math.min(adjustment, rttAdjustment());
+      if (adjustment <= 0 && rttCtrl.canGoDown(now)) {
+        adjust(now, adjustment);
+        rttCtrl.goDown(now, (long) appRTTEstimator.get());
+      } else if (adjustment > 0 && rttCtrl.canGoUp(now)) {
+        adjust(now, adjustment);
+        rttCtrl.goUp(now, (long) appRTTEstimator.get());
+      } else {
+        //nothing
+      }
+    } else {
+      adjust(now, adjustment);
+    }
+  }
+
+  private void adjust(long now, double adjustment) {
     double multiplier_const = getMultplier(adjustment);
     appCwnd = Math.min(Math.max(multiplier_const * appCwnd, ledbatCwnd.getMinCwnd()), ledbatCwnd.getCwnd());
-    reportAdjustment(System.currentTimeMillis(), multiplier_const, appCwnd);
+    reportAdjustment(now, multiplier_const, appCwnd);
   }
-  
+
   private double rttAdjustment() {
-    long trueRTT = (long)appRTTEstimator.get();
-    long oneWayQueueDelay = ledbatCwnd.getEstimatedQD();
+    long trueRTT = (long) appRTTEstimator.get();
+    long oneWayDelay = ledbatCwnd.getEstimatedOWD();
     int oneSideExecutionOverhead = 100;
-    if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead)) {//100ms
+    if (trueRTT > 2 * (oneWayDelay + oneSideExecutionOverhead)) {//100ms
       return -0.7;
-    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/2)) {//50ms
+    } else if (trueRTT > 2 * (oneWayDelay + oneSideExecutionOverhead / 2)) {//
       return -0.4;
-    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/4)) {//25ms
+    } else if (trueRTT > 2 * (oneWayDelay + oneSideExecutionOverhead / 4)) {//
       return -0.1;
-    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/10)) {//10ms
+    } else if (trueRTT > 2 * (oneWayDelay + oneSideExecutionOverhead / 5)) {//
       return 0.1;
-    } else if(trueRTT > 2 * (oneWayQueueDelay + oneSideExecutionOverhead/20)) {//5ms
+    } else if (trueRTT > 2 * (oneWayDelay + oneSideExecutionOverhead / 10)) {//
       return 0.4;
     } else {
       return 0.7;
     }
   }
-  
+
   private double getMultplier(double adjustment) {
     if (adjustment <= -0.7) {
       return 0.5;
     } else if (adjustment <= -0.4) {
-      return 0.6;
-    } else if (adjustment <= -0.1) {
       return 0.7;
+    } else if (adjustment <= -0.1) {
+      return 0.8;
     } else if (adjustment <= 0) {
       return 1;
     } else if (adjustment <= 0.1) {
       return 1.1;
     } else if (adjustment <= 0.4) {
-      return 1.4;
+      return 1.2;
     } else if (adjustment <= 0.7) {
-      return 1.7;
+      if(rttCtrl.isStarted()) {
+        return 1.3;
+      } else {
+        return 1.7;
+      }
     } else {
       return 2;
     }
@@ -137,7 +213,7 @@ public class AppCongestionWindow {
 
     int rtt = (int) (now - resp.leecherAppReqSendT);
     appRTTEstimator.update(rtt);
-    reportRTT(now, getRTT());
+    reportRTT(now, getRTT(), ledbatCwnd.getEstimatedOWD());
 
     int oneWayDelay = (int) (resp.leecherNetRespT - resp.seederNetRespSendT);
     ledbatCwnd.updateCWND(now, oneWayDelay, flightSize, msgSize);
@@ -148,7 +224,7 @@ public class AppCongestionWindow {
 
     int rtt = (int) (now - resp.leecherAppReqSendT);
     appRTTEstimator.update(rtt);
-    reportRTT(now, getRTT());
+    reportRTT(now, getRTT(), ledbatCwnd.getEstimatedOWD());
 
     int oneWayDelay = (int) (resp.leecherNetRespT - resp.seederNetRespSendT);
     ledbatCwnd.updateCWND(now, oneWayDelay, flightSize, msgSize);
@@ -158,7 +234,17 @@ public class AppCongestionWindow {
     flightSize -= msgSize;
     connHistory.timeout(now, msgSize);
 
-    ledbatCwnd.handleLoss(now, getRTT());
+    switch (ledbatCwnd.handleLoss(now, getRTT())) {
+      case 0:
+        //ignore - acceptable
+        break;
+      case 1:
+        //first loss
+        rttCtrl.start(now);
+      case -1:
+        adjust(now, 0); //if ledbat slowed down...it will slow itself
+    }
+
   }
 
   //**************************************************************************
@@ -215,16 +301,16 @@ public class AppCongestionWindow {
   public DownloadThroughput report() {
     return connHistory.report();
   }
-  
+
   public void reportAdjustment(long time, double adjustment, double appCwnd) {
     if (tracker.isPresent()) {
       tracker.get().reportAdjustment(time, adjustment, appCwnd);
     }
   }
-  
-  public void reportRTT(long time, long rtt) {
+
+  public void reportRTT(long time, long rtt, long owd) {
     if (tracker.isPresent()) {
-      tracker.get().reportRTT(time, rtt);
+      tracker.get().reportRTT(time, rtt, owd);
     }
   }
 }

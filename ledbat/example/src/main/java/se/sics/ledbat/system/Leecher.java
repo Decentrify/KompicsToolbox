@@ -136,7 +136,7 @@ public class Leecher extends ComponentDefinition {
 
     private void trySend() {
         long now = System.currentTimeMillis();
-        conn.adjustState(networkLoad.adjustment());
+        conn.adjustState(now, networkLoad.adjustment());
         while (conn.canSend()) {
             conn.request(now, ledbatConfig.mss);
             request();

@@ -57,12 +57,12 @@ public class AppCwndTracker {
     }
   }
 
-  public void reportRTT(long now, long rtt) {
+  public void reportRTT(long now, long rtt, long owd) {
     if (now > lastReported + 100) { //every 100ms
       lastReported = now;
       try {
         double expTime = ((double)(now - start)) / 1000;
-        rttFile.write(expTime + "," + rtt + "\n");
+        rttFile.write(expTime + "," + rtt + ", " + owd + "\n");
         rttFile.flush();
       } catch (IOException ex) {
         throw new RuntimeException(ex);
