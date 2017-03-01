@@ -20,37 +20,21 @@ package se.sics.ktoolbox.nutil.fsm;
 
 import java.util.HashMap;
 import java.util.Map;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMStateDef {
 
-  private FSMStateDefId id = null;
   private FSMOnWrongStateAction owsa = new FSMOnWrongStateAction() {
     @Override
-    public void handle(FSMStateId state, FSMEvent event, FSMExternalState es, FSMInternalState is) {
+    public void handle(FSMStateName state, FSMEvent event, FSMExternalState es, FSMInternalState is) {
       //default drop msgs silently
     }
   };
   //Class is a FSMEvent subtype
   private final Map<Class, FSMEventHandler> handlers = new HashMap<>();
   private boolean sealed = false;
-
-  //set upon registration with FSMDef
-  void setId(FSMStateDefId setId) throws FSMException {
-    if (id != null) {
-      throw new FSMException("double use of state def within the same fsm - not allowed");
-    }
-    this.id = setId;
-  }
-
-  public FSMStateDefId getId() {
-    return id;
-  }
 
   public void setOnWrongStateAction(FSMOnWrongStateAction owsa) {
     this.owsa = owsa;
@@ -69,10 +53,10 @@ public class FSMStateDef {
     sealed = true;
   }
 
-  protected FSMState build(Identifier baseId, FSMExternalState es, FSMInternalState is) throws FSMException {
+  protected FSMState build(FSMStateName state, FSMExternalState es, FSMInternalState is) throws FSMException {
     if (!sealed) {
       throw new FSMException("trying to build an unsealed definition");
     }
-    return new FSMState(id.getStateId(baseId), owsa, es, is, handlers);
+    return new FSMState(state, owsa, es, is, handlers);
   }
 }

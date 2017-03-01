@@ -36,12 +36,6 @@ public class FSMDefId {
     return new FSMId(fsmDefId, baseId);
   }
   
-  public FSMStateDefId getFSMStateDefId(byte stateId) {
-    byte[] sId = new byte[1];
-    sId[0] = stateId;
-    return new FSMStateDefId(fsmDefId, sId);
-  }
-  
   @Override
   public String toString() {
     return "<fsm,md:" + BaseEncoding.base16().encode(fsmDefId) + ">";

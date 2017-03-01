@@ -21,5 +21,6 @@ package se.sics.ktoolbox.nutil.fsm;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMTransition {
+public enum FSMBasicStateNames implements FSMStateName {
+  START, FINAL
 }

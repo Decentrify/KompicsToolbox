@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.events.Event2;
 import se.sics.ktoolbox.nutil.fsm.events.Port2;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -32,21 +30,21 @@ import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 public class FSM2 {
   private static final Logger LOG = LoggerFactory.getLogger(FSM2.class);
   
-  public static enum Transition implements FSMTransition {
-    T1
-  }
-  
   public static FSMachineDef build() throws FSMException {
     FSMOnWrongStateAction owsa = new FSMOnWrongStateAction<MyExternalState, InternalState>() {
       @Override
-      public void handle(FSMStateId state, FSMEvent event, MyExternalState es, InternalState is) {
+      public void handle(FSMStateName state, FSMEvent event, MyExternalState es, InternalState is) {
         LOG.warn("state:{} does not handle event:{}", state, event);
       }
     };
-    FSMachineDef fsm = FSMachineDef.instance(FSMs.fsm2);
-    FSMStateDefId id1 = fsm.registerInitState(initState(owsa));
-    fsm.register(Transition.T1, id1, id1);
-    fsm.seal();
+    FSMachineDef.Builder builder = FSMachineDef.builder(FSMs.fsm2);
+    
+    FSMStateDef startState = initState(owsa);
+    
+    FSMachineDef fsm = builder
+      .fromState(FSMBasicStateNames.START, startState).toStates(FSMBasicStateNames.START).buildState()
+      .complete();
+    
     return fsm;
   }
 
@@ -60,10 +58,10 @@ public class FSM2 {
   
   static FSMEventHandler initHandler1 = new FSMEventHandler<MyExternalState, InternalState, Event2.Req>() {
     @Override
-    public FSMTransition handle(MyExternalState es, InternalState is, Event2.Req req) {
+    public FSMStateName handle(MyExternalState es, InternalState is, Event2.Req req) {
       LOG.info("1->2");
       es.getProxy().trigger(req, es.getProxy().getNegative(Port2.class));
-      return Transition.T1;
+      return FSMBasicStateNames.START;
     }
   };
   

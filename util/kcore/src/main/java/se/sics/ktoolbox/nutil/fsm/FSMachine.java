@@ -19,12 +19,12 @@
 package se.sics.ktoolbox.nutil.fsm;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Table;
 import java.util.Map;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -32,48 +32,40 @@ import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 public class FSMachine {
 
   private final static Logger LOG = LoggerFactory.getLogger(FSMachine.class);
-  private String logPrefix = "";
 
   public final FSMId id;
   private final FSMOnKillAction oka;
-  private FSMState currentState;
-  private final Map<FSMStateId, FSMState> states;
-  private final Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable;
+  private Pair<FSMStateName, FSMState> currentState;
+  private final Map<FSMStateName, FSMState> states;
+  private final Table<FSMStateName, FSMStateName, Boolean> transitionTable;
 
-  public FSMachine(FSMId id, FSMOnKillAction oka, Map<FSMStateId, FSMState> states,
-    Map<FSMTransition, Pair<FSMStateId, FSMStateId>> transitionTable,
-    FSMState initState) {
+  public FSMachine(FSMId id, FSMOnKillAction oka, Map<FSMStateName, FSMState> states,
+    Table<FSMStateName, FSMStateName, Boolean> transitionTable) {
     this.id = id;
     this.oka = oka;
     this.states = states;
     this.transitionTable = transitionTable;
-    this.currentState = initState;
-    this.logPrefix = id.toString();
+    this.currentState = Pair.with((FSMStateName)FSMBasicStateNames.START, states.get(FSMBasicStateNames.START));
   }
 
   public void handle(FSMEvent event) throws FSMException {
-    LOG.trace("{}state:{} handle event:{}", new Object[]{logPrefix, currentState.id, event});
-    Optional<FSMTransition> transition = currentState.handle(event);
-    if (!transition.isPresent()) {
-      LOG.info("{}state:{} does not handle event:{}", new Object[]{logPrefix, currentState.id, event});
+    LOG.trace("{}state:{} handle event:{}", new Object[]{id, currentState.getValue0(), event});
+    Optional<FSMStateName> next = currentState.getValue1().handle(event);
+    if (!next.isPresent()) {
+      LOG.info("{}state:{} does not handle event:{}", new Object[]{id, currentState.getValue0(), event});
       return;
     }
-    if (FSMTransitions.KILL.equals(transition.get())) {
+    if (FSMBasicStateNames.FINAL.equals(next.get())) {
       oka.kill(id);
       return;
     }
-    Pair<FSMStateId, FSMStateId> t = transitionTable.get(transition.get());
-    if (t == null) {
-      throw new FSMException("transition:" + transition.get() + " not defined");
+    //we can't check at definition the sanity or completion of transition table
+    if (!transitionTable.contains(currentState.getValue0(), next.get())) {
+      throw new FSMException("transition from:" + currentState.getValue0() + " to:" + next.get() + " not defined");
     }
-    //we can't check at definition the sanity of transitions
-    if (!t.getValue0().equals(currentState.id)) {
-      throw new FSMException("transition:" + transition.get() + " defined from:" + t.getValue0()
-        + " to:" + t.getValue1() + " not possible from state:" + currentState.id);
-    }
+    LOG.trace("{}state:{} event:{} resulted in transition to state:{}",
+      new Object[]{id, currentState.getValue0(), event, next.get()});
     //we check at definition that both from and to states of a transition are registered
-    currentState = states.get(t.getValue1());
-    LOG.trace("{}state:{} event:{} resulted in transition:{} to state:{}",
-      new Object[]{logPrefix, currentState.id, event, transition.get(), t.getValue1()});
+    currentState = Pair.with(next.get(), states.get(next.get()));
   }
 }

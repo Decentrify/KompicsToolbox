@@ -18,11 +18,9 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
-
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface FSMOnWrongStateAction<E extends FSMExternalState, I extends FSMInternalState> {
-  public void handle(FSMStateId state, FSMEvent event, E es, I is);
+  public void handle(FSMStateName state, FSMEvent event, E es, I is);
 }

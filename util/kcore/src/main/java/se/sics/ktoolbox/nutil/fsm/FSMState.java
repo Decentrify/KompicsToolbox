@@ -20,35 +20,33 @@ package se.sics.ktoolbox.nutil.fsm;
 
 import com.google.common.base.Optional;
 import java.util.Map;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMState {
 
-  public final FSMStateId id;
+  private final FSMStateName name;
   private final FSMOnWrongStateAction owsa;
   private final FSMExternalState es;
   private final FSMInternalState is;
   private final Map<Class, FSMEventHandler> handlers;
 
-  public FSMState(FSMStateId id, FSMOnWrongStateAction owsa, FSMExternalState es, FSMInternalState is,
-    Map<Class, FSMEventHandler> handlers) {
-    this.id = id;
+  public FSMState(FSMStateName name, FSMOnWrongStateAction owsa, FSMExternalState es, FSMInternalState is, Map<Class, FSMEventHandler> handlers) {
     this.owsa = owsa;
     this.es = es;
     this.is = is;
     this.handlers = handlers;
+    this.name = name;
   }
 
-  public Optional<FSMTransition> handle(FSMEvent event) {
+  public Optional<FSMStateName> handle(FSMEvent event) {
     FSMEventHandler handler = handlers.get(event.getClass());
     if (handler == null) {
-      owsa.handle(id, event, es, is);
+      owsa.handle(name, event, es, is);
       return Optional.absent();
     }
-    FSMTransition next = handler.handle(es, is, event);
+    FSMStateName next = handler.handle(es, is, event);
     return Optional.of(next);
   }
 }

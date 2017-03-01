@@ -18,13 +18,13 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import java.util.HashMap;
 import java.util.Map;
-import org.javatuples.Pair;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMIds;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
@@ -33,91 +33,113 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 public class FSMachineDef {
 
   public final FSMDefId id;
-  private FSMStateDefId initState = null;
-  private final Map<FSMStateDefId, FSMStateDef> stateDefs = new HashMap<>();
-  private final Map<FSMTransition, Pair<FSMStateDefId, FSMStateDefId>> transitionTable = new HashMap<>();
-  private boolean sealed = false;
-  private byte stateDefId = 0;
+  private final Map<FSMStateName, FSMStateDef> stateDefs;
+  private final Table<FSMStateName, FSMStateName, Boolean> transitionTable;
 
-  private FSMachineDef(FSMDefId id) {
+  private FSMachineDef(FSMDefId id, Map<FSMStateName, FSMStateDef> stateDefs,
+    Table<FSMStateName, FSMStateName, Boolean> transitionTable) {
     this.id = id;
+    this.stateDefs = stateDefs;
+    this.transitionTable = transitionTable;
   }
 
-  public FSMStateDefId registerInitState(FSMStateDef stateDef) throws FSMException {
-    if (sealed) {
-      throw new FSMException("trying to register state definition after definition has been sealed");
+  public FSMachine build(Identifier baseId, FSMOnKillAction oka, FSMExternalState es, FSMInternalState is)
+    throws FSMException {
+
+    Map<FSMStateName, FSMState> states = new HashMap<>();
+    for (Map.Entry<FSMStateName, FSMStateDef> e : stateDefs.entrySet()) {
+      FSMState state = e.getValue().build(e.getKey(), es, is);
+      states.put(e.getKey(), state);
     }
-    if (initState != null) {
-      FSMStateDef sd = stateDefs.get(initState);
-      if (sd == null) {
-        throw new FSMException("FSM logic error");
+
+    return new FSMachine(id.getFSMId(baseId), oka, states, transitionTable);
+  }
+
+  public static class Builder {
+
+    public final FSMDefId id;
+    private final Map<FSMStateName, FSMStateDef> stateDefs = new HashMap<>();
+    private final Table<FSMStateName, FSMStateName, Boolean> transitionTable = HashBasedTable.create();
+
+    private Builder(FSMDefId id) {
+      this.id = id;
+    }
+
+    public AuxBuilder fromState(FSMStateName from, FSMStateDef stateDef) throws FSMException {
+      if (stateDefs.containsKey(from)) {
+        throw new FSMException("state:" + from + " already registered");
       }
-      throw new FSMException("init state defintion:" + sd.getClass() + " id:" + sd.getId() + " already registered");
+      stateDefs.put(from, stateDef);
+      return new AuxBuilder(this, from);
     }
-    stateDef.setId(id.getFSMStateDefId(stateDefId++));
-    stateDefs.put(stateDef.getId(), stateDef);
-    initState = stateDef.getId();
-    return initState;
+
+    private void buildState(FSMStateName from, FSMStateName[] toStates, Optional<FSMStateName> cleanupState) throws
+      FSMException {
+      for (FSMStateName to : toStates) {
+        if (transitionTable.contains(from, to)) {
+          throw new FSMException("transition from:" + from + " to:" + to + " already registered");
+        }
+        transitionTable.put(from, to, true);
+      }
+      if (cleanupState.isPresent()) {
+        if (transitionTable.contains(from, cleanupState.get())) {
+          throw new FSMException("transition from:" + from + " to:" + cleanupState.get() + " already registered");
+        }
+      }
+      transitionTable.put(from, cleanupState.get(), true);
+    }
+
+    public FSMachineDef complete() throws FSMException {
+      if (!stateDefs.containsKey(FSMBasicStateNames.START)) {
+        throw new FSMException("start state undefined");
+      }
+      for (Table.Cell<FSMStateName, FSMStateName, Boolean> e : transitionTable.cellSet()) {
+        if (!stateDefs.containsKey(e.getColumnKey())) {
+          throw new FSMException("transition from state:" + e.getColumnKey() + " undefined");
+        }
+        if(FSMBasicStateNames.FINAL.equals(e.getRowKey())) {
+          continue;
+        }
+        if (!stateDefs.containsKey(e.getRowKey())) {
+          throw new FSMException("transition to state:" + e.getRowKey() + " undefined");
+        }
+      }
+      return new FSMachineDef(id, stateDefs, transitionTable);
+    }
   }
 
-  public FSMStateDefId registerState(FSMStateDef stateDef) throws FSMException {
-    if (sealed) {
-      throw new FSMException("trying to register state definition after definition has been sealed");
+  public static class AuxBuilder {
+
+    private final Builder mb;
+    private final FSMStateName from;
+    private FSMStateName[] toStates = new FSMStateName[0];
+    private FSMStateName cleanupState = null;
+
+    private AuxBuilder(Builder mb, FSMStateName from) {
+      this.mb = mb;
+      this.from = from;
     }
-    if (initState == null) {
-      throw new FSMException("trying to register state definition before init definition registered");
+
+    public AuxBuilder toStates(FSMStateName... ids) {
+      this.toStates = ids;
+      return this;
     }
-    stateDef.setId(id.getFSMStateDefId(stateDefId++));
-    stateDefs.put(stateDef.getId(), stateDef);
-    return stateDef.getId();
+
+    public AuxBuilder cleanup(FSMStateName id) {
+      this.cleanupState = id;
+      return this;
+    }
+
+    public Builder buildState() throws FSMException {
+      if (toStates == null) {
+        throw new FSMException("to states not registered");
+      }
+      mb.buildState(from, toStates, Optional.fromNullable(cleanupState));
+      return mb;
+    }
   }
 
-  public void register(FSMTransition transition, FSMStateDefId from, FSMStateDefId to) throws FSMException {
-    if (sealed) {
-      throw new FSMException("Trying to register transition after definition has been sealed");
-    }
-    if (transitionTable.containsKey(transition)) {
-      throw new FSMException("transition:" + transition + " already registered");
-    }
-    if (!stateDefs.containsKey(from)) {
-      throw new FSMException("transition:" + transition + " - undefined from state:" + from);
-    }
-    if (!stateDefs.containsKey(to)) {
-      throw new FSMException("transition:" + transition + " - undefined to state:" + to);
-    }
-    transitionTable.put(transition, Pair.with(from, to));
-  }
-
-  public void seal() throws FSMException {
-    if (initState == null) {
-      throw new FSMException("trying to seal an incomplete definition - missing init state");
-    }
-    sealed = true;
-  }
-
-  public FSMachine build(Identifier baseId, FSMOnKillAction oka, FSMExternalState es,
-    FSMInternalState is) throws FSMException {
-    if (!sealed) {
-      throw new FSMException("Trying to build an unsealed definition");
-    }
-
-    Map<FSMStateId, FSMState> states = new HashMap<>();
-    for (Map.Entry<FSMStateDefId, FSMStateDef> e : stateDefs.entrySet()) {
-      FSMState state = e.getValue().build(baseId, es, is);
-      states.put(state.id, state);
-    }
-
-    Map<FSMTransition, Pair<FSMStateId, FSMStateId>> tt = new HashMap<>();
-    for (Map.Entry<FSMTransition, Pair<FSMStateDefId, FSMStateDefId>> e : transitionTable.entrySet()) {
-      FSMStateId from = e.getValue().getValue0().getStateId(baseId);
-      FSMStateId to = e.getValue().getValue1().getStateId(baseId);
-      tt.put(e.getKey(), Pair.with(from, to));
-    }
-    FSMState initS = states.get(initState.getStateId(baseId));
-    return new FSMachine(id.getFSMId(baseId), oka, states, tt, initS);
-  }
-
-  public static FSMachineDef instance(String fsmName) {
-    return new FSMachineDef(FSMIds.getDefId(fsmName));
+  public static Builder builder(String fsmName) {
+    return new Builder(FSMIds.getDefId(fsmName));
   }
 }

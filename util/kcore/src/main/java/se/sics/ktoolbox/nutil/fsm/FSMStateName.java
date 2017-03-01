@@ -21,6 +21,5 @@ package se.sics.ktoolbox.nutil.fsm;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public enum FSMTransitions implements FSMTransition {
-  KILL
+public interface FSMStateName {
 }

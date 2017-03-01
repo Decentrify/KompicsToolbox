@@ -22,5 +22,5 @@ package se.sics.ktoolbox.nutil.fsm;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface FSMEventHandler<ES extends FSMExternalState, IS extends FSMInternalState, E extends FSMEvent> {
-  public FSMTransition handle(ES es, IS is, E event);
+  public FSMStateName handle(ES es, IS is, E event);
 }

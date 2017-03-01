@@ -22,96 +22,100 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.events.Event1;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateDefId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMStateId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSM1 {
+
   private static final Logger LOG = LoggerFactory.getLogger(FSM1.class);
-  
-  public static enum Transition implements FSMTransition {
-    T1, T2, T3, T4
+
+  public static enum MyStateNames implements FSMStateName {
+    S2,
+    S3
   }
-  
+
   public static FSMachineDef build() throws FSMException {
     FSMOnWrongStateAction owsa = new FSMOnWrongStateAction<MyExternalState, InternalState>() {
 
       @Override
-      public void handle(FSMStateId stateId, FSMEvent event, MyExternalState es, InternalState is) {
-        LOG.warn("state:{} does not handle event:{}", stateId, event);
+      public void handle(FSMStateName state, FSMEvent event, MyExternalState es, InternalState is) {
+        LOG.warn("state:{} does not handle event:{}", state, event);
       }
     };
-    FSMachineDef fsm = FSMachineDef.instance(FSMs.fsm1);
-    FSMStateDefId id1 = fsm.registerInitState(initState(owsa));
-    FSMStateDefId id2 = fsm.registerState(state2(owsa));
-    FSMStateDefId id3 = fsm.registerState(state3(owsa));
-    fsm.register(Transition.T1, id1, id2);
-    fsm.register(Transition.T2, id1, id3);
-    fsm.register(Transition.T3, id2, id1);
-    fsm.register(Transition.T4, id3, id2);
-    fsm.seal();
+    
+    FSMachineDef.Builder builder = FSMachineDef.builder(FSMs.fsm1);
+
+    FSMStateDef s1 = state1(owsa);
+    FSMStateDef s2 = state2(owsa);
+    FSMStateDef s3 = state3(owsa);
+
+    FSMachineDef fsm = builder
+      .fromState(FSMBasicStateNames.START, s1).toStates(MyStateNames.S2, MyStateNames.S3).buildState()
+      .fromState(MyStateNames.S2, s2).toStates(FSMBasicStateNames.START).buildState()
+      .fromState(MyStateNames.S3, s3).toStates(FSMBasicStateNames.FINAL).buildState()
+      .complete();
+
     return fsm;
   }
 
-  private static FSMStateDef initState(FSMOnWrongStateAction owsa) throws FSMException {
+  static FSMStateDef state1(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
     state.setOnWrongStateAction(owsa);
-    state.register(Event1.E1.class, initHandler1);
-    state.register(Event1.E2.class, initHandler2);
+    state.register(Event1.E1.class, state1Handler1);
+    state.register(Event1.E2.class, state1Handler2);
     state.seal();
     return state;
   }
-  
-  static FSMEventHandler initHandler1 = new FSMEventHandler<MyExternalState, InternalState, Event1.E1>() {
+
+  static FSMEventHandler state1Handler1 = new FSMEventHandler<MyExternalState, InternalState, Event1.E1>() {
     @Override
-    public FSMTransition handle(MyExternalState es, InternalState is, Event1.E1 event) {
+    public FSMStateName handle(MyExternalState es, InternalState is, Event1.E1 event) {
       LOG.info("1->2");
-      return Transition.T1;
+      return MyStateNames.S2;
     }
   };
-  
-  static FSMEventHandler initHandler2 = new FSMEventHandler<MyExternalState, InternalState, Event1.E2>() {
+
+  static FSMEventHandler state1Handler2 = new FSMEventHandler<MyExternalState, InternalState, Event1.E2>() {
     @Override
-    public FSMTransition handle(MyExternalState es, InternalState is, Event1.E2 event) {
+    public FSMStateName handle(MyExternalState es, InternalState is, Event1.E2 event) {
       LOG.info("1->3");
-      return Transition.T2;
+      return MyStateNames.S3;
     }
   };
-    
-  private static FSMStateDef state2(FSMOnWrongStateAction owsa) throws FSMException {
+
+  static FSMStateDef state2(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
     state.setOnWrongStateAction(owsa);
-    state.register(Event1.E3.class, state2Handler1);
+    state.register(Event1.E3.class, state2Handler);
     state.seal();
     return state;
   }
-  
-  static FSMEventHandler state2Handler1 = new FSMEventHandler<MyExternalState, InternalState, Event1.E3>() {
+
+  static FSMEventHandler state2Handler = new FSMEventHandler<MyExternalState, InternalState, Event1.E3>() {
     @Override
-    public FSMTransition handle(MyExternalState es, InternalState is, Event1.E3 event) {
+    public FSMStateName handle(MyExternalState es, InternalState is, Event1.E3 event) {
       LOG.info("2->1");
-      return Transition.T3;
+      return FSMBasicStateNames.START;
     }
   };
-  
-  private static FSMStateDef state3(FSMOnWrongStateAction owsa) throws FSMException {
+
+  static FSMStateDef state3(FSMOnWrongStateAction owsa) throws FSMException {
     FSMStateDef state = new FSMStateDef();
     state.setOnWrongStateAction(owsa);
-    state.register(Event1.E4.class, state3Handler1);
+    state.register(Event1.E4.class, state3Handler);
     state.seal();
     return state;
   }
-  
-  static FSMEventHandler state3Handler1 = new FSMEventHandler<MyExternalState, InternalState, Event1.E4>() {
+
+  static FSMEventHandler state3Handler = new FSMEventHandler<MyExternalState, InternalState, Event1.E4>() {
     @Override
-    public FSMTransition handle(MyExternalState es, InternalState is, Event1.E4 event) {
-      LOG.info("3->2");
-      return Transition.T4;
+    public FSMStateName handle(MyExternalState es, InternalState is, Event1.E4 event) {
+      LOG.info("3->stop");
+      return FSMBasicStateNames.FINAL;
     }
   };
-  
+
   public static class InternalState implements FSMInternalState {
   }
 
