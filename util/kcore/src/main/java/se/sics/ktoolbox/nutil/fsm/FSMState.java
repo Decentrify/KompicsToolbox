@@ -18,35 +18,59 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
 import com.google.common.base.Optional;
 import java.util.Map;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMStateChangeHandler;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMState {
 
-  private final FSMStateName name;
-  private final FSMOnWrongStateAction owsa;
+  private final FSMStateName state;
+  private final FSMEventHandler fallback;
+  private final Optional<FSMStateChangeHandler> onEntry;
+  private final Optional<FSMStateChangeHandler> onExit;
   private final FSMExternalState es;
   private final FSMInternalState is;
   private final Map<Class, FSMEventHandler> handlers;
 
-  public FSMState(FSMStateName name, FSMOnWrongStateAction owsa, FSMExternalState es, FSMInternalState is, Map<Class, FSMEventHandler> handlers) {
-    this.owsa = owsa;
+  public FSMState(FSMStateName state, FSMEventHandler fallback, Optional<FSMStateChangeHandler> onEntry,
+    Optional<FSMStateChangeHandler> onExit, FSMExternalState es, FSMInternalState is,
+    Map<Class, FSMEventHandler> handlers) {
+    this.state = state;
+    this.fallback = fallback;
+    this.onEntry = onEntry;
+    this.onExit = onExit;
     this.es = es;
     this.is = is;
     this.handlers = handlers;
-    this.name = name;
   }
 
+  public void onEntry(FSMStateName from) {
+    if(onEntry.isPresent()) {
+      onEntry.get().handle(from, state, es, is);
+    }
+  }
+  
+  public void onExit(FSMStateName to) {
+    if(onExit.isPresent()) {
+      onExit.get().handle(state, to, es, is);
+    }
+  }
+  
   public Optional<FSMStateName> handle(FSMEvent event) {
     FSMEventHandler handler = handlers.get(event.getClass());
     if (handler == null) {
-      owsa.handle(name, event, es, is);
+      fallback.handle(state, es, is, event);
       return Optional.absent();
     }
-    FSMStateName next = handler.handle(es, is, event);
+    FSMStateName next = handler.handle(state, es, is, event);
     return Optional.of(next);
   }
 }

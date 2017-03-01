@@ -16,13 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.handler;
+
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FSMException extends Exception {
-  public FSMException(String msg) {
-    super(msg);
-  }
+public interface FSMStateChangeHandler <ES extends FSMExternalState, IS extends FSMInternalState> {
+  public void handle(FSMStateName from, FSMStateName to, ES es, IS is);
 }

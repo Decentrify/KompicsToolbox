@@ -16,31 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.handler;
 
-import java.util.HashMap;
-import java.util.Map;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FSMInternalStateBuilders {
-  private final Map<FSMDefId, FSMInternalStateBuilder> stateBuilders = new HashMap<>();
-  
-  public void register(FSMDefId id, FSMInternalStateBuilder builder) throws FSMException {
-    if(stateBuilders.containsKey(id)) {
-      throw new FSMException("fsmd:" + id +" already registered");
-    }
-    stateBuilders.put(id, builder);
-  }
-  
-  public FSMInternalState newInternalState(FSMId fsmId) throws FSMException {
-    FSMInternalStateBuilder sb = stateBuilders.get(fsmId.getDefId());
-    if(sb == null) {
-      throw new FSMException("fsmd:" + fsmId.getDefId() +" not registered");
-    }
-    return sb.newState(fsmId);
-  }
+public interface FSMEventHandler<ES extends FSMExternalState, IS extends FSMInternalState, E extends FSMEvent> {
+  public FSMStateName handle(FSMStateName state, ES es, IS is, E event);
 }

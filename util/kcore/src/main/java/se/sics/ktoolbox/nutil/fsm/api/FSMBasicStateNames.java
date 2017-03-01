@@ -16,14 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
-
-import com.google.common.base.Optional;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+package se.sics.ktoolbox.nutil.fsm.api;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMIdExtractor {
-  public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException;
+public enum FSMBasicStateNames implements FSMStateName {
+  START, FINAL
 }

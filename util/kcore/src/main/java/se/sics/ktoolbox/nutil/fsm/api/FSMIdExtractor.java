@@ -16,11 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.api;
+
+import com.google.common.base.Optional;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMOnWrongStateAction<E extends FSMExternalState, I extends FSMInternalState> {
-  public void handle(FSMStateName state, FSMEvent event, E es, I is);
+public interface FSMIdExtractor {
+  public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException;
 }

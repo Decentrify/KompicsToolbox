@@ -16,13 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
-
-import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+package se.sics.ktoolbox.nutil.fsm.api;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMInternalStateBuilder {
-  public FSMInternalState newState(FSMId fsmId);
+public interface FSMStateName {
 }

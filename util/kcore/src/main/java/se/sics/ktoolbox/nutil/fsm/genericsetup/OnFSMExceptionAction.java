@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.fsm.genericsetup;
 
-import se.sics.ktoolbox.nutil.fsm.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
 
 /**
  *

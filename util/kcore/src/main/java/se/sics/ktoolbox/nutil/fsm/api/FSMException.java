@@ -16,11 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.api;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public enum FSMBasicStateNames implements FSMStateName {
-  START, FINAL
+public class FSMException extends Exception {
+  public FSMException(String msg) {
+    super(msg);
+  }
 }

@@ -18,45 +18,35 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import java.util.HashMap;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import com.google.common.base.Optional;
 import java.util.Map;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMStateChangeHandler;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMStateDef {
 
-  private FSMOnWrongStateAction owsa = new FSMOnWrongStateAction() {
-    @Override
-    public void handle(FSMStateName state, FSMEvent event, FSMExternalState es, FSMInternalState is) {
-      //default drop msgs silently
-    }
-  };
+  private final FSMEventHandler fallback;
+  private final Optional<FSMStateChangeHandler> onEntry;
+  private final Optional<FSMStateChangeHandler> onExit;
   //Class is a FSMEvent subtype
-  private final Map<Class, FSMEventHandler> handlers = new HashMap<>();
-  private boolean sealed = false;
+  private final Map<Class, FSMEventHandler> handlers;
 
-  public void setOnWrongStateAction(FSMOnWrongStateAction owsa) {
-    this.owsa = owsa;
-  }
-  public void register(Class<? extends FSMEvent> event, FSMEventHandler handler) throws FSMException {
-    if (sealed) {
-      throw new FSMException("Trying to register handler after definition has been sealed");
-    }
-    if (handlers.containsKey(event)) {
-      throw new FSMException("Handler already registered for event:" + event);
-    }
-    handlers.put(event, handler);
-  }
-
-  public void seal() {
-    sealed = true;
+  FSMStateDef(FSMEventHandler fallback, Optional<FSMStateChangeHandler> onEntry, Optional<FSMStateChangeHandler> onExit,
+    Map<Class, FSMEventHandler> handlers) {
+    this.fallback = fallback;
+    this.onEntry = onEntry;
+    this.onExit = onExit;
+    this.handlers = handlers;
   }
 
   protected FSMState build(FSMStateName state, FSMExternalState es, FSMInternalState is) throws FSMException {
-    if (!sealed) {
-      throw new FSMException("trying to build an unsealed definition");
-    }
-    return new FSMState(state, owsa, es, is, handlers);
+    return new FSMState(state, fallback, onEntry, onExit, es, is, handlers);
   }
 }

@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**

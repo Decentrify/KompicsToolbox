@@ -16,11 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.api;
+
+import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMEventHandler<ES extends FSMExternalState, IS extends FSMInternalState, E extends FSMEvent> {
-  public FSMStateName handle(ES es, IS is, E event);
+public interface FSMEvent extends KompicsEvent {
+  //identifies all messages belonging to same FSM
+  public Identifier getBaseId();
 }

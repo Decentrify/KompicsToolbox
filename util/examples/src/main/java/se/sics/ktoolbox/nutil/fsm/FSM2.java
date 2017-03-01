@@ -18,10 +18,17 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilder;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.nutil.fsm.events.Event2;
 import se.sics.ktoolbox.nutil.fsm.events.Port2;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 
 /**
@@ -31,34 +38,30 @@ public class FSM2 {
   private static final Logger LOG = LoggerFactory.getLogger(FSM2.class);
   
   public static FSMachineDef build() throws FSMException {
-    FSMOnWrongStateAction owsa = new FSMOnWrongStateAction<MyExternalState, InternalState>() {
+    FSMEventHandler owsa = new FSMEventHandler<MyExternalState, InternalState, FSMEvent>() {
       @Override
-      public void handle(FSMStateName state, FSMEvent event, MyExternalState es, InternalState is) {
+      public FSMStateName handle(FSMStateName state, MyExternalState es, InternalState is, FSMEvent event) {
         LOG.warn("state:{} does not handle event:{}", state, event);
+        return state;
       }
     };
-    FSMachineDef.Builder builder = FSMachineDef.builder(FSMs.fsm2);
-    
-    FSMStateDef startState = initState(owsa);
+    FSMBuilder.Machine builder = FSMBuilder.builder(FSMs.fsm2);
     
     FSMachineDef fsm = builder
-      .fromState(FSMBasicStateNames.START, startState).toStates(FSMBasicStateNames.START).buildState()
+      .onState(FSMBasicStateNames.START)
+        .fallback(owsa)
+        .onEvent(Event2.Req.class, initHandler1)
+        .buildState()
+        .nextStates(FSMBasicStateNames.START)
+        .buildTransition()
       .complete();
     
     return fsm;
   }
 
-  private static FSMStateDef initState(FSMOnWrongStateAction owsa) throws FSMException {
-    FSMStateDef state = new FSMStateDef();
-    state.setOnWrongStateAction(owsa);
-    state.register(Event2.Req.class, initHandler1);
-    state.seal();
-    return state;
-  }
-  
   static FSMEventHandler initHandler1 = new FSMEventHandler<MyExternalState, InternalState, Event2.Req>() {
     @Override
-    public FSMStateName handle(MyExternalState es, InternalState is, Event2.Req req) {
+    public FSMStateName handle(FSMStateName state, MyExternalState es, InternalState is, Event2.Req req) {
       LOG.info("1->2");
       es.getProxy().trigger(req, es.getProxy().getNegative(Port2.class));
       return FSMBasicStateNames.START;
