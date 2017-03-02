@@ -20,11 +20,11 @@ package se.sics.ktoolbox.nutil.fsm;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import com.google.common.collect.Table;
 import java.util.HashMap;
 import java.util.Map;
-import se.sics.ktoolbox.nutil.fsm.FSMStateDef;
-import se.sics.ktoolbox.nutil.fsm.FSMachineDef;
 import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
 import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
 import se.sics.ktoolbox.nutil.fsm.api.FSMException;
@@ -43,35 +43,25 @@ public class FSMBuilder {
 
   public static class Machine {
 
-    public final FSMDefId id;
-    private final Map<FSMStateName, FSMStateDef> stateDefs = new HashMap<>();
     private final Table<FSMStateName, FSMStateName, Boolean> transitionTable
       = HashBasedTable.create();
 
-    private Machine(FSMDefId id) {
-      this.id = id;
+    private Machine() {
     }
 
-    public State onState(FSMStateName state) throws FSMException {
-      if (stateDefs.containsKey(state)) {
+    public Transition onState(FSMStateName state) throws FSMException {
+      if (transitionTable.containsColumn(state)) {
         throw new FSMException("state:" + state + " already registered");
       }
-      return new State(this, state);
-    }
-
-    public Transition withState(FSMStateName state, FSMStateDef stateDef) {
-      stateDefs.put(state, stateDef);
       return new Transition(this, state);
     }
 
-    private Transition buildState(FSMStateName state, FSMStateDef stateDef) {
-      stateDefs.put(state, stateDef);
-      return new Transition(this, state);
-    }
-
-    private void buildTransition(FSMStateName from, FSMStateName[] toStates,
-      Optional<FSMStateName> cleanupState) throws
-      FSMException {
+    private void buildTransition(FSMStateName from, FSMStateName[] toStates, Optional<FSMStateName> cleanupState,
+      boolean toFinal) throws FSMException {
+      
+      if(toFinal && cleanupState.isPresent()) {
+        throw new FSMException("if cleanup is present, final should not - go cleanup and that will lead to final");
+      } 
       for (FSMStateName to : toStates) {
         if (transitionTable.contains(from, to)) {
           throw new FSMException("transition from:" + from + " to:" + to
@@ -86,25 +76,30 @@ public class FSMBuilder {
         }
       }
       transitionTable.put(from, cleanupState.get(), true);
+      if(toFinal) {
+        transitionTable.put(from, FSMBasicStateNames.FINAL, true);
+      }
     }
 
-    public FSMachineDef complete() throws FSMException {
-      if (!stateDefs.containsKey(FSMBasicStateNames.START)) {
-        throw new FSMException("start state undefined");
+    public FSMachineDef complete(String fsmName, Handlers handlers) throws FSMException {
+      FSMDefId id = FSMIds.getDefId(fsmName);
+
+      if (!transitionTable.containsRow(FSMBasicStateNames.START)) {
+        throw new FSMException("START state not defined");
       }
-      for (Table.Cell<FSMStateName, FSMStateName, Boolean> e : transitionTable.
-        cellSet()) {
-        if (!stateDefs.containsKey(e.getColumnKey())) {
-          throw new FSMException("transition from state:" + e.getColumnKey()
-            + " undefined");
-        }
-        if (FSMBasicStateNames.FINAL.equals(e.getRowKey())) {
-          continue;
-        }
-        if (!stateDefs.containsKey(e.getRowKey())) {
-          throw new FSMException("transition to state:" + e.getRowKey()
-            + " undefined");
-        }
+      if (!transitionTable.containsColumn(FSMBasicStateNames.FINAL)) {
+        throw new FSMException("FINAL state not defined");
+      }
+      SetView<FSMStateName> deadState = Sets.difference(transitionTable.columnKeySet(), transitionTable.rowKeySet());
+      if (!deadState.isEmpty()) {
+        throw new FSMException("states:" + deadState.toString()
+          + "are dead end states. Only FINAL allowed as dead end state.");
+      }
+
+      Map<FSMStateName, FSMStateDef> stateDefs = handlers.getStateDefs();
+      SetView<FSMStateName> malformedStates = Sets.difference(stateDefs.keySet(), transitionTable.rowKeySet());
+      if (!malformedStates.isEmpty()) {
+        throw new FSMException("states:" + malformedStates.toString() + " have no event handlers");
       }
       return new FSMachineDef(id, stateDefs, transitionTable);
     }
@@ -116,6 +111,7 @@ public class FSMBuilder {
     private final FSMStateName from;
     private FSMStateName[] toStates = new FSMStateName[0];
     private FSMStateName cleanupState = null;
+    private boolean toFinal = false;
 
     private Transition(Machine parent, FSMStateName from) {
       this.parent = parent;
@@ -132,69 +128,243 @@ public class FSMBuilder {
       return this;
     }
 
+    public Transition toFinal() {
+      this.toFinal = true;
+      return this;
+    }
+
     public Machine buildTransition() throws FSMException {
       if (toStates == null) {
         throw new FSMException("to states not registered");
       }
-      parent.buildTransition(from, toStates, Optional.fromNullable(cleanupState));
+      parent.buildTransition(from, toStates, Optional.fromNullable(cleanupState), toFinal);
       return parent;
     }
   }
 
-  public static class State {
+  public static class Handlers {
 
-    private static final FSMEventHandler defaultFallback = new FSMEventHandler() {
+    private Events events = null;
+    private Fallback fallback = null;
+    private StateChange stateChange = null;
+    //*********************
+    private Table<FSMStateName, Class, FSMEventHandler> eventHandlers;
+    private FSMEventHandler defaultFallback = new FSMEventHandler() {
       @Override
       public FSMStateName handle(FSMStateName state, FSMExternalState es, FSMInternalState is, FSMEvent event) {
         //default drop msgs silently
         return state;
       }
     };
-    private final Machine parent;
-    private final FSMStateName state;
-    private FSMEventHandler fallback = defaultFallback;
-    private Optional<FSMStateChangeHandler> onEntry = Optional.absent();
-    private Optional<FSMStateChangeHandler> onExit = Optional.absent();
-    private final Map<Class, FSMEventHandler> handlers = new HashMap<>();
+    private Map<FSMStateName, FSMEventHandler> customFallback = new HashMap<>();
+    private Map<FSMStateName, FSMStateChangeHandler> onEntryHandlers = new HashMap<>();
+    private Map<FSMStateName, FSMStateChangeHandler> onExitHandlers = new HashMap<>();
 
-    private State(Machine parent, FSMStateName state) {
-      this.parent = parent;
-      this.state = state;
+    private Handlers() {
     }
 
-    public State fallback(FSMEventHandler handler) {
-      this.fallback = handler;
-      return this;
-    }
-
-    public State onEntry(FSMStateChangeHandler handler) {
-      this.onEntry = Optional.of(handler);
-      return this;
-    }
-
-    public State onExit(FSMStateChangeHandler handler) {
-      this.onExit = Optional.of(handler);
-      return this;
-    }
-
-    public State onEvent(Class<? extends FSMEvent> event, FSMEventHandler handler) throws FSMException {
-      if (handlers.containsKey(event)) {
-        throw new FSMException("Handler already registered for event:" + event + " in state:" + state);
+    public Events events() throws FSMException {
+      if (events == null) {
+        events = new Events(this);
       }
-      handlers.put(event, handler);
-      return this;
+      return events;
     }
 
-    public Transition buildState() throws FSMException {
-      if (handlers.isEmpty()) {
-        throw new FSMException("state:" + state + " has no handlers");
+    private void buildEvents(Table<FSMStateName, Class, FSMEventHandler> eventHandlers) {
+      this.eventHandlers = eventHandlers;
+    }
+
+    public Fallback fallback() throws FSMException {
+      return fallback(defaultFallback);
+    }
+
+    public Fallback fallback(FSMEventHandler defaultFallback) throws FSMException {
+      if (fallback == null) {
+        fallback = new Fallback(this, defaultFallback);
       }
-      FSMStateDef stateDef = new FSMStateDef(fallback, onEntry, onExit, handlers);
-      return parent.buildState(state, stateDef);
+      return fallback;
+    }
+
+    private void buildFallbacks(FSMEventHandler defaultFallback, Map<FSMStateName, FSMEventHandler> customFallback) {
+      this.defaultFallback = defaultFallback;
+      this.customFallback = customFallback;
+    }
+
+    public StateChange stateChanges() throws FSMException {
+      if (stateChange == null) {
+        stateChange = new StateChange(this);
+      }
+      return stateChange;
+    }
+
+    private void buildStateChanges(Map<FSMStateName, FSMStateChangeHandler> onEntryHandlers,
+      Map<FSMStateName, FSMStateChangeHandler> onExitHandlers) {
+      this.onEntryHandlers = onEntryHandlers;
+      this.onExitHandlers = onExitHandlers;
+    }
+
+    private Map<FSMStateName, FSMStateDef> getStateDefs() throws FSMException {
+      if (events == null || eventHandlers.isEmpty()) {
+        throw new FSMException("event handlers not set");
+      }
+      Map<FSMStateName, FSMStateDef> stateDefs = new HashMap<>();
+      for (Map.Entry<FSMStateName, Map<Class, FSMEventHandler>> e : eventHandlers.rowMap().entrySet()) {
+        FSMEventHandler f = customFallback.get(e.getKey());
+        if (f == null) {
+          f = defaultFallback;
+        }
+        Optional<FSMStateChangeHandler> onEntry = Optional.fromNullable(onEntryHandlers.get(e.getKey()));
+        Optional<FSMStateChangeHandler> onExit = Optional.fromNullable(onExitHandlers.get(e.getKey()));
+        FSMStateDef stateDef = new FSMStateDef(f, onEntry, onExit, new HashMap<>(e.getValue()));
+        stateDefs.put(e.getKey(), stateDef);
+      }
+      return stateDefs;
     }
   }
 
-  public static Machine builder(String fsmName) {
-    return new Machine(FSMIds.getDefId(fsmName));
+  public static class Events {
+
+    private Handlers parent;
+    private final Table<FSMStateName, Class, FSMEventHandler> eventHandlers = HashBasedTable.create();
+
+    public Events(Handlers parent) {
+      this.parent = parent;
+    }
+
+    public Event onEvent(Class eventType) {
+      return new Event(this, eventType);
+    }
+
+    private void buildEvent(Class eventType, Map<FSMStateName, FSMEventHandler> handlers) {
+      for (Map.Entry<FSMStateName, FSMEventHandler> handler : handlers.entrySet()) {
+        eventHandlers.put(handler.getKey(), eventType, handler.getValue());
+      }
+    }
+
+    public Handlers buildEvents() throws FSMException {
+      if (parent == null) {
+        throw new FSMException("this events builder was closed once already");
+      }
+      parent.buildEvents(eventHandlers);
+      Handlers aux = parent;
+      parent = null;
+      return aux;
+    }
+  }
+
+  public static class Event {
+
+    private final Events parent;
+    private final Class eventType;
+    private final Map<FSMStateName, FSMEventHandler> handlers = new HashMap<>();
+
+    private Event(Events parent, Class eventType) {
+      this.parent = parent;
+      this.eventType = eventType;
+    }
+
+    public Event inState(FSMStateName state, FSMEventHandler handler) throws FSMException {
+      if (handlers.containsKey(state)) {
+        throw new FSMException("handler already registered for state:" + state + " event:" + eventType);
+      }
+      handlers.put(state, handler);
+      return this;
+    }
+
+    public Events buildEvent() {
+      parent.buildEvent(eventType, handlers);
+      return parent;
+    }
+
+    //public shortcut on buildEvent - so you can chain events
+    public Event onEvent(Class eventType) {
+      return buildEvent().onEvent(eventType);
+    }
+
+    public Handlers buildEvents() throws FSMException {
+      return parent.buildEvents();
+    }
+  }
+
+  public static class Fallback {
+
+    private Handlers parent;
+    private final FSMEventHandler defaultFallback;
+    private final Map<FSMStateName, FSMEventHandler> customFallback = new HashMap<>();
+
+    private Fallback(Handlers parent, FSMEventHandler defaultFallback) {
+      this.parent = parent;
+      this.defaultFallback = defaultFallback;
+    }
+
+    public Fallback inState(FSMStateName state, FSMEventHandler fallback) throws FSMException {
+      if (customFallback.containsKey(state)) {
+        throw new FSMException("fallback handler already registered for state:" + state);
+      }
+      customFallback.put(state, fallback);
+      return this;
+    }
+
+    public Handlers buildFallbacks() throws FSMException {
+      if (parent == null) {
+        throw new FSMException("this fallback builder was closed once already");
+      }
+      parent.buildFallbacks(defaultFallback, customFallback);
+      Handlers aux = parent;
+      parent = null;
+      return aux;
+    }
+  }
+
+  public static class StateChange {
+
+    private Handlers parent;
+    private final Map<FSMStateName, FSMStateChangeHandler> onEntryHandlers = new HashMap<>();
+    private final Map<FSMStateName, FSMStateChangeHandler> onExitHandlers = new HashMap<>();
+
+    private StateChange(Handlers parent) {
+      this.parent = parent;
+    }
+
+    public StateChange onEntry(FSMStateName state, FSMStateChangeHandler handler) throws FSMException {
+      if (onEntryHandlers.containsKey(state)) {
+        throw new FSMException("onEntry handler already registered for state:" + state);
+      }
+      onEntryHandlers.put(state, handler);
+      return this;
+    }
+
+    public StateChange onExit(FSMStateName state, FSMStateChangeHandler handler) throws FSMException {
+      if (onExitHandlers.containsKey(state)) {
+        throw new FSMException("onExit handler already registered for state:" + state);
+      }
+      onExitHandlers.put(state, handler);
+      return this;
+    }
+
+    public StateChange on(FSMStateName state, FSMStateChangeHandler onEntry, FSMStateChangeHandler onExit)
+      throws FSMException {
+      onEntry(state, onEntry);
+      onExit(state, onExit);
+      return this;
+    }
+
+    public Handlers buildStateChanges() throws FSMException {
+      if (parent == null) {
+        throw new FSMException("this events builder was closed once already");
+      }
+      parent.buildStateChanges(onEntryHandlers, onExitHandlers);
+      Handlers aux = parent;
+      parent = null;
+      return aux;
+    }
+  }
+
+  public static Machine machine() {
+    return new Machine();
+  }
+
+  public static Handlers handlers() {
+    return new Handlers();
   }
 }

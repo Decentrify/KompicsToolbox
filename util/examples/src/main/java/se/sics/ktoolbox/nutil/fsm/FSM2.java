@@ -18,14 +18,14 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilder;
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.nutil.fsm.api.FSMException;
-import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilder;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.events.Event2;
 import se.sics.ktoolbox.nutil.fsm.events.Port2;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
@@ -45,17 +45,20 @@ public class FSM2 {
         return state;
       }
     };
-    FSMBuilder.Machine builder = FSMBuilder.builder(FSMs.fsm2);
-    
-    FSMachineDef fsm = builder
+    FSMBuilder.Machine machine = FSMBuilder.machine()
       .onState(FSMBasicStateNames.START)
-        .fallback(owsa)
-        .onEvent(Event2.Req.class, initHandler1)
-        .buildState()
         .nextStates(FSMBasicStateNames.START)
-        .buildTransition()
-      .complete();
+        .buildTransition();
     
+    FSMBuilder.Handlers handlers = FSMBuilder.handlers()
+      .events()
+        .onEvent(Event2.Req.class)
+          .inState(FSMBasicStateNames.START, initHandler1)
+      .buildEvents()
+      .fallback(owsa)
+      .buildFallbacks();
+    
+    FSMachineDef fsm = machine.complete(FSMs.fsm2, handlers);
     return fsm;
   }
 

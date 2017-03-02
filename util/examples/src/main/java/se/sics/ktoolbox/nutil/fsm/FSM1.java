@@ -18,14 +18,14 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilder;
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.nutil.fsm.api.FSMException;
-import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilder;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.events.Event1;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
@@ -52,30 +52,32 @@ public class FSM1 {
       }
     };
     
-    FSMBuilder.Machine builder = FSMBuilder.builder(FSMs.fsm1);
-
-    FSMachineDef fsm = builder
+    FSMBuilder.Machine machine = FSMBuilder.machine()
       .onState(FSMBasicStateNames.START)
-        .fallback(owsa)
-        .onEvent(Event1.E1.class, state1Handler1)
-        .onEvent(Event1.E2.class, state1Handler2)
-        .buildState()
         .nextStates(MyStateNames.S2, MyStateNames.S3)
         .buildTransition()
       .onState(MyStateNames.S2)
-        .fallback(owsa)
-        .onEvent(Event1.E3.class, state2Handler)
-        .buildState()
         .nextStates(FSMBasicStateNames.START)
         .buildTransition()
       .onState(MyStateNames.S3)
-        .fallback(owsa)
-        .onEvent(Event1.E4.class, state3Handler)
-        .buildState()
-        .nextStates(FSMBasicStateNames.FINAL)
-        .buildTransition()
-      .complete();
+        .toFinal()
+        .buildTransition();
 
+    FSMBuilder.Handlers handlers = FSMBuilder.handlers()
+      .events()
+        .onEvent(Event1.E1.class)
+          .inState(FSMBasicStateNames.START, state1Handler1)
+        .onEvent(Event1.E2.class)
+          .inState(FSMBasicStateNames.START, state1Handler2)
+        .onEvent(Event1.E3.class)
+          .inState(MyStateNames.S2, state2Handler)
+        .onEvent(Event1.E4.class)
+          .inState(MyStateNames.S3, state3Handler)
+      .buildEvents()
+      .fallback(owsa)
+      .buildFallbacks();
+
+    FSMachineDef fsm = machine.complete(FSMs.fsm1, handlers);
     return fsm;
   }
 
