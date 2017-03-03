@@ -16,17 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm.handler;
+package se.sics.kompics;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.nutil.fsm.api.FSMException;
-import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
+import se.sics.ktoolbox.util.result.Result;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMEventHandler<ES extends FSMExternalState, IS extends FSMInternalState, E extends FSMEvent> {
-  public FSMStateName handle(FSMStateName state, ES es, IS is, E event) throws FSMException;
+public abstract class Promise<R extends Direct.Response> extends Direct.Request<R>{
+  public abstract R success(Result r);
+  public abstract R fail(Result r);
+  
+  protected Promise() {
+    super();
+  }
 }

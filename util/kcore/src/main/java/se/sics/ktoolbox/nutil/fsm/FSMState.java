@@ -18,12 +18,13 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
 import com.google.common.base.Optional;
 import java.util.Map;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMStateChangeHandler;
 
@@ -64,7 +65,7 @@ public class FSMState {
     }
   }
   
-  public Optional<FSMStateName> handle(FSMEvent event) {
+  public Optional<FSMStateName> handle(FSMEvent event) throws FSMException {
     FSMEventHandler handler = handlers.get(event.getClass());
     if (handler == null) {
       fallback.handle(state, es, is, event);
