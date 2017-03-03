@@ -18,17 +18,17 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
-import se.sics.ktoolbox.nutil.fsm.api.FSMOnKillAction;
-import se.sics.ktoolbox.nutil.fsm.api.FSMException;
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
 import com.google.common.base.Optional;
 import com.google.common.collect.Table;
 import java.util.Map;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMOnKillAction;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 
 /**

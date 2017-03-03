@@ -50,7 +50,7 @@ public class FSMBuilder {
     }
 
     public Transition onState(FSMStateName state) throws FSMException {
-      if (transitionTable.containsColumn(state)) {
+      if (transitionTable.containsRow(state)) {
         throw new FSMException("state:" + state + " already registered");
       }
       return new Transition(this, state);
@@ -58,10 +58,10 @@ public class FSMBuilder {
 
     private void buildTransition(FSMStateName from, FSMStateName[] toStates, Optional<FSMStateName> cleanupState,
       boolean toFinal) throws FSMException {
-      
-      if(toFinal && cleanupState.isPresent()) {
+
+      if (toFinal && cleanupState.isPresent()) {
         throw new FSMException("if cleanup is present, final should not - go cleanup and that will lead to final");
-      } 
+      }
       for (FSMStateName to : toStates) {
         if (transitionTable.contains(from, to)) {
           throw new FSMException("transition from:" + from + " to:" + to
@@ -74,9 +74,9 @@ public class FSMBuilder {
           throw new FSMException("transition from:" + from + " to:"
             + cleanupState.get() + " already registered");
         }
+        transitionTable.put(from, cleanupState.get(), true);
       }
-      transitionTable.put(from, cleanupState.get(), true);
-      if(toFinal) {
+      if (toFinal) {
         transitionTable.put(from, FSMBasicStateNames.FINAL, true);
       }
     }
@@ -91,7 +91,7 @@ public class FSMBuilder {
         throw new FSMException("FINAL state not defined");
       }
       SetView<FSMStateName> deadState = Sets.difference(transitionTable.columnKeySet(), transitionTable.rowKeySet());
-      if (!deadState.isEmpty()) {
+      if (deadState.size() > 1) {
         throw new FSMException("states:" + deadState.toString()
           + "are dead end states. Only FINAL allowed as dead end state.");
       }

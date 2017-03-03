@@ -106,14 +106,14 @@ public class MultiFSMBuilder {
       return new NegativePort(this, potType);
     }
 
-    private void buildPositivePort(Class portType, List<Class> events) {
-      positivePorts.add(Pair.with(portType, events));
-      events.addAll(events);
+    private void buildPositivePort(Class portType, List<Class> newEvents) {
+      positivePorts.add(Pair.with(portType, newEvents));
+      events.addAll(newEvents);
     }
 
-    private void buildNegativePort(Class portType, List<Class> events) {
-      negativePorts.add(Pair.with(portType, events));
-      events.addAll(events);
+    private void buildNegativePort(Class portType, List<Class> newEvents) {
+      negativePorts.add(Pair.with(portType, newEvents));
+      events.addAll(newEvents);
     }
 
     public Machine buildEvents() {
