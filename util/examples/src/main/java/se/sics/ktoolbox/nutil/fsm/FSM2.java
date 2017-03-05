@@ -53,7 +53,7 @@ public class FSM2 {
     FSMBuilder.Handlers handlers = FSMBuilder.handlers()
       .events()
         .onEvent(Event2.Req.class)
-          .inState(FSMBasicStateNames.START, initHandler1)
+          .subscribe(initHandler1, FSMBasicStateNames.START)
       .buildEvents()
       .fallback(owsa)
       .buildFallbacks();

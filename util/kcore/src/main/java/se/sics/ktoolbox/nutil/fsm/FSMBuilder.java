@@ -263,11 +263,13 @@ public class FSMBuilder {
       this.eventType = eventType;
     }
 
-    public Event inState(FSMStateName state, FSMEventHandler handler) throws FSMException {
-      if (handlers.containsKey(state)) {
-        throw new FSMException("handler already registered for state:" + state + " event:" + eventType);
+    public Event subscribe(FSMEventHandler handler, FSMStateName... states) throws FSMException {
+      for (FSMStateName state : states) {
+        if (handlers.containsKey(state)) {
+          throw new FSMException("handler already registered for state:" + state + " event:" + eventType);
+        }
+        handlers.put(state, handler);
       }
-      handlers.put(state, handler);
       return this;
     }
 
