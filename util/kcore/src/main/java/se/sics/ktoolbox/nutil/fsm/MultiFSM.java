@@ -18,12 +18,6 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMOnKillAction;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilders;
-import se.sics.ktoolbox.nutil.fsm.api.FSMIdExtractor;
-import se.sics.ktoolbox.nutil.fsm.api.FSMException;
-import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
 import com.google.common.base.Optional;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -33,6 +27,12 @@ import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentProxy;
+import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMIdExtractor;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilders;
+import se.sics.ktoolbox.nutil.fsm.api.FSMOnKillAction;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.GenericSetup;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnEventAction;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnFSMExceptionAction;
@@ -106,6 +106,8 @@ public class MultiFSM {
     this.es.setProxy(proxy);
   }
 
+  
+  //TODO Alex - setupHandler and setupPortsAndHandler finalize;
   public void setupPortsAndHandlers() {
     Pair<List, List> ports = preparePorts();
     GenericSetup.portsAndHandledEvents(es.getProxy(), ports.getValue0(), ports.getValue1());
