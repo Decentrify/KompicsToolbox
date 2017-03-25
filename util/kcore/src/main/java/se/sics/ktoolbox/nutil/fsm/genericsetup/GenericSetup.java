@@ -22,12 +22,17 @@ import java.util.List;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Port;
 import se.sics.kompics.Positive;
+import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -38,37 +43,57 @@ public class GenericSetup {
 
   public static void portsAndHandledEvents(ComponentProxy proxy,
     List<Pair<Class, List<Pair<OnEventAction, Class>>>> positivePorts,
-    List<Pair<Class, List<Pair<OnEventAction, Class>>>> negativePorts) {
+    List<Pair<Class, List<Pair<OnEventAction, Class>>>> negativePorts,
+    List<Pair<OnMsgAction, Class>> positiveNetworkMsgs,
+    List<Pair<OnMsgAction, Class>> negativeNetworkMsgs) {
 
     for (Pair<Class, List<Pair<OnEventAction, Class>>> e : positivePorts) {
       LOG.info("positive port:{}", e.getValue0());
       Positive port = proxy.requires(e.getValue0());
       setupPort(proxy, port, e.getValue1());
     }
+    if (!positiveNetworkMsgs.isEmpty()) {
+      Positive port = proxy.requires(Network.class);
+      setupNetworkPort(proxy, port, positiveNetworkMsgs);
+    }
     for (Pair<Class, List<Pair<OnEventAction, Class>>> e : negativePorts) {
       LOG.info("negative port:{}", e.getValue0());
       Negative port = proxy.provides(e.getValue0());
       setupPort(proxy, port, e.getValue1());
     }
+    if (!negativeNetworkMsgs.isEmpty()) {
+      Negative port = proxy.provides(Network.class);
+      setupNetworkPort(proxy, port, negativeNetworkMsgs);
+    }
   }
-  
+
   public static void handledEvents(ComponentProxy proxy,
     List<Pair<Class, List<Pair<OnEventAction, Class>>>> positivePorts,
-    List<Pair<Class, List<Pair<OnEventAction, Class>>>> negativePorts) {
+    List<Pair<Class, List<Pair<OnEventAction, Class>>>> negativePorts,
+    List<Pair<OnMsgAction, Class>> positiveNetworkMsgs,
+    List<Pair<OnMsgAction, Class>> negativeNetworkMsgs) {
 
     for (Pair<Class, List<Pair<OnEventAction, Class>>> e : positivePorts) {
       LOG.info("positive port:{}", e.getValue0());
       Positive port = proxy.getNegative(e.getValue0()).getPair();
       setupPort(proxy, port, e.getValue1());
     }
+    if (!positiveNetworkMsgs.isEmpty()) {
+      Positive port = proxy.getNegative(Network.class).getPair();
+      setupNetworkPort(proxy, port, positiveNetworkMsgs);
+    }
     for (Pair<Class, List<Pair<OnEventAction, Class>>> e : negativePorts) {
       LOG.info("negative port:{}", e.getValue0());
       Negative port = proxy.getPositive(e.getValue0()).getPair();
       setupPort(proxy, port, e.getValue1());
     }
+    if (!negativeNetworkMsgs.isEmpty()) {
+      Negative port = proxy.getPositive(Network.class).getPair();
+      setupNetworkPort(proxy, port, negativeNetworkMsgs);
+    }
   }
-  
-  private static void setupPort(ComponentProxy proxy, Port port, List<Pair<OnEventAction, Class>> handledEvents)  {
+
+  private static void setupPort(ComponentProxy proxy, Port port, List<Pair<OnEventAction, Class>> handledEvents) {
     for (final Pair<OnEventAction, Class> e : handledEvents) {
       Handler handler = new Handler(e.getValue1()) {
         @Override
@@ -76,6 +101,20 @@ public class GenericSetup {
           e.getValue0().handle(event);
         }
       };
+      proxy.subscribe(handler, port);
+    }
+  }
+
+  private static void setupNetworkPort(ComponentProxy proxy, Port port, List<Pair<OnMsgAction, Class>> handledMsgs) {
+    for (final Pair<OnMsgAction, Class> e : handledMsgs) {
+      ClassMatchedHandler handler
+        = new ClassMatchedHandler<Object, KContentMsg<KAddress, KHeader<KAddress>, Object>>() {
+
+          @Override
+          public void handle(Object content, KContentMsg<KAddress, KHeader<KAddress>, Object> container) {
+            e.getValue0().handle(content, container);
+          }
+        };
       proxy.subscribe(handler, port);
     }
   }

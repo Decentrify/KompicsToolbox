@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +37,12 @@ import se.sics.ktoolbox.nutil.fsm.api.FSMOnKillAction;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.GenericSetup;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnEventAction;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnFSMExceptionAction;
+import se.sics.ktoolbox.nutil.fsm.genericsetup.OnMsgAction;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -53,8 +58,10 @@ public class MultiFSM {
   private final Map<FSMId, FSMachine> fsms = new HashMap<>();
   private final FSMExternalState es;
   private final FSMInternalStateBuilders isb;
-  private final List<Pair<Class, List<Class>>> positivePorts;
-  private final List<Pair<Class, List<Class>>> negativePorts;
+  private final Map<Class, Set<Class>> positivePorts;
+  private final Map<Class, Set<Class>> negativePorts;
+  private final Set<Class> positiveNetworkMsgs;
+  private final Set<Class> negativeNetworkMsgs;
 
   private final FSMOnKillAction oka = new FSMOnKillAction() {
     @Override
@@ -63,26 +70,74 @@ public class MultiFSM {
     }
   };
 
-  private final OnEventAction oea = new OnEventAction<FSMEvent>() {
+  private Optional<FSMachine> getFSM(FSMEvent event) throws FSMException {
+    Optional<FSMId> optFsmId = fsmIdExtractor.fromEvent(event);
+    if (!optFsmId.isPresent()) {
+      LOG.warn("{}fsm did not handle event:{}", new Object[]{logPrefix, event});
+      return Optional.absent();
+    }
+    FSMId fsmId = optFsmId.get();
+    FSMachine fsm = fsms.get(fsmId);
+    if (fsm == null) {
+      FSMachineDef fsmd = fsmds.get(fsmId.getDefId());
+      if (fsmd == null) {
+        throw new RuntimeException("illdefined fsm - critical logical error");
+      }
+      fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
+      fsms.put(fsmId, fsm);
+    }
+    return Optional.of(fsm);
+  }
+  private final OnEventAction oeapos = new OnEventAction<FSMEvent>() {
     @Override
     public void handle(FSMEvent event) {
       try {
-        Optional<FSMId> optFsmId = fsmIdExtractor.fromEvent(event);
-        if (!optFsmId.isPresent()) {
-          LOG.warn("{}fsm did not handle event:{}", new Object[]{logPrefix, event});
-          return;
+        Optional<FSMachine> fsm = getFSM(event);
+        if (fsm.isPresent()) {
+          fsm.get().handlePositive(event);
         }
-        FSMId fsmId = optFsmId.get();
-        FSMachine fsm = fsms.get(fsmId);
-        if (fsm == null) {
-          FSMachineDef fsmd = fsmds.get(fsmId.getDefId());
-          if (fsmd == null) {
-            throw new RuntimeException("illdefined fsm - critical logical error");
-          }
-          fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
-          fsms.put(fsmId, fsm);
+      } catch (FSMException ex) {
+        oexa.handle(ex);
+      }
+    }
+  };
+
+  private final OnEventAction oeaneg = new OnEventAction<FSMEvent>() {
+    @Override
+    public void handle(FSMEvent event) {
+      try {
+        Optional<FSMachine> fsm = getFSM(event);
+        if (fsm.isPresent()) {
+          fsm.get().handleNegative(event);
         }
-        fsm.handle(event);
+      } catch (FSMException ex) {
+        oexa.handle(ex);
+      }
+    }
+  };
+
+  private final OnMsgAction omapos = new OnMsgAction<FSMEvent>() {
+    @Override
+    public void handle(FSMEvent payload, KContentMsg<KAddress, KHeader<KAddress>, FSMEvent> msg) {
+      try {
+        Optional<FSMachine> fsm = getFSM(payload);
+        if (fsm.isPresent()) {
+          fsm.get().handlePositive(payload, msg);
+        }
+      } catch (FSMException ex) {
+        oexa.handle(ex);
+      }
+    }
+  };
+
+  private final OnMsgAction omaneg = new OnMsgAction<FSMEvent>() {
+    @Override
+    public void handle(FSMEvent payload, KContentMsg<KAddress, KHeader<KAddress>, FSMEvent> msg) {
+      try {
+        Optional<FSMachine> fsm = getFSM(payload);
+        if (fsm.isPresent()) {
+          fsm.get().handleNegative(payload, msg);
+        }
       } catch (FSMException ex) {
         oexa.handle(ex);
       }
@@ -90,9 +145,10 @@ public class MultiFSM {
   };
 
   // Class1 - ? extends PortType , Class2 - ? extends FSMEvent(KompicsEvent)
-  public MultiFSM(OnFSMExceptionAction oexa,  FSMIdExtractor fsmIdExtractor,
-    Map<FSMDefId, FSMachineDef> fsmds, FSMExternalState es, FSMInternalStateBuilders isb, 
-    List<Pair<Class, List<Class>>> positivePorts, List<Pair<Class, List<Class>>> negativePorts) {
+  public MultiFSM(OnFSMExceptionAction oexa, FSMIdExtractor fsmIdExtractor,
+    Map<FSMDefId, FSMachineDef> fsmds, FSMExternalState es, FSMInternalStateBuilders isb,
+    Map<Class, Set<Class>> positivePorts, Map<Class, Set<Class>> negativePorts,
+    Set<Class> positiveNetworkMsgs, Set<Class> negativeNetworkMsgs) {
     this.oexa = oexa;
     this.fsmIdExtractor = fsmIdExtractor;
     this.fsmds = fsmds;
@@ -100,53 +156,58 @@ public class MultiFSM {
     this.isb = isb;
     this.positivePorts = positivePorts;
     this.negativePorts = negativePorts;
+    this.positiveNetworkMsgs = positiveNetworkMsgs;
+    this.negativeNetworkMsgs = negativeNetworkMsgs;
   }
 
   public void setProxy(ComponentProxy proxy) {
     this.es.setProxy(proxy);
   }
 
-  
-  //TODO Alex - setupHandler and setupPortsAndHandler finalize;
   public void setupPortsAndHandlers() {
     Pair<List, List> ports = preparePorts();
-    GenericSetup.portsAndHandledEvents(es.getProxy(), ports.getValue0(), ports.getValue1());
+    Pair<List, List> networkPorts = preparePorts();
+    GenericSetup.portsAndHandledEvents(es.getProxy(), ports.getValue0(), ports.getValue1(),
+      networkPorts.getValue0(), networkPorts.getValue1());
   }
 
   public void setupHandlers() {
     Pair<List, List> ports = preparePorts();
-    GenericSetup.handledEvents(es.getProxy(), ports.getValue0(), ports.getValue1());
+    Pair<List, List> networkPorts = preparePorts();
+    GenericSetup.handledEvents(es.getProxy(), ports.getValue0(), ports.getValue1(),
+      networkPorts.getValue0(), networkPorts.getValue1());
   }
 
   private Pair<List, List> preparePorts() {
     List pPorts = new LinkedList<>();
     List nPorts = new LinkedList<>();
 
-    for (Pair<Class, List<Class>> e : positivePorts) {
+    for (Map.Entry<Class, Set<Class>> e : positivePorts.entrySet()) {
       List<Pair<OnEventAction, Class>> events = new LinkedList<>();
-      for (Class c : e.getValue1()) {
-        events.add(Pair.with(oea, c));
+      for (Class c : e.getValue()) {
+        events.add(Pair.with(oeapos, c));
       }
-      pPorts.add(Pair.with(e.getValue0(), events));
+      pPorts.add(Pair.with(e.getKey(), events));
     }
-    for (Pair<Class, List<Class>> e : negativePorts) {
+    for (Map.Entry<Class, Set<Class>> e : negativePorts.entrySet()) {
       List<Pair<OnEventAction, Class>> events = new LinkedList<>();
-      for (Class c : e.getValue1()) {
-        events.add(Pair.with(oea, c));
+      for (Class c : e.getValue()) {
+        events.add(Pair.with(oeaneg, c));
       }
-      nPorts.add(Pair.with(e.getValue0(), events));
+      nPorts.add(Pair.with(e.getKey(), events));
     }
     return Pair.with(pPorts, nPorts);
   }
 
-  public void tearDown() {
-    FSMStop stop = new FSMStop();
-    for (FSMachine fsm : fsms.values()) {
-      try {
-        fsm.handle(stop);
-      } catch (FSMException ex) {
-        continue;
-      }
+  private Pair<List, List> prepareNetwork() {
+    List pPorts = new LinkedList<>();
+    List nPorts = new LinkedList<>();
+    for (Class c : positiveNetworkMsgs) {
+      pPorts.add(Pair.with(omapos, c));
     }
+    for (Class c : negativeNetworkMsgs) {
+      nPorts.add(Pair.with(omaneg, c));
+    }
+    return Pair.with(pPorts, nPorts);
   }
 }

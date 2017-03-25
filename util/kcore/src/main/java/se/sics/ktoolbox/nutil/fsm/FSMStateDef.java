@@ -18,35 +18,68 @@
  */
 package se.sics.ktoolbox.nutil.fsm;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
-import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
-import se.sics.ktoolbox.nutil.fsm.api.FSMException;
-import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
 import com.google.common.base.Optional;
 import java.util.Map;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMMsgHandler;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMStateChangeHandler;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMStateDef {
+  
+  private Optional<FSMStateChangeHandler> onEntry;
+  private Optional<FSMStateChangeHandler> onExit;
+  
+  private Map<Class, FSMEventHandler> positiveHandlers;
+  private Map<Class, FSMEventHandler> negativeHandlers;
+  
+  private Map<Class, FSMMsgHandler> positiveNetworkHandlers;
+  private Map<Class, FSMMsgHandler> negativeNetworkHandlers;
 
-  private final FSMEventHandler fallback;
-  private final Optional<FSMStateChangeHandler> onEntry;
-  private final Optional<FSMStateChangeHandler> onExit;
-  //Class is a FSMEvent subtype
-  private final Map<Class, FSMEventHandler> handlers;
-
-  FSMStateDef(FSMEventHandler fallback, Optional<FSMStateChangeHandler> onEntry, Optional<FSMStateChangeHandler> onExit,
-    Map<Class, FSMEventHandler> handlers) {
-    this.fallback = fallback;
-    this.onEntry = onEntry;
-    this.onExit = onExit;
-    this.handlers = handlers;
+  private FSMStateDef() {}
+  
+  public FSMStateDef setOnEntry(Optional<FSMStateChangeHandler> handler) {
+    this.onEntry = handler;
+    return this;
   }
 
+  public FSMStateDef setOnExit(Optional<FSMStateChangeHandler> handler) {
+    this.onExit = handler;
+    return this;
+  }
+
+  public FSMStateDef setPositiveHandlers(Map<Class, FSMEventHandler> positiveHandlers) {
+    this.positiveHandlers = positiveHandlers;
+    return this;
+  }
+
+  public FSMStateDef setNegativeHandlers(Map<Class, FSMEventHandler> negativeHandlers) {
+    this.negativeHandlers = negativeHandlers;
+    return this;
+  }
+
+  public FSMStateDef setPositiveNetworkHandlers(Map<Class, FSMMsgHandler> positiveNetworkHandlers) {
+    this.positiveNetworkHandlers = positiveNetworkHandlers;
+    return this;
+  }
+
+  public FSMStateDef setNegativeNetworkHandlers(Map<Class, FSMMsgHandler> negativeNetworkHandlers) {
+    this.negativeNetworkHandlers = negativeNetworkHandlers;
+    return this;
+  }
+  
+  public static FSMStateDef instance() {
+    return new FSMStateDef();
+  }
+  
   protected FSMState build(FSMStateName state, FSMExternalState es, FSMInternalState is) throws FSMException {
-    return new FSMState(state, fallback, onEntry, onExit, es, is, handlers);
+    return new FSMState(state, onEntry, onExit, es, is,
+      positiveHandlers, negativeHandlers, positiveNetworkHandlers, negativeNetworkHandlers);
   }
 }
