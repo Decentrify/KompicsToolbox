@@ -93,7 +93,7 @@ public class FSMBuilder {
         public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException {
           if (events.contains(event.getClass()) || positiveNetworkMsgs.contains(event.getClass())
             || negativeNetworkMsgs.contains(event.getClass())) {
-            return Optional.of(fsmd.id.getFSMId(event.getBaseId()));
+            return Optional.of(fsmd.id.getFSMId(event.getFSMBaseId()));
           }
 
           return Optional.absent();
@@ -226,6 +226,14 @@ public class FSMBuilder {
 
     public Port negativePort(Class portType) {
       return new Port(this, portType, false);
+    }
+    
+    public NetworkPort positiveNetwork() {
+      return new NetworkPort(this, true);
+    }
+
+    public NetworkPort negativeNetwork() {
+      return new NetworkPort(this, false);
     }
 
     public Handlers defaultFallback(FSMEventHandler eventHandler, FSMMsgHandler msgHandler) {

@@ -35,7 +35,7 @@ public class Event1 {
     }
 
     @Override
-    public Identifier getBaseId() {
+    public Identifier getFSMBaseId() {
       return baseId;
     }
 
@@ -54,7 +54,7 @@ public class Event1 {
     }
 
     @Override
-    public Identifier getBaseId() {
+    public Identifier getFSMBaseId() {
       return baseId;
     }
 
@@ -73,7 +73,7 @@ public class Event1 {
     }
 
     @Override
-    public Identifier getBaseId() {
+    public Identifier getFSMBaseId() {
       return baseId;
     }
 
@@ -92,7 +92,7 @@ public class Event1 {
     }
 
     @Override
-    public Identifier getBaseId() {
+    public Identifier getFSMBaseId() {
       return baseId;
     }
 

@@ -26,7 +26,7 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class FSMStop implements FSMEvent {
   @Override
-  public Identifier getBaseId() {
+  public Identifier getFSMBaseId() {
     return null;
   }
 }

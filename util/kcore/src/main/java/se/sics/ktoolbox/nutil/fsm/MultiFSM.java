@@ -83,7 +83,7 @@ public class MultiFSM {
       if (fsmd == null) {
         throw new RuntimeException("illdefined fsm - critical logical error");
       }
-      fsm = fsmd.build(event.getBaseId(), oka, es, isb.newInternalState(fsmId));
+      fsm = fsmd.build(event.getFSMBaseId(), oka, es, isb.newInternalState(fsmId));
       fsms.put(fsmId, fsm);
     }
     return Optional.of(fsm);
