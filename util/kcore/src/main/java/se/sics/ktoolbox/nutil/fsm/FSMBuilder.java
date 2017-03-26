@@ -68,7 +68,7 @@ public class FSMBuilder {
 
     public MultiMachine setNegativePorts(Map<Class, Set<Class>> portEvents) {
       negativePorts = portEvents;
-      for (Set<Class> e : positivePorts.values()) {
+      for (Set<Class> e : portEvents.values()) {
         events.addAll(e);
       }
       return this;
@@ -239,22 +239,22 @@ public class FSMBuilder {
       if (pp) {
         positivePorts.put(portType, eventHandlers.keySet());
         for (Map.Entry<Class, Map<FSMStateName, FSMEventHandler>> e : eventHandlers.entrySet()) {
+          if (positivePortEventHandlers.containsRow(e.getKey())) {
+            throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
+          }
           for (Map.Entry<FSMStateName, FSMEventHandler> ee : e.getValue().entrySet()) {
             positivePortEventHandlers.put(e.getKey(), ee.getKey(), ee.getValue());
-            if (positivePortEventHandlers.containsRow(e.getKey())) {
-              throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
-            }
           }
         }
         positivePortFallbackHandlers.putAll(fallbackHandlers);
       } else {
         negativePorts.put(portType, eventHandlers.keySet());
         for (Map.Entry<Class, Map<FSMStateName, FSMEventHandler>> e : eventHandlers.entrySet()) {
-          for (Map.Entry<FSMStateName, FSMEventHandler> ee : e.getValue().entrySet()) {
-            negativePortEventHandlers.put(e.getKey(), ee.getKey(), ee.getValue());
-          }
           if (negativePortEventHandlers.containsRow(e.getKey())) {
             throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
+          }
+          for (Map.Entry<FSMStateName, FSMEventHandler> ee : e.getValue().entrySet()) {
+            negativePortEventHandlers.put(e.getKey(), ee.getKey(), ee.getValue());
           }
         }
         negativePortFallbackHandlers.putAll(fallbackHandlers);
@@ -266,22 +266,22 @@ public class FSMBuilder {
       if (pp) {
         positiveNetwork.addAll(msgHandlers.keySet());
         for (Map.Entry<Class, Map<FSMStateName, FSMMsgHandler>> e : msgHandlers.entrySet()) {
+          if (positiveNetworkMsgHandlers.containsRow(e.getKey())) {
+            throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
+          }
           for (Map.Entry<FSMStateName, FSMMsgHandler> ee : e.getValue().entrySet()) {
             positiveNetworkMsgHandlers.put(e.getKey(), ee.getKey(), ee.getValue());
-            if (positiveNetworkMsgHandlers.containsRow(e.getKey())) {
-              throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
-            }
           }
         }
         positiveNetworkFallbackHandlers.putAll(fallbackHandlers);
       } else {
         negativeNetwork.addAll(msgHandlers.keySet());
         for (Map.Entry<Class, Map<FSMStateName, FSMMsgHandler>> e : msgHandlers.entrySet()) {
+          if (negativeNetworkMsgHandlers.containsRow(e.getKey())) {
+            throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
+          }
           for (Map.Entry<FSMStateName, FSMMsgHandler> ee : e.getValue().entrySet()) {
             negativeNetworkMsgHandlers.put(e.getKey(), ee.getKey(), ee.getValue());
-            if (negativeNetworkMsgHandlers.containsRow(e.getKey())) {
-              throw new FSMException("currently we do not allow same event in different ports(besides pos/neg");
-            }
           }
         }
         negativeNetworkFallbackHandlers.putAll(fallbackHandlers);
@@ -446,8 +446,7 @@ public class FSMBuilder {
     return new Handlers();
   }
 
-  public static MultiFSM multiFSM(String fsmName, Machine m, Handlers h, FSMExternalState es,
-    FSMInternalStateBuilder isb, OnFSMExceptionAction oexa) throws FSMException {
+  public static FSMachineDef fsmDef(String fsmName, Machine m, Handlers h) throws FSMException {
     FSMDefId id = FSMIds.getDefId(fsmName);
 
     if (!m.transitionTable.containsRow(FSMBasicStateNames.START)) {
@@ -474,7 +473,15 @@ public class FSMBuilder {
       h.fallbackEventHandler, h.fallbackMsgHandler,
       h.positivePortFallbackHandlers, h.negativePortFallbackHandlers,
       h.positiveNetworkFallbackHandlers, h.negativeNetworkFallbackHandlers);
-    
+
+    return fsmDef;
+  }
+
+  public static MultiFSM multiFSM(String fsmName, Machine m, Handlers h, FSMExternalState es,
+    FSMInternalStateBuilder isb, OnFSMExceptionAction oexa) throws FSMException {
+
+    FSMachineDef fsmDef = fsmDef(fsmName, m, h);
+
     MultiFSM multiFSM = MultiMachine.instance()
       .setPositivePorts(h.positivePorts)
       .setNegativePorts(h.negativePorts)

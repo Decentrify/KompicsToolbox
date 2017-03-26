@@ -49,7 +49,7 @@ import se.sics.ktoolbox.util.network.KHeader;
  */
 public class MultiFSM {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MultiFSMComp.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MultiFSM.class);
   private String logPrefix = "";
 
   private final OnFSMExceptionAction oexa;
@@ -166,14 +166,14 @@ public class MultiFSM {
 
   public void setupPortsAndHandlers() {
     Pair<List, List> ports = preparePorts();
-    Pair<List, List> networkPorts = preparePorts();
+    Pair<List, List> networkPorts = prepareNetwork();
     GenericSetup.portsAndHandledEvents(es.getProxy(), ports.getValue0(), ports.getValue1(),
       networkPorts.getValue0(), networkPorts.getValue1());
   }
 
   public void setupHandlers() {
     Pair<List, List> ports = preparePorts();
-    Pair<List, List> networkPorts = preparePorts();
+    Pair<List, List> networkPorts = prepareNetwork();
     GenericSetup.handledEvents(es.getProxy(), ports.getValue0(), ports.getValue1(),
       networkPorts.getValue0(), networkPorts.getValue1());
   }
