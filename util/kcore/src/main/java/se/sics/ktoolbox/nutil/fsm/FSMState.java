@@ -115,4 +115,12 @@ public class FSMState {
     FSMStateName next = handler.handle(state, es, is, payload, msg);
     return Optional.of(next);
   }
+  
+  public FSMStateName fallback(FSMEvent event, FSMEventHandler fallback) throws FSMException {
+    return fallback.handle(state, es, is, event);
+  }
+
+  public FSMStateName fallback(FSMEvent payload, KContentMsg msg, FSMMsgHandler fallback) throws FSMException {
+    return fallback.handle(state, es, is, payload, msg);
+  }
 }

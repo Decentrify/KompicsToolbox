@@ -18,8 +18,11 @@
  */
 package se.sics.ktoolbox.nutil.fsm.api;
 
+import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface FSMInternalState {
+  public FSMId getFSMId();
 }
