@@ -108,7 +108,7 @@ public class GenericSetup {
   private static void setupNetworkPort(ComponentProxy proxy, Port port, List<Pair<OnMsgAction, Class>> handledMsgs) {
     for (final Pair<OnMsgAction, Class> e : handledMsgs) {
       ClassMatchedHandler handler
-        = new ClassMatchedHandler<Object, KContentMsg<KAddress, KHeader<KAddress>, Object>>() {
+        = new ClassMatchedHandler<Object, KContentMsg<KAddress, KHeader<KAddress>, Object>>(e.getValue1()) {
 
           @Override
           public void handle(Object content, KContentMsg<KAddress, KHeader<KAddress>, Object> container) {
