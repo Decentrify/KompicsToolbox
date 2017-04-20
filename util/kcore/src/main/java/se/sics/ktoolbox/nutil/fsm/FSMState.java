@@ -26,52 +26,101 @@ import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
 import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
 import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
+import se.sics.ktoolbox.nutil.fsm.handler.FSMMsgHandler;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMStateChangeHandler;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMState {
-
+  
   private final FSMStateName state;
-  private final FSMEventHandler fallback;
   private final Optional<FSMStateChangeHandler> onEntry;
   private final Optional<FSMStateChangeHandler> onExit;
   private final FSMExternalState es;
   private final FSMInternalState is;
-  private final Map<Class, FSMEventHandler> handlers;
-
-  public FSMState(FSMStateName state, FSMEventHandler fallback, Optional<FSMStateChangeHandler> onEntry,
-    Optional<FSMStateChangeHandler> onExit, FSMExternalState es, FSMInternalState is,
-    Map<Class, FSMEventHandler> handlers) {
+  
+  private final Map<Class, FSMEventHandler> positiveHandlers;
+  private final Map<Class, FSMEventHandler> negativeHandlers;
+  
+  private final Map<Class, FSMMsgHandler> positiveMsgHandlers;
+  private final Map<Class, FSMMsgHandler> negativeMsgHandlers;
+  
+  public FSMState(FSMStateName state, Optional<FSMStateChangeHandler> onEntry, Optional<FSMStateChangeHandler> onExit,
+    FSMExternalState es, FSMInternalState is,
+    Map<Class, FSMEventHandler> positiveHandlers, Map<Class, FSMEventHandler> negativeHandlers,
+    Map<Class, FSMMsgHandler> positiveMsgHandlers, Map<Class, FSMMsgHandler> negativeMsgHandlers) {
     this.state = state;
-    this.fallback = fallback;
     this.onEntry = onEntry;
     this.onExit = onExit;
     this.es = es;
     this.is = is;
-    this.handlers = handlers;
+    this.positiveHandlers = positiveHandlers;
+    this.negativeHandlers = negativeHandlers;
+    this.positiveMsgHandlers = positiveMsgHandlers;
+    this.negativeMsgHandlers = negativeMsgHandlers;
   }
-
+  
   public void onEntry(FSMStateName from) {
-    if(onEntry.isPresent()) {
+    if (onEntry.isPresent()) {
       onEntry.get().handle(from, state, es, is);
     }
   }
   
   public void onExit(FSMStateName to) {
-    if(onExit.isPresent()) {
+    if (onExit.isPresent()) {
       onExit.get().handle(state, to, es, is);
     }
   }
   
-  public Optional<FSMStateName> handle(FSMEvent event) throws FSMException {
-    FSMEventHandler handler = handlers.get(event.getClass());
+  public Optional<FSMStateName> handlePositive(FSMEvent event) throws FSMException {
+    FSMEventHandler handler = positiveHandlers.get(event.getClass());
     if (handler == null) {
-      fallback.handle(state, es, is, event);
       return Optional.absent();
     }
     FSMStateName next = handler.handle(state, es, is, event);
     return Optional.of(next);
+  }
+  
+  public Optional<FSMStateName> handleNegative(FSMEvent event) throws FSMException {
+    FSMEventHandler handler = negativeHandlers.get(event.getClass());
+    if (handler == null) {
+      return Optional.absent();
+    }
+    FSMStateName next = handler.handle(state, es, is, event);
+    return Optional.of(next);
+  }
+  
+  public Optional<FSMStateName> handlePositive(FSMEvent payload, KContentMsg<KAddress, KHeader<KAddress>, FSMEvent> msg)
+    throws
+    FSMException {
+    FSMMsgHandler handler = positiveMsgHandlers.get(payload.getClass());
+    if (handler == null) {
+      return Optional.absent();
+    }
+    FSMStateName next = handler.handle(state, es, is, payload, msg);
+    return Optional.of(next);
+  }
+  
+  public Optional<FSMStateName> handleNegative(FSMEvent payload, KContentMsg<KAddress, KHeader<KAddress>, FSMEvent> msg)
+    throws
+    FSMException {
+    FSMMsgHandler handler = negativeMsgHandlers.get(payload.getClass());
+    if (handler == null) {
+      return Optional.absent();
+    }
+    FSMStateName next = handler.handle(state, es, is, payload, msg);
+    return Optional.of(next);
+  }
+  
+  public FSMStateName fallback(FSMEvent event, FSMEventHandler fallback) throws FSMException {
+    return fallback.handle(state, es, is, event);
+  }
+
+  public FSMStateName fallback(FSMEvent payload, KContentMsg msg, FSMMsgHandler fallback) throws FSMException {
+    return fallback.handle(state, es, is, payload, msg);
   }
 }

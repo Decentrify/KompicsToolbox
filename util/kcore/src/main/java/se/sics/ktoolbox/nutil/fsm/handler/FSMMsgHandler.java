@@ -16,17 +16,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.handler;
 
 import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.nutil.fsm.api.FSMException;
+import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FSMStop implements FSMEvent {
-  @Override
-  public Identifier getFSMBaseId() {
-    return null;
-  }
+public interface FSMMsgHandler <ES extends FSMExternalState, IS extends FSMInternalState, E extends FSMEvent> {
+  public FSMStateName handle(FSMStateName state, ES es, IS is, E payload, KContentMsg<KAddress, KHeader<KAddress>, E> msg) throws FSMException;
 }
+

@@ -16,17 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.fsm;
+package se.sics.ktoolbox.nutil.fsm.genericsetup;
 
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class FSMStop implements FSMEvent {
-  @Override
-  public Identifier getFSMBaseId() {
-    return null;
-  }
+public interface OnMsgAction<P extends Object> {
+  public void handle(P payload, KContentMsg<KAddress, KHeader<KAddress>, P> msg);
 }

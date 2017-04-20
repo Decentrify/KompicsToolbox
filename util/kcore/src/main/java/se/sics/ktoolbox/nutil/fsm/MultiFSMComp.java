@@ -52,8 +52,7 @@ public class MultiFSMComp extends ComponentDefinition {
   @Override
   public void tearDown() {
     //TODO Alex - maybe introduce a CLEANUP message to properly clean things before tear down;
-    LOG.warn("{}multi fsm tear down is iffy at best atm - might not clean properly external sources");
-    fsm.tearDown();
+    LOG.warn("{}multi fsm tear down is iffy at best atm - externaly stop all machines");
   }
 
   public static class Init extends se.sics.kompics.Init<MultiFSMComp> {
