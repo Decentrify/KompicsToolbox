@@ -21,6 +21,7 @@ package se.sics.ktoolbox.gradient.setup;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 
@@ -29,13 +30,14 @@ import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlaySetup {
+
   public static OverlayIdFactory setup() {
-     OverlayRegistry.initiate(new SystemOverlays.TypeFactory(), new SystemOverlays.Comparator());
-        
-        byte overlayOwnerId = 1;
-        OverlayRegistry.registerPrefix("test_owner", overlayOwnerId);
-        
-        IdentifierFactory torrentBaseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
-        return new OverlayIdFactory(torrentBaseIdFactory, SystemOverlays.Types.TEST_TYPE, overlayOwnerId);
+    OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
+
+    byte overlayOwnerId = 1;
+    OverlayRegistry.registerPrefix("test_owner", overlayOwnerId);
+
+    IdentifierFactory torrentBaseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+    return new OverlayIdFactory(torrentBaseIdFactory, OverlayId.BasicTypes.TGRADIENT, overlayOwnerId);
   }
 }
