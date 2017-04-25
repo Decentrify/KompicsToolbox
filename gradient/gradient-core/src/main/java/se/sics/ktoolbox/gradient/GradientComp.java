@@ -285,7 +285,7 @@ public class GradientComp extends ComponentDefinition {
     }
 
     private void publishSample() {
-        GradientSample publishedSample = new GradientSample(overlayId, selfView.getContent(), gradientNeighbours.getAllCopy());
+        GradientSample publishedSample = new GradientSample(overlayId, selfView.getContent(), gradientNeighbours.getAllCopy(), selfView.rank);
         if(publishedSample.gradientNeighbours.isEmpty()) {
             LOG.warn("{}no neighbours", logPrefix);
         }

@@ -33,14 +33,14 @@ public class TGradientSample<C extends Object> extends GradientSample<C>{
     public final List<Container<KAddress, C>> gradientFingers;
     
     public TGradientSample(Identifier eventId, OverlayId overlayId, C selfView, 
-            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        super(eventId, overlayId, selfView, gradientNeighbours);
+            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers, int rank) {
+        super(eventId, overlayId, selfView, gradientNeighbours, rank);
         this.gradientFingers = gradientFingers;
     }
     
     public TGradientSample(OverlayId overlayId, C selfView, 
-            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours, gradientFingers);
+            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers, int rank) {
+        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours, gradientFingers, rank);
     }
 
     public List<Container<KAddress, C>> getGradientFingers() {

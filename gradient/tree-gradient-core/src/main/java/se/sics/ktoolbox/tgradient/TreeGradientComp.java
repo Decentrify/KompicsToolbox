@@ -331,7 +331,7 @@ public class TreeGradientComp extends ComponentDefinition {
 
     private void publishSample() {
         TGradientSample sample = new TGradientSample(overlayId, selfView.getContent(), gradientNeighbours,
-                gradientFingers.getAllCopy());
+                gradientFingers.getAllCopy(), selfView.rank);
         if(sample.gradientNeighbours.isEmpty()) {
             LOG.warn("{}no neighbours", logPrefix);
         }

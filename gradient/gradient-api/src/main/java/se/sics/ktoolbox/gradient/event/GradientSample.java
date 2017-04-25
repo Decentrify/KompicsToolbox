@@ -36,17 +36,19 @@ public class GradientSample<C extends Object> implements GradientEvent {
     public final OverlayId overlayId;
     public final C selfView;
     public final List<Container<KAddress, C>> gradientNeighbours;
+    public final int selfRank;
 
     public GradientSample(Identifier eventId, OverlayId overlayId,
-            C selfView, List<Container<KAddress, C>> gradientNeighbours) {
+            C selfView, List<Container<KAddress, C>> gradientNeighbours, int selfRank) {
         this.eventId = eventId;
         this.overlayId = overlayId;
         this.selfView = selfView;
         this.gradientNeighbours = gradientNeighbours;
+        this.selfRank = selfRank;
     }
 
-    public GradientSample(OverlayId overlayId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours);
+    public GradientSample(OverlayId overlayId, C selfView, List<Container<KAddress, C>> gradientNeighbours, int rank) {
+        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours, rank);
     }
 
     public List<Container<KAddress, C>> getGradientNeighbours() {

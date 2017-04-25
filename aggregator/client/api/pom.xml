@@ -7,7 +7,7 @@
     <parent>
         <groupId>se.sics.ktoolbox.aggregator</groupId>
         <artifactId>client</artifactId>
-        <version>2.0.4-SNAPSHOT</version>
+        <version>0.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>se.sics.ktoolbox.aggregator.client</groupId>
