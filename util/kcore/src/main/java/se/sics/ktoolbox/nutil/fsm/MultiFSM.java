@@ -34,12 +34,15 @@ import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
 import se.sics.ktoolbox.nutil.fsm.api.FSMIdExtractor;
 import se.sics.ktoolbox.nutil.fsm.api.FSMInternalStateBuilders;
 import se.sics.ktoolbox.nutil.fsm.api.FSMOnKillAction;
+import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.GenericSetup;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnEventAction;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnFSMExceptionAction;
 import se.sics.ktoolbox.nutil.fsm.genericsetup.OnMsgAction;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMIds;
+import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -209,5 +212,12 @@ public class MultiFSM {
       nPorts.add(Pair.with(omaneg, c));
     }
     return Pair.with(pPorts, nPorts);
+  }
+  
+  public FSMStateName getFSMState(String fsmName, Identifier baseId) {
+    FSMDefId fsmDefId = FSMIds.getDefId(fsmName);
+    FSMId fsmId = fsmDefId.getFSMId(baseId);
+    FSMachine fsm = fsms.get(fsmId);
+    return fsm.getState();
   }
 }

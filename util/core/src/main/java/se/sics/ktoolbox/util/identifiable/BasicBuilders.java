@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.util.identifiable;
 
 import java.util.UUID;
-import se.sics.ktoolbox.util.identifiable.IdentifierBuilder;
 
 /**
  *

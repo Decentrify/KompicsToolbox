@@ -185,4 +185,8 @@ public class FSMachine {
       return state;
     }
   };
+  
+  public FSMStateName getState() {
+    return currentState.getValue0();
+  }
 }
