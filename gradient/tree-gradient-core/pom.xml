@@ -5,7 +5,7 @@
   <parent>
     <groupId>se.sics.ktoolbox</groupId>
     <artifactId>gradient</artifactId>
-    <version>2.0.3-SNAPSHOT</version>
+    <version>2.0.2.1-SNAPSHOT</version>
   </parent>
   <groupId>se.sics.ktoolbox.gradient</groupId>
   <artifactId>tree-gradient-core</artifactId>
