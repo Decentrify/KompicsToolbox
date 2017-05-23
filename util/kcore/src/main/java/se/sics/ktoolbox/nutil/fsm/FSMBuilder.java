@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import se.sics.ktoolbox.nutil.fsm.api.FSMBasicStateNames;
-import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
 import se.sics.ktoolbox.nutil.fsm.api.FSMException;
 import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
 import se.sics.ktoolbox.nutil.fsm.api.FSMIdExtractor;
@@ -39,7 +38,6 @@ import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMMsgHandler;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMStateChangeHandler;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
-import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMIds;
 
 /**
@@ -85,20 +83,7 @@ public class FSMBuilder {
     }
 
     public MultiFSM buildMultiFSM(final FSMachineDef fsmd, OnFSMExceptionAction oexa, FSMExternalState es,
-      FSMInternalStateBuilder builder) throws FSMException {
-
-      FSMIdExtractor fsmIdExtractor = new FSMIdExtractor() {
-
-        @Override
-        public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException {
-          if (events.contains(event.getClass()) || positiveNetworkMsgs.contains(event.getClass())
-            || negativeNetworkMsgs.contains(event.getClass())) {
-            return Optional.of(fsmd.id.getFSMId(event.getFSMBaseId()));
-          }
-
-          return Optional.absent();
-        }
-      };
+      FSMInternalStateBuilder builder, FSMIdExtractor fsmIdExtractor) throws FSMException {
 
       Map<FSMDefId, FSMachineDef> fsmds = new HashMap<>();
       fsmds.put(fsmd.id, fsmd);
@@ -486,7 +471,7 @@ public class FSMBuilder {
   }
 
   public static MultiFSM multiFSM(String fsmName, Machine m, Handlers h, FSMExternalState es,
-    FSMInternalStateBuilder isb, OnFSMExceptionAction oexa) throws FSMException {
+    FSMInternalStateBuilder isb, OnFSMExceptionAction oexa, FSMIdExtractor fsmIdExtractor) throws FSMException {
 
     FSMachineDef fsmDef = fsmDef(fsmName, m, h);
 
@@ -495,7 +480,7 @@ public class FSMBuilder {
       .setNegativePorts(h.negativePorts)
       .setPositiveNetworkMsgs(h.positiveNetwork)
       .setNegativeNetworkMsgs(h.negativeNetwork)
-      .buildMultiFSM(fsmDef, oexa, es, isb);
+      .buildMultiFSM(fsmDef, oexa, es, isb, fsmIdExtractor);
     return multiFSM;
   }
 

@@ -19,14 +19,9 @@
 package se.sics.ktoolbox.nutil.fsm;
 
 import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMStop implements FSMEvent {
-  @Override
-  public Identifier getFSMBaseId() {
-    return null;
-  }
 }

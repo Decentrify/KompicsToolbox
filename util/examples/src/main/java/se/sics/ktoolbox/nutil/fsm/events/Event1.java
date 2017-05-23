@@ -34,8 +34,7 @@ public class Event1 {
       this.baseId = baseId;
     }
 
-    @Override
-    public Identifier getFSMBaseId() {
+    public Identifier getFSMId() {
       return baseId;
     }
 
@@ -53,8 +52,7 @@ public class Event1 {
       this.baseId = baseId;
     }
 
-    @Override
-    public Identifier getFSMBaseId() {
+    public Identifier getFSMId() {
       return baseId;
     }
 
@@ -72,8 +70,7 @@ public class Event1 {
       this.baseId = baseId;
     }
 
-    @Override
-    public Identifier getFSMBaseId() {
+    public Identifier getFSMId() {
       return baseId;
     }
 
@@ -91,8 +88,7 @@ public class Event1 {
       this.baseId = baseId;
     }
 
-    @Override
-    public Identifier getFSMBaseId() {
+    public Identifier getFSMId() {
       return baseId;
     }
 

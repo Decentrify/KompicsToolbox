@@ -19,12 +19,9 @@
 package se.sics.ktoolbox.nutil.fsm.api;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface FSMEvent extends KompicsEvent {
-  //identifies all messages belonging to same FSM
-  public Identifier getFSMBaseId();
 }
