@@ -31,6 +31,10 @@ public class OverlayRegistry {
     private static OverlayId.TypeComparator typeComparator = null;
     private static OverlayId.TypeFactory typeFactory = null;
 
+    public static synchronized void reset() {
+      reservedOverlayPrefixes.clear();
+    }
+    
     //TODO Alex - fix with a proper singleton later - should be done in the beginning
     public static synchronized void initiate(OverlayId.TypeFactory tf, OverlayId.TypeComparator tc) {
         typeComparator = tc;

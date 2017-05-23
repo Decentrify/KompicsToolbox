@@ -26,24 +26,29 @@ import java.util.Map;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class FSMIdRegistry {
+
   private static final Map<String, ByteBuffer> reservedFSMDIds = new HashMap<>();
-  
-    public static synchronized boolean registerPrefix(String owner, byte fsmdId) {
-        if(reservedFSMDIds.containsKey(owner)) {
-            throw new RuntimeException("owner name clash");
-        }
-        if (reservedFSMDIds.values().contains(ByteBuffer.wrap(new byte[]{fsmdId}))) {
-            throw new RuntimeException("fsmdId clash");
-        }
-        reservedFSMDIds.put(owner, ByteBuffer.wrap(new byte[]{fsmdId}));
-        return true;
+
+  public static synchronized void reset() {
+    reservedFSMDIds.clear();
+  }
+
+  public static synchronized boolean registerPrefix(String owner, byte fsmdId) {
+    if (reservedFSMDIds.containsKey(owner)) {
+      throw new RuntimeException("owner name clash:" + owner);
     }
-    
-    public static byte getPrefix(String owner) {
-        ByteBuffer prefix = reservedFSMDIds.get(owner);
-        if(prefix == null) {
-            throw new RuntimeException("ups");
-        }
-        return prefix.array()[0];
+    if (reservedFSMDIds.values().contains(ByteBuffer.wrap(new byte[]{fsmdId}))) {
+      throw new RuntimeException("fsmdId clash");
     }
+    reservedFSMDIds.put(owner, ByteBuffer.wrap(new byte[]{fsmdId}));
+    return true;
+  }
+
+  public static byte getPrefix(String owner) {
+    ByteBuffer prefix = reservedFSMDIds.get(owner);
+    if (prefix == null) {
+      throw new RuntimeException("ups");
+    }
+    return prefix.array()[0];
+  }
 }
