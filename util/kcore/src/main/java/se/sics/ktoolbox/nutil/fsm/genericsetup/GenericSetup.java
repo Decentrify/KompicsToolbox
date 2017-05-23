@@ -75,7 +75,8 @@ public class GenericSetup {
 
     for (Pair<Class, List<Pair<OnEventAction, Class>>> e : positivePorts) {
       LOG.info("positive port:{}", e.getValue0());
-      Positive port = proxy.getNegative(e.getValue0()).getPair();
+      Negative aux = proxy.getNegative(e.getValue0());
+      Positive port = aux.getPair();
       setupPort(proxy, port, e.getValue1());
     }
     if (!positiveNetworkMsgs.isEmpty()) {
@@ -84,7 +85,8 @@ public class GenericSetup {
     }
     for (Pair<Class, List<Pair<OnEventAction, Class>>> e : negativePorts) {
       LOG.info("negative port:{}", e.getValue0());
-      Negative port = proxy.getPositive(e.getValue0()).getPair();
+      Positive aux = proxy.getPositive(e.getValue0());
+      Negative port = aux.getPair();
       setupPort(proxy, port, e.getValue1());
     }
     if (!negativeNetworkMsgs.isEmpty()) {
@@ -98,7 +100,8 @@ public class GenericSetup {
       Handler handler = new Handler(e.getValue1()) {
         @Override
         public void handle(KompicsEvent event) {
-          e.getValue0().handle(event);
+          OnEventAction oea = e.getValue0();
+          oea.handle(event);
         }
       };
       proxy.subscribe(handler, port);

@@ -69,6 +69,7 @@ public class MultiFSM {
   private final FSMOnKillAction oka = new FSMOnKillAction() {
     @Override
     public void kill(FSMId fsmId) {
+      LOG.info("{}removing fsm:{}", logPrefix, fsmId);
       fsms.remove(fsmId);
     }
   };
