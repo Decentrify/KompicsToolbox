@@ -55,9 +55,9 @@ public class MultiFSM {
   private static final Logger LOG = LoggerFactory.getLogger(MultiFSM.class);
   private String logPrefix = "";
 
+  private final FSMachineDef fsmDef;
   private final OnFSMExceptionAction oexa;
   private final FSMIdExtractor fsmIdExtractor;
-  private final Map<FSMDefId, FSMachineDef> fsmds;
   private final Map<FSMId, FSMachine> fsms = new HashMap<>();
   private final FSMExternalState es;
   private final FSMInternalStateBuilders isb;
@@ -75,7 +75,7 @@ public class MultiFSM {
   };
 
   private Optional<FSMachine> getFSM(FSMEvent event) throws FSMException {
-    Optional<FSMId> optFsmId = fsmIdExtractor.fromEvent(event);
+    Optional<FSMId> optFsmId = fsmIdExtractor.fromEvent(fsmDef.id, event);
     if (!optFsmId.isPresent()) {
       LOG.warn("{}fsm did not handle event:{}", new Object[]{logPrefix, event});
       return Optional.absent();
@@ -83,11 +83,7 @@ public class MultiFSM {
     FSMId fsmId = optFsmId.get();
     FSMachine fsm = fsms.get(fsmId);
     if (fsm == null) {
-      FSMachineDef fsmd = fsmds.get(fsmId.getDefId());
-      if (fsmd == null) {
-        throw new RuntimeException("illdefined fsm - critical logical error");
-      }
-      fsm = fsmd.build(fsmId.baseId, oka, es, isb.newInternalState(fsmId));
+      fsm = fsmDef.build(fsmId.baseId, oka, es, isb.newInternalState(fsmId));
       fsms.put(fsmId, fsm);
     }
     return Optional.of(fsm);
@@ -149,13 +145,13 @@ public class MultiFSM {
   };
 
   // Class1 - ? extends PortType , Class2 - ? extends FSMEvent(KompicsEvent)
-  public MultiFSM(OnFSMExceptionAction oexa, FSMIdExtractor fsmIdExtractor,
-    Map<FSMDefId, FSMachineDef> fsmds, FSMExternalState es, FSMInternalStateBuilders isb,
+  public MultiFSM(FSMachineDef fsmDef, OnFSMExceptionAction oexa, FSMIdExtractor fsmIdExtractor,
+    FSMExternalState es, FSMInternalStateBuilders isb,
     Map<Class, Set<Class>> positivePorts, Map<Class, Set<Class>> negativePorts,
     Set<Class> positiveNetworkMsgs, Set<Class> negativeNetworkMsgs) {
+    this.fsmDef = fsmDef;
     this.oexa = oexa;
     this.fsmIdExtractor = fsmIdExtractor;
-    this.fsmds = fsmds;
     this.es = es;
     this.isb = isb;
     this.positivePorts = positivePorts;

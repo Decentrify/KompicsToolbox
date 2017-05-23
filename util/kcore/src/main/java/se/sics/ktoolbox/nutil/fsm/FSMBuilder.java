@@ -85,13 +85,11 @@ public class FSMBuilder {
     public MultiFSM buildMultiFSM(final FSMachineDef fsmd, OnFSMExceptionAction oexa, FSMExternalState es,
       FSMInternalStateBuilder builder, FSMIdExtractor fsmIdExtractor) throws FSMException {
 
-      Map<FSMDefId, FSMachineDef> fsmds = new HashMap<>();
-      fsmds.put(fsmd.id, fsmd);
-
       FSMInternalStateBuilders builders = new FSMInternalStateBuilders();
       builders.register(fsmd.id, builder);
 
-      MultiFSM multiFSM = new MultiFSM(oexa, fsmIdExtractor, fsmds, es, builders, positivePorts, negativePorts,
+      fsmIdExtractor.set(events, positiveNetworkMsgs, negativeNetworkMsgs);
+      MultiFSM multiFSM = new MultiFSM(fsmd, oexa, fsmIdExtractor, es, builders, positivePorts, negativePorts,
         positiveNetworkMsgs, negativeNetworkMsgs);
       return multiFSM;
     }

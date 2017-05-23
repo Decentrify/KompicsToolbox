@@ -19,11 +19,14 @@
 package se.sics.ktoolbox.nutil.fsm.api;
 
 import com.google.common.base.Optional;
+import java.util.Set;
+import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface FSMIdExtractor {
-  public Optional<FSMId> fromEvent(FSMEvent event) throws FSMException;
+public interface FSMIdExtractor<E extends FSMEvent> {
+  public void set(Set<Class> events, Set<Class> positiveNetworkMsgs, Set<Class> negativeNetworkMsgs);
+  public Optional<FSMId> fromEvent(FSMDefId fsmdId, E event) throws FSMException;
 }
