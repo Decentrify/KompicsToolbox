@@ -217,4 +217,8 @@ public class MultiFSM {
     FSMachine fsm = fsms.get(fsmId);
     return fsm.getState();
   }
+  
+  public boolean isEmpty() {
+    return fsms.isEmpty();
+  }
 }
