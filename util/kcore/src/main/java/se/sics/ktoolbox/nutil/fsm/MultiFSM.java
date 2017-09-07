@@ -221,4 +221,8 @@ public class MultiFSM {
   public boolean isEmpty() {
     return fsms.isEmpty();
   }
+  
+  public int size() {
+    return fsms.size();
+  }
 }

@@ -25,7 +25,7 @@ import se.sics.kompics.network.Msg;
 /**
  * @author Alex Ormenisan <aaor@sics.se>
  */
-public interface KContentMsg<Adr extends KAddress, H extends KHeader<Adr>, C extends Object> extends Msg<Adr, H>, PatternExtractor<Class, C>{
+public interface KContentMsg<Adr extends KAddress, H extends KHeader<Adr>, C extends Object> extends Msg<Adr, H>, PatternExtractor<Class<Object>, C>{
     public C getContent();
     public KContentMsg<Adr, H, C> withHeader(H newHeader);
     public <C2 extends Object> KContentMsg<Adr, H, C2> answer(C2 content);

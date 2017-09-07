@@ -28,7 +28,7 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
  */
 public class Status {
 
-    public static class Internal<S extends Object> implements PatternExtractor<Class, S>, Identifiable {
+    public static class Internal<S extends Object> implements PatternExtractor<Class<Object>, S>, Identifiable {
         private final Identifier eventId; 
         public final S status;
 
@@ -42,8 +42,8 @@ public class Status {
         }
 
         @Override
-        public Class<S> extractPattern() {
-            return (Class<S>)status.getClass();
+        public Class<Object> extractPattern() {
+            return (Class)status.getClass();
         }
 
         @Override

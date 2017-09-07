@@ -62,11 +62,11 @@ public class BasicContentMsg<A extends KAddress, H extends KHeader<A>, C extends
     }
 
     @Override
-    public Class<C> extractPattern() {
+    public Class<Object> extractPattern() {
         if (content instanceof ContentPattern) {
-            return ((ContentPattern<C>) content).extractPattern();
+            return (Class)((ContentPattern<C>) content).extractPattern();
         } else {
-            return (Class<C>) content.getClass();
+            return (Class)content.getClass();
         }
     }
 
