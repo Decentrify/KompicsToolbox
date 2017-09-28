@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.ktoolbox.gradient.GradientComp;
@@ -39,7 +38,7 @@ import se.sics.ktoolbox.util.ProbabilitiesHelper;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

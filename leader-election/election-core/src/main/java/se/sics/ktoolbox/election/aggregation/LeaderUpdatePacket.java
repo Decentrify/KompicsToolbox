@@ -21,8 +21,8 @@ package se.sics.ktoolbox.election.aggregation;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

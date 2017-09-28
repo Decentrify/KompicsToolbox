@@ -19,12 +19,12 @@
 package se.sics.ktoolbox.util.managedStore.core.impl;
 
 import java.nio.ByteBuffer;
-import se.sics.ktoolbox.util.managedStore.core.Storage;
-import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import java.util.Set;
 import org.javatuples.Pair;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
+import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

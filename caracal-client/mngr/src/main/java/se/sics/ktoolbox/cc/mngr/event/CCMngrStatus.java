@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.cc.mngr.event;
 
 import se.sics.caracaldb.global.SchemaData;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

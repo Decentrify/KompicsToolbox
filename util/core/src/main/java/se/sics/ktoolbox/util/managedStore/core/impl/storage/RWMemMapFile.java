@@ -18,14 +18,14 @@
  */
 package se.sics.ktoolbox.util.managedStore.core.impl.storage;
 
-import se.sics.ktoolbox.util.managedStore.core.Storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Set;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
+import se.sics.ktoolbox.util.managedStore.core.Storage;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

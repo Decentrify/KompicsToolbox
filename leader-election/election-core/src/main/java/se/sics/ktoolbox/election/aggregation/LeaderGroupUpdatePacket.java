@@ -18,8 +18,8 @@
  */
 package se.sics.ktoolbox.election.aggregation;
 
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

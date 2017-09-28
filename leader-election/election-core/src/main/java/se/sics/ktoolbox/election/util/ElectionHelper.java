@@ -1,8 +1,14 @@
 package se.sics.ktoolbox.election.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import org.javatuples.Pair;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 

@@ -18,8 +18,8 @@
  */
 package se.sics.nutil.network.bestEffort.event;
 
-import se.sics.ktoolbox.util.identifiable.Identifiable;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifiable;
+import se.sics.kompics.id.Identifier;
 import se.sics.nutil.ContentWrapper;
 
 /**

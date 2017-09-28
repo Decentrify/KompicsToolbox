@@ -32,8 +32,8 @@ import se.sics.kompics.PortCore;
 import se.sics.kompics.PortCoreHelper;
 import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
+import se.sics.kompics.id.Identifier;
 import se.sics.kompics.network.MessageNotify;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

@@ -20,7 +20,7 @@ package se.sics.ktoolbox.util.aggregation;
 
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

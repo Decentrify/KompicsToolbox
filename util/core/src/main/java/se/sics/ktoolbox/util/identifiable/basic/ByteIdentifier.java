@@ -21,7 +21,7 @@ package se.sics.ktoolbox.util.identifiable.basic;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.SignedBytes;
 import java.util.Arrays;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

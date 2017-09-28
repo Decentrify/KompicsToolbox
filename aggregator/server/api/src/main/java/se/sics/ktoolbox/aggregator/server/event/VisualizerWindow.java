@@ -18,12 +18,11 @@
  */
 package se.sics.ktoolbox.aggregator.server.event;
 
-import java.util.UUID;
 import se.sics.kompics.Direct;
 import se.sics.kompics.PatternExtractor;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Event indicating the processing of the windows being held by the visualizer.

@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.gradient.event;
 
 import java.util.List;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;

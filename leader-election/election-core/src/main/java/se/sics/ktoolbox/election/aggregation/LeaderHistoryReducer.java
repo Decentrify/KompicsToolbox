@@ -21,9 +21,9 @@ package se.sics.ktoolbox.election.aggregation;
 import java.util.HashSet;
 import java.util.Set;
 import org.javatuples.Pair;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.aggregation.PacketReducer;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

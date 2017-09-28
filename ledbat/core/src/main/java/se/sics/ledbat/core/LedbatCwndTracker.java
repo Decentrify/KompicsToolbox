@@ -28,7 +28,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

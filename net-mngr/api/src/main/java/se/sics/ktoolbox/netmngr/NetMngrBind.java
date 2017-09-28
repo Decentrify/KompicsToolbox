@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.netmngr;
 
 import se.sics.kompics.Direct;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

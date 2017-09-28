@@ -19,9 +19,9 @@
 
 package se.sics.ktoolbox.gradient.temp;
 
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**

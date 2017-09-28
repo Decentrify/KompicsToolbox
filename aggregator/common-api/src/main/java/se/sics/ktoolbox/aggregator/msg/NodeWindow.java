@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.aggregator.msg;
 
 import java.util.Map;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

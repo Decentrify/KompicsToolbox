@@ -21,10 +21,10 @@ package se.sics.ktoolbox.util.config.impl;
 import com.google.common.base.Optional;
 import java.util.Random;
 import se.sics.kompics.config.Config;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.config.KConfigHelper;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**

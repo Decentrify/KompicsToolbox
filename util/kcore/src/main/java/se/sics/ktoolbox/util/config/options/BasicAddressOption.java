@@ -23,11 +23,11 @@ import java.net.InetAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.config.Config;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.config.KConfigOption.Base;
 import se.sics.ktoolbox.util.config.KConfigOption.Basic;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**

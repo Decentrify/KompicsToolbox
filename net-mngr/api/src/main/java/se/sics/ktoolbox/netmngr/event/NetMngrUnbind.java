@@ -19,9 +19,9 @@
 package se.sics.ktoolbox.netmngr.event;
 
 import se.sics.kompics.Direct;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

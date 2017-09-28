@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.util.overlays.view.archive;
 
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.update.View;
 
 /**

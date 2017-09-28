@@ -18,9 +18,9 @@
  */
 package se.sics.ktoolbox.aggregator.client.events;
 
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Event carrying the component information which will be

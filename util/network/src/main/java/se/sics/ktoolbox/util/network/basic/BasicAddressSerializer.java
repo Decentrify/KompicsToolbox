@@ -25,10 +25,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.id.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**

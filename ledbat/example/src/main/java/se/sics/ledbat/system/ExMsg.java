@@ -19,8 +19,8 @@
 package se.sics.ledbat.system;
 
 import java.util.UUID;
+import se.sics.kompics.id.Identifier;
 import se.sics.kompics.timer.ScheduleTimeout;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 

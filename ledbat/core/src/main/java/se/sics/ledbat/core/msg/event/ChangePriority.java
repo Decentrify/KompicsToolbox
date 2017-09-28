@@ -2,8 +2,8 @@ package se.sics.ledbat.core.msg.event;
 
 
 import java.util.UUID;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 public class ChangePriority implements LedbatEvent {
     public final Identifier eventId;

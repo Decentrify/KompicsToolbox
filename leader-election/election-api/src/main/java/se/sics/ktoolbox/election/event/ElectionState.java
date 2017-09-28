@@ -2,8 +2,8 @@ package se.sics.ktoolbox.election.event;
 
 import java.util.UUID;
 import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Wrapper for the marker events to let the application know about the node being elected / removed

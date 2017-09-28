@@ -20,10 +20,8 @@ package se.sics.ktoolbox.gradient.aggregation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.util.aggregation.StatePacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

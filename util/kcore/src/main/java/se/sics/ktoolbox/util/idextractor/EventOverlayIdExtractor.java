@@ -18,9 +18,9 @@
  */
 package se.sics.ktoolbox.util.idextractor;
 
-import se.sics.ktoolbox.util.overlays.OverlayEvent;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
+import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

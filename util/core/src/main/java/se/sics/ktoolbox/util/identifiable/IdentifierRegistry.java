@@ -20,6 +20,7 @@ package se.sics.ktoolbox.util.identifiable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import se.sics.kompics.id.Identifier;
 
 /**
  *
@@ -42,7 +43,7 @@ public class IdentifierRegistry {
         }
     }
     
-    public static IdentifierFactory lookup(String factoryName) {
+    public static IdentifierFactory<Identifier> lookup(String factoryName) {
         rwLock.readLock().lock();
         try {
             return identifierFactories.get(factoryName);

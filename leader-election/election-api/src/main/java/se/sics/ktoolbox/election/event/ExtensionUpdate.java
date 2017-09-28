@@ -1,8 +1,8 @@
 package se.sics.ktoolbox.election.event;
 
 import java.util.List;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

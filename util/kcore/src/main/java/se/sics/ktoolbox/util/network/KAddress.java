@@ -20,8 +20,8 @@
  */
 package se.sics.ktoolbox.util.network;
 
+import se.sics.kompics.id.Identifiable;
 import se.sics.kompics.network.Address;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

@@ -20,10 +20,10 @@ package se.sics.ktoolbox.croupier.msg;
 
 import com.google.common.base.Optional;
 import java.util.Map;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.update.View;
 

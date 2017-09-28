@@ -29,6 +29,7 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
+import se.sics.kompics.id.Identifier;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
@@ -41,7 +42,6 @@ import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrConfig;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**

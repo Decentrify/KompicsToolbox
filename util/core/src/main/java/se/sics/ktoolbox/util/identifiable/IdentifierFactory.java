@@ -20,6 +20,8 @@
  */
 package se.sics.ktoolbox.util.identifiable;
 
+import se.sics.kompics.id.Identifier;
+
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */

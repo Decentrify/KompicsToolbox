@@ -22,8 +22,7 @@ import se.sics.ktoolbox.netmngr.chunk.Chunk;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

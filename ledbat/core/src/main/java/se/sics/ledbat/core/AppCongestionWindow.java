@@ -19,7 +19,7 @@
 package se.sics.ledbat.core;
 
 import com.google.common.base.Optional;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.predict.ExpMovingAvg;
 import se.sics.ledbat.core.util.ThroughputHandler;
 import se.sics.ledbat.ncore.msg.LedbatMsg;

@@ -23,8 +23,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import se.sics.kompics.id.Identifier;
 import se.sics.kompics.network.Address;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 

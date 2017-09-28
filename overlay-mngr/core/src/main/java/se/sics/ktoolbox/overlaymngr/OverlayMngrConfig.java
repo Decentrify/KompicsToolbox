@@ -19,10 +19,10 @@
 package se.sics.ktoolbox.overlaymngr;
 
 import java.util.Arrays;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.config.options.BasicAddressBootstrapOption;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 

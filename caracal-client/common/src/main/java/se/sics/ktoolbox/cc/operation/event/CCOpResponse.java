@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.cc.operation.event;
 
 import se.sics.caracaldb.operations.CaracalOp;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

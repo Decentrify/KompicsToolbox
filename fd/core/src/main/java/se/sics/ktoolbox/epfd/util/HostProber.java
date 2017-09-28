@@ -22,9 +22,9 @@ package se.sics.ktoolbox.epfd.util;
 
 import java.util.HashMap;
 import java.util.UUID;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.epfd.EPFDService;
 import se.sics.ktoolbox.epfd.event.EPFDFollow;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

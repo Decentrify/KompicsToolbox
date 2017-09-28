@@ -19,9 +19,9 @@
 package se.sics.ktoolbox.omngr.bootstrap.msg;
 
 import java.util.List;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 

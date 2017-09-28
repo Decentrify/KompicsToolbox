@@ -19,11 +19,10 @@
 package se.sics.ktoolbox.aggregator.server.util;
 
 import com.google.common.collect.Table;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface VisualizerProcessor {

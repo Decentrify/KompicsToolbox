@@ -19,9 +19,9 @@
 package se.sics.ktoolbox.epfd.msg;
 
 import java.util.UUID;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.epfd.event.EPFDEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

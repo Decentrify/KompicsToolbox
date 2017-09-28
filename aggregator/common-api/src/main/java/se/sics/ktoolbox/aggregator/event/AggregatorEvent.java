@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.aggregator.event;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
+import se.sics.kompics.id.Identifiable;
 
 /**
  * Marker interface for segregating the messages belonging to the

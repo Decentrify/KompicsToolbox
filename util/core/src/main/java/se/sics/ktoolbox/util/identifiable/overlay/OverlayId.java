@@ -22,8 +22,8 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 import java.util.Comparator;
 import java.util.Objects;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.util.Either;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

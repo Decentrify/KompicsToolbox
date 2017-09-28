@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.nutil.fsm.events;
 
 import se.sics.kompics.Direct;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.nutil.fsm.api.FSMEvent;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  *

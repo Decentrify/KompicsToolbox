@@ -21,6 +21,7 @@ package se.sics.ktoolbox.nutil.fsm;
 import com.google.common.collect.Table;
 import java.util.HashMap;
 import java.util.Map;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.nutil.fsm.api.FSMException;
 import se.sics.ktoolbox.nutil.fsm.api.FSMExternalState;
 import se.sics.ktoolbox.nutil.fsm.api.FSMInternalState;
@@ -29,7 +30,6 @@ import se.sics.ktoolbox.nutil.fsm.api.FSMStateName;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMEventHandler;
 import se.sics.ktoolbox.nutil.fsm.handler.FSMMsgHandler;
 import se.sics.ktoolbox.nutil.fsm.ids.FSMDefId;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

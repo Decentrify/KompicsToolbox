@@ -19,18 +19,24 @@
 package se.sics.ktoolbox.aggregator.server;
 
 import com.google.common.collect.Table;
+import java.util.HashMap;
+import java.util.Map;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.*;
-import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Init;
+import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
+import se.sics.kompics.Start;
+import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 import se.sics.ktoolbox.aggregator.server.event.VisualizerWindow;
-import java.util.*;
-import org.javatuples.Pair;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerProcessor;
+import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 
 /**
  * Visualizer component used for providing the visualizations to the end user.

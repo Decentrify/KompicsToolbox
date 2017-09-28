@@ -33,14 +33,14 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Port;
 import se.sics.kompics.PortType;
+import se.sics.kompics.id.Identifiable;
+import se.sics.kompics.id.Identifier;
 import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
-import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 
 /**

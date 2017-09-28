@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.netmngr;
 
 import se.sics.kompics.KompicsEvent;
-import se.sics.ktoolbox.util.identifiable.Identifiable;
-import se.sics.ktoolbox.util.identifiable.Identifier;
+import se.sics.kompics.id.Identifiable;
+import se.sics.kompics.id.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
