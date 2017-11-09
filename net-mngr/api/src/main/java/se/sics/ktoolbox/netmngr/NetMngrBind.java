@@ -20,6 +20,7 @@ package se.sics.ktoolbox.netmngr;
 
 import se.sics.kompics.Direct;
 import se.sics.kompics.id.Identifier;
+import se.sics.ktoolbox.util.Either;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -27,51 +28,62 @@ import se.sics.ktoolbox.util.network.KAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NetMngrBind {
-    public static class Request extends Direct.Request<Response> implements NetMngrEvent {
-        public final Identifier eventId;
-        public final int port;
-        
-        public Request(Identifier eventId, int port) {
-            this.eventId = eventId;
-            this.port = port;
-        }
-        
-        public Request(int port) {
-            this(BasicIdentifiers.eventId(), port);
-        }
 
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "NetMngrBindReq<" + eventId + ">";
-        }
-        
-        public Response answer(KAddress boundAdr) {
-            return new Response(this, boundAdr);
-        }
+  public static class Request extends Direct.Request<Response> implements NetMngrEvent {
+
+    public final Identifier eventId;
+    public final Either<Integer, KAddress> useAddress;
+    
+    private Request(Identifier eventId, Either useAddress) {
+      this.eventId = eventId;
+      this.useAddress = useAddress;
+    }
+
+    private Request(Either useAddress) {
+      this(BasicIdentifiers.eventId(), useAddress);
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+
+    @Override
+    public String toString() {
+      return "NetMngrBindReq<" + eventId + ">";
+    }
+
+    public Response answer(KAddress boundAdr) {
+      return new Response(this, boundAdr);
     }
     
-    public static class Response implements Direct.Response, NetMngrEvent {
-        public final Request req;
-        public final KAddress boundAdr;
-        
-        public Response(Request req, KAddress boundAddress) {
-            this.req = req;
-            this.boundAdr = boundAddress;
-        }
-        
-        @Override
-        public Identifier getId() {
-            return req.getId();
-        }
-        
-        @Override
-        public String toString() {
-            return "NetMngrBindResp<" + req.getId() + ">";
-        }
+    public static Request useLocal(int port) {
+      return new Request(Either.left(port));
     }
+    
+    public static Request useProvided(KAddress adr) {
+      return new Request(Either.right(adr));
+    }
+  }
+
+  public static class Response implements Direct.Response, NetMngrEvent {
+
+    public final Request req;
+    public final KAddress boundAdr;
+
+    public Response(Request req, KAddress boundAddress) {
+      this.req = req;
+      this.boundAdr = boundAddress;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "NetMngrBindResp<" + req.getId() + ">";
+    }
+  }
 }

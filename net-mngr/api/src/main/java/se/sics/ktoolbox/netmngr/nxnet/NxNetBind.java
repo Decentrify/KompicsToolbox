@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.netmngr.nxnet;
 
+import java.net.InetAddress;
+import java.util.Optional;
 import se.sics.kompics.Direct;
 import se.sics.kompics.id.Identifier;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
@@ -29,49 +31,66 @@ import se.sics.ktoolbox.util.network.KAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NxNetBind {
-    public static class Request extends Direct.Request<Response> implements NetMngrEvent {
-        public final Identifier eventId;
-        public final KAddress bindAdr;
-        
-        public Request(Identifier eventId, KAddress bindAdr) {
-            this.eventId = eventId;
-            this.bindAdr = bindAdr;
-        }
-        
-        public Request(KAddress bindAdr) {
-            this(BasicIdentifiers.eventId(), bindAdr);
-        }
 
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "NxNetBindReq<" + eventId + ">";
-        }
-        
-        public Response answer() {
-            return new Response(this);
-        }
+  public static class Request extends Direct.Request<Response> implements NetMngrEvent {
+
+    public final Identifier eventId;
+    public final KAddress adr;
+    public final Optional<InetAddress> bindAdr;
+
+    public Request(Identifier eventId, KAddress adr, Optional<InetAddress> bindAdr) {
+      this.eventId = eventId;
+      this.adr = adr;
+      this.bindAdr = bindAdr;
+    }
+
+    public Request(KAddress adr, Optional<InetAddress> bindAdr) {
+      this(BasicIdentifiers.eventId(), adr,bindAdr);
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetBindReq<" + eventId + ">";
+    }
+
+    public Response answer() {
+      return new Response(this);
     }
     
-    public static class Response implements Direct.Response, NetMngrEvent {
-        public final Request req;
-        
-        public Response(Request req) {
-            this.req = req;
-        }
-        
-        @Override
-        public Identifier getId() {
-            return req.getId();
-        }
-        
-        @Override
-        public String toString() {
-            return "NxNetBindResp<" + req.getId() + ">";
-        }
+    public static Request localAdr(KAddress adr) {
+      return new Request(adr, (Optional)Optional.empty());
     }
+    
+    public static Request providedAdr(KAddress providedAdr, InetAddress localInterface) {
+      return new Request(providedAdr, Optional.of(localInterface));
+    }
+    
+    public Request withPort(int port) {
+      return new Request(adr.withPort(port), bindAdr);
+    }
+  }
+
+  public static class Response implements Direct.Response, NetMngrEvent {
+
+    public final Request req;
+
+    public Response(Request req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetBindResp<" + req.getId() + ">";
+    }
+  }
 }
