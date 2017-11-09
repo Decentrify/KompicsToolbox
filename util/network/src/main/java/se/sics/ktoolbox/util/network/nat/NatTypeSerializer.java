@@ -144,6 +144,8 @@ public class NatTypeSerializer implements Serializer {
         return NatType.nated(mappingPolicy, allocationPolicy, delta, filteringPolicy, bindingTimeout);
       case UNKNOWN:
         return NatType.unknown();
+      case NAT_OPEN_PORTS:
+        return NatType.natOpenPorts();
       default:
         throw new RuntimeException("unknown NatType");
     }

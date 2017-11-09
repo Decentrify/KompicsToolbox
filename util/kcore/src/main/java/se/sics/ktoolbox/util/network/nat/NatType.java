@@ -93,6 +93,7 @@ public class NatType {
       case UDP_BLOCKED:
       case UPNP:
       case UNKNOWN:
+      case NAT_OPEN_PORTS:
         return type.code;
       case NAT:
         return type.code + "_" + mappingPolicy.code + "_" + allocationPolicy.code + "_" + filteringPolicy.code;
@@ -109,6 +110,10 @@ public class NatType {
 
   public boolean isOpen() {
     return type.equals(Nat.Type.OPEN);
+  }
+
+  public boolean isNatOpenPorts() {
+    return type.equals(Nat.Type.NAT_OPEN_PORTS);
   }
 
   public boolean isBlocked() {
@@ -163,7 +168,7 @@ public class NatType {
       return false;
     }
   }
-  
+
   public static boolean isNatOpenPorts(KAddress address) {
     if (address instanceof NatAwareAddress) {
       return Nat.Type.NAT_OPEN_PORTS.equals(((NatAwareAddress) address).getNatType().type);
