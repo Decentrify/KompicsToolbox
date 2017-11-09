@@ -33,59 +33,63 @@ import se.sics.ktoolbox.util.network.basic.BasicAddress;
  */
 public class NatAwareAddressImplSerializer implements Serializer {
 
-    private final int id;
+  private final int id;
 
-    public NatAwareAddressImplSerializer(int id) {
-        this.id = id;
+  public NatAwareAddressImplSerializer(int id) {
+    this.id = id;
+  }
+
+  @Override
+  public int identifier() {
+    return id;
+  }
+
+  @Override
+  public void toBinary(Object o, ByteBuf buf) {
+    NatAwareAddressImpl obj = (NatAwareAddressImpl) o;
+    Serializers.lookupSerializer(NatType.class).toBinary(obj.natType, buf);
+
+    Serializer basicAddressSerializer = Serializers.lookupSerializer(BasicAddress.class);
+    basicAddressSerializer.toBinary(obj.publicAdr, buf);
+
+    if (obj.privateAdr.isPresent()) {
+      buf.writeBoolean(true);
+      basicAddressSerializer.toBinary(obj.privateAdr.get(), buf);
+    } else {
+      buf.writeBoolean(false);
     }
 
-    @Override
-    public int identifier() {
-        return id;
+    buf.writeByte(obj.parents.size());
+    for (BasicAddress parent : obj.parents) {
+      basicAddressSerializer.toBinary(parent, buf);
+    }
+  }
+
+  @Override
+  public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
+    NatType natType = (NatType) Serializers.lookupSerializer(NatType.class).fromBinary(buf, hint);
+
+    Serializer basicAddressSerializer = Serializers.lookupSerializer(BasicAddress.class);
+    BasicAddress publicAdr = (BasicAddress) basicAddressSerializer.fromBinary(buf, hint);
+    BasicAddress privateAdr = null;
+
+    if (buf.readBoolean()) {
+      privateAdr = (BasicAddress) basicAddressSerializer.fromBinary(buf, hint);
     }
 
-    @Override
-    public void toBinary(Object o, ByteBuf buf) {
-        NatAwareAddressImpl obj = (NatAwareAddressImpl) o;
-        Serializers.lookupSerializer(NatType.class).toBinary(obj.natType, buf);
-        
-        Serializer basicAddressSerializer = Serializers.lookupSerializer(BasicAddress.class);
-        basicAddressSerializer.toBinary(obj.publicAdr, buf);
-        
-        if(obj.privateAdr.isPresent()) {
-            buf.writeBoolean(true);
-            basicAddressSerializer.toBinary(obj.privateAdr.get(), buf);
-        } else {
-            buf.writeBoolean(false);
-        }
-        
-        buf.writeByte(obj.parents.size());
-        for (BasicAddress parent : obj.parents) {
-            basicAddressSerializer.toBinary(parent, buf);
-        }
+    List<BasicAddress> parents = new ArrayList<>();
+    int nrParents = buf.readByte();
+    for (int i = 0; i < nrParents; i++) {
+      parents.add((BasicAddress) basicAddressSerializer.fromBinary(buf, hint));
     }
-
-    @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        NatType natType = (NatType) Serializers.lookupSerializer(NatType.class).fromBinary(buf, hint);
-        
-        Serializer basicAddressSerializer = Serializers.lookupSerializer(BasicAddress.class);
-        BasicAddress publicAdr = (BasicAddress) basicAddressSerializer.fromBinary(buf, hint);
-        BasicAddress privateAdr = null;
-        
-        if(buf.readBoolean()) {
-            privateAdr = (BasicAddress) basicAddressSerializer.fromBinary(buf, hint);
-        }
-        
-        List<BasicAddress> parents = new ArrayList<>();
-        int nrParents = buf.readByte();
-        for (int i = 0; i < nrParents; i++) {
-            parents.add((BasicAddress) basicAddressSerializer.fromBinary(buf, hint));
-        }
-        if(hint.isPresent() && hint.get() instanceof InetSocketAddress) {
-            InetSocketAddress adr = (InetSocketAddress)hint.get();
-            publicAdr = new BasicAddress(adr.getAddress(), adr.getPort(), publicAdr.getId());
-        } 
-        return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+    if (hint.isPresent() && hint.get() instanceof InetSocketAddress) {
+      InetSocketAddress adr = (InetSocketAddress) hint.get();
+      if (NatType.natOpenPorts().equals(natType)) {
+        publicAdr = new BasicAddress(adr.getAddress(), publicAdr.getPort(), publicAdr.getId());
+      } else {
+        publicAdr = new BasicAddress(adr.getAddress(), adr.getPort(), publicAdr.getId());
+      }
     }
+    return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+  }
 }
