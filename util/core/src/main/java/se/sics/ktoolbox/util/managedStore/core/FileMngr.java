@@ -21,7 +21,7 @@ package se.sics.ktoolbox.util.managedStore.core;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

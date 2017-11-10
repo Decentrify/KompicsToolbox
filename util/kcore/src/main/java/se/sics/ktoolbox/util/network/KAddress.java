@@ -20,7 +20,7 @@
  */
 package se.sics.ktoolbox.util.network;
 
-import se.sics.kompics.id.Identifiable;
+import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.network.Address;
 
 /**

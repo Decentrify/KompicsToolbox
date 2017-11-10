@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.netmngr.core;
 
 import java.nio.ByteBuffer;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.basic.ContentPattern;

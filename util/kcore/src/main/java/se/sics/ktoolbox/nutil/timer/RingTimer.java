@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import se.sics.kompics.id.Identifiable;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifiable;
+import se.sics.kompics.util.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

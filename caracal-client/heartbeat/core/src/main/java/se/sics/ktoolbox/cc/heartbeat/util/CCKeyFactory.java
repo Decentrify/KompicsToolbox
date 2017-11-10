@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.KeyRange;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializers;
 
 /**

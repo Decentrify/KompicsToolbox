@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.util.selectors;
 
 import se.sics.kompics.ChannelSelector;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.Msg;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.DecoratedHeader;

@@ -24,7 +24,7 @@ import java.util.UUID;
 import org.javatuples.Pair;
 import org.junit.Assert;
 import org.junit.Test;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 
 /**
  *

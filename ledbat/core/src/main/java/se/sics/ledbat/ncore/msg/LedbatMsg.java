@@ -18,8 +18,8 @@
  */
 package se.sics.ledbat.ncore.msg;
 
-import se.sics.kompics.id.Identifiable;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifiable;
+import se.sics.kompics.util.Identifier;
 import se.sics.nutil.ContentWrapper;
 
 /**

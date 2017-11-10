@@ -21,7 +21,7 @@ package se.sics.ktoolbox.netmngr.chunk;
 import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
 import io.netty.buffer.ByteBuf;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 

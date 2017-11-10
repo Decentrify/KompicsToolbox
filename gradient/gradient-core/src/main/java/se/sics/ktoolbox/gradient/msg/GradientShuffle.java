@@ -1,7 +1,7 @@
 package se.sics.ktoolbox.gradient.msg;
 
 import java.util.List;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.gradient.event.GradientEvent;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;

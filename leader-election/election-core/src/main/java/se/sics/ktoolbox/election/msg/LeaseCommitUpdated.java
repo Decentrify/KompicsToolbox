@@ -4,7 +4,7 @@ package se.sics.ktoolbox.election.msg;
 
 import java.security.PublicKey;
 import java.util.UUID;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.election.event.ElectionEvent;
 import se.sics.ktoolbox.election.util.LCPeerView;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;

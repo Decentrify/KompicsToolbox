@@ -19,7 +19,7 @@
 
 package se.sics.ktoolbox.cc.heartbeat.event;
 
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.cc.event.CCEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;

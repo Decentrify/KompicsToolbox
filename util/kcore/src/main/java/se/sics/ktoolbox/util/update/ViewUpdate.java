@@ -21,8 +21,8 @@ package se.sics.ktoolbox.util.update;
 
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.PatternExtractor;
-import se.sics.kompics.id.Identifiable;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifiable;
+import se.sics.kompics.util.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

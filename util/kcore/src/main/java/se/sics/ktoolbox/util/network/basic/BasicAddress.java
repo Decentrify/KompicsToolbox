@@ -21,7 +21,7 @@ package se.sics.ktoolbox.util.network.basic;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Objects;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.Address;
 import se.sics.ktoolbox.util.network.KAddress;
 

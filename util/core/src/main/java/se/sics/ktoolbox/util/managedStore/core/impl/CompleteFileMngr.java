@@ -21,7 +21,7 @@ package se.sics.ktoolbox.util.managedStore.core.impl;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import org.javatuples.Pair;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.managedStore.core.FileMngr;
 import se.sics.ktoolbox.util.managedStore.core.ManagedStoreHelper;
 import se.sics.ktoolbox.util.managedStore.core.Storage;

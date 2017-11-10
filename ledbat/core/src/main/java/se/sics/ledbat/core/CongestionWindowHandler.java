@@ -23,7 +23,7 @@ import java.util.Random;
 import org.javatuples.Triplet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.tracking.load.util.FuzzyTimeoutCounter;
 
 /**

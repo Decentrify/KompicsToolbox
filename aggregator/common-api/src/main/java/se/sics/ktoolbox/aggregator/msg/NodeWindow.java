@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.aggregator.msg;
 
 import java.util.Map;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;

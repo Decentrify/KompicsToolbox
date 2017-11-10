@@ -30,7 +30,7 @@ import se.sics.kompics.Init;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 import se.sics.ktoolbox.aggregator.server.event.VisualizerWindow;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;

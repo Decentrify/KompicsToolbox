@@ -22,7 +22,7 @@ import se.sics.ktoolbox.netmngr.chunk.Chunk;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.Map;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>

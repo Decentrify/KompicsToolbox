@@ -19,8 +19,8 @@
 package se.sics.ktoolbox.util.status;
 
 import se.sics.kompics.PatternExtractor;
-import se.sics.kompics.id.Identifiable;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifiable;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 
 /**

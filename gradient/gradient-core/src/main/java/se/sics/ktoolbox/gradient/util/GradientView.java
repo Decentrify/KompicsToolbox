@@ -38,7 +38,7 @@ import se.sics.ktoolbox.util.ProbabilitiesHelper;
 import se.sics.ktoolbox.util.compare.WrapperComparator;
 import se.sics.ktoolbox.gradient.GradientKCWrapper;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

@@ -20,7 +20,7 @@ package se.sics.ktoolbox.aggregator.server.event;
 
 import se.sics.kompics.Direct;
 import se.sics.kompics.PatternExtractor;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.server.util.VisualizerPacket;
 

@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.overlaymngr.bootstrap;
 
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.overlaymngr.events.OverlayMngrEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;

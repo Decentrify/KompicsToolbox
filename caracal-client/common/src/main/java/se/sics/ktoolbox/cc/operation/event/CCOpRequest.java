@@ -21,7 +21,7 @@ package se.sics.ktoolbox.cc.operation.event;
 import se.sics.caracaldb.Key;
 import se.sics.caracaldb.operations.CaracalOp;
 import se.sics.kompics.Direct;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders.UUIDBuilder;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;

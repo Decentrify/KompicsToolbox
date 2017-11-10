@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.omngr.bootstrap.msg;
 
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;

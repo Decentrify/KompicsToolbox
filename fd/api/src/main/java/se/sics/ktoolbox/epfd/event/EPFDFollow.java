@@ -21,7 +21,7 @@ package se.sics.ktoolbox.epfd.event;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import se.sics.kompics.Direct;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**

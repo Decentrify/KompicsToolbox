@@ -19,7 +19,7 @@
 
 package se.sics.ktoolbox.netmngr.chunk;
 
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 
 /**
  * author Alex Ormenisan <aaor@sics.se>

@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.croupier.history;
 
 import java.util.Map;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 

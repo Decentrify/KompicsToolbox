@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.epfd.msg;
 
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.epfd.event.EPFDEvent;
 
 /**

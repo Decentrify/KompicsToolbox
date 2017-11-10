@@ -22,7 +22,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 import java.util.Comparator;
 import java.util.Objects;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.Either;
 
 /**

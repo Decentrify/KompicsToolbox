@@ -19,7 +19,7 @@
 package se.sics.ktoolbox.util.identifiable;
 
 import java.util.Random;
-import se.sics.kompics.id.Identifier;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.identifiable.basic.StringByteIdFactory;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
