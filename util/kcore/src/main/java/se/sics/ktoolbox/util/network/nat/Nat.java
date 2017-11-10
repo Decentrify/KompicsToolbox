@@ -39,7 +39,7 @@ public class Nat {
 
     public static enum Type {
 
-        OPEN("OP"), NAT("NAT"), UPNP("UPNP"), UDP_BLOCKED("UB"), FIREWALL("FW"), UNKNOWN("X"), NAT_OPEN_PORTS("NAT_OP");
+        OPEN("OP"), NAT("NAT"), UPNP("UPNP"), UDP_BLOCKED("UB"), FIREWALL("FW"), UNKNOWN("X"), NAT_FW("NAT_FW");
         public String code;
 
         private Type(String code) {
