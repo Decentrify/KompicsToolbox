@@ -43,7 +43,7 @@ public class Nat {
     public final static String UB = "UB";
     public final static String FWL = "FWL";
     public final static String X = "X";
-    public final static String PORT_FW = "PORT_FW";
+    public final static String PFW = "PFW";
     public static enum Type {
       
         OPEN(Nat.OPEN), 
@@ -52,7 +52,7 @@ public class Nat {
         UDP_BLOCKED(Nat.UB), 
         FWL(Nat.FWL), 
         UNKNOWN(Nat.X), 
-        PORT_FW(Nat.PORT_FW);
+        PFW(Nat.PFW);
         public final String code;
 
         private Type(String code) {

@@ -69,7 +69,7 @@ public class NatTypeSerializer implements Serializer {
         bb.write(Pair.with(0, true), Pair.with(2, true));
         buf.writeBytes(bb.finalise());
         return;
-      case PORT_FW:
+      case PFW:
         bb.write(Pair.with(1, true), Pair.with(2, true));
         buf.writeBytes(bb.finalise());
         return;
@@ -144,7 +144,7 @@ public class NatTypeSerializer implements Serializer {
         return NatType.nated(mappingPolicy, allocationPolicy, delta, filteringPolicy, bindingTimeout);
       case UNKNOWN:
         return NatType.unknown();
-      case PORT_FW:
+      case PFW:
         return NatType.natPortForwarding();
       default:
         throw new RuntimeException("unknown NatType");
@@ -153,7 +153,7 @@ public class NatTypeSerializer implements Serializer {
 
   private Nat.Type getNatType(boolean[] traitFlags) {
     if (traitFlags[1] && traitFlags[2]) {
-      return Nat.Type.PORT_FW;
+      return Nat.Type.PFW;
     }
     if (traitFlags[0] && traitFlags[2]) {
       return Nat.Type.UNKNOWN;

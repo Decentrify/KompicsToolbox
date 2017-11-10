@@ -126,7 +126,7 @@ public class NatAwareAddressImpl implements NatAwareAddress {
     return new NatAwareAddressImpl(privateAdr, address, NatType.open(), new ArrayList<BasicAddress>());
   }
   
-  public static NatAwareAddressImpl natForwardedPorts(BasicAddress address) {
+  public static NatAwareAddressImpl natPortForwarding(BasicAddress address) {
     Optional<BasicAddress> privateAdr = Optional.absent();
     return new NatAwareAddressImpl(privateAdr, address, NatType.natPortForwarding(), new ArrayList<BasicAddress>());
   }
