@@ -57,7 +57,7 @@ public class NatTypeSerializer implements Serializer {
         bb.write(Pair.with(1, true));
         buf.writeBytes(bb.finalise());
         return;
-      case FIREWALL:
+      case FWL:
         bb.write(Pair.with(0, true), Pair.with(1, true));
         buf.writeBytes(bb.finalise());
         return;
@@ -69,7 +69,7 @@ public class NatTypeSerializer implements Serializer {
         bb.write(Pair.with(0, true), Pair.with(2, true));
         buf.writeBytes(bb.finalise());
         return;
-      case NAT_FW:
+      case PORT_FW:
         bb.write(Pair.with(1, true), Pair.with(2, true));
         buf.writeBytes(bb.finalise());
         return;
@@ -129,7 +129,7 @@ public class NatTypeSerializer implements Serializer {
     switch (type) {
       case OPEN:
         return NatType.open();
-      case FIREWALL:
+      case FWL:
         return NatType.firewall();
       case UPNP:
         return NatType.upnp();
@@ -144,8 +144,8 @@ public class NatTypeSerializer implements Serializer {
         return NatType.nated(mappingPolicy, allocationPolicy, delta, filteringPolicy, bindingTimeout);
       case UNKNOWN:
         return NatType.unknown();
-      case NAT_FW:
-        return NatType.natOpenPorts();
+      case PORT_FW:
+        return NatType.natPortForwarding();
       default:
         throw new RuntimeException("unknown NatType");
     }
@@ -153,13 +153,13 @@ public class NatTypeSerializer implements Serializer {
 
   private Nat.Type getNatType(boolean[] traitFlags) {
     if (traitFlags[1] && traitFlags[2]) {
-      return Nat.Type.NAT_FW;
+      return Nat.Type.PORT_FW;
     }
     if (traitFlags[0] && traitFlags[2]) {
       return Nat.Type.UNKNOWN;
     }
     if (traitFlags[0] && traitFlags[1]) {
-      return Nat.Type.FIREWALL;
+      return Nat.Type.FWL;
     }
     if (traitFlags[2]) {
       return Nat.Type.UDP_BLOCKED;

@@ -22,9 +22,10 @@ import com.google.common.base.Optional;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.Address;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
@@ -127,7 +128,7 @@ public class NatAwareAddressImpl implements NatAwareAddress {
   
   public static NatAwareAddressImpl natForwardedPorts(BasicAddress address) {
     Optional<BasicAddress> privateAdr = Optional.absent();
-    return new NatAwareAddressImpl(privateAdr, address, NatType.natOpenPorts(), new ArrayList<BasicAddress>());
+    return new NatAwareAddressImpl(privateAdr, address, NatType.natPortForwarding(), new ArrayList<BasicAddress>());
   }
 
   public static NatAwareAddressImpl nated(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType,
@@ -139,7 +140,13 @@ public class NatAwareAddressImpl implements NatAwareAddress {
     Optional<BasicAddress> privateAdr = Optional.absent();
     return new NatAwareAddressImpl(privateAdr, adr, NatType.unknown(), new ArrayList<BasicAddress>());
   }
-
+  
+  public static NatAwareAddressImpl adr(BasicAddress publicAdr, NatType natType) {
+    Optional<BasicAddress> privateAdr = Optional.absent();
+    List<BasicAddress> parents = new LinkedList<>(); 
+    return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
+  }
+  
   @Override
   public String toString() {
     return publicAdr.toString() + ":" + natType;

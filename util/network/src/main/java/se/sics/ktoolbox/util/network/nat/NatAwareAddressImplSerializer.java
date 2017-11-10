@@ -84,7 +84,7 @@ public class NatAwareAddressImplSerializer implements Serializer {
     }
     if (hint.isPresent() && hint.get() instanceof InetSocketAddress) {
       InetSocketAddress adr = (InetSocketAddress) hint.get();
-      if (NatType.natOpenPorts().equals(natType)) {
+      if (NatType.natPortForwarding().equals(natType)) {
         publicAdr = new BasicAddress(adr.getAddress(), publicAdr.getPort(), publicAdr.getId());
       } else {
         publicAdr = new BasicAddress(adr.getAddress(), adr.getPort(), publicAdr.getId());

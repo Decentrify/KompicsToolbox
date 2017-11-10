@@ -37,10 +37,23 @@ public class Nat {
         "NAT_PD_RD_PD", "NAT_PD_PP_EI", "NAT_PD_PP_PD"
     };
 
+    public final static String OPEN = "OP";
+    public final static String NAT = "NAT";
+    public final static String UPNP = "UPNP";
+    public final static String UB = "UB";
+    public final static String FWL = "FWL";
+    public final static String X = "X";
+    public final static String PORT_FW = "PORT_FW";
     public static enum Type {
-
-        OPEN("OP"), NAT("NAT"), UPNP("UPNP"), UDP_BLOCKED("UB"), FIREWALL("FW"), UNKNOWN("X"), NAT_FW("NAT_FW");
-        public String code;
+      
+        OPEN(Nat.OPEN), 
+        NAT(Nat.NAT), 
+        UPNP(Nat.UPNP), 
+        UDP_BLOCKED(Nat.UB), 
+        FWL(Nat.FWL), 
+        UNKNOWN(Nat.X), 
+        PORT_FW(Nat.PORT_FW);
+        public final String code;
 
         private Type(String code) {
             this.code = code;

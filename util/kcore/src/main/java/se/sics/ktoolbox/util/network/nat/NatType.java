@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.network.nat;
 
+import com.google.common.base.Optional;
 import java.util.Objects;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -89,16 +90,49 @@ public class NatType {
   public String toString() {
     switch (type) {
       case OPEN:
-      case FIREWALL:
+      case FWL:
       case UDP_BLOCKED:
       case UPNP:
       case UNKNOWN:
-      case NAT_FW:
+      case PORT_FW:
         return type.code;
       case NAT:
         return type.code + "_" + mappingPolicy.code + "_" + allocationPolicy.code + "_" + filteringPolicy.code;
       default:
         return "undefined";
+    }
+  }
+
+  public static Optional<NatType> decode(String natType) {
+    switch (natType) {
+      case Nat.OPEN:
+        return Optional.of(open());
+      case Nat.FWL:
+        return Optional.of(firewall());
+      case Nat.X:
+        return Optional.of(unknown());
+      case Nat.UB:
+        return Optional.of(udpBlocked());
+      case Nat.UPNP:
+        return Optional.of(upnp());
+      case Nat.PORT_FW:
+        return Optional.of(natPortForwarding());
+      default:
+        if (natType.startsWith(Nat.NAT)) {
+          String[] policies = natType.substring(Nat.NAT.length()).split("_");
+          if (policies.length != 3) {
+            return Optional.absent();
+          }
+          Nat.MappingPolicy mappingPolicy = Nat.MappingPolicy.decode(policies[0]);
+          Nat.AllocationPolicy allocationPolicy = Nat.AllocationPolicy.decode(policies[1]);
+          Nat.FilteringPolicy filteringPolicy = Nat.FilteringPolicy.decode(policies[2]);
+          if (mappingPolicy == null || allocationPolicy == null || filteringPolicy == null) {
+            return Optional.absent();
+          }
+          return Optional.of(nated(mappingPolicy, allocationPolicy, 0, filteringPolicy, 0));
+        } else {
+          return Optional.absent();
+        }
     }
   }
 
@@ -113,7 +147,7 @@ public class NatType {
   }
 
   public boolean isNatOpenPorts() {
-    return type.equals(Nat.Type.NAT_FW);
+    return type.equals(Nat.Type.PORT_FW);
   }
 
   public boolean isBlocked() {
@@ -124,12 +158,12 @@ public class NatType {
     return new NatType(Nat.Type.OPEN, null, null, 0, null, 0);
   }
 
-  public static NatType natOpenPorts() {
-    return new NatType(Nat.Type.NAT_FW, null, null, 0, null, 0);
+  public static NatType natPortForwarding() {
+    return new NatType(Nat.Type.PORT_FW, null, null, 0, null, 0);
   }
 
   public static NatType firewall() {
-    return new NatType(Nat.Type.FIREWALL, null, null, 0, null, 0);
+    return new NatType(Nat.Type.FWL, null, null, 0, null, 0);
   }
 
   public static NatType udpBlocked() {
@@ -171,7 +205,7 @@ public class NatType {
 
   public static boolean isNatOpenPorts(KAddress address) {
     if (address instanceof NatAwareAddress) {
-      return Nat.Type.NAT_FW.equals(((NatAwareAddress) address).getNatType().type);
+      return Nat.Type.PORT_FW.equals(((NatAwareAddress) address).getNatType().type);
     } else {
       return false;
     }
