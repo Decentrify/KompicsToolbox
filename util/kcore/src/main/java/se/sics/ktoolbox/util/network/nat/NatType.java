@@ -146,7 +146,7 @@ public class NatType {
     return type.equals(Nat.Type.OPEN);
   }
 
-  public boolean isNatOpenPorts() {
+  public boolean isNatPortForwarding() {
     return type.equals(Nat.Type.PFW);
   }
 
