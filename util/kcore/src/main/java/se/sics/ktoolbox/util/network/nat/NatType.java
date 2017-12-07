@@ -154,6 +154,9 @@ public class NatType {
     return type.equals(Nat.Type.UDP_BLOCKED);
   }
 
+  public boolean isNat() {
+    return type.equals(Nat.Type.NAT);
+  }
   public static NatType open() {
     return new NatType(Nat.Type.OPEN, null, null, 0, null, 0);
   }
