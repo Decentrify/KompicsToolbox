@@ -131,8 +131,9 @@ public class NatAwareAddressImpl implements NatAwareAddress {
     return new NatAwareAddressImpl(privateAdr, address, NatType.natPortForwarding(), new ArrayList<BasicAddress>());
   }
 
-  public static NatAwareAddressImpl nated(BasicAddress privateAdr, BasicAddress publicAdr, NatType natType,
+  public static NatAwareAddressImpl nated(BasicAddress publicAdr, NatType natType,
     List<BasicAddress> parents) {
+    Optional<BasicAddress> privateAdr = Optional.absent();
     return new NatAwareAddressImpl(privateAdr, publicAdr, natType, parents);
   }
 
@@ -149,6 +150,6 @@ public class NatAwareAddressImpl implements NatAwareAddress {
   
   @Override
   public String toString() {
-    return publicAdr.toString() + ":" + natType;
+    return publicAdr.toString() + ":" + (privateAdr.isPresent() ? privateAdr.get().toString() + ":" : "") + natType;
   }
 }
