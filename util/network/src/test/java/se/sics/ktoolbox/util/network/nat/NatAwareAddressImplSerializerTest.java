@@ -29,9 +29,9 @@ import java.util.Objects;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
@@ -94,7 +94,7 @@ public class NatAwareAddressImplSerializerTest {
         parents.add(parent);
         parent = new BasicAddress(InetAddress.getByName("193.200.200.4"), 10001, nodeIdFactory.randomId());
         parents.add(parent);
-        original = NatAwareAddressImpl.nated(privateAdr, publicAdr, natType, parents);
+        original = NatAwareAddressImpl.nated(publicAdr, natType, parents);
         buf = Unpooled.buffer();
         serializer.toBinary(original, buf);
 
