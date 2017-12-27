@@ -22,20 +22,19 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.util.Identifiable;
-import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.MessageNotify;
 import se.sics.kompics.network.Msg;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.kompics.util.Identifiable;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.timer.RingTimer;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -70,7 +69,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
 
     timer = new RingTimer(50, 25000);
     BestEffortNetworkConfig beConfig = new BestEffortNetworkConfig(config());
-    loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix, init.proxy, config(), beConfig.reportDir);
+    loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix, proxy, config(), beConfig.reportDir);
 
     subscribe(handleStart, control);
     subscribe(handleRingTimer, timerPort);
@@ -205,12 +204,10 @@ public class BestEffortNetworkComp extends ComponentDefinition {
 
     public final KAddress self;
     public final Identifier id;
-    public final ComponentProxy proxy;
 
-    public Init(KAddress self, Identifier id, ComponentProxy proxy) {
+    public Init(KAddress self, Identifier id) {
       this.self = self;
       this.id = id;
-      this.proxy = proxy;
     }
   }
 
