@@ -18,9 +18,9 @@
  */
 package se.sics.ledbat.ncore.msg;
 
+import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
-import se.sics.nutil.ContentWrapper;
 
 /**
  *
@@ -28,72 +28,82 @@ import se.sics.nutil.ContentWrapper;
  */
 public class LedbatMsg {
 
-    public static class Request<C extends Identifiable> implements Identifiable, ContentWrapper<C> {
+  public static class Request<C extends Identifiable> implements Identifiable, PatternExtractor<Class, C> {
 
-        public final C content;
-        public final long leecherAppReqSendT;
+    public final C content;
+    public final long leecherAppReqSendT;
 
-        protected Request(C content, long leecherAppReqSendT) {
-            this.content = content;
-            this.leecherAppReqSendT = leecherAppReqSendT;
-        }
-
-        public Request(C content) {
-            this(content, System.currentTimeMillis());
-        }
-        
-        @Override
-        public Identifier getId() {
-            return content.getId();
-        }
-
-        @Override
-        public C getWrappedContent() {
-            return content;
-        }
-
-        @Override
-        public String toString() {
-            return "Ledbat.Request<" + content.toString() + ">";
-        }
-        
-        public <AC extends Identifiable> Response answer(AC answerContent) {
-            return new Response(this, answerContent);
-        }
+    protected Request(C content, long leecherAppReqSendT) {
+      this.content = content;
+      this.leecherAppReqSendT = leecherAppReqSendT;
     }
 
-    public static class Response<C extends Identifiable> implements Identifiable, ContentWrapper<C> {
-
-        public final C content;
-        public final long leecherAppReqSendT;
-        public final long seederNetRespSendT;
-        public final long leecherNetRespT;
-
-        protected Response(C content, long leecherAppReqSendT, long seederNetRespSendT, long leecherNetRespT) {
-            this.content = content;
-            this.leecherAppReqSendT = leecherAppReqSendT;
-            this.seederNetRespSendT = seederNetRespSendT;
-            this.leecherNetRespT = leecherNetRespT;
-        }
-
-        private Response(Request req, C content) {
-            //-1 set in serializer - as close as possible to network so we best estimate network delay and not kompics delay
-            this(content, req.leecherAppReqSendT, -1, -1);
-        }
-
-        @Override
-        public Identifier getId() {
-            return content.getId();
-        }
-
-        @Override
-        public C getWrappedContent() {
-            return content;
-        }
-        
-        @Override
-        public String toString() {
-            return "Ledbat.Response<" + content.toString() + ">";
-        }
+    public Request(C content) {
+      this(content, System.currentTimeMillis());
     }
+
+    @Override
+    public Identifier getId() {
+      return content.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "Ledbat.Request<" + content.toString() + ">";
+    }
+
+    public <AC extends Identifiable> Response answer(AC answerContent) {
+      return new Response(this, answerContent);
+    }
+
+    @Override
+    public Class extractPattern() {
+      return Request.class;
+    }
+
+    @Override
+    public C extractValue() {
+      return content;
+    }
+  }
+
+  public static class Response<C extends Identifiable> implements Identifiable, PatternExtractor<Class, C> {
+
+    public final C content;
+    public final long leecherAppReqSendT;
+    public final long seederNetRespSendT;
+    public final long leecherNetRespT;
+
+    protected Response(C content, long leecherAppReqSendT, long seederNetRespSendT, long leecherNetRespT) {
+      this.content = content;
+      this.leecherAppReqSendT = leecherAppReqSendT;
+      this.seederNetRespSendT = seederNetRespSendT;
+      this.leecherNetRespT = leecherNetRespT;
+    }
+
+    private Response(Request req, C content) {
+      //-1 set in serializer - as close as possible to network so we best estimate network delay and not kompics delay
+      this(content, req.leecherAppReqSendT, -1, -1);
+    }
+
+    @Override
+    public Identifier getId() {
+      return content.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "Ledbat.Response<" + content.toString() + ">";
+    }
+
+    @Override
+    public Class extractPattern() {
+      return Response.class;
+    }
+
+    @Override
+    public C extractValue() {
+      return content;
+    }
+  }
 }

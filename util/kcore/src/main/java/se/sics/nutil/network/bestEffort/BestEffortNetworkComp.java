@@ -178,7 +178,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
   private <C extends Identifiable> void handleRequest(
     BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Request<C>> m) {
     BestEffortMsg.Request<C> retryContent = m.getContent();
-    C baseContent = retryContent.getWrappedContent();
+    C baseContent = retryContent.extractValue();
     KAddress target = m.getHeader().getDestination();
     BasicContentMsg msg = new BasicContentMsg(m.getHeader(), baseContent);
 

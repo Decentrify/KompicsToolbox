@@ -18,16 +18,16 @@
  */
 package se.sics.nutil.network.bestEffort.event;
 
+import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
-import se.sics.nutil.ContentWrapper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BestEffortMsg {
 
-  public static abstract class Base<C extends Identifiable> implements ContentWrapper<C>, Identifiable {
+  public static abstract class Base<C extends Identifiable> implements PatternExtractor<Class, C>, Identifiable {
 
     public final C content;
 
@@ -36,13 +36,13 @@ public class BestEffortMsg {
     }
 
     @Override
-    public C getWrappedContent() {
-      return content;
+    public Identifier getId() {
+      return content.getId();
     }
 
     @Override
-    public Identifier getId() {
-      return content.getId();
+    public C extractValue() {
+      return content;
     }
   }
 
@@ -65,6 +65,11 @@ public class BestEffortMsg {
     public String toString() {
       return "BE_Request<" + content.toString() + ">";
     }
+
+    @Override
+    public Class extractPattern() {
+      return Request.class;
+    }
   }
 
   public static class Timeout<C extends Identifiable> extends Base<C> {
@@ -80,12 +85,22 @@ public class BestEffortMsg {
     public String toString() {
       return "BE_Timeout<" + content.toString() + ">";
     }
+
+    @Override
+    public Class extractPattern() {
+      return Timeout.class;
+    }
   }
 
   public static class Cancel<C extends Identifiable> extends Base<C> {
 
     public Cancel(C content) {
       super(content);
+    }
+
+    @Override
+    public Class extractPattern() {
+      return Cancel.class;
     }
   }
 }

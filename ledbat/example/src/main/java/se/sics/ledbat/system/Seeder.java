@@ -62,7 +62,7 @@ public class Seeder extends ComponentDefinition {
 
                 @Override
                 public void handle(LedbatMsg.Request<ExMsg.Request> content, KContentMsg<KAddress, KHeader<KAddress>, LedbatMsg.Request<ExMsg.Request>> context) {
-                    trigger(context.answer(content.answer(content.getWrappedContent().answer(payload))), networkPort);
+                    trigger(context.answer(content.answer(content.extractValue().answer(payload))), networkPort);
                 }
             };
 

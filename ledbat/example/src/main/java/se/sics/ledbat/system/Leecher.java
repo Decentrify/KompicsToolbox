@@ -123,8 +123,8 @@ public class Leecher extends ComponentDefinition {
                 @Override
                 public void handle(LedbatMsg.Response<ExMsg.Response> content, KContentMsg<KAddress, KHeader<KAddress>, LedbatMsg.Response<ExMsg.Response>> context) {
                     LOG.trace("{}received resp", logPrefix);
-                    if (ongoing.remove(content.getWrappedContent().eventId)) {
-                        cancelTimeout(content.getWrappedContent().eventId);
+                    if (ongoing.remove(content.extractValue().eventId)) {
+                        cancelTimeout(content.extractValue().eventId);
                         conn.success(System.currentTimeMillis(), ledbatConfig.mss, content);
                         trySend();
                     } else {

@@ -128,6 +128,9 @@ public class Result<V extends Object> {
     return new Result(status, evalue);
   }
 
+  public static Result timeout() {
+    return failure(Result.Status.TIMEOUT, new IllegalStateException("timeout"));
+  }
   public static Result timeout(Exception ex) {
     return failure(Result.Status.TIMEOUT, ex);
   }
