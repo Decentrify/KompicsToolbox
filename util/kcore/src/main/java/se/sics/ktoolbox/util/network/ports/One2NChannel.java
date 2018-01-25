@@ -32,8 +32,8 @@ import se.sics.kompics.PortCore;
 import se.sics.kompics.PortCoreHelper;
 import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
-import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.MessageNotify;
+import se.sics.kompics.util.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -123,16 +123,20 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
     }
     if (channelSelector.getEventType().isAssignableFrom(event.getClass())) {
       overlayId = channelSelector.getValue(event);
-      if (overlayId == null) {
-        LOG.info("{}event:{} not processable in:{}", new Object[]{logPrefix, event, details});
-        return;
+      if (PortCoreHelper.isPositive(sourcePort) ^ positive) {
+        if (overlayId == null) {
+          LOG.info("{}event:{} not processable in:{}", new Object[]{logPrefix, event, details});
+          return;
+        }
       }
     } else if (event instanceof MessageNotify.Req && channelSelector.getEventType().isAssignableFrom(
       (((MessageNotify.Req) event).msg).getClass())) {
       overlayId = channelSelector.getValue(event);
-      if (overlayId == null) {
-        LOG.info("{}traffic not processable in:{}", logPrefix, details);
-        return;
+      if (PortCoreHelper.isPositive(sourcePort) ^ positive) {
+        if (overlayId == null) {
+          LOG.info("{}traffic not processable in:{}", logPrefix, details);
+          return;
+        }
       }
     } else {
       LOG.info("{}cannot extract id for:{} from:{} in:{}",
