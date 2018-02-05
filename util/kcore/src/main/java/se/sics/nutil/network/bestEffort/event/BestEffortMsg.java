@@ -18,6 +18,8 @@
  */
 package se.sics.nutil.network.bestEffort.event;
 
+import java.util.Set;
+import java.util.function.Consumer;
 import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
@@ -69,6 +71,34 @@ public class BestEffortMsg {
     @Override
     public Class extractPattern() {
       return Request.class;
+    }
+  }
+  
+  public static class BatchRequest<C extends Identifiable> extends Base<C> {
+    
+    public final int retries;
+    public final long rto;
+    public final Set<Request<C>> requests;
+
+    public BatchRequest(C content, int retries, long rto, Set<Request<C>> requests) {
+      super(content);
+      this.retries = retries;
+      this.rto = rto;
+      this.requests = requests;
+    }
+
+    @Override
+    public String toString() {
+      return "BE_NRequest<" + content.toString() + ">";
+    }
+
+    @Override
+    public Class extractPattern() {
+      return BatchRequest.class;
+    }
+    
+    public void forEach(Consumer<Request> consumer) {
+      requests.stream().forEach(consumer);
     }
   }
 

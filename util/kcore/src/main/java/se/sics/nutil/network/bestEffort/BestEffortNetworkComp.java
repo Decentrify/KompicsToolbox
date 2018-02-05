@@ -19,6 +19,7 @@
 package se.sics.nutil.network.bestEffort;
 
 import java.util.List;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -67,7 +68,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     this.self = init.self;
     this.logPrefix = "<" + init.id + ">";
 
-    timer = new RingTimer(50, 25000);
+    timer = new RingTimer(HardCodedConfig.windowSize, HardCodedConfig.maxTimeout);
     BestEffortNetworkConfig beConfig = new BestEffortNetworkConfig(config());
     loadTracking = NetworkQueueLoadProxy.instance("load_be_" + logPrefix, proxy, config(), beConfig.reportDir);
 
@@ -85,7 +86,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     public void handle(Start event) {
       LOG.info("{}starting...", logPrefix);
       loadTracking.start();
-      scheduleRingPeriodicTimeout(50);
+      scheduleRingPeriodicTimeout(HardCodedConfig.windowSize);
     }
   };
 
@@ -106,6 +107,8 @@ public class BestEffortNetworkComp extends ComponentDefinition {
         handleRequest(contentMsg);
       } else if (contentMsg.getContent() instanceof BestEffortMsg.Cancel) {
         handleCancel(contentMsg);
+      } else if(contentMsg.getContent() instanceof BestEffortMsg.BatchRequest) {
+        handleNRequest(contentMsg);
       } else {
         LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
         trigger(msg, outgoingNetworkPort);
@@ -141,12 +144,12 @@ public class BestEffortNetworkComp extends ComponentDefinition {
       List<RingContainer> timeouts = (List) timer.windowTick();
       for (RingContainer tc : timeouts) {
         if (tc.retriesLeft == 0) {
-          BasicContentMsg msg = tc.msg.answer(tc.req.timeout());
+          BasicContentMsg msg = new BasicContentMsg(tc.sendingHeader.answer(), tc.req.timeout());
           LOG.debug("{}retry timeout:{}", logPrefix, msg);
           trigger(msg, incomingNetworkPort);
         } else {
-          LOG.debug("{}sending retry msg:{}", logPrefix, tc.msg);
-          doRetry(tc.msg, tc.req, tc.retriesLeft - 1);
+          LOG.debug("{}sending retry msg:{}", logPrefix, tc.sendingHeader);
+          doRetry(tc.sendingHeader, tc.req, tc.retriesLeft - 1);
         }
       }
     }
@@ -166,24 +169,31 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     }
   };
 
-  private void doRetry(BasicContentMsg msg, BestEffortMsg.Request retryContent, int retriesLeft) {
-    RingContainer rt = new RingContainer(retryContent, msg, retriesLeft);
+  private void doRetry(KHeader sendingHeader, BestEffortMsg.Request retryContent, int retriesLeft) {
+    BasicContentMsg msg = new BasicContentMsg(sendingHeader, retryContent.extractValue());
+    LOG.debug("{}sending msg:{}", logPrefix, msg);
+    RingContainer rt = new RingContainer(sendingHeader, retryContent, retriesLeft);
     LOG.debug("{}schedule retry in:{}", logPrefix, retryContent.rto);
     trigger(msg, outgoingNetworkPort);
     if(!timer.setTimeout(2 * retryContent.rto, rt)) {
       throw new RuntimeException("fix me with long timer");
     }
   }
+  
+  Consumer<BestEffortMsg.Request> doRetry(final KHeader header) {
+    return (BestEffortMsg.Request payload) -> {
+      doRetry(header, payload, payload.retries);
+    };
+  }
 
   private <C extends Identifiable> void handleRequest(
-    BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Request<C>> m) {
-    BestEffortMsg.Request<C> retryContent = m.getContent();
-    C baseContent = retryContent.extractValue();
-    KAddress target = m.getHeader().getDestination();
-    BasicContentMsg msg = new BasicContentMsg(m.getHeader(), baseContent);
-
-    LOG.debug("{}sending msg:{}", logPrefix, msg);
-    doRetry(msg, retryContent, retryContent.retries);
+    BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Request<C>> msg) {
+    doRetry(msg.getHeader(), msg.getContent(), msg.getContent().retries);
+  }
+  
+  private <C extends Identifiable> void handleNRequest(
+    BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.BatchRequest<C>> msg) {
+    msg.getContent().forEach(doRetry(msg.getHeader()));
   }
 
   private void handleResponse(BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg) {
@@ -195,7 +205,6 @@ public class BestEffortNetworkComp extends ComponentDefinition {
   private <C extends KompicsEvent & Identifiable> void handleCancel(
     BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Cancel<C>> m) {
     C baseContent = m.getContent().content;
-    KAddress target = m.getHeader().getDestination();
     //TODO Alex URGENT - check if this id matches message
     timer.cancelTimeout(baseContent.getId());
   }
@@ -214,19 +223,19 @@ public class BestEffortNetworkComp extends ComponentDefinition {
   public static class RingContainer implements RingTimer.Container {
 
     public final BestEffortMsg.Request req;
-    public final BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg;
+    public final KHeader<KAddress> sendingHeader;
     public final int retriesLeft;
 
-    public RingContainer(BestEffortMsg.Request req, BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg,
+    public RingContainer(KHeader<KAddress> sendingHeader, BestEffortMsg.Request req,
       int retriesLeft) {
       this.req = req;
-      this.msg = msg;
+      this.sendingHeader = sendingHeader;
       this.retriesLeft = retriesLeft;
     }
 
     @Override
     public Identifier getId() {
-      return msg.getContent().getId();
+      return req.extractValue().getId();
     }
   }
 
@@ -243,5 +252,10 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     public RingTimeout(SchedulePeriodicTimeout st) {
       super(st);
     }
+  }
+  
+  public static class HardCodedConfig {
+    public static int windowSize = 50;
+    public static int maxTimeout = 25000;
   }
 }
