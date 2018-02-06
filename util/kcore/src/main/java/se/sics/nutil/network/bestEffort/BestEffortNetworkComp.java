@@ -108,7 +108,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
       } else if (contentMsg.getContent() instanceof BestEffortMsg.Cancel) {
         handleCancel(contentMsg);
       } else if(contentMsg.getContent() instanceof BestEffortMsg.BatchRequest) {
-        handleNRequest(contentMsg);
+        handleBatchRequest(contentMsg);
       } else {
         LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
         trigger(msg, outgoingNetworkPort);
@@ -149,7 +149,8 @@ public class BestEffortNetworkComp extends ComponentDefinition {
           trigger(msg, incomingNetworkPort);
         } else {
           LOG.debug("{}sending retry msg:{}", logPrefix, tc.sendingHeader);
-          doRetry(tc.sendingHeader, tc.req, tc.retriesLeft - 1);
+          scheduleRetry(tc.sendingHeader, tc.req, tc.retriesLeft - 1);
+          sendMsg(tc.sendingHeader, tc.req.extractValue());
         }
       }
     }
@@ -169,31 +170,36 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     }
   };
 
-  private void doRetry(KHeader sendingHeader, BestEffortMsg.Request retryContent, int retriesLeft) {
-    BasicContentMsg msg = new BasicContentMsg(sendingHeader, retryContent.extractValue());
-    LOG.debug("{}sending msg:{}", logPrefix, msg);
-    RingContainer rt = new RingContainer(sendingHeader, retryContent, retriesLeft);
+  private void scheduleRetry(KHeader sendingHeader, BestEffortMsg.Request retryContent, int retriesLeft) {
     LOG.debug("{}schedule retry in:{}", logPrefix, retryContent.rto);
-    trigger(msg, outgoingNetworkPort);
+    RingContainer rt = new RingContainer(sendingHeader, retryContent, retriesLeft);
     if(!timer.setTimeout(2 * retryContent.rto, rt)) {
       throw new RuntimeException("fix me with long timer");
     }
   }
   
-  Consumer<BestEffortMsg.Request> doRetry(final KHeader header) {
+  private void sendMsg(KHeader header, Identifiable payload) {
+    BasicContentMsg msg = new BasicContentMsg(header, payload);
+    LOG.debug("{}sending msg:{}", logPrefix, msg);
+    trigger(msg, outgoingNetworkPort);
+  }
+  
+  Consumer<BestEffortMsg.Request> scheduleRetry(final KHeader header) {
     return (BestEffortMsg.Request payload) -> {
-      doRetry(header, payload, payload.retries);
+      scheduleRetry(header, payload, payload.retries);
     };
   }
 
   private <C extends Identifiable> void handleRequest(
     BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.Request<C>> msg) {
-    doRetry(msg.getHeader(), msg.getContent(), msg.getContent().retries);
+    scheduleRetry(msg.getHeader(), msg.getContent(), msg.getContent().retries);
+    sendMsg(msg.getHeader(), msg.getContent().extractValue());
   }
   
-  private <C extends Identifiable> void handleNRequest(
+  private <C extends Identifiable> void handleBatchRequest(
     BasicContentMsg<KAddress, KHeader<KAddress>, BestEffortMsg.BatchRequest<C>> msg) {
-    msg.getContent().forEach(doRetry(msg.getHeader()));
+    msg.getContent().forEach(scheduleRetry(msg.getHeader()));
+    sendMsg(msg.getHeader(), msg.getContent().extractValue());
   }
 
   private void handleResponse(BasicContentMsg<KAddress, KHeader<KAddress>, Identifiable> msg) {

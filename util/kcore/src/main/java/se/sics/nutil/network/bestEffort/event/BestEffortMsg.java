@@ -78,13 +78,13 @@ public class BestEffortMsg {
     
     public final int retries;
     public final long rto;
-    public final Set<Request<C>> requests;
+    public final Set<Request<C>> retryRequests;
 
     public BatchRequest(C content, int retries, long rto, Set<Request<C>> requests) {
       super(content);
       this.retries = retries;
       this.rto = rto;
-      this.requests = requests;
+      this.retryRequests = requests;
     }
 
     @Override
@@ -98,7 +98,7 @@ public class BestEffortMsg {
     }
     
     public void forEach(Consumer<Request> consumer) {
-      requests.stream().forEach(consumer);
+      retryRequests.stream().forEach(consumer);
     }
   }
 
