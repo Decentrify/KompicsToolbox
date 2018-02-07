@@ -140,7 +140,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
   Handler handleRingTimer = new Handler<RingTimeout>() {
     @Override
     public void handle(RingTimeout timeout) {
-      LOG.debug("{}ring size:{}", logPrefix, timer.getSize());
+      LOG.trace("{}ring size:{}", logPrefix, timer.getSize());
       List<RingContainer> timeouts = (List) timer.windowTick();
       for (RingContainer tc : timeouts) {
         if (tc.retriesLeft == 0) {
