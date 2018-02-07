@@ -99,7 +99,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
     @Override
     public void handle(Msg msg) {
       if (!(msg instanceof BasicContentMsg)) {
-        LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
+        LOG.debug("{}forwarding outgoing:{}", logPrefix, msg);
         trigger(msg, outgoingNetworkPort);
       }
       BasicContentMsg contentMsg = (BasicContentMsg) msg;
@@ -110,7 +110,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
       } else if(contentMsg.getContent() instanceof BestEffortMsg.BatchRequest) {
         handleBatchRequest(contentMsg);
       } else {
-        LOG.trace("{}forwarding outgoing:{}", logPrefix, msg);
+        LOG.debug("{}forwarding outgoing:{}", logPrefix, msg);
         trigger(msg, outgoingNetworkPort);
       }
     }
@@ -123,7 +123,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
         return;
       }
       if (!(msg instanceof BasicContentMsg)) {
-        LOG.trace("{}forwarding incoming:{}", logPrefix, msg);
+        LOG.debug("{}forwarding incoming:{}", logPrefix, msg);
         trigger(msg, incomingNetworkPort);
         return;
       }
@@ -131,7 +131,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
       if (contentMsg.getContent() instanceof Identifiable) {
         handleResponse(contentMsg);
       } else {
-        LOG.trace("{}forwarding incoming:{}", logPrefix, msg);
+        LOG.debug("{}forwarding incoming:{}", logPrefix, msg);
         trigger(msg, incomingNetworkPort);
       }
     }
