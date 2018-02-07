@@ -129,6 +129,7 @@ public class BestEffortNetworkComp extends ComponentDefinition {
       }
       BasicContentMsg contentMsg = (BasicContentMsg) msg;
       if (contentMsg.getContent() instanceof Identifiable) {
+        LOG.debug("{}handling incoming:{}", logPrefix, msg);
         handleResponse(contentMsg);
       } else {
         LOG.debug("{}forwarding incoming:{}", logPrefix, msg);
