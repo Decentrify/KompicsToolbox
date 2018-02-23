@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
 
@@ -66,13 +67,13 @@ public class RingTimer {
     return true;
   }
 
-  public boolean cancelTimeout(Identifier containerId) {
+  public Optional<Container> cancelTimeout(Identifier containerId) {
     Timeout t = timeouts.remove(containerId);
     if(t == null) {
-      return false;
+      return Optional.empty();
     }
     t.cancelTimeout();
-    return true;
+    return Optional.of(t.container);
   }
   
   public int getSize() {
