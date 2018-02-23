@@ -21,6 +21,7 @@
         <module>net-mngr</module>
         <module>ledbat</module>
         <module>httpsclient</module>
+        <module>nledbat</module>
     </modules>
 
     <properties>
