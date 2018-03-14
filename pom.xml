@@ -20,6 +20,7 @@
         <!--<module>nat-echo</module>-->
         <module>net-mngr</module>
         <module>ledbat</module>
+        <module>httpsclient</module>
     </modules>
 
     <properties>
@@ -61,6 +62,7 @@
     <netty.version>5.0.0.Alpha2</netty.version>
     <caracal.version>0.0.8-SNAPSHOT</caracal.version>
     <apachec.version>3.6.1</apachec.version>
+    <jersey.version>2.22.2</jersey.version>
   </properties>
     
   <dependencies>
