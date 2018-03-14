@@ -303,16 +303,5 @@ public class MockComponentProxy implements ComponentProxy {
         public void enqueue(KompicsEvent event) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
-
-    @Override
-    public void deliverOutgoing(KompicsEvent event) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void deliverIncoming(KompicsEvent event) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     }
 }
