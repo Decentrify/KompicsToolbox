@@ -18,6 +18,7 @@ public class ThroughputHandler {
     private final LinkedList<Long> throughPutHistory = new LinkedList<>();
     private long currentSecond;
     private long currentSecondNumOfBytes;
+    private long unreportedNumOfBytes;
 
     public ThroughputHandler(String connectionId) {
         this.connectionId = connectionId;
@@ -40,6 +41,7 @@ public class ThroughputHandler {
     public void packetReceived(long now, int size) {
         update(now);
         currentSecondNumOfBytes += size;
+        unreportedNumOfBytes += size;
     }
 
     public long speed(long now) {
@@ -49,6 +51,8 @@ public class ThroughputHandler {
     
     public long currentSpeed(long now) {
         update(now);
-        return currentSecondNumOfBytes;
+        long report = unreportedNumOfBytes;
+        unreportedNumOfBytes = 0;
+        return report;
     }
 }
