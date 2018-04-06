@@ -51,6 +51,18 @@ public class WebResponse {
     }
   }
 
+  public <C extends Object> C readErrorDetails(Class<C> contentType) {
+    try {
+      checkMediaType();
+      String stringContent = response.readEntity(String.class);
+      Gson gson = new Gson();
+      C content = gson.fromJson(stringContent, contentType);
+      return content;
+    } catch (ProcessingException e) {
+      throw new IllegalStateException(e.getMessage());
+    }
+  }
+
   public boolean statusOk() {
     Response.Status.Family status = response.getStatusInfo().getFamily();
     return status == Response.Status.Family.INFORMATIONAL || status == Response.Status.Family.SUCCESSFUL;

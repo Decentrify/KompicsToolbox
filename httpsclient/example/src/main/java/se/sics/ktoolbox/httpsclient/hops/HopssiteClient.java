@@ -31,13 +31,13 @@ public class HopssiteClient {
 
   public static void main(String[] args) {
     //search(args[0]);
-    reportData();
+    search("test");
   }
   
   private static void search(String term) {
     SearchServiceDTO.Params searchParam = new SearchServiceDTO.Params(term);
     WebResponse resp = WebClient.httpsInstance()
-      .setTarget(Hopssite.Target.bbc5())
+      .setTarget(Hopssite.Target.bbc5_test())
       .setPath(Hopssite.Path.search())
       .setPayload(searchParam)
       .doPost();

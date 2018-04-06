@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.Future;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -66,9 +67,6 @@ public class WebClient implements Closeable {
   }
 
   public WebClient setPayload(Object object) {
-//    Gson gson = new Gson();
-//    String jsonObject = gson.toJson(object);
-//    this.payload = Entity.entity(jsonObject, mediaType);
     this.payload = Entity.entity(object, mediaType);
     return this;
   }
@@ -85,11 +83,23 @@ public class WebClient implements Closeable {
     Response response = client.target(target).path(path).request(mediaType).get();
     return new WebResponse(response);
   }
+  
+  public AsyncWebResponse doAsyncGet() {
+    performSanityCheck();
+    Future<Response> response = client.target(target).path(path).request(mediaType).async().get();
+    return new AsyncWebResponse(response);
+  }
 
   public WebResponse doPost() {
     performSanityCheck();
     Response response = client.target(target).path(path).request(mediaType).post(payload);
     return new WebResponse(response);
+  }
+  
+  public AsyncWebResponse doAsyncPost() {
+    performSanityCheck();
+    Future<Response> response = client.target(target).path(path).request(mediaType).async().post(payload);
+    return new AsyncWebResponse(response);
   }
 
   public WebResponse doPut() {
@@ -98,10 +108,22 @@ public class WebClient implements Closeable {
     return new WebResponse(response);
   }
 
+  public AsyncWebResponse doAsyncPut() {
+    performSanityCheck();
+    Future<Response> response = client.target(target).path(path).request(mediaType).async().put(payload);
+    return new AsyncWebResponse(response);
+  }
+  
   public WebResponse doDelete() {
     performSanityCheck();
     Response response = client.target(target).path(path).request(mediaType).delete();
     return new WebResponse(response);
+  }
+  
+  public AsyncWebResponse doAsyncDelete() {
+    performSanityCheck();
+    Future<Response> response = client.target(target).path(path).request(mediaType).async().delete();
+    return new AsyncWebResponse(response);
   }
 
   private void performSanityCheck() {
