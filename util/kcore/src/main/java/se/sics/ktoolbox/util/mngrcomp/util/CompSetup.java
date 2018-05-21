@@ -27,6 +27,6 @@ import se.sics.kompics.util.Identifier;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface CompSetup<P extends PortsSetup> {
-  public Component createAndStart(ComponentProxy proxy, P ports, Identifier trasnferId, Init init);
-  public void destroyAndKill(ComponentProxy proxy, P ports,Identifier transferId, Component comp);
+  public Component createAndStart(ComponentProxy proxy, P ports, Identifier appCompId, Init init);
+  public void destroyAndKill(ComponentProxy proxy, P ports, Identifier appCompId, Component comp);
 }

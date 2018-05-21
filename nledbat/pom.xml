@@ -12,5 +12,6 @@
     <name>NLedbat</name>
     <modules>
         <module>core</module>
+        <module>example</module>
     </modules>
 </project>
