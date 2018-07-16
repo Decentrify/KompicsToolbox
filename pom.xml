@@ -12,7 +12,7 @@
         <!--<module>simulator</module>-->
         <module>croupier</module>
         <module>gradient</module>
-        <module>videostream</module>
+        <!-- <module>videostream</module> -->
         <module>leader-election</module> 
         <module>fd</module>
         <module>caracal-client</module>
