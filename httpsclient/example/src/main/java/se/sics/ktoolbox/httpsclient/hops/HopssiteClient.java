@@ -31,6 +31,7 @@ public class HopssiteClient {
 
   public static void main(String[] args) {
     //search(args[0]);
+    WebClient.setBuilder(new WebClient.BasicBuilder());
     search("test");
   }
   

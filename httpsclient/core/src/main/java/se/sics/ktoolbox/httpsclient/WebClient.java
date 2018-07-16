@@ -39,6 +39,14 @@ import javax.ws.rs.core.Response;
  */
 public class WebClient implements Closeable {
 
+  private static Builder builder = null;
+
+  public static void setBuilder(Builder b) {
+    if(builder != null) {
+      throw new RuntimeException("double builder set");
+    }
+    builder = b;
+  }
   public final Client client;
   private Class respContentClass;
   private String target;
@@ -46,7 +54,7 @@ public class WebClient implements Closeable {
   private Entity payload;
   private String mediaType = MediaType.APPLICATION_JSON;
 
-  private WebClient(Client client) {
+  public WebClient(Client client) {
     this.client = client;
     this.payload = Entity.entity("", mediaType);
   }
@@ -83,7 +91,7 @@ public class WebClient implements Closeable {
     Response response = client.target(target).path(path).request(mediaType).get();
     return new WebResponse(response);
   }
-  
+
   public AsyncWebResponse doAsyncGet() {
     performSanityCheck();
     Future<Response> response = client.target(target).path(path).request(mediaType).async().get();
@@ -95,7 +103,7 @@ public class WebClient implements Closeable {
     Response response = client.target(target).path(path).request(mediaType).post(payload);
     return new WebResponse(response);
   }
-  
+
   public AsyncWebResponse doAsyncPost() {
     performSanityCheck();
     Future<Response> response = client.target(target).path(path).request(mediaType).async().post(payload);
@@ -113,13 +121,13 @@ public class WebClient implements Closeable {
     Future<Response> response = client.target(target).path(path).request(mediaType).async().put(payload);
     return new AsyncWebResponse(response);
   }
-  
+
   public WebResponse doDelete() {
     performSanityCheck();
     Response response = client.target(target).path(path).request(mediaType).delete();
     return new WebResponse(response);
   }
-  
+
   public AsyncWebResponse doAsyncDelete() {
     performSanityCheck();
     Future<Response> response = client.target(target).path(path).request(mediaType).async().delete();
@@ -145,46 +153,67 @@ public class WebClient implements Closeable {
   }
 
   public static WebClient httpsInstance() {
-    try {
-      SSLContext sc = SSLContext.getInstance("SSL");
-      sc.init(null, trustAllCerts(), new java.security.SecureRandom());
-      Client client = ClientBuilder.newBuilder().sslContext(sc).hostnameVerifier(acceptAnyHost()).build();
-      return new WebClient(client);
-    } catch (NoSuchAlgorithmException | KeyManagementException ex) {
-      throw new IllegalStateException(ex);
+    if(builder == null) {
+      throw new RuntimeException("builder not set");
     }
+    return builder.httpsInstance();
   }
 
-  public static <T> WebClient httpInstance() {
-    Client client = ClientBuilder.newClient();
-    return new WebClient(client);
+  public static WebClient httpInstance() {
+    if(builder == null) {
+      throw new RuntimeException("builder not set");
+    }
+    return builder.httpInstance();
   }
 
-  private static TrustManager[] trustAllCerts() {
-    return new TrustManager[]{
-      new X509TrustManager() {
-        @Override
-        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-          return null;
-        }
+  public static interface Builder {
 
-        @Override
-        public void checkClientTrusted(X509Certificate[] certs, String authType) {
-        }
+    public WebClient httpsInstance();
 
-        @Override
-        public void checkServerTrusted(X509Certificate[] certs, String authType) {
-        }
+    public WebClient httpInstance();
+  }
+
+  public static class BasicBuilder implements Builder {
+
+    @Override
+    public WebClient httpsInstance() {
+      try {
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts(), new java.security.SecureRandom());
+        Client client = ClientBuilder.newBuilder().sslContext(sc).hostnameVerifier(acceptAnyHost()).build();
+        return new WebClient(client);
+      } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+        throw new IllegalStateException(ex);
       }
-    };
-  }
+    }
 
-  private static HostnameVerifier acceptAnyHost() {
-    return new HostnameVerifier() {
-      @Override
-      public boolean verify(String string, SSLSession ssls) {
-        return true;
-      }
-    };
+    @Override
+    public WebClient httpInstance() {
+      Client client = ClientBuilder.newClient();
+      return new WebClient(client);
+    }
+
+    public static TrustManager[] trustAllCerts() {
+      return new TrustManager[]{
+        new X509TrustManager() {
+          @Override
+          public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return null;
+          }
+
+          @Override
+          public void checkClientTrusted(X509Certificate[] certs, String authType) {
+          }
+
+          @Override
+          public void checkServerTrusted(X509Certificate[] certs, String authType) {
+          }
+        }
+      };
+    }
+
+    public static HostnameVerifier acceptAnyHost() {
+      return (String string, SSLSession ssls) -> true;
+    }
   }
 }
