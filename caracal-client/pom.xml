@@ -11,12 +11,12 @@
     <packaging>pom</packaging>
     <name>Caracal Client</name>
     <modules>
-        <module>common</module>
+        <!--<module>common</module>-->
         <module>bootstrap</module>
-        <module>heartbeat</module>
+        <!--<module>heartbeat</module>-->
         <!--<module>sim</module>-->
         <!--<module>schemasetup</module>-->
-        <module>mngr</module>
+        <!--<module>mngr</module>-->
     </modules>
   
     <dependencies>
@@ -36,7 +36,7 @@
             <version>${kompics.version}</version>
         </dependency>
         
-        <dependency>
+<!--        <dependency>
             <groupId>se.sics.caracaldb</groupId>
             <artifactId>caracaldb-core</artifactId>
             <version>${caracal.version}</version>
@@ -46,7 +46,7 @@
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
         
         <dependency>
             <groupId>se.sics.ktoolbox.util</groupId>

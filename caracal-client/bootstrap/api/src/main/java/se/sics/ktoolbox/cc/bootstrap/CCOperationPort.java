@@ -22,7 +22,6 @@ import se.sics.kompics.PortType;
 import se.sics.ktoolbox.cc.operation.event.CCOpRequest;
 import se.sics.ktoolbox.cc.operation.event.CCOpResponse;
 import se.sics.ktoolbox.cc.operation.event.CCOpTimeout;
-import se.sics.ktoolbox.cc.operation.event.CCOperationEvent;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>

@@ -34,7 +34,6 @@ import se.sics.kompics.Start;
 import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
 import se.sics.ktoolbox.croupier.CroupierComp;
 import se.sics.ktoolbox.croupier.CroupierControlPort;
 import se.sics.ktoolbox.croupier.CroupierPort;
@@ -57,6 +56,7 @@ import se.sics.ktoolbox.util.network.ports.One2NChannel;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
 
 /**
+ * TODO fix bootstrapping issue - CC
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class OverlayMngrComp extends ComponentDefinition {
@@ -129,9 +129,9 @@ public class OverlayMngrComp extends ComponentDefinition {
     //*********************************BOOTSTRAP********************************
     private void connectCroupierBootstrap() {
         Component cBootComp = create(CroupierBootstrapComp.class, new CroupierBootstrapComp.Init());
-        Channel[] cBootChannels = new Channel[2];
+        Channel[] cBootChannels = new Channel[1];
         cBootChannels[0] = connect(cBootComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
-        cBootChannels[1] = connect(cBootComp.getNegative(CCHeartbeatPort.class), extPorts.heartbeatPort, Channel.TWO_WAY);
+//        cBootChannels[1] = connect(cBootComp.getNegative(CCHeartbeatPort.class), extPorts.heartbeatPort, Channel.TWO_WAY);
         //croupierControlPort - connect to croupiers
         bootstrapEnd = One2NChannel.getChannel("omngr", cBootComp.getNegative(CroupierControlPort.class), new EventOverlayIdExtractor());
         //bootstrapPort - used by parent;
@@ -270,13 +270,13 @@ public class OverlayMngrComp extends ComponentDefinition {
 
         public final Positive<Timer> timerPort;
         public final Positive<Network> networkPort;
-        public final Positive<CCHeartbeatPort> heartbeatPort;
+//        public final Positive<CCHeartbeatPort> heartbeatPort;
 
-        public ExtPort(Positive<Timer> timerPort, Positive<Network> networkPort, 
-                Positive<CCHeartbeatPort> heartbeatPort) {
+        public ExtPort(Positive<Timer> timerPort, Positive<Network> networkPort){
+//                Positive<CCHeartbeatPort> heartbeatPort) {
             this.timerPort = timerPort;
             this.networkPort = networkPort;
-            this.heartbeatPort = heartbeatPort;
+//            this.heartbeatPort = heartbeatPort;
         }
     }
 }

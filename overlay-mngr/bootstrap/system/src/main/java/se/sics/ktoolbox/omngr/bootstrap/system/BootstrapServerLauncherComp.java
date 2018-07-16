@@ -20,7 +20,6 @@ package se.sics.ktoolbox.omngr.bootstrap.system;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.sics.caracaldb.MessageRegistrator;
 import se.sics.kompics.Channel;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.Component;
@@ -120,7 +119,6 @@ public class BootstrapServerLauncherComp extends ComponentDefinition {
     private static void serializerSetup() {
         //serializers setup
         int serializerId = 128;
-        MessageRegistrator.register();
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
         serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
         serializerId = GradientSerializerSetup.registerSerializers(serializerId);

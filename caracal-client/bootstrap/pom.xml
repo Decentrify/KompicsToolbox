@@ -12,13 +12,13 @@
     <name>CC Bootstrap</name>
     <modules>
         <module>api</module>
-        <module>core</module>
+        <!--<module>core</module>-->
     </modules>
     <dependencies>
-        <dependency>
+<!--        <dependency>
             <groupId>se.sics.ktoolbox.cc</groupId>
             <artifactId>common</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency>-->
     </dependencies>
 </project>

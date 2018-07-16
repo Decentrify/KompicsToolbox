@@ -34,9 +34,6 @@ import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
-import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 import se.sics.ktoolbox.croupier.CroupierControlPort;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
@@ -45,6 +42,7 @@ import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
+ * TODO - Alex - fix commented out bootstrapping CC
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CroupierBootstrapComp extends ComponentDefinition {
@@ -54,7 +52,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
 
     //*******************************CONNECTIONS********************************
     private final Positive timerPort = requires(Timer.class);
-    private final Positive heartbeatPort = requires(CCHeartbeatPort.class);
+//    private final Positive heartbeatPort = requires(CCHeartbeatPort.class);
     private final Positive croupierStatusPort = requires(CroupierControlPort.class);
     private final Negative bootstrapPort = provides(CroupierBootstrapPort.class);
     //******************************INTERNAL_STATE******************************
@@ -74,7 +72,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
 
         subscribe(handleStart, control);
         subscribe(handleCroupierBootstrap, bootstrapPort);
-        subscribe(handleExternalSample, heartbeatPort);
+//        subscribe(handleExternalSample, heartbeatPort);
         subscribe(handleDisconnect, croupierStatusPort);
         subscribe(handleRebootstrap, timerPort);
     }
@@ -92,24 +90,24 @@ public class CroupierBootstrapComp extends ComponentDefinition {
         @Override
         public void handle(OMCroupierBootstrap event) {
             LOG.trace("{}{}", logPrefix, event);
-            trigger(new CCHeartbeat.Start(event.overlayId), heartbeatPort);
-            trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
+//            trigger(new CCHeartbeat.Start(event.overlayId), heartbeatPort);
+//            trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
             scheduleNextRebootstrap(event.overlayId, 1);
         }
     };
 
-    Handler handleExternalSample = new Handler<CCOverlaySample.Response>() {
-
-        @Override
-        public void handle(CCOverlaySample.Response resp) {
-            LOG.info("{}overlay:{} external bootstrap:{}", new Object[]{logPrefix, resp.req.overlayId, resp.overlaySample});
-            if (OverlayMngrConfig.isGlobalCroupier(resp.req.overlayId)) {
-                //TODO Alex
-            } else {
-                trigger(new CroupierJoin(resp.req.overlayId, resp.overlaySample), croupierStatusPort);
-            }
-        }
-    };
+//    Handler handleExternalSample = new Handler<CCOverlaySample.Response>() {
+//
+//        @Override
+//        public void handle(CCOverlaySample.Response resp) {
+//            LOG.info("{}overlay:{} external bootstrap:{}", new Object[]{logPrefix, resp.req.overlayId, resp.overlaySample});
+//            if (OverlayMngrConfig.isGlobalCroupier(resp.req.overlayId)) {
+//                //TODO Alex
+//            } else {
+//                trigger(new CroupierJoin(resp.req.overlayId, resp.overlaySample), croupierStatusPort);
+//            }
+//        }
+//    };
 
     Handler handleDisconnect = new Handler<CroupierDisconnected>() {
         @Override
@@ -119,7 +117,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
                 //TODO Alex
             } else {
                 LOG.info("{}croupier:{} disconnected", new Object[]{logPrefix, event.overlayId});
-                trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
+//                trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
                 rebootstrap.put(event.overlayId, 1); //speed up until rebootstrapped
             }
         }
@@ -129,7 +127,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
         @Override
         public void handle(RebootstrapTimeout event) {
             LOG.debug("{}rebootstraping...", logPrefix);
-            trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
+//            trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
             scheduleNextRebootstrap(event.overlayId, rebootstrap.get(event.overlayId));
         }
     };

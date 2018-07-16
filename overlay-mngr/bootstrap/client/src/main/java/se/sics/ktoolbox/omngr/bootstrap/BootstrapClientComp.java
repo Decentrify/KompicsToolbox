@@ -42,9 +42,6 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
-import se.sics.ktoolbox.cc.heartbeat.event.CCHeartbeat;
-import se.sics.ktoolbox.cc.heartbeat.event.CCOverlaySample;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
@@ -55,6 +52,7 @@ import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
+ * TODO removed caracal - fix CC bootstrap
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BootstrapClientComp extends ComponentDefinition {
@@ -69,7 +67,7 @@ public class BootstrapClientComp extends ComponentDefinition {
     private String logPrefix = "";
 
     //******************************CONNECTIONS*********************************
-    Negative<CCHeartbeatPort> heartbeatPort = provides(CCHeartbeatPort.class);
+//    Negative<CCHeartbeatPort> heartbeatPort = provides(CCHeartbeatPort.class);
     Positive<Network> networkPort = requires(Network.class);
     Positive<Timer> timerPort = requires(Timer.class);
     //*****************************EXTERNAL_STATE*******************************
@@ -80,7 +78,7 @@ public class BootstrapClientComp extends ComponentDefinition {
     private Set<OverlayId> heartbeats = new HashSet<>();
     //********************************AUX_STATE*********************************
     private UUID heartbeatTimeout;
-    private Map<Identifier, Pair<CCOverlaySample.Request, UUID>> pendingRequests = new HashMap<>();
+//    private Map<Identifier, Pair<CCOverlaySample.Request, UUID>> pendingRequests = new HashMap<>();
 
     public BootstrapClientComp(Init init) {
         SystemKCWrapper systemConfig = new SystemKCWrapper(config());
@@ -94,10 +92,10 @@ public class BootstrapClientComp extends ComponentDefinition {
 
         subscribe(handleStart, control);
         subscribe(handleHeartbeat, timerPort);
-        subscribe(handleHeartbeatStart, heartbeatPort);
-        subscribe(handleSampleRequest, heartbeatPort);
-        subscribe(handleSampleRequestTimeout, timerPort);
-        subscribe(handleSampleResponse, networkPort);
+//        subscribe(handleHeartbeatStart, heartbeatPort);
+//        subscribe(handleSampleRequest, heartbeatPort);
+//        subscribe(handleSampleRequestTimeout, timerPort);
+//        subscribe(handleSampleResponse, networkPort);
     }
 
     Handler handleStart = new Handler<Start>() {
@@ -126,59 +124,59 @@ public class BootstrapClientComp extends ComponentDefinition {
         trigger(container, networkPort);
     }
 
-    Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
-        @Override
-        public void handle(CCHeartbeat.Start heartbeat) {
-            LOG.info("{}heartbeat on:{}", logPrefix, heartbeat.overlayId);
-            heartbeats.add(heartbeat.overlayId);
-            sendHeartbeat(heartbeat.overlayId);
-        }
-    };
+//    Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
+//        @Override
+//        public void handle(CCHeartbeat.Start heartbeat) {
+//            LOG.info("{}heartbeat on:{}", logPrefix, heartbeat.overlayId);
+//            heartbeats.add(heartbeat.overlayId);
+//            sendHeartbeat(heartbeat.overlayId);
+//        }
+//    };
+//
+//    Handler handleSampleRequest = new Handler<CCOverlaySample.Request>() {
+//        @Override
+//        public void handle(CCOverlaySample.Request req) {
+//            LOG.debug("{}sample request for:{}", logPrefix, req.overlayId);
+//
+//            Sample.Request content = new Sample.Request(req.overlayId);
+//            UUID tId = scheduleSampleReqTimeout(content.getId());
+//            pendingRequests.put(content.getId(), Pair.with(req, tId));
+//            KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
+//            LOG.trace("{}sending:{}", logPrefix, container);
+//            trigger(container, networkPort);
+//        }
+//    };
 
-    Handler handleSampleRequest = new Handler<CCOverlaySample.Request>() {
-        @Override
-        public void handle(CCOverlaySample.Request req) {
-            LOG.debug("{}sample request for:{}", logPrefix, req.overlayId);
-
-            Sample.Request content = new Sample.Request(req.overlayId);
-            UUID tId = scheduleSampleReqTimeout(content.getId());
-            pendingRequests.put(content.getId(), Pair.with(req, tId));
-            KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
-            LOG.trace("{}sending:{}", logPrefix, container);
-            trigger(container, networkPort);
-        }
-    };
-
-    ClassMatchedHandler handleSampleResponse
-            = new ClassMatchedHandler<Sample.Response, KContentMsg<?, ?, Sample.Response>>() {
-
-                @Override
-                public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> container) {
-                    LOG.trace("{}received:{}", logPrefix, container);
-                    Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(content.getId());
-                    if (req == null) {
-                        LOG.trace("{}late:{}", logPrefix, container);
-                        return;
-                    }
-                    cancelTimeout(req.getValue1());
-                    LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
-                    answer(req.getValue0(), req.getValue0().answer(content.sample));
-                }
-            };
-
-    Handler handleSampleRequestTimeout = new Handler<SampleRequestTimeout>() {
-        @Override
-        public void handle(SampleRequestTimeout timeout) {
-            LOG.debug("{}timeout on sample request", logPrefix);
-            Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(timeout.eventId);
-            if (req == null) {
-                LOG.trace("{}late:{}", logPrefix, timeout);
-                return;
-            }
-            LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
-            answer(req.getValue0(), req.getValue0().answer(new ArrayList<KAddress>()));
-        }
-    };
+//    ClassMatchedHandler handleSampleResponse
+//            = new ClassMatchedHandler<Sample.Response, KContentMsg<?, ?, Sample.Response>>() {
+//
+//                @Override
+//                public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> container) {
+//                    LOG.trace("{}received:{}", logPrefix, container);
+//                    Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(content.getId());
+//                    if (req == null) {
+//                        LOG.trace("{}late:{}", logPrefix, container);
+//                        return;
+//                    }
+//                    cancelTimeout(req.getValue1());
+//                    LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
+//                    answer(req.getValue0(), req.getValue0().answer(content.sample));
+//                }
+//            };
+//
+//    Handler handleSampleRequestTimeout = new Handler<SampleRequestTimeout>() {
+//        @Override
+//        public void handle(SampleRequestTimeout timeout) {
+//            LOG.debug("{}timeout on sample request", logPrefix);
+//            Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(timeout.eventId);
+//            if (req == null) {
+//                LOG.trace("{}late:{}", logPrefix, timeout);
+//                return;
+//            }
+//            LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
+//            answer(req.getValue0(), req.getValue0().answer(new ArrayList<KAddress>()));
+//        }
+//    };
 
     //*******************************TIMEOUTS***********************************
     private void cancelTimeout(UUID timeout) {
