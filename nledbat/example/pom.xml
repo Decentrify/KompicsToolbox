@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>se.sics.ktoolbox</groupId>
+    <artifactId>nledbat</artifactId>
+    <version>2.0.4-SNAPSHOT</version>
+  </parent>
+  <groupId>se.sics.ktoolbox.nledbat</groupId>
+  <artifactId>example</artifactId>
+  <packaging>jar</packaging>
+  <name>NLedbat Example</name>
+    
+  <properties>
+    <nat.version>0.0.5-SNAPSHOT</nat.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>se.sics.ktoolbox.nledbat</groupId>
+      <artifactId>core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>se.sics.kompics.basic</groupId>
+      <artifactId>kompics-component-java-timer</artifactId>
+      <version>${kompics.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>se.sics.nat.mngr</groupId>
+      <artifactId>core</artifactId>
+      <version>${nat.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>se.sics.kompics.basic</groupId>
+      <artifactId>kompics-component-netty-network</artifactId>
+      <version>${kompics.version}</version>
+    </dependency>
+        
+    <dependency>
+      <groupId>se.sics.ktoolbox.util</groupId>
+      <artifactId>network</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+        
+    <dependency> 
+      <groupId>se.sics.ktoolbox.netmngr</groupId>
+      <artifactId>network</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>se.sics.nat.stun</groupId>
+      <artifactId>network</artifactId>
+      <version>${nat.version}</version>
+    </dependency>
+  </dependencies>
+</project>

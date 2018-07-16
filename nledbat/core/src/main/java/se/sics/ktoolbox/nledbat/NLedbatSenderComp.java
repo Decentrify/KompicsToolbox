@@ -57,7 +57,7 @@ public class NLedbatSenderComp extends ComponentDefinition {
   Positive<Timer> timerPort = requires(Timer.class);
   Negative<Network> incomingNetworkPort = provides(Network.class);
   Positive<Network> outgoingNetworkPort = requires(Network.class);
-  Negative<NLedbatSenderCtrl> ctrlPort = provides(NLedbatSenderCtrl.class);
+  Negative<NLedbatSenderCtrl> ledbatCtrl = provides(NLedbatSenderCtrl.class);
 
   private final Identifier dataId;
   private final Identifier senderId;
@@ -155,7 +155,7 @@ public class NLedbatSenderComp extends ComponentDefinition {
 
     @Override
     public void handle(StatusTimeout event) {
-      trigger(new NLedbatEvents.SenderStatus(cwnd.size(), rttEstimator.rto(), pendingData.size()), ctrlPort);
+      trigger(new NLedbatEvents.SenderStatus(cwnd.size(), rttEstimator.rto(), pendingData.size()), ledbatCtrl);
     }
   };
 
@@ -261,7 +261,7 @@ public class NLedbatSenderComp extends ComponentDefinition {
 
   public static class HardCodedConfig {
 
-    public static int statusPeriod = 100;
+    public static long statusPeriod = 100;
     public static int windowSize = 50;
     public static int maxTimeout = 25000;
   }

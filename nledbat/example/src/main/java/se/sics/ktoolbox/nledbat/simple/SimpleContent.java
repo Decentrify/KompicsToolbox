@@ -16,23 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nledbat.event.external;
-
-import se.sics.kompics.KompicsEvent;
+package se.sics.ktoolbox.nledbat.simple;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NLedbatEvents {
-  public static class SenderStatus implements KompicsEvent {
-    public final long cwndSize;
-    public final long rto;
-    public final int bufferedMsgs;
-    
-    public SenderStatus(long cwndSize, long rto, int bufferedMsgs) {
-      this.cwndSize = cwndSize;
-      this.rto = rto;
-      this.bufferedMsgs = bufferedMsgs;
-    }
-  } 
+public class SimpleContent {
+  public final byte[] content;
+  
+  public SimpleContent(byte[] content) {
+    this.content = content;
+  }
 }
