@@ -22,7 +22,6 @@ import java.io.Closeable;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import javax.net.ssl.HostnameVerifier;
@@ -235,7 +234,8 @@ public class WebClient implements Closeable {
         Response response = client.target(target).path(path).request(mediaType).get();
         return new Try.Success(new WebResponse(response));
       } catch (ProcessingException ex) {
-        return new Try.Failure(new CommunicationException(ex));
+        String msg = "communication problem with:" + target + path;
+        return new Try.Failure(new CommunicationException(msg, ex));
       } catch (Exception ex) {
         return new Try.Failure(ex);
       }
@@ -254,7 +254,8 @@ public class WebClient implements Closeable {
         Response response = client.target(target).path(path).request(mediaType).post(payload);
         return new Try.Success(new WebResponse(response));
       } catch (ProcessingException ex) {
-        return new Try.Failure(new CommunicationException(ex));
+        String msg = "communication problem with:" + target + path;
+        return new Try.Failure(new CommunicationException(msg, ex));
       } catch (Exception ex) {
         return new Try.Failure(ex);
       }
