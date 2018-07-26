@@ -13,6 +13,11 @@
   
   <dependencies>
     <dependency>
+      <groupId>se.sics.ktoolbox.util</groupId>
+      <artifactId>core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
       <version>${jaxrs.version}</version>

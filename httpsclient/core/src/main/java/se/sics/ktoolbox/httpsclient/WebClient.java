@@ -22,17 +22,22 @@ import java.io.Closeable;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.Optional;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import se.sics.ktoolbox.util.trysf.Try;
+import static se.sics.ktoolbox.util.trysf.TryHelper.tryFSucc1;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -42,7 +47,7 @@ public class WebClient implements Closeable {
   private static Builder builder = null;
 
   public static void setBuilder(Builder b) {
-    if(builder != null) {
+    if (builder != null) {
       throw new RuntimeException("double builder set");
     }
     builder = b;
@@ -153,14 +158,14 @@ public class WebClient implements Closeable {
   }
 
   public static WebClient httpsInstance() {
-    if(builder == null) {
+    if (builder == null) {
       throw new RuntimeException("builder not set");
     }
     return builder.httpsInstance();
   }
 
   public static WebClient httpInstance() {
-    if(builder == null) {
+    if (builder == null) {
       throw new RuntimeException("builder not set");
     }
     return builder.httpInstance();
@@ -214,6 +219,104 @@ public class WebClient implements Closeable {
 
     public static HostnameVerifier acceptAnyHost() {
       return (String string, SSLSession ssls) -> true;
+    }
+  }
+
+  // TRY
+  public Try<WebResponse> tryGet() {
+    Try<WebResponse> result = trySanityCheck()
+      .flatMap(tryDoGet());
+    return result;
+  }
+
+  private BiFunction<Boolean, Throwable, Try<WebResponse>> tryDoGet() {
+    return tryFSucc1((Boolean _in) -> {
+      try {
+        Response response = client.target(target).path(path).request(mediaType).get();
+        return new Try.Success(new WebResponse(response));
+      } catch (ProcessingException ex) {
+        return new Try.Failure(new CommunicationException(ex));
+      } catch (Exception ex) {
+        return new Try.Failure(ex);
+      }
+    });
+  }
+
+  public Try<WebResponse> tryPost() {
+    Try<WebResponse> result = trySanityCheck()
+      .flatMap(tryDoPost());
+    return result;
+  }
+  
+  private BiFunction<Boolean, Throwable, Try<WebResponse>> tryDoPost() {
+    return tryFSucc1((Boolean _in) -> {
+      try {
+        Response response = client.target(target).path(path).request(mediaType).post(payload);
+        return new Try.Success(new WebResponse(response));
+      } catch (ProcessingException ex) {
+        return new Try.Failure(new CommunicationException(ex));
+      } catch (Exception ex) {
+        return new Try.Failure(ex);
+      }
+    });
+  }
+
+  private Try<Boolean> trySanityCheck() {
+    if (client == null) {
+      return new Try.Failure(new IllegalStateException(NO_CLIENT));
+    }
+
+    if (target == null || target.isEmpty()) {
+      return new Try.Failure(new IllegalStateException(NO_TARGET));
+    }
+
+    if (path == null || path.isEmpty()) {
+      return new Try.Failure(new IllegalStateException(NO_PATH));
+    }
+    return new Try.Success(true);
+  }
+
+  public static final String NO_CLIENT = "Client not created.";
+  public static final String NO_TARGET = "Target not set.";
+  public static final String NO_PATH = "Path not set.";
+
+  public static class CommunicationException extends Exception {
+
+    public CommunicationException(String msg, Throwable cause) {
+      super(msg, cause);
+    }
+
+    public CommunicationException(Throwable cause) {
+      super(cause);
+    }
+  }
+
+  public static class ContentException extends Exception {
+
+    public ContentException(String msg, Throwable cause) {
+      super(msg, cause);
+    }
+
+    public ContentException(Throwable cause) {
+      super(cause);
+    }
+
+    public ContentException(String msg) {
+      super(msg);
+    }
+  }
+
+  public static class ClientException extends Exception {
+    public ClientException(String msg, Throwable cause) {
+      super(msg, cause);
+    }
+
+    public ClientException(Throwable cause) {
+      super(cause);
+    }
+
+    public ClientException(String msg) {
+      super(msg);
     }
   }
 }

@@ -19,9 +19,15 @@
 package se.sics.ktoolbox.httpsclient;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import se.sics.ktoolbox.httpsclient.WebClient.ContentException;
+import se.sics.ktoolbox.util.trysf.Try;
+import se.sics.ktoolbox.util.trysf.TryHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -72,5 +78,31 @@ public class WebResponse {
     if (!response.getMediaType().getSubtype().equals(MediaType.APPLICATION_JSON_TYPE.getSubtype())) {
       throw new IllegalStateException("expected json type, found:" + response.getMediaType().getSubtype());
     }
+  }
+
+  // TRY
+  public static <C> BiFunction<WebResponse, Throwable, Try<C>>
+    readContent(Class<C> contentType, Function<String, Throwable> serverExceptionMapper) {
+    return TryHelper.tryFSucc1((WebResponse wrep) -> {
+      Response response = wrep.response;
+      if (!response.getMediaType().getSubtype().equals(MediaType.APPLICATION_JSON_TYPE.getSubtype())) {
+        return new Try.Failure(new ContentException("expected json type, found:" + response.getMediaType().getSubtype()));
+      }
+      Response.Status.Family status = response.getStatusInfo().getFamily();
+      try {
+        if (!(status == Response.Status.Family.INFORMATIONAL || status == Response.Status.Family.SUCCESSFUL)) {
+          String stringServerEx = response.readEntity(String.class);
+          Throwable serverEx = serverExceptionMapper.apply(stringServerEx);
+          return new Try.Failure(serverEx);
+        } else {
+          String stringContent = response.readEntity(String.class);
+          C content = new Gson().fromJson(stringContent, contentType);
+          return new Try.Success(content);
+        }
+      } catch (ProcessingException | JsonSyntaxException ex) {
+        return new Try.Failure(new ContentException(ex));
+      }
+    }
+    );
   }
 }

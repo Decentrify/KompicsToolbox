@@ -21,6 +21,7 @@ package se.sics.ktoolbox.util.trysf;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
@@ -30,38 +31,82 @@ public class TryHelper {
     return new Try.Success(true);
   }
 
-  public static <I extends Object, O extends Object> BiFunction<I, Throwable, O> tryFSucc(Function<I, O> f) {
+  public static <I, O> BiFunction<I, Throwable, O> tryFSucc0(Supplier<O> s) {
+    return (I input, Throwable fail) -> {
+      return s.get();
+    };
+  }
+
+  public static <I, O> BiFunction<I, Throwable, O> tryFSucc1(Function<I, O> f) {
     return (I input, Throwable fail) -> {
       return f.apply(input);
     };
   }
 
-  public static <I extends Object, O extends Object> BiFunction<I, Throwable, O> tryFFail(Function<Throwable, O> f) {
+  public static <I1, I2, O> BiFunction<Pair<I1, I2>, Throwable, O>
+    tryFSucc2(Function<I1, Function<I2, O>> f) {
+    return (Pair<I1, I2> input, Throwable fail) -> {
+      return f.apply(input.getValue0()).apply(input.getValue1());
+    };
+  }
+
+  public static <I1, I2, I3, O> BiFunction<Triplet<I1, I2, I3>, Throwable, O>
+    tryFSucc3(Function<I1, Function<I2, Function<I3, O>>> f) {
+    return (Triplet<I1, I2, I3> input, Throwable fail) -> {
+      return f.apply(input.getValue0()).apply(input.getValue1()).apply(input.getValue2());
+    };
+  }
+
+  public static <I, O> BiFunction<I, Throwable, O> tryFFail(Function<Throwable, O> f) {
     return (I input, Throwable fail) -> {
       return f.apply(fail);
     };
   }
 
-  public static Try<Pair> tryPair(Try input1, Try input2) {
-    if (input1.isFailure()) {
-      return (Try.Failure) input1;
-    }
-    if (input2.isFailure()) {
-      return (Try.Failure) input2;
-    }
-    Pair tupleInput = Pair.with(input1.get(), input2.get());
-    return new Try.Success(tupleInput);
-  }
+  public static class Joiner {
 
-  public static <O extends Object> Try<Triplet> tryTriplet(Try<Pair<O, O>> input12, Try input3) {
-    if (input12.isFailure()) {
-      return (Try.Failure) input12;
+    public static <I1, I2> Try<I2> map(Try<I1> input1, Try<I2> input2) {
+      if (input1.isFailure()) {
+        return (Try.Failure) input1;
+      }
+      return input2;
     }
-    if (input3.isFailure()) {
-      return (Try.Failure) input3;
+
+    public static <I1, I2> Try<Pair<I1, I2>> combine(Try<I1> in1, Try<I2> in2) {
+      if (in1.isFailure()) {
+        return (Try.Failure) in1;
+      }
+      if (in2.isFailure()) {
+        return (Try.Failure) in2;
+      }
+      Pair tupleInput = Pair.with(in1.get(), in2.get());
+      return new Try.Success(tupleInput);
     }
-    Triplet tupleInput = input12.get().addAt2(input3);
-    return new Try.Success(tupleInput);
+
+    public static <I1, I2, I3> Try<Triplet<I1, I2, I3>> combine(Try<I1> in1, Try<I2> in2, Try<I3> in3) {
+      if (in1.isFailure()) {
+        return (Try.Failure) in1;
+      }
+      if (in2.isFailure()) {
+        return (Try.Failure) in2;
+      }
+      if (in3.isFailure()) {
+        return (Try.Failure) in3;
+      }
+      Triplet tupleInput = Triplet.with(in1, in2, in3);
+      return new Try.Success(tupleInput);
+    }
+    
+    public static <I1, I2, I3> Try<Triplet<I1, I2, I3>> combine2(Try<Pair<I1, I2>> input12, Try<I3> input3) {
+      if (input12.isFailure()) {
+        return (Try.Failure) input12;
+      }
+      if (input3.isFailure()) {
+        return (Try.Failure) input3;
+      }
+      Triplet tupleInput = input12.get().addAt2(input3);
+      return new Try.Success(tupleInput);
+    }
   }
 
   public static Throwable tryError(Try input) {
