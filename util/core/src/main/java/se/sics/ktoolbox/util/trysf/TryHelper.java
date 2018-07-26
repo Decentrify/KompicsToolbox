@@ -107,6 +107,13 @@ public class TryHelper {
       Triplet tupleInput = input12.get().addAt2(input3);
       return new Try.Success(tupleInput);
     }
+    
+    public static <I> Try<String> successMsg(Try<I> in, String msg) {
+      if(in.isSuccess()) {
+        return new Try.Success(String.format(msg, in.get().toString()));
+      } 
+      return (Try.Failure)in;
+    }
   }
 
   public static Throwable tryError(Try input) {
