@@ -52,8 +52,11 @@ public class TryHelper {
 
   public static <I1, I2, I3, O> BiFunction<Triplet<I1, I2, I3>, Throwable, O>
     tryFSucc3(Function<I1, Function<I2, Function<I3, O>>> f) {
-    return (Triplet<I1, I2, I3> input, Throwable fail) -> {
-      return f.apply(input.getValue0()).apply(input.getValue1()).apply(input.getValue2());
+    return (Triplet<I1, I2, I3> input, Throwable fail) -> { 
+      Function<I2, Function<I3, O>> pf1 = f.apply(input.getValue0());
+      Function<I3, O> pf2 = pf1.apply(input.getValue1());
+      O result = pf2.apply(input.getValue2());
+      return result;
     };
   }
 
@@ -79,7 +82,7 @@ public class TryHelper {
       if (in2.isFailure()) {
         return (Try.Failure) in2;
       }
-      Pair tupleInput = Pair.with(in1.get(), in2.get());
+      Pair<I1,I2> tupleInput = Pair.with(in1.get(), in2.get());
       return new Try.Success(tupleInput);
     }
 
@@ -93,7 +96,7 @@ public class TryHelper {
       if (in3.isFailure()) {
         return (Try.Failure) in3;
       }
-      Triplet tupleInput = Triplet.with(in1, in2, in3);
+      Triplet<I1,I2,I3> tupleInput = Triplet.with(in1.get(), in2.get(), in3.get());
       return new Try.Success(tupleInput);
     }
     
@@ -104,7 +107,7 @@ public class TryHelper {
       if (input3.isFailure()) {
         return (Try.Failure) input3;
       }
-      Triplet tupleInput = input12.get().addAt2(input3);
+      Triplet<I1,I2,I3> tupleInput = input12.get().addAt2(input3.get());
       return new Try.Success(tupleInput);
     }
     
