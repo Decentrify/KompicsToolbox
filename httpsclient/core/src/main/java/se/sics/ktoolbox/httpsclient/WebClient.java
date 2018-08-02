@@ -43,9 +43,9 @@ import static se.sics.ktoolbox.util.trysf.TryHelper.tryFSucc1;
  */
 public class WebClient implements Closeable {
 
-  private static Builder builder = null;
+  private static WebClientBuilder builder = null;
 
-  public static void setBuilder(Builder b) {
+  public static void setBuilder(WebClientBuilder b) {
     if (builder != null) {
       throw new RuntimeException("double builder set");
     }
@@ -170,14 +170,7 @@ public class WebClient implements Closeable {
     return builder.httpInstance();
   }
 
-  public static interface Builder {
-
-    public WebClient httpsInstance();
-
-    public WebClient httpInstance();
-  }
-
-  public static class BasicBuilder implements Builder {
+  public static class BasicBuilder implements WebClientBuilder {
 
     @Override
     public WebClient httpsInstance() {
