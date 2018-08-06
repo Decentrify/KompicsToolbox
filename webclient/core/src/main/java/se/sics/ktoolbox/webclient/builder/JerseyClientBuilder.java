@@ -33,6 +33,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.spi.Connector;
 import org.glassfish.jersey.client.spi.ConnectorProvider;
 import se.sics.ktoolbox.webclient.WebClient;
 import se.sics.ktoolbox.webclient.WebClientBuilder;
@@ -128,12 +129,12 @@ public class JerseyClientBuilder implements WebClientBuilder {
       config.property(property.getKey(), property.getValue());
     }
 
-    ConnectorProvider connectorProvider = new ApacheConnectorProvider();
+    ConnectorProvider connectorProvider = (client, runtimeConfig) -> new SimpleApacheConnector(apacheHttpClientBuilder.build());
     config.connectorProvider(connectorProvider);
 
     return config;
   }
-
+  
   @Override
   public WebClient httpsInstance() {
     return new WebClient(build());
