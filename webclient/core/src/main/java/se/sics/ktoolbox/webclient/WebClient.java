@@ -22,8 +22,11 @@ import java.io.Closeable;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -82,6 +85,10 @@ public class WebClient implements Closeable {
     this.payload = Entity.entity(object, mediaType);
     return this;
   }
+  
+  public String stringPayload() {
+    return payload.toString();
+  }
 
   @Override
   public void close() {
@@ -111,6 +118,12 @@ public class WebClient implements Closeable {
   public AsyncWebResponse doAsyncPost() {
     performSanityCheck();
     Future<Response> response = client.target(target).path(path).request(mediaType).async().post(payload);
+    try {
+      response.get();
+    } catch (InterruptedException | ExecutionException ex) {
+      ex.printStackTrace();
+      System.err.println(ex);
+    } 
     return new AsyncWebResponse(response);
   }
 

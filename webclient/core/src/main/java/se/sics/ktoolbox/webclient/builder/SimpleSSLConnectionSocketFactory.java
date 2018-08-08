@@ -18,12 +18,18 @@
  */
 package se.sics.ktoolbox.webclient.builder;
 
+import java.security.cert.X509Certificate;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.client.WebTarget;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLInitializationException;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
@@ -41,6 +47,10 @@ public class SimpleSSLConnectionSocketFactory {
   public SimpleSSLConnectionSocketFactory(TlsConfiguration configuration, @Nullable HostnameVerifier verifier) {
     this.configuration = configuration;
     this.verifier = verifier;
+  }
+
+  public SimpleSSLConnectionSocketFactory() {
+    this(new TlsConfiguration(), null);
   }
 
   public SSLConnectionSocketFactory getSocketFactory() throws SSLInitializationException {
@@ -81,8 +91,35 @@ public class SimpleSSLConnectionSocketFactory {
   private void loadTrustMaterial(SSLContextBuilder sslContextBuilder) throws Exception {
     TrustStrategy trustStrategy = null;
     if (configuration.isTrustSelfSignedCertificates()) {
-      trustStrategy = new TrustSelfSignedStrategy();
+//      trustStrategy = new TrustSelfSignedStrategy();
+      trustStrategy = new TrustAllStrategy();
     }
     sslContextBuilder.loadTrustMaterial(trustStrategy);
   }
+
+  TrustManager[] trustAllCerts() {
+    return new TrustManager[]{
+      new X509TrustManager() {
+        @Override
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+          return null;
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+        }
+      }
+    };
+  }
+
+  HostnameVerifier anyHost = new HostnameVerifier() {
+    @Override
+    public boolean verify(String string, SSLSession ssls) {
+      return true;
+    }
+  };
 }

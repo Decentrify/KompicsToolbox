@@ -26,8 +26,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class TlsConfiguration {
 
-  private boolean trustSelfSignedCertificates = false;
-  private boolean verifyHostname = true;
+  private boolean trustSelfSignedCertificates = true;
+  private boolean verifyHostname = false;
 
   @JsonProperty
   public boolean isTrustSelfSignedCertificates() {
