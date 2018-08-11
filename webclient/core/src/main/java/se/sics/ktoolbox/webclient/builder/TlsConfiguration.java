@@ -20,6 +20,7 @@ package se.sics.ktoolbox.webclient.builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+
 /**
  * simplified 
  * https://github.com/dropwizard/dropwizard/tree/master/dropwizard-client/src/main/java/io/dropwizard/client

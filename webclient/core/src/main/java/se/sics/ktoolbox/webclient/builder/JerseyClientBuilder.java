@@ -24,16 +24,14 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import javax.annotation.Nullable;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.net.ssl.HostnameVerifier;
 import org.apache.http.config.Registry;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.eclipse.persistence.jaxb.rs.MOXyJsonProvider;
 import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.spi.Connector;
 import org.glassfish.jersey.client.spi.ConnectorProvider;
 import se.sics.ktoolbox.webclient.WebClient;
 import se.sics.ktoolbox.webclient.WebClientBuilder;
@@ -50,9 +48,6 @@ public class JerseyClientBuilder implements WebClientBuilder {
   private JerseyClientConfiguration configuration = new JerseyClientConfiguration();
 
   private HttpClientBuilder apacheHttpClientBuilder;
-
-  @Nullable
-  private ObjectMapper objectMapper;
 
   public JerseyClientBuilder() {
     this.apacheHttpClientBuilder = new HttpClientBuilder();
@@ -83,11 +78,6 @@ public class JerseyClientBuilder implements WebClientBuilder {
     return this;
   }
 
-  public JerseyClientBuilder using(ObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
-    return this;
-  }
-
   public JerseyClientBuilder using(HostnameVerifier verifier) {
     apacheHttpClientBuilder.using(verifier);
     return this;
@@ -98,43 +88,32 @@ public class JerseyClientBuilder implements WebClientBuilder {
     return this;
   }
 
-  public Client build() {
-    if (objectMapper == null) {
-      throw new IllegalStateException("Must have an object mapper");
-    }
-
-    return build(objectMapper);
-  }
-
-  private Client build(ObjectMapper objectMapper) {
-    final Client client = ClientBuilder.newClient(buildConfig(objectMapper));
-//    client.register(new JerseyIgnoreRequestUserAgentHeaderFilter());
+  private Client build() {
+    final Client client = ClientBuilder.newClient(buildConfig());
     return client;
   }
 
-  private Configuration buildConfig(final ObjectMapper objectMapper) {
+  private Configuration buildConfig() {
     final ClientConfig config = new ClientConfig();
-
-    for (Object singleton : this.singletons) {
+    this.singletons.forEach((singleton) -> {
       config.register(singleton);
-    }
-
-    for (Class<?> provider : this.providers) {
+    });
+    this.providers.forEach((provider) -> {
       config.register(provider);
-    }
+    });
+    config.getClasses().add(MOXyJsonProvider.class);
 
-    config.register(new JacksonFeature(objectMapper));
-
-    for (Map.Entry<String, Object> property : this.properties.entrySet()) {
+    this.properties.entrySet().forEach((property) -> {
       config.property(property.getKey(), property.getValue());
-    }
+    });
 
-    ConnectorProvider connectorProvider = (client, runtimeConfig) -> new SimpleApacheConnector(apacheHttpClientBuilder.build());
+    ConnectorProvider connectorProvider
+      = (client, runtimeConfig) -> new SimpleApacheConnector(apacheHttpClientBuilder.build());
     config.connectorProvider(connectorProvider);
 
     return config;
   }
-  
+
   @Override
   public WebClient httpsInstance() {
     return new WebClient(build());

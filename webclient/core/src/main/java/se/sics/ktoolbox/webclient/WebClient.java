@@ -58,12 +58,11 @@ public class WebClient implements Closeable {
   private Class respContentClass;
   private String target;
   private String path;
-  private Entity payload;
-  private String mediaType = MediaType.APPLICATION_JSON;
+  private Entity<?> payload;
 
   public WebClient(Client client) {
     this.client = client;
-    this.payload = Entity.entity("", mediaType);
+    this.payload = Entity.entity("", MediaType.APPLICATION_JSON);
   }
 
   public WebClient setTarget(String target) {
@@ -76,20 +75,11 @@ public class WebClient implements Closeable {
     return this;
   }
 
-  public WebClient setMediaType(String mediaType) {
-    this.mediaType = mediaType;
-    return this;
-  }
-
-  public WebClient setPayload(Object object) {
-    this.payload = Entity.entity(object, mediaType);
+  public <P> WebClient setPayload(P payload, MediaType mt) {
+    this.payload = Entity.entity(payload, mt);
     return this;
   }
   
-  public String stringPayload() {
-    return payload.toString();
-  }
-
   @Override
   public void close() {
     if (client != null) {
@@ -99,55 +89,85 @@ public class WebClient implements Closeable {
 
   public WebResponse doGet() {
     performSanityCheck();
-    Response response = client.target(target).path(path).request(mediaType).get();
+    Response response = client
+      .target(target)
+      .path(path)
+      .request()
+      .get();
     return new WebResponse(response);
   }
 
   public AsyncWebResponse doAsyncGet() {
     performSanityCheck();
-    Future<Response> response = client.target(target).path(path).request(mediaType).async().get();
+    Future<Response> response = client
+      .target(target)
+      .path(path)
+      .request()
+      .async()
+      .get();
     return new AsyncWebResponse(response);
   }
 
   public WebResponse doPost() {
     performSanityCheck();
-    Response response = client.target(target).path(path).request(mediaType).post(payload);
+    Response response = client
+      .target(target)
+      .path(path)
+      .request()
+      .post(payload);
     return new WebResponse(response);
   }
 
   public AsyncWebResponse doAsyncPost() {
     performSanityCheck();
-    Future<Response> response = client.target(target).path(path).request(mediaType).async().post(payload);
-    try {
-      response.get();
-    } catch (InterruptedException | ExecutionException ex) {
-      ex.printStackTrace();
-      System.err.println(ex);
-    } 
+    Future<Response> response = client
+      .target(target)
+      .path(path)
+      .request()
+      .async()
+      .post(payload);
     return new AsyncWebResponse(response);
   }
 
   public WebResponse doPut() {
     performSanityCheck();
-    Response response = client.target(target).path(path).request(mediaType).put(payload);
+    Response response = client
+      .target(target)
+      .path(path)
+      .request()
+      .put(payload);
     return new WebResponse(response);
   }
 
   public AsyncWebResponse doAsyncPut() {
     performSanityCheck();
-    Future<Response> response = client.target(target).path(path).request(mediaType).async().put(payload);
+    Future<Response> response = client
+      .target(target)
+      .path(path)
+      .request()
+      .async()
+      .put(payload);
     return new AsyncWebResponse(response);
   }
 
   public WebResponse doDelete() {
     performSanityCheck();
-    Response response = client.target(target).path(path).request(mediaType).delete();
+    Response response = client
+      .target(target)
+      .path(path)
+      .request()
+      .delete();
     return new WebResponse(response);
   }
 
   public AsyncWebResponse doAsyncDelete() {
     performSanityCheck();
-    Future<Response> response = client.target(target).path(path).request(mediaType).async().delete();
+    Future<Response> response = client
+      .target(target)
+      .path(path)
+      .request()
+      .async()
+      .delete();
     return new AsyncWebResponse(response);
   }
 
@@ -237,7 +257,11 @@ public class WebClient implements Closeable {
   private BiFunction<Boolean, Throwable, Try<WebResponse>> tryDoGet() {
     return tryFSucc1((Boolean _in) -> {
       try {
-        Response response = client.target(target).path(path).request(mediaType).get();
+        Response response = client
+          .target(target)
+          .path(path)
+          .request()
+          .get();
         return new Try.Success(new WebResponse(response));
       } catch (ProcessingException ex) {
         String msg = "communication problem with:" + target + path;
@@ -257,7 +281,11 @@ public class WebClient implements Closeable {
   private BiFunction<Boolean, Throwable, Try<WebResponse>> tryDoPost() {
     return tryFSucc1((Boolean _in) -> {
       try {
-        Response response = client.target(target).path(path).request(mediaType).post(payload);
+        Response response = client
+          .target(target)
+          .path(path)
+          .request()
+          .post(payload);
         return new Try.Success(new WebResponse(response));
       } catch (ProcessingException ex) {
         String msg = "communication problem with:" + target + path;

@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.webclient.hops;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import se.sics.ktoolbox.webclient.WebClient;
 import se.sics.ktoolbox.webclient.WebResponse;
 import se.sics.ktoolbox.webclient.hops.dto.DelaReportDTO;
@@ -40,7 +42,7 @@ public class HopssiteClient {
     WebResponse resp = WebClient.httpsInstance()
       .setTarget(Hopssite.Target.bbc5_test())
       .setPath(Hopssite.Path.search())
-      .setPayload(searchParam)
+      .setPayload(searchParam, MediaType.APPLICATION_JSON_TYPE)
       .doPost();
     SearchServiceDTO.SearchResult result = resp.readContent(SearchServiceDTO.SearchResult.class);
     System.out.println("nr hits:" + result.getNrHits());
@@ -54,7 +56,7 @@ public class HopssiteClient {
     WebResponse resp = WebClient.httpsInstance()
       .setTarget(Hopssite.Target.bbc5_test())
       .setPath(Hopssite.Path.reportDataValues())
-      .setPayload(delaReport)
+      .setPayload(delaReport, MediaType.APPLICATION_JSON_TYPE)
       .doPost();
     String result = resp.readContent(String.class);
     System.out.println("result:" + result);
@@ -68,7 +70,7 @@ public class HopssiteClient {
     WebResponse resp = WebClient.httpsInstance()
       .setTarget(Hopssite.Target.bbc5_test())
       .setPath(Hopssite.Path.reportDownloadValues())
-      .setPayload(delaReport)
+      .setPayload(delaReport, MediaType.APPLICATION_JSON_TYPE)
       .doPost();
     String result = resp.readContent(String.class);
     System.out.println("result:" + result);
