@@ -19,6 +19,8 @@
  */
 package se.sics.ktoolbox.util.trysf;
 
+import io.netty.buffer.ByteBufUtil;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,7 +28,7 @@ import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 public class TryHelper {
-
+  
   public static Try<Boolean> tryStart() {
     return new Try.Success(true);
   }
@@ -60,14 +62,13 @@ public class TryHelper {
     };
   }
 
-  public static <I, O> BiFunction<I, Throwable, O> tryFFail(Function<Throwable, O> f) {
-    return (I input, Throwable fail) -> {
+  public static <I, T extends Throwable, O> BiFunction<I, T, O> tryFFail(Function<T, O> f) {
+    return (I input, T fail) -> {
       return f.apply(fail);
     };
   }
 
   public static class Joiner {
-
     public static <I1, I2> Try<I2> map(Try<I1> input1, Try<I2> input2) {
       if (input1.isFailure()) {
         return (Try.Failure) input1;
@@ -75,6 +76,14 @@ public class TryHelper {
       return input2;
     }
 
+    public static <I1, I2> Try<Pair<I1, I2>> combine(I1 in1, Try<I2> in2) {
+      if(in2.isFailure()) {
+        return (Try.Failure) in2;
+      }
+      Pair<I1,I2> tupleInput = Pair.with(in1, in2.get());
+      return new Try.Success(tupleInput);
+    }
+    
     public static <I1, I2> Try<Pair<I1, I2>> combine(Try<I1> in1, Try<I2> in2) {
       if (in1.isFailure()) {
         return (Try.Failure) in1;
@@ -138,4 +147,11 @@ public class TryHelper {
       return t.flatMap(f);
     };
   }
+  
+  public static BiFunction<Pair<byte[], byte[]>, Throwable, Boolean> compareArray() {
+    return tryFSucc2((byte[] array1) -> (byte[] array2) -> {
+      boolean result = Arrays.equals(array1, array2);
+      return result;
+    });
+  } 
 }

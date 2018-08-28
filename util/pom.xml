@@ -14,7 +14,6 @@
     <module>core</module>
     <module>kcore</module>
     <module>network</module>
-    <!--<module>example</module>-->
     <module>examples</module>
   </modules>
     
@@ -23,16 +22,22 @@
       <groupId>se.sics.kompics</groupId>
       <artifactId>kompics-core</artifactId>
       <version>${kompics.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
-      <version>${netty.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+      <version>${netty.version}</version>
     </dependency>
     <dependency>
       <groupId>org.javatuples</groupId>

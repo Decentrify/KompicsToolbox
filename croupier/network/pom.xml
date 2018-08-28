@@ -18,27 +18,45 @@
       <artifactId>core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>se.sics.ktoolbox.util</groupId>
+      <artifactId>network</artifactId>
+      <version>${project.version}</version>
+    </dependency>
       
     <dependency>
       <groupId>se.sics.kompics.basic</groupId>
       <artifactId>kompics-component-netty-network</artifactId>
       <version>${kompics.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>se.sics.ktoolbox.util</groupId>
-      <artifactId>network</artifactId>
-      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
         
     <dependency>
       <groupId>se.sics.kompics.basic</groupId>
       <artifactId>kompics-port-timer</artifactId>
       <version>${kompics.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>se.sics.kompics.basic</groupId>
       <artifactId>kompics-port-network</artifactId>
       <version>${kompics.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     
     <dependency>

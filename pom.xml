@@ -31,7 +31,7 @@
     <kompics.version>1.0.0</kompics.version>
         
     <junit.version>4.5</junit.version>
-    <guava.version>[18.0,24.0-jre]</guava.version>
+    <guava.version>20.0</guava.version>
     <tuples.version>1.2</tuples.version>
     <config.version>1.2.1</config.version>
     <logger.version>1.7.5</logger.version>
