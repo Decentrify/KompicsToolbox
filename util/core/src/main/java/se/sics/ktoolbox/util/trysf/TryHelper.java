@@ -28,7 +28,7 @@ import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 public class TryHelper {
-  
+
   public static Try<Boolean> tryStart() {
     return new Try.Success(true);
   }
@@ -54,7 +54,7 @@ public class TryHelper {
 
   public static <I1, I2, I3, O> BiFunction<Triplet<I1, I2, I3>, Throwable, O>
     tryFSucc3(Function<I1, Function<I2, Function<I3, O>>> f) {
-    return (Triplet<I1, I2, I3> input, Throwable fail) -> { 
+    return (Triplet<I1, I2, I3> input, Throwable fail) -> {
       Function<I2, Function<I3, O>> pf1 = f.apply(input.getValue0());
       Function<I3, O> pf2 = pf1.apply(input.getValue1());
       O result = pf2.apply(input.getValue2());
@@ -69,6 +69,7 @@ public class TryHelper {
   }
 
   public static class Joiner {
+
     public static <I1, I2> Try<I2> map(Try<I1> input1, Try<I2> input2) {
       if (input1.isFailure()) {
         return (Try.Failure) input1;
@@ -77,13 +78,13 @@ public class TryHelper {
     }
 
     public static <I1, I2> Try<Pair<I1, I2>> combine(I1 in1, Try<I2> in2) {
-      if(in2.isFailure()) {
+      if (in2.isFailure()) {
         return (Try.Failure) in2;
       }
-      Pair<I1,I2> tupleInput = Pair.with(in1, in2.get());
+      Pair<I1, I2> tupleInput = Pair.with(in1, in2.get());
       return new Try.Success(tupleInput);
     }
-    
+
     public static <I1, I2> Try<Pair<I1, I2>> combine(Try<I1> in1, Try<I2> in2) {
       if (in1.isFailure()) {
         return (Try.Failure) in1;
@@ -91,7 +92,7 @@ public class TryHelper {
       if (in2.isFailure()) {
         return (Try.Failure) in2;
       }
-      Pair<I1,I2> tupleInput = Pair.with(in1.get(), in2.get());
+      Pair<I1, I2> tupleInput = Pair.with(in1.get(), in2.get());
       return new Try.Success(tupleInput);
     }
 
@@ -105,10 +106,10 @@ public class TryHelper {
       if (in3.isFailure()) {
         return (Try.Failure) in3;
       }
-      Triplet<I1,I2,I3> tupleInput = Triplet.with(in1.get(), in2.get(), in3.get());
+      Triplet<I1, I2, I3> tupleInput = Triplet.with(in1.get(), in2.get(), in3.get());
       return new Try.Success(tupleInput);
     }
-    
+
     public static <I1, I2, I3> Try<Triplet<I1, I2, I3>> combine2(Try<Pair<I1, I2>> input12, Try<I3> input3) {
       if (input12.isFailure()) {
         return (Try.Failure) input12;
@@ -116,15 +117,15 @@ public class TryHelper {
       if (input3.isFailure()) {
         return (Try.Failure) input3;
       }
-      Triplet<I1,I2,I3> tupleInput = input12.get().addAt2(input3.get());
+      Triplet<I1, I2, I3> tupleInput = input12.get().addAt2(input3.get());
       return new Try.Success(tupleInput);
     }
-    
+
     public static <I> Try<String> successMsg(Try<I> in, String msg) {
-      if(in.isSuccess()) {
+      if (in.isSuccess()) {
         return new Try.Success(String.format(msg, in.get().toString()));
-      } 
-      return (Try.Failure)in;
+      }
+      return (Try.Failure) in;
     }
   }
 
@@ -147,11 +148,34 @@ public class TryHelper {
       return t.flatMap(f);
     };
   }
-  
+
   public static BiFunction<Pair<byte[], byte[]>, Throwable, Boolean> compareArray() {
     return tryFSucc2((byte[] array1) -> (byte[] array2) -> {
       boolean result = Arrays.equals(array1, array2);
       return result;
     });
-  } 
+  }
+
+  public static class SimpleCollector<R> {
+
+    private Try<Boolean> joinedResult = new Try.Success(true);
+    private int pendingResults;
+
+    public SimpleCollector(int size) {
+      pendingResults = size;
+    }
+
+    public void collect(Try<R> result) {
+      pendingResults--;
+      joinedResult = TryHelper.Joiner.map(result, joinedResult);
+    }
+
+    public boolean completed() {
+      return pendingResults == 0;
+    }
+
+    public Try<Boolean> getResult() {
+      return joinedResult;
+    }
+  }
 }
