@@ -21,7 +21,11 @@ package se.sics.ktoolbox.util.trysf;
 
 import io.netty.buffer.ByteBufUtil;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.javatuples.Pair;
@@ -75,6 +79,13 @@ public class TryHelper {
         return (Try.Failure) input1;
       }
       return input2;
+    }
+    
+    public static <I1, I2> Try<I2> map(Try<I1> input1, I2 input2) {
+      if (input1.isFailure()) {
+        return (Try.Failure) input1;
+      }
+      return new Try.Success(input2);
     }
 
     public static <I1, I2> Try<Pair<I1, I2>> combine(I1 in1, Try<I2> in2) {
@@ -176,6 +187,38 @@ public class TryHelper {
 
     public Try<Boolean> getResult() {
       return joinedResult;
+    }
+  }
+
+  public static class MapCollector {
+
+    private final Set<String> expected;
+    private final Consumer<Try<Boolean>> callback;
+    private final Map<String, Try> results = new HashMap<>();
+    private Try<Boolean> joinedResult = new Try.Success(true);
+
+    public MapCollector(Set<String> expectedResults, Consumer<Try<Boolean>> callback) {
+      this.expected = expectedResults;
+      this.callback = callback;
+    }
+
+    public void collect(String name, Try result) {
+      if(!expected.contains(name)) {
+        throw new IllegalArgumentException("unexpected result:" + name);
+      }
+      results.put(name, result);
+      joinedResult = TryHelper.Joiner.map(result, joinedResult);
+      if(completed()) {
+        callback.accept(joinedResult);
+      }
+    }
+
+    public boolean completed() {
+      return results.size() == expected.size();
+    }
+
+    public Map<String, Try> getResult() {
+      return results;
     }
   }
 }
