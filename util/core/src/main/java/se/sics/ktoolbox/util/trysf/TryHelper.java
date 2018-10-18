@@ -19,7 +19,6 @@
  */
 package se.sics.ktoolbox.util.trysf;
 
-import io.netty.buffer.ByteBufUtil;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +41,7 @@ public class TryHelper {
       return s.get();
     };
   }
-
+  
   public static <I, O> BiFunction<I, Throwable, O> tryFSucc1(Function<I, O> f) {
     return (I input, Throwable fail) -> {
       return f.apply(input);
@@ -220,5 +219,12 @@ public class TryHelper {
     public Map<String, Try> getResult() {
       return results;
     }
+  }
+  
+  public static <I> BiFunction<I, Throwable, Boolean> tryAssert(Consumer<I> c) {
+    return (I input, Throwable fail) -> {
+      c.accept(input);
+      return true;
+    };
   }
 }
