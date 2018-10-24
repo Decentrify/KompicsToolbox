@@ -41,7 +41,19 @@ public class TryHelper {
       return s.get();
     };
   }
-  
+
+  public static <O> BiFunction<TryState.ExceptionChain, Throwable, TryState.ExceptionChain>
+    exChain0(Supplier<Try<O>> s, String failMsg) {
+    return tryFSucc1((TryState.ExceptionChain state) -> {
+      try {
+        s.get().checkedGet();
+        return state;
+      } catch (Throwable ex) {
+        return state.fail(new TryException.Base(failMsg, ex));
+      }
+    });
+  }
+
   public static <I, O> BiFunction<I, Throwable, O> tryFSucc1(Function<I, O> f) {
     return (I input, Throwable fail) -> {
       return f.apply(input);
@@ -79,7 +91,7 @@ public class TryHelper {
       }
       return input2;
     }
-    
+
     public static <I1, I2> Try<I2> map(Try<I1> input1, I2 input2) {
       if (input1.isFailure()) {
         return (Try.Failure) input1;
@@ -202,12 +214,12 @@ public class TryHelper {
     }
 
     public void collect(String name, Try result) {
-      if(!expected.contains(name)) {
+      if (!expected.contains(name)) {
         throw new IllegalArgumentException("unexpected result:" + name);
       }
       results.put(name, result);
       joinedResult = TryHelper.Joiner.map(result, joinedResult);
-      if(completed()) {
+      if (completed()) {
         callback.accept(joinedResult);
       }
     }
@@ -220,7 +232,7 @@ public class TryHelper {
       return results;
     }
   }
-  
+
   public static <I> BiFunction<I, Throwable, Boolean> tryAssert(Consumer<I> c) {
     return (I input, Throwable fail) -> {
       c.accept(input);
