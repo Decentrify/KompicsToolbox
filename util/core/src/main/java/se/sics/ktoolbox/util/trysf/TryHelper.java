@@ -32,8 +32,18 @@ import org.javatuples.Triplet;
 
 public class TryHelper {
 
+  public static <V> Try<V> tryVal(V val) {
+    return new Try.Success(val);
+  }
+
   public static Try<Boolean> tryStart() {
     return new Try.Success(true);
+  }
+
+  public static <I, O> BiFunction<I, Throwable, Try<O>> tryTSucc0(Supplier<Try<O>> s) {
+    return (I input, Throwable fail) -> {
+      return s.get();
+    };
   }
 
   public static <I, O> BiFunction<I, Throwable, O> tryFSucc0(Supplier<O> s) {
@@ -52,6 +62,12 @@ public class TryHelper {
         return state.fail(new TryException.Base(failMsg, ex));
       }
     });
+  }
+
+  public static <I, O> BiFunction<I, Throwable, Try<O>> tryTSucc1(Function<I, Try<O>> f) {
+    return (I input, Throwable fail) -> {
+      return f.apply(input);
+    };
   }
 
   public static <I, O> BiFunction<I, Throwable, O> tryFSucc1(Function<I, O> f) {
@@ -234,9 +250,9 @@ public class TryHelper {
   }
 
   public static <I> BiFunction<I, Throwable, Boolean> tryAssert(Consumer<I> c) {
-    return (I input, Throwable fail) -> {
+    return tryFSucc1((I input) -> {
       c.accept(input);
       return true;
-    };
+    });
   }
 }
