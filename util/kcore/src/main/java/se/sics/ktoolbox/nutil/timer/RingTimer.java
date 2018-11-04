@@ -23,20 +23,22 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.timer.RingTimer.Container;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class RingTimer {
+public class RingTimer<C extends Container> {
 
   private final int windowSize;
   private final int maxTimeout;
   private final int ringSize;
   //****************************************************
-  private final ArrayList<List<Timeout>> ring;
-  private final Map<Identifier, Timeout> timeouts = new HashMap<>();
+  private final ArrayList<List<Timeout<C>>> ring;
+  private final Map<Identifier, Timeout<C>> timeouts = new HashMap<>();
   private int ringPointer = 0;
   //your timeout will take between (giventimeout, givenTimeout + 1window)
   private final int timeoutShift = 1;
@@ -51,11 +53,11 @@ public class RingTimer {
 
   private void setupRing() {
     for (int i = 0; i < ringSize; i++) {
-      ring.add(new LinkedList<Timeout>());
+      ring.add(new LinkedList<>());
     }
   }
 
-  public boolean setTimeout(long rto, Container container) {
+  public boolean setTimeout(long rto, C container) {
     if (rto > maxTimeout) {
       return false;
     }
@@ -66,23 +68,23 @@ public class RingTimer {
     return true;
   }
 
-  public boolean cancelTimeout(Identifier containerId) {
-    Timeout t = timeouts.remove(containerId);
+  public Optional<C> cancelTimeout(Identifier containerId) {
+    Timeout<C> t = timeouts.remove(containerId);
     if(t == null) {
-      return false;
+      return Optional.empty();
     }
     t.cancelTimeout();
-    return true;
+    return Optional.of(t.container);
   }
   
   public int getSize() {
     return timeouts.size();
   }
 
-  public List<Container> windowTick() {
-    List<Container> result = new LinkedList<>();
-    List<Timeout> registered = ring.get(ringPointer);
-    for(Timeout t: registered) {
+  public List<C> windowTick() {
+    List<C> result = new LinkedList<>();
+    List<Timeout<C>> registered = ring.get(ringPointer);
+    for(Timeout<C> t: registered) {
       if(t.ongoing) {
         result.add(t.container);
         timeouts.remove(t.container.getId());
@@ -93,12 +95,12 @@ public class RingTimer {
     return result;
   }
 
-  private static class Timeout {
+  private static class Timeout<C extends Container> {
 
-    public final Container container;
+    public final C container;
     private boolean ongoing;
 
-    Timeout(Container container) {
+    Timeout(C container) {
       this.container = container;
       ongoing = true;
     }
