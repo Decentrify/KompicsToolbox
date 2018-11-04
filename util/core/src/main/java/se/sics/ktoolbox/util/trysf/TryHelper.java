@@ -107,6 +107,16 @@ public class TryHelper {
       }
       return input2;
     }
+    
+    public static <I1, I2, I3> Try<I3> map(Try<I1> input1, Try<I2> input2, Try<I3> input3) {
+      if (input1.isFailure()) {
+        return (Try.Failure) input1;
+      }
+      if (input2.isFailure()) {
+        return (Try.Failure) input2;
+      }
+      return input3;
+    }
 
     public static <I1, I2> Try<I2> map(Try<I1> input1, I2 input2) {
       if (input1.isFailure()) {
