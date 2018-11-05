@@ -23,15 +23,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
 import se.sics.kompics.util.Identifier;
@@ -44,76 +41,74 @@ import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
  */
 public class BootstrapServerComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BootstrapServerComp.class);
-    private String logPrefix = "";
+  //******************************CONNECTIONS*********************************
+  Positive<Network> networkPort = requires(Network.class);
+  //*****************************EXTERNAL_STATE*******************************
+  private final KAddress selfAdr;
+  //*****************************INTERNAL_STATE*******************************
+  private HashBasedTable<Identifier, Integer, KAddress> samples = HashBasedTable.create();
 
-    //******************************CONNECTIONS*********************************
-    Positive<Network> networkPort = requires(Network.class);
-    Positive<Timer> timerPort = requires(Timer.class);
-    //*****************************EXTERNAL_STATE*******************************
-    private KAddress selfAdr;
-    //*****************************INTERNAL_STATE*******************************
-    private HashBasedTable<Identifier, Integer, KAddress> samples = HashBasedTable.create();
+  public BootstrapServerComp(Init init) {
+    selfAdr = init.selfAdr;
+    loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
+    logger.info("initiating...");
 
-    public BootstrapServerComp(Init init) {
-        selfAdr = init.selfAdr;
-        logPrefix = "<nid:" + selfAdr.getId() + ">";
-        LOG.info("{}initiating...", logPrefix);
+    subscribe(handleStart, control);
+    subscribe(handleHeartbeat, networkPort);
+    subscribe(handleSampleRequest, networkPort);
+  }
 
-        subscribe(handleStart, control);
-        subscribe(handleHeartbeat, networkPort);
-        subscribe(handleSampleRequest, networkPort);
+  Handler handleStart = new Handler<Start>() {
+    @Override
+    public void handle(Start event) {
     }
+  };
 
-    Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start event) {
-            LOG.info("{}starting...", logPrefix);
-        }
-    };
+  @Override
+  public void tearDown() {
+  }
 
-    ClassMatchedHandler handleHeartbeat
-            = new ClassMatchedHandler<Heartbeat, BasicContentMsg<?, ?, Heartbeat>>() {
+  ClassMatchedHandler handleHeartbeat
+    = new ClassMatchedHandler<Heartbeat, BasicContentMsg<?, ?, Heartbeat>>() {
 
-                @Override
-                public void handle(Heartbeat content, BasicContentMsg<?, ?, Heartbeat> container) {
-                    LOG.trace("{}received:{}", logPrefix, container);
-                    samples.put(content.overlayId, content.position, container.getHeader().getSource());
-                }
-            };
-
-    ClassMatchedHandler handleSampleRequest
-            = new ClassMatchedHandler<Sample.Request, BasicContentMsg<?, ?, Sample.Request>>() {
-
-                @Override
-                public void handle(Sample.Request content, BasicContentMsg<?, ?, Sample.Request> container) {
-                    LOG.trace("{}received:{}", logPrefix, container);
-                    List<KAddress> sample = sampleWithoutDuplicates(content.overlayId);
-                    KContentMsg response = container.answer(content.answer(sample));
-                    LOG.trace("{}sending:{}", logPrefix, response);
-                    trigger(response, networkPort);
-                }
-            };
-
-    private List<KAddress> sampleWithoutDuplicates(Identifier overlayId) {
-        Set<Identifier> ids = new HashSet<>();
-        List<KAddress> adrs = new ArrayList<>();
-        for (KAddress adr : samples.row(overlayId).values()) {
-            if (ids.contains(adr.getId())) {
-                continue;
-            }
-            adrs.add(adr);
-            ids.add(adr.getId());
-        }
-        return adrs;
+    @Override
+    public void handle(Heartbeat content, BasicContentMsg<?, ?, Heartbeat> container) {
+      logger.debug("heartbeat:{}", container);
+      samples.put(content.overlayId, content.position, container.getHeader().getSource());
     }
+  };
 
-    public static class Init extends se.sics.kompics.Init<BootstrapServerComp> {
+  ClassMatchedHandler handleSampleRequest
+    = new ClassMatchedHandler<Sample.Request, BasicContentMsg<?, ?, Sample.Request>>() {
 
-        public final KAddress selfAdr;
-
-        public Init(KAddress selfAdr) {
-            this.selfAdr = selfAdr;
-        }
+    @Override
+    public void handle(Sample.Request content, BasicContentMsg<?, ?, Sample.Request> container) {
+      logger.trace("sample request:{}", container);
+      List<KAddress> sample = sampleWithoutDuplicates(content.overlayId);
+      KContentMsg response = container.answer(content.answer(sample));
+      trigger(response, networkPort);
     }
+  };
+
+  private List<KAddress> sampleWithoutDuplicates(Identifier overlayId) {
+    Set<Identifier> ids = new HashSet<>();
+    List<KAddress> adrs = new ArrayList<>();
+    for (KAddress adr : samples.row(overlayId).values()) {
+      if (ids.contains(adr.getId())) {
+        continue;
+      }
+      adrs.add(adr);
+      ids.add(adr.getId());
+    }
+    return adrs;
+  }
+
+  public static class Init extends se.sics.kompics.Init<BootstrapServerComp> {
+
+    public final KAddress selfAdr;
+
+    public Init(KAddress selfAdr) {
+      this.selfAdr = selfAdr;
+    }
+  }
 }

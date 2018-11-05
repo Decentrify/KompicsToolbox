@@ -18,30 +18,22 @@
  */
 package se.sics.ktoolbox.omngr.bootstrap;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
-import org.javatuples.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.function.Consumer;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
-import se.sics.kompics.timer.CancelTimeout;
-import se.sics.kompics.timer.SchedulePeriodicTimeout;
-import se.sics.kompics.timer.ScheduleTimeout;
-import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.ktoolbox.nutil.timer.TimerProxy;
+import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
@@ -53,202 +45,121 @@ import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
  * TODO removed caracal - fix CC bootstrap
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BootstrapClientComp extends ComponentDefinition {
 
-    //hack - change to config later
-    private final static int maxSampleSize = 10;
-    private final static long heartbeatPeriod = 60 * 1000;
-    private final static long msgTimeout = 2000;
-    //**************************************************************************
+  //******************************CONNECTIONS*********************************
+  private final Negative<BootstrapClientPort> bootstrapPort;
+  private final Positive<Network> networkPort;
+  private final Positive<Timer> timerPort;
+  private final TimerProxy timer;
+  //*****************************EXTERNAL_STATE*******************************
+  private final KAddress selfAdr;
+  private final SystemKCWrapper systemConfig;
+  private final BootstrapClientConfig clientConfig;
+  //*****************************INTERNAL_STATE*******************************
+  private final Random rand;
+  private final Map<OverlayId, BootstrapClientEvent.Start> heartbeats = new HashMap<>();
+  //********************************AUX_STATE*********************************
+  private UUID heartbeatTimeout;
 
-    private static final Logger LOG = LoggerFactory.getLogger(BootstrapClientComp.class);
-    private String logPrefix = "";
+  public BootstrapClientComp(Init init) {
+    bootstrapPort = provides(BootstrapClientPort.class);
+    networkPort = requires(Network.class);
+    timerPort = requires(Timer.class);
+    
+    systemConfig = new SystemKCWrapper(config());
+    clientConfig = BootstrapClientConfig.instance(config()).get();
+    selfAdr = init.selfAdr;
+    loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
+    logger.info("initiating with seed:{}, bootstrap server:{}", systemConfig.seed, clientConfig.server);
 
-    //******************************CONNECTIONS*********************************
-//    Negative<CCHeartbeatPort> heartbeatPort = provides(CCHeartbeatPort.class);
-    Positive<Network> networkPort = requires(Network.class);
-    Positive<Timer> timerPort = requires(Timer.class);
-    //*****************************EXTERNAL_STATE*******************************
-    private KAddress selfAdr;
-    private KAddress bootstrapServer;
-    //*****************************INTERNAL_STATE*******************************
-    private Random rand;
-    private Set<OverlayId> heartbeats = new HashSet<>();
-    //********************************AUX_STATE*********************************
-    private UUID heartbeatTimeout;
-//    private Map<Identifier, Pair<CCOverlaySample.Request, UUID>> pendingRequests = new HashMap<>();
+    timer = new TimerProxyImpl().setup(proxy);
+    rand = new Random(systemConfig.seed);
 
-    public BootstrapClientComp(Init init) {
-        SystemKCWrapper systemConfig = new SystemKCWrapper(config());
-        selfAdr = init.selfAdr;
-        logPrefix = "<nid:" + selfAdr.getId() + ">";
-        LOG.info("{}initiating with seed:{}", logPrefix, systemConfig.seed);
+    subscribe(handleStart, control);
+    subscribe(handleHeartbeatStart, bootstrapPort);
+    subscribe(handleHeartbeatStop, bootstrapPort);
+    subscribe(handleSample, networkPort);
+  }
 
-        bootstrapServer = init.bootstrapServer;
-
-        rand = new Random(systemConfig.seed);
-
-        subscribe(handleStart, control);
-        subscribe(handleHeartbeat, timerPort);
-//        subscribe(handleHeartbeatStart, heartbeatPort);
-//        subscribe(handleSampleRequest, heartbeatPort);
-//        subscribe(handleSampleRequestTimeout, timerPort);
-//        subscribe(handleSampleResponse, networkPort);
+  Handler handleStart = new Handler<Start>() {
+    @Override
+    public void handle(Start event) {
+      heartbeatTimeout = timer.schedulePeriodicTimer(0, clientConfig.heartbeatPeriod, heartbeatTimeout());
     }
+  };
 
-    Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start event) {
-            LOG.info("{}starting...", logPrefix);
-            scheduleHearbeatTimeout();
-        }
+  @Override
+  public void tearDown() {
+    timer.cancelPeriodicTimer(heartbeatTimeout);
+    heartbeatTimeout = null;
+  }
+
+  private Consumer<Boolean> heartbeatTimeout() {
+    return (_in) -> {
+      logger.info("heartbeat overlays:{}", heartbeats.size());
+      heartbeats.keySet().forEach((overlayId) -> {
+        sendHeartbeat(overlayId);
+        sampleRequest(overlayId);
+      });
     };
+  }
 
-    Handler handleHeartbeat = new Handler<HeartbeatTimeout>() {
-        @Override
-        public void handle(HeartbeatTimeout event) {
-            LOG.debug("{}heartbeating", logPrefix);
-            for (OverlayId overlayId : heartbeats) {
-                sendHeartbeat(overlayId);
-            }
-        }
-    };
+  private void sendHeartbeat(OverlayId overlayId) {
+    logger.debug("heartbeat id:{}", overlayId);
+    Heartbeat content = new Heartbeat(overlayId, rand.nextInt(clientConfig.heartbeatPositions));
+    KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, clientConfig.server, Transport.UDP), content);
+    trigger(container, networkPort);
+  }
 
-    private void sendHeartbeat(OverlayId overlayId) {
-        Heartbeat content = new Heartbeat(overlayId, rand.nextInt(maxSampleSize));
-        //Heartbeat content = new Heartbeat(overlayId, ((IntIdentifier) selfAdr.getId()).id);
-        KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
-        LOG.trace("{}sending:{}", logPrefix, container);
-        trigger(container, networkPort);
+  private void sampleRequest(OverlayId overlayId) {
+    logger.debug("sample request for:{}", overlayId);
+    Sample.Request content = new Sample.Request(overlayId);
+    KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, clientConfig.server, Transport.UDP), content);
+    trigger(container, networkPort);
+  }
+
+  Handler handleHeartbeatStart = new Handler<BootstrapClientEvent.Start>() {
+    @Override
+    public void handle(BootstrapClientEvent.Start req) {
+      logger.info("heartbeat start:{}", req.overlay);
+      heartbeats.put(req.overlay, req);
+      sendHeartbeat(req.overlay);
+      sampleRequest(req.overlay);
     }
+  };
 
-//    Handler handleHeartbeatStart = new Handler<CCHeartbeat.Start>() {
-//        @Override
-//        public void handle(CCHeartbeat.Start heartbeat) {
-//            LOG.info("{}heartbeat on:{}", logPrefix, heartbeat.overlayId);
-//            heartbeats.add(heartbeat.overlayId);
-//            sendHeartbeat(heartbeat.overlayId);
-//        }
-//    };
-//
-//    Handler handleSampleRequest = new Handler<CCOverlaySample.Request>() {
-//        @Override
-//        public void handle(CCOverlaySample.Request req) {
-//            LOG.debug("{}sample request for:{}", logPrefix, req.overlayId);
-//
-//            Sample.Request content = new Sample.Request(req.overlayId);
-//            UUID tId = scheduleSampleReqTimeout(content.getId());
-//            pendingRequests.put(content.getId(), Pair.with(req, tId));
-//            KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, bootstrapServer, Transport.UDP), content);
-//            LOG.trace("{}sending:{}", logPrefix, container);
-//            trigger(container, networkPort);
-//        }
-//    };
-
-//    ClassMatchedHandler handleSampleResponse
-//            = new ClassMatchedHandler<Sample.Response, KContentMsg<?, ?, Sample.Response>>() {
-//
-//                @Override
-//                public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> container) {
-//                    LOG.trace("{}received:{}", logPrefix, container);
-//                    Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(content.getId());
-//                    if (req == null) {
-//                        LOG.trace("{}late:{}", logPrefix, container);
-//                        return;
-//                    }
-//                    cancelTimeout(req.getValue1());
-//                    LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
-//                    answer(req.getValue0(), req.getValue0().answer(content.sample));
-//                }
-//            };
-//
-//    Handler handleSampleRequestTimeout = new Handler<SampleRequestTimeout>() {
-//        @Override
-//        public void handle(SampleRequestTimeout timeout) {
-//            LOG.debug("{}timeout on sample request", logPrefix);
-//            Pair<CCOverlaySample.Request, UUID> req = pendingRequests.remove(timeout.eventId);
-//            if (req == null) {
-//                LOG.trace("{}late:{}", logPrefix, timeout);
-//                return;
-//            }
-//            LOG.debug("{}sample response for:{}", logPrefix, req.getValue0().overlayId);
-//            answer(req.getValue0(), req.getValue0().answer(new ArrayList<KAddress>()));
-//        }
-//    };
-
-    //*******************************TIMEOUTS***********************************
-    private void cancelTimeout(UUID timeout) {
-        CancelTimeout cpt = new CancelTimeout(timeout);
-        trigger(cpt, timerPort);
+  Handler handleHeartbeatStop = new Handler<BootstrapClientEvent.Stop>() {
+    @Override
+    public void handle(BootstrapClientEvent.Stop req) {
+      logger.info("heartbeat stop:{}", req.overlay);
+      heartbeats.remove(req.overlay);
     }
+  };
 
-    private void scheduleHearbeatTimeout() {
-        if (heartbeatTimeout != null) {
-            LOG.warn("{} double starting heartbeat timeout", logPrefix);
-        }
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(heartbeatPeriod, heartbeatPeriod);
-        HeartbeatTimeout sc = new HeartbeatTimeout(spt);
-        spt.setTimeoutEvent(sc);
-        heartbeatTimeout = sc.getTimeoutId();
-        trigger(spt, timerPort);
+  ClassMatchedHandler handleSample
+    = new ClassMatchedHandler<Sample.Response, KContentMsg<?, ?, Sample.Response>>() {
+
+    @Override
+    public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> msg) {
+      logger.debug("received:{}", content);
+      BootstrapClientEvent.Start req = heartbeats.get(content.overlayId);
+      if (req != null) {
+        answer(req, req.sample(content.sample));
+      }
     }
+  };
 
-    private void cancelHeartbeatTimeout() {
-        if (heartbeatTimeout == null) {
-            return;
-        }
-        CancelTimeout cpt = new CancelTimeout(heartbeatTimeout);
-        heartbeatTimeout = null;
-        trigger(cpt, timerPort);
+  //**************************************************************************
+  public static class Init extends se.sics.kompics.Init<BootstrapClientComp> {
 
+    public final KAddress selfAdr;
+
+    public Init(KAddress selfAdr) {
+      this.selfAdr = selfAdr;
     }
-
-    private class HeartbeatTimeout extends Timeout {
-
-        HeartbeatTimeout(SchedulePeriodicTimeout request) {
-            super(request);
-        }
-
-        @Override
-        public String toString() {
-            return "HeartbeatTimeout<" + getTimeoutId() + ">";
-        }
-    }
-
-    private UUID scheduleSampleReqTimeout(Identifier eventId) {
-        ScheduleTimeout spt = new ScheduleTimeout(msgTimeout);
-        SampleRequestTimeout sc = new SampleRequestTimeout(spt, eventId);
-        spt.setTimeoutEvent(sc);
-        trigger(spt, timerPort);
-        return sc.getTimeoutId();
-    }
-
-    private class SampleRequestTimeout extends Timeout {
-
-        public final Identifier eventId;
-
-        SampleRequestTimeout(ScheduleTimeout request, Identifier eventId) {
-            super(request);
-            this.eventId = eventId;
-        }
-
-        @Override
-        public String toString() {
-            return "SampleRequestTimeout<" + getTimeoutId() + ">";
-        }
-    }
-
-    //**************************************************************************
-    public static class Init extends se.sics.kompics.Init<BootstrapClientComp> {
-
-        public final KAddress selfAdr;
-        public final KAddress bootstrapServer;
-
-        public Init(KAddress selfAdr, KAddress bootstrapServer) {
-            this.selfAdr = selfAdr;
-            this.bootstrapServer = bootstrapServer;
-        }
-    }
+  }
 }

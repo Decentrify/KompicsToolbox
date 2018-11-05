@@ -19,155 +19,91 @@
 package se.sics.ktoolbox.overlaymngr.bootstrap;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.util.Identifier;
-import se.sics.kompics.timer.CancelTimeout;
-import se.sics.kompics.timer.ScheduleTimeout;
-import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierControlPort;
 import se.sics.ktoolbox.croupier.event.CroupierDisconnected;
 import se.sics.ktoolbox.croupier.event.CroupierJoin;
-import se.sics.ktoolbox.overlaymngr.OverlayMngrConfig;
+import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientEvent;
+import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientPort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * TODO - Alex - fix commented out bootstrapping CC
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class CroupierBootstrapComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CroupierBootstrapComp.class);
-    private String logPrefix = " ";
+  //*******************************CONNECTIONS********************************
+  private final Positive timerPort = requires(Timer.class);
+  private final Positive heartbeatPort = requires(BootstrapClientPort.class);
+  private final Positive croupierStatusPort = requires(CroupierControlPort.class);
+  private final Negative bootstrapPort = provides(CroupierBootstrapPort.class);
 
-    //*******************************CONNECTIONS********************************
-    private final Positive timerPort = requires(Timer.class);
-//    private final Positive heartbeatPort = requires(CCHeartbeatPort.class);
-    private final Positive croupierStatusPort = requires(CroupierControlPort.class);
-    private final Negative bootstrapPort = provides(CroupierBootstrapPort.class);
-    //******************************INTERNAL_STATE******************************
-    //TODO move as config - rebootstraping
-    private static long rebootPeriod = 10000;
-    private static int rebootMaxMult = 6 * 60;//if overlay is stable - rebootstrap every 1h-3h(based on the radom spread) to make sure overlay is healthy - nodes that might get disconnected
-    //*****
-    private Random rand;
-    private Map<Identifier, Integer> rebootstrap = new HashMap<>();
+  private Map<Identifier, List<KAddress>> samples = new HashMap<>();
 
-    public CroupierBootstrapComp(Init init) {
-        SystemKCWrapper systemConfig = new SystemKCWrapper(config());
-        logPrefix = "<nid:" + systemConfig.id + ">";
-        LOG.info("{}initiating...", logPrefix);
+  public CroupierBootstrapComp(Init init) {
+    SystemKCWrapper systemConfig = new SystemKCWrapper(config());
+    loggingCtxPutAlways("nId", systemConfig.id.toString());
 
-        rand = new Random(systemConfig.seed);
+    subscribe(handleStart, control);
+    subscribe(handleCroupierBootstrap, bootstrapPort);
+    subscribe(handleExternalSample, heartbeatPort);
+    subscribe(handleJoin, croupierStatusPort);
+    subscribe(handleDisconnected, croupierStatusPort);
+  }
 
-        subscribe(handleStart, control);
-        subscribe(handleCroupierBootstrap, bootstrapPort);
-//        subscribe(handleExternalSample, heartbeatPort);
-        subscribe(handleDisconnect, croupierStatusPort);
-        subscribe(handleRebootstrap, timerPort);
+  //******************************CONTROL*************************************
+  Handler handleStart = new Handler<Start>() {
+    @Override
+    public void handle(Start event) {
     }
+  };
 
-    //******************************CONTROL*************************************
-    Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start event) {
-            LOG.info("{}starting...", logPrefix);
-        }
-    };
-
-    //**************************************************************************
-    Handler handleCroupierBootstrap = new Handler<OMCroupierBootstrap>() {
-        @Override
-        public void handle(OMCroupierBootstrap event) {
-            LOG.trace("{}{}", logPrefix, event);
-//            trigger(new CCHeartbeat.Start(event.overlayId), heartbeatPort);
-//            trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
-            scheduleNextRebootstrap(event.overlayId, 1);
-        }
-    };
-
-//    Handler handleExternalSample = new Handler<CCOverlaySample.Response>() {
-//
-//        @Override
-//        public void handle(CCOverlaySample.Response resp) {
-//            LOG.info("{}overlay:{} external bootstrap:{}", new Object[]{logPrefix, resp.req.overlayId, resp.overlaySample});
-//            if (OverlayMngrConfig.isGlobalCroupier(resp.req.overlayId)) {
-//                //TODO Alex
-//            } else {
-//                trigger(new CroupierJoin(resp.req.overlayId, resp.overlaySample), croupierStatusPort);
-//            }
-//        }
-//    };
-
-    Handler handleDisconnect = new Handler<CroupierDisconnected>() {
-        @Override
-        public void handle(CroupierDisconnected event) {
-            if (OverlayMngrConfig.isGlobalCroupier(event.overlayId)) {
-                LOG.warn("{}global croupier disconnected", logPrefix);
-                //TODO Alex
-            } else {
-                LOG.info("{}croupier:{} disconnected", new Object[]{logPrefix, event.overlayId});
-//                trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
-                rebootstrap.put(event.overlayId, 1); //speed up until rebootstrapped
-            }
-        }
-    };
-
-    Handler handleRebootstrap = new Handler<RebootstrapTimeout>() {
-        @Override
-        public void handle(RebootstrapTimeout event) {
-            LOG.debug("{}rebootstraping...", logPrefix);
-//            trigger(new CCOverlaySample.Request(event.overlayId), heartbeatPort);
-            scheduleNextRebootstrap(event.overlayId, rebootstrap.get(event.overlayId));
-        }
-    };
-
-    //**********************************TIMEOUTS********************************
-    private void cancelTimeout(UUID timeoutId) {
-        CancelTimeout cpt = new CancelTimeout(timeoutId);
-        trigger(cpt, timerPort);
-
+  Handler handleCroupierBootstrap = new Handler<OMCroupierBootstrap>() {
+    @Override
+    public void handle(OMCroupierBootstrap req) {
+      logger.trace("{}", req);
+      trigger(new BootstrapClientEvent.Start(req.overlayId), heartbeatPort);
     }
+  };
 
-    private void scheduleNextRebootstrap(OverlayId overlayId, int multiplier) {
-        if (multiplier < rebootMaxMult) {
-            rebootstrap.put(overlayId, multiplier + 1);
-        }
-        //introduce some randomness - to spread the rebootstrap load
-        //delay between rebootPeriod * [multiplier, 3*multiplier] 
-        long delay = rebootPeriod * multiplier * (rand.nextInt(3));
-        
-        ScheduleTimeout spt = new ScheduleTimeout(delay);
-        RebootstrapTimeout sc = new RebootstrapTimeout(spt, overlayId);
-        spt.setTimeoutEvent(sc);
-        trigger(spt, timerPort);
+  Handler handleExternalSample = new Handler<BootstrapClientEvent.Sample>() {
+    @Override
+    public void handle(BootstrapClientEvent.Sample sample) {
+      logger.trace("{}", sample);
+      samples.put(sample.req.overlay, sample.sample);
+      trigger(new CroupierJoin(sample.req.overlay, sample.sample), croupierStatusPort);
     }
+  };
 
-    private class RebootstrapTimeout extends Timeout {
-
-        public final OverlayId overlayId;
-
-        RebootstrapTimeout(ScheduleTimeout request, OverlayId overlayId) {
-            super(request);
-            this.overlayId = overlayId;
-        }
-
-        @Override
-        public String toString() {
-            return "Rebootstrap<" + overlayId + "><Timeout<" + getTimeoutId()+ ">";
-        }
+  Handler handleJoin = new Handler<CroupierJoin>() {
+    @Override
+    public void handle(CroupierJoin req) {
+      logger.trace("{}", req);
+      trigger(new BootstrapClientEvent.Start(req.overlayId), heartbeatPort);
     }
+  };
 
-    public static class Init extends se.sics.kompics.Init<CroupierBootstrapComp> {
+  Handler handleDisconnected = new Handler<CroupierDisconnected>() {
+    @Override
+    public void handle(CroupierDisconnected event) {
+      List<KAddress> sample = samples.get(event.overlayId);
+      if (sample != null && !sample.isEmpty()) {
+        trigger(new CroupierJoin(event.overlayId, sample), croupierStatusPort);
+      }
     }
+  };
+
+  public static class Init extends se.sics.kompics.Init<CroupierBootstrapComp> {
+  }
 }

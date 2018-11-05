@@ -52,106 +52,99 @@ import se.sics.ktoolbox.util.status.StatusPort;
  */
 public class BootstrapServerLauncherComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BootstrapServerLauncherComp.class);
-    private String logPrefix = "";
+  //******************************CONNECTIONS*********************************
+  //*************************INTERNAL_NO_CONNECTION***************************
+  private Positive<StatusPort> externalStatusPort = requires(StatusPort.class);
+  //****************************EXTRENAL_STATE********************************
+  private NatAwareAddress systemAdr;
+  //********************************CLEANUP***********************************
+  private Component timerComp;
+  private Component netMngrComp;
+  private Component bootstrapServerComp;
 
-    //******************************CONNECTIONS*********************************
-    //*************************INTERNAL_NO_CONNECTION***************************
-    private Positive<StatusPort> externalStatusPort = requires(StatusPort.class);
-    //****************************EXTRENAL_STATE********************************
-    private NatAwareAddress systemAdr;
-    //********************************CLEANUP***********************************
-    private Component timerComp;
-    private Component netMngrComp;
-    private Component bootstrapServerComp; 
-    
-    public BootstrapServerLauncherComp() {
-        LOG.info("initiating...");
+  public BootstrapServerLauncherComp() {
+    subscribe(handleStart, control);
+    subscribe(handleNetReady, externalStatusPort);
+  }
 
-        subscribe(handleStart, control);
-        subscribe(handleNetReady, externalStatusPort);
+  private Handler handleStart = new Handler<Start>() {
+    @Override
+    public void handle(Start event) {
+
+      timerComp = create(JavaTimer.class, Init.NONE);
+      setNetMngr();
+      trigger(Start.event, timerComp.control());
+      trigger(Start.event, netMngrComp.control());
+    }
+  };
+
+  private void setNetMngr() {
+    logger.info("setting up network mngr");
+    NetworkMngrComp.ExtPort netExtPorts = new NetworkMngrComp.ExtPort(timerComp.getPositive(Timer.class));
+    netMngrComp = create(NetworkMngrComp.class, new NetworkMngrComp.Init(netExtPorts));
+    connect(netMngrComp.getPositive(StatusPort.class), externalStatusPort.getPair(), Channel.TWO_WAY);
+  }
+
+  ClassMatchedHandler handleNetReady
+    = new ClassMatchedHandler<NetMngrReady, Status.Internal<NetMngrReady>>() {
+    @Override
+    public void handle(NetMngrReady content, Status.Internal<NetMngrReady> container) {
+      logger.info("network mngr ready");
+      systemAdr = content.systemAdr;
+      setBootstrapServer();
+      trigger(Start.event, bootstrapServerComp.control());
+    }
+  };
+
+  private void setBootstrapServer() {
+    logger.info("setting up bootstrap server");
+    bootstrapServerComp = create(BootstrapServerComp.class, new BootstrapServerComp.Init(systemAdr));
+    connect(bootstrapServerComp.getNegative(Network.class), netMngrComp.getPositive(Network.class), Channel.TWO_WAY);
+  }
+
+  private static void systemSetup() {
+    BasicIdentifiers.registerDefaults2(1234l);
+    OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte) 0), new OverlayId.BasicTypeComparator());
+
+    serializerSetup();
+  }
+
+  private static void serializerSetup() {
+    //serializers setup
+    int serializerId = 128;
+    serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
+    serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
+    serializerId = GradientSerializerSetup.registerSerializers(serializerId);
+    serializerId = OMngrSerializerSetup.registerSerializers(serializerId);
+    serializerId = NetworkMngrSerializerSetup.registerSerializers(serializerId);
+
+    if (serializerId > 255) {
+      throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
     }
 
-    private Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start event) {
-            LOG.info("{}starting...", logPrefix);
-            
-            timerComp = create(JavaTimer.class, Init.NONE);
-            setNetMngr();
-            trigger(Start.event, timerComp.control());
-            trigger(Start.event, netMngrComp.control());
-        }
-    };
+    //hooks setup
+    //no hooks needed
+  }
 
-    private void setNetMngr() {
-        LOG.info("{}setting up network mngr", logPrefix);
-        NetworkMngrComp.ExtPort netExtPorts = new NetworkMngrComp.ExtPort(timerComp.getPositive(Timer.class));
-        netMngrComp = create(NetworkMngrComp.class, new NetworkMngrComp.Init(netExtPorts));
-        connect(netMngrComp.getPositive(StatusPort.class), externalStatusPort.getPair(), Channel.TWO_WAY);
+  public static void main(String[] args) {
+    systemSetup();
+    start();
+    try {
+      Kompics.waitForTermination();
+    } catch (InterruptedException ex) {
+      throw new RuntimeException(ex.getMessage());
     }
+  }
 
-    ClassMatchedHandler handleNetReady
-            = new ClassMatchedHandler<NetMngrReady, Status.Internal<NetMngrReady>>() {
-                @Override
-                public void handle(NetMngrReady content, Status.Internal<NetMngrReady> container) {
-                    LOG.info("{}network mngr ready", logPrefix);
-                    systemAdr = content.systemAdr;
-                    setBootstrapServer();
-                    trigger(Start.event, bootstrapServerComp.control());
-                }
-            };
-
-    private void setBootstrapServer() {
-        LOG.info("{}setting up bootstrap server", logPrefix);
-        bootstrapServerComp = create(BootstrapServerComp.class, new BootstrapServerComp.Init(systemAdr));
-        connect(bootstrapServerComp.getNegative(Timer.class), timerComp.getPositive(Timer.class), Channel.TWO_WAY);
-        connect(bootstrapServerComp.getNegative(Network.class), netMngrComp.getPositive(Network.class), Channel.TWO_WAY);
+  public static void start() {
+    if (Kompics.isOn()) {
+      Kompics.shutdown();
     }
-    
-     private static void systemSetup() {
-        BasicIdentifiers.registerDefaults2(1234l);
-        OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
-        
-        serializerSetup();
-    }
-    
-    private static void serializerSetup() {
-        //serializers setup
-        int serializerId = 128;
-        serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
-        serializerId = CroupierSerializerSetup.registerSerializers(serializerId);
-        serializerId = GradientSerializerSetup.registerSerializers(serializerId);
-        serializerId = OMngrSerializerSetup.registerSerializers(serializerId);
-        serializerId = NetworkMngrSerializerSetup.registerSerializers(serializerId);
+    Kompics.createAndStart(BootstrapServerLauncherComp.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
+  }
 
-        if (serializerId > 255) {
-            throw new RuntimeException("switch to bigger serializerIds, last serializerId:" + serializerId);
-        }
-
-        //hooks setup
-        //no hooks needed
-    }
-
-    public static void main(String[] args) {
-        systemSetup();
-        start();
-        try {
-            Kompics.waitForTermination();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-    }
-
-    public static void start() {
-        if (Kompics.isOn()) {
-            Kompics.shutdown();
-        }
-        Kompics.createAndStart(BootstrapServerLauncherComp.class, Runtime.getRuntime().availableProcessors(), 20); // Yes 20 is totally arbitrary
-    }
-
-    public static void stop() {
-        Kompics.shutdown();
-    }
+  public static void stop() {
+    Kompics.shutdown();
+  }
 
 }
