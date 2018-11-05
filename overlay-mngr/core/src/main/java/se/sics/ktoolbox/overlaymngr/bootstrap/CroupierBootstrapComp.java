@@ -58,7 +58,6 @@ public class CroupierBootstrapComp extends ComponentDefinition {
     subscribe(handleStart, control);
     subscribe(handleCroupierBootstrap, bootstrapPort);
     subscribe(handleExternalSample, heartbeatPort);
-    subscribe(handleJoin, croupierStatusPort);
     subscribe(handleDisconnected, croupierStatusPort);
   }
 
@@ -83,14 +82,6 @@ public class CroupierBootstrapComp extends ComponentDefinition {
       logger.trace("{}", sample);
       samples.put(sample.req.overlay, sample.sample);
       trigger(new CroupierJoin(sample.req.overlay, sample.sample), croupierStatusPort);
-    }
-  };
-
-  Handler handleJoin = new Handler<CroupierJoin>() {
-    @Override
-    public void handle(CroupierJoin req) {
-      logger.trace("{}", req);
-      trigger(new BootstrapClientEvent.Start(req.overlayId), heartbeatPort);
     }
   };
 
