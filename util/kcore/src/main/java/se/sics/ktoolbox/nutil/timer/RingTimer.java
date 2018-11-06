@@ -33,8 +33,8 @@ import se.sics.ktoolbox.nutil.timer.RingTimer.Container;
  */
 public class RingTimer<C extends Container> {
 
-  private final int windowSize;
-  private final int maxTimeout;
+  private final long windowSize;
+  private final long maxTimeout;
   private final int ringSize;
   //****************************************************
   private final ArrayList<List<Timeout<C>>> ring;
@@ -43,10 +43,10 @@ public class RingTimer<C extends Container> {
   //your timeout will take between (giventimeout, givenTimeout + 1window)
   private final int timeoutShift = 1;
 
-  public RingTimer(int windowSize, int maxTimeout) {
+  public RingTimer(long windowSize, long maxTimeout) {
     this.windowSize = windowSize;
     this.maxTimeout = maxTimeout;
-    ringSize = maxTimeout / windowSize + timeoutShift;
+    ringSize = (int)(maxTimeout / windowSize + timeoutShift);
     ring = new ArrayList<>(ringSize);
     setupRing();
   }
