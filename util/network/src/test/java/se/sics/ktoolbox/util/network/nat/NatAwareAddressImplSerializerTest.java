@@ -34,7 +34,7 @@ import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
@@ -49,7 +49,7 @@ public class NatAwareAddressImplSerializerTest {
     @BeforeClass
     public static void setup() {
         OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte) 0), new OverlayId.BasicTypeComparator());
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -60,7 +60,7 @@ public class NatAwareAddressImplSerializerTest {
         NatAwareAddressImpl original, copy;
         ByteBuf buf;
 
-        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        IdentifierFactory nodeIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, java.util.Optional.of(1234l));
         BasicAddress address = new BasicAddress(InetAddress.getLocalHost(), 10000, nodeIdFactory.randomId());
         original = NatAwareAddressImpl.open(address);
         buf = Unpooled.buffer();
@@ -82,7 +82,7 @@ public class NatAwareAddressImplSerializerTest {
         NatAwareAddressImpl original, copy;
         ByteBuf buf, copyBuf;
 
-        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        IdentifierFactory nodeIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, java.util.Optional.of(1234l));
         Identifier nodeId = nodeIdFactory.randomId();
         BasicAddress privateAdr = new BasicAddress(InetAddress.getByName("192.100.100.2"), 10000, nodeId);
         BasicAddress publicAdr = new BasicAddress(InetAddress.getByName("193.200.200.2"), 20000, nodeId);

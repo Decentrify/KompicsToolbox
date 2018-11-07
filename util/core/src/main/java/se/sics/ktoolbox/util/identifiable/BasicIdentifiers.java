@@ -18,11 +18,8 @@
  */
 package se.sics.ktoolbox.util.identifiable;
 
-import java.util.Random;
+import java.util.Optional;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
-import se.sics.ktoolbox.util.identifiable.basic.StringByteIdFactory;
-import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 
 /**
  *
@@ -30,88 +27,61 @@ import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
  */
 public class BasicIdentifiers {
 
-    public static enum Values {
+  public static Optional<Long> backupSeed = Optional.of(1234l);
 
-        EVENT, MSG, OVERLAY, NODE;
-    }
+  public static enum Values {
 
-    public static Identifier eventId() {
-        return IdentifierRegistry.lookup(Values.EVENT.toString()).randomId();
-    }
+    EVENT,
+    MSG,
+    OVERLAY,
+    NODE;
+  }
 
-    public static Identifier eventId(IdentifierBuilder builder) {
-        return IdentifierRegistry.lookup(Values.EVENT.toString()).id(builder);
-    }
+  public static Identifier eventId() {
+    return IdentifierRegistryV2.instance(Values.EVENT, backupSeed).randomId();
+  }
 
-    public static Class<? extends Identifier> eventIdType() {
-        return IdentifierRegistry.lookup(Values.EVENT.toString()).idType();
-    }
+  public static Identifier eventId(IdentifierBuilder builder) {
+    return IdentifierRegistryV2.instance(Values.EVENT, backupSeed).id(builder);
+  }
 
-    public static Identifier msgId() {
-        return IdentifierRegistry.lookup(Values.MSG.toString()).randomId();
-    }
+  public static Class<? extends Identifier> eventIdType() {
+    return IdentifierRegistryV2.idType(Values.EVENT);
+  }
 
-    public static Identifier msgId(IdentifierBuilder builder) {
-        return IdentifierRegistry.lookup(Values.MSG.toString()).id(builder);
-    }
+  public static Identifier msgId() {
+    return IdentifierRegistryV2.instance(Values.MSG, backupSeed).randomId();
+  }
 
-    public static Class<? extends Identifier> msgIdType() {
-        return IdentifierRegistry.lookup(Values.MSG.toString()).idType();
-    }
+  public static Identifier msgId(IdentifierBuilder builder) {
+    return IdentifierRegistryV2.instance(Values.MSG, backupSeed).id(builder);
+  }
 
-    public static Identifier overlayId() {
-        return IdentifierRegistry.lookup(Values.OVERLAY.toString()).randomId();
-    }
+  public static Class<? extends Identifier> msgIdType() {
+    return IdentifierRegistryV2.idType(Values.MSG);
+  }
 
-    public static Identifier overlayId(IdentifierBuilder builder) {
-        return IdentifierRegistry.lookup(Values.OVERLAY.toString()).id(builder);
-    }
+  public static Identifier overlayId() {
+    return IdentifierRegistryV2.instance(Values.OVERLAY, backupSeed).randomId();
+  }
 
-    public static Class<? extends Identifier> overlayIdType() {
-        return IdentifierRegistry.lookup(Values.OVERLAY.toString()).idType();
-    }
+  public static Identifier overlayId(IdentifierBuilder builder) {
+    return IdentifierRegistryV2.instance(Values.OVERLAY, backupSeed).id(builder);
+  }
 
-    public static Identifier nodeId() {
-        return IdentifierRegistry.lookup(Values.NODE.toString()).randomId();
-    }
+  public static Class<? extends Identifier> overlayIdType() {
+    return IdentifierRegistryV2.idType(Values.OVERLAY);
+  }
 
-    public static Identifier nodeId(IdentifierBuilder builder) {
-        return IdentifierRegistry.lookup(Values.NODE.toString()).id(builder);
-    }
+  public static Identifier nodeId() {
+    return IdentifierRegistryV2.instance(Values.NODE, backupSeed).randomId();
+  }
 
-    public static Class<? extends Identifier> nodeIdType() {
-        return IdentifierRegistry.lookup(Values.NODE.toString()).idType();
-    }
+  public static Identifier nodeId(IdentifierBuilder builder) {
+    return IdentifierRegistryV2.instance(Values.NODE, backupSeed).id(builder);
+  }
 
-    public static void registerDefaults(long seed) {
-        Random rand = new Random(seed);
-        IdentifierRegistry.register(Values.EVENT.toString(), new UUIDIdFactory());
-        IdentifierRegistry.register(Values.MSG.toString(), new UUIDIdFactory());
-        IdentifierRegistry.register(Values.OVERLAY.toString(), new UUIDIdFactory());
-        IdentifierRegistry.register(Values.NODE.toString(), new IntIdFactory(rand));
-    }
-    
-    public static void registerDefaults2(long seed) {
-        Random rand = new Random(seed);
-        IdentifierRegistry.register(Values.EVENT.toString(), new UUIDIdFactory());
-        IdentifierRegistry.register(Values.MSG.toString(), new UUIDIdFactory());
-        IdentifierRegistry.register(Values.OVERLAY.toString(), new StringByteIdFactory(rand, 64));
-        IdentifierRegistry.register(Values.NODE.toString(), new IntIdFactory(rand));
-    }
-    
-    public static boolean checkBasicIdentifiers() {
-        if (IdentifierRegistry.lookup(Values.EVENT.toString()) == null) {
-            return false;
-        }
-        if (IdentifierRegistry.lookup(Values.MSG.toString()) == null) {
-            return false;
-        }
-        if (IdentifierRegistry.lookup(Values.OVERLAY.toString()) == null) {
-            return false;
-        }
-        if (IdentifierRegistry.lookup(Values.NODE.toString()) == null) {
-            return false;
-        }
-        return true;
-    }
+  public static Class<? extends Identifier> nodeIdType() {
+    return IdentifierRegistryV2.idType(Values.NODE);
+  }
 }

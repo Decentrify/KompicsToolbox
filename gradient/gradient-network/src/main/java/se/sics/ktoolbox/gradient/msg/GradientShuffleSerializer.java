@@ -28,8 +28,6 @@ import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.gradient.util.GradientContainer;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
@@ -40,9 +38,9 @@ public class GradientShuffleSerializer {
         private final int id;
         private final Class msgIdType;
         
-        Basic(int id) {
+        Basic(int id, Class msgIdType) {
             this.id = id;
-            this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
+            this.msgIdType = msgIdType;
         }
         
         @Override
@@ -82,8 +80,8 @@ public class GradientShuffleSerializer {
     
     public static class Request extends Basic {
 
-        public Request(int id) {
-            super(id);
+        public Request(int id, Class msgIdType) {
+            super(id, msgIdType);
         }
         
         @Override
@@ -96,8 +94,8 @@ public class GradientShuffleSerializer {
     
     public static class Response extends Basic {
 
-        public Response(int id) {
-            super(id);
+        public Response(int id, Class msgIdType) {
+            super(id, msgIdType);
         }
         
         @Override

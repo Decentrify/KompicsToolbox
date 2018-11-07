@@ -26,7 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -36,7 +36,7 @@ import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 public class UUIDIdSerializerTest {
     @BeforeClass
     public static void setup() {
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }

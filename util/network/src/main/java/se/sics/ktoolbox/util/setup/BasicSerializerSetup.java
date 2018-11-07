@@ -19,6 +19,8 @@
 package se.sics.ktoolbox.util.setup;
 
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.IntId;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdSerializer;
 import se.sics.ktoolbox.util.identifiable.basic.SimpleByteId;
@@ -106,11 +108,13 @@ public class BasicSerializerSetup {
         Serializers.register(uuidIdentifierSerializer, BasicSerializers.UUIDIdentifier.serializerName);
         Serializers.register(BasicSerializers.UUIDIdentifier.serializedClass, BasicSerializers.UUIDIdentifier.serializerName);
 
-        OverlayIdSerializer overlayIdentifierSerializer = new OverlayIdSerializer(currentId++);
+        Class overlayIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.OVERLAY);
+        OverlayIdSerializer overlayIdentifierSerializer = new OverlayIdSerializer(currentId++, overlayIdType);
         Serializers.register(overlayIdentifierSerializer, BasicSerializers.OverlayIdentifier.serializerName);
         Serializers.register(BasicSerializers.OverlayIdentifier.serializedClass, BasicSerializers.OverlayIdentifier.serializerName);
 
-        BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(currentId++);
+        Class nodeIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.NODE);
+        BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(currentId++, nodeIdType);
         Serializers.register(basicAddressSerializer, BasicSerializers.BasicAddress.serializerName);
         Serializers.register(BasicSerializers.BasicAddress.serializedClass, BasicSerializers.BasicAddress.serializerName);
 

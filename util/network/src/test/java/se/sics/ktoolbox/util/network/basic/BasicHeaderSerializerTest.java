@@ -32,7 +32,7 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
@@ -44,7 +44,7 @@ public class BasicHeaderSerializerTest {
 
     @BeforeClass
     public static void setup() {
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -61,7 +61,7 @@ public class BasicHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        IdentifierFactory nodeIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, java.util.Optional.of(1234l));
         BasicAddress simpleAdr1 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
         BasicAddress simpleAdr2 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
         original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);
@@ -90,7 +90,7 @@ public class BasicHeaderSerializerTest {
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
-        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        IdentifierFactory nodeIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, java.util.Optional.of(1234l));
         NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, nodeIdFactory.randomId()));
         NatAwareAddressImpl simpleAdr2 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, nodeIdFactory.randomId()));
         original = new BasicHeader(simpleAdr1, simpleAdr2, Transport.UDP);

@@ -28,6 +28,8 @@ import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
 import se.sics.ktoolbox.omngr.bootstrap.msg.SampleSerializer;
 import se.sics.ktoolbox.omngr.util.ServiceViewSerializer;
 import se.sics.ktoolbox.overlaymngr.util.ServiceView;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -71,7 +73,8 @@ public class OMngrSerializerSetup {
         Serializers.register(serviceViewSerializer, OMngrSerializers.ServiceView.serializerName);
         Serializers.register(OMngrSerializers.ServiceView.serializedClass, OMngrSerializers.ServiceView.serializerName);
         
-        HeartbeatSerializer heartbeatSerializer = new HeartbeatSerializer(currentId++);
+        Class msgIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.MSG);
+        HeartbeatSerializer heartbeatSerializer = new HeartbeatSerializer(currentId++, msgIdType);
         Serializers.register(heartbeatSerializer, OMngrSerializers.Heartbeat.serializerName);
         Serializers.register(OMngrSerializers.Heartbeat.serializedClass, OMngrSerializers.Heartbeat.serializerName);
         

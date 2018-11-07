@@ -32,7 +32,7 @@ import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
@@ -48,7 +48,7 @@ public class CroupierContainerSerializerTest {
     @BeforeClass
     public static void setup() {
         OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
 
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
@@ -72,7 +72,7 @@ public class CroupierContainerSerializerTest {
             throw new RuntimeException(ex);
         }
 
-        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        IdentifierFactory nodeIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, java.util.Optional.of(1234l));
         NatAwareAddressImpl simpleAdr1 = NatAwareAddressImpl.open(new BasicAddress(localHost, 10000, nodeIdFactory.randomId()));
         original = new CroupierContainer(simpleAdr1, new TestHelper.TestContent1(1));
         serializedOriginal = Unpooled.buffer();

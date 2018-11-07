@@ -28,8 +28,6 @@ import org.slf4j.LoggerFactory;
 import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@sics.se>
@@ -41,9 +39,9 @@ public class BasicAddressSerializer implements Serializer {
     private final int id;
     private final Class nodeIdType;
 
-    public BasicAddressSerializer(int id) {
+    public BasicAddressSerializer(int id, Class nodeIdType) {
         this.id = id;
-        this.nodeIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString()).idType();
+        this.nodeIdType = nodeIdType;
     }
 
     @Override

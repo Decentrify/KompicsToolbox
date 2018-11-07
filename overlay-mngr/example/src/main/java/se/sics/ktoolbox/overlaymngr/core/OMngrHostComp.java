@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.overlaymngr.core;
 
 import java.security.SecureRandom;
+import java.util.Optional;
 import java.util.Random;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
@@ -144,7 +145,7 @@ public class OMngrHostComp extends ComponentDefinition {
     };
 
     private void connectTestCroupier1Comp() {
-        IdentifierFactory baseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        IdentifierFactory baseIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY, Optional.of(1234l));
         OverlayIdFactory overlayIdFactory = new OverlayIdFactory(baseIdFactory, OverlayId.BasicTypes.CROUPIER, owner);
         OverlayId croupierId = overlayIdFactory.id(new BasicBuilders.ByteBuilder(new byte[]{0, 0, 1}));
         Component tc1Comp = create(TestCroupierComp.class, new TestCroupierInit(croupierId));
@@ -156,7 +157,7 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestCroupier2Comp() {
-        IdentifierFactory baseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        IdentifierFactory baseIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY,  Optional.of(1234l));
         OverlayIdFactory overlayIdFactory = new OverlayIdFactory(baseIdFactory, OverlayId.BasicTypes.CROUPIER, owner);
         OverlayId croupierId = overlayIdFactory.id(new BasicBuilders.ByteBuilder(new byte[]{0, 0, 2}));
         Component tc2Comp = create(TestCroupierComp.class, new TestCroupierInit(croupierId));
@@ -168,7 +169,7 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestGradient1Comp() {
-        IdentifierFactory baseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        IdentifierFactory baseIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY,  Optional.of(1234l));
         OverlayIdFactory overlayIdFactory = new OverlayIdFactory(baseIdFactory, OverlayId.BasicTypes.TGRADIENT, owner);
         OverlayId tgradientId = overlayIdFactory.id(new BasicBuilders.ByteBuilder(new byte[]{0, 0, 3}));
         Identifier croupierId = tgradientId.changeType(OverlayId.BasicTypes.CROUPIER);
@@ -184,7 +185,7 @@ public class OMngrHostComp extends ComponentDefinition {
     }
 
     private void connectTestGradient2Comp() {
-        IdentifierFactory baseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        IdentifierFactory baseIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY,  Optional.of(1234l));
         OverlayIdFactory overlayIdFactory = new OverlayIdFactory(baseIdFactory, OverlayId.BasicTypes.TGRADIENT, owner);
         OverlayId tgradientId = overlayIdFactory.id(new BasicBuilders.ByteBuilder(new byte[]{0, 0, 4}));
         Identifier croupierId = tgradientId.changeType(OverlayId.BasicTypes.CROUPIER);

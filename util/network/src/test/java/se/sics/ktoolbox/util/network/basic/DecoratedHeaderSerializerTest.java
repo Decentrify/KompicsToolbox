@@ -31,7 +31,7 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
@@ -45,7 +45,7 @@ public class DecoratedHeaderSerializerTest {
     @BeforeClass
     public static void setup() {
         OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -63,12 +63,12 @@ public class DecoratedHeaderSerializerTest {
             throw new RuntimeException(ex);
         }
         
-        IdentifierFactory nodeIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.NODE.toString());
+        IdentifierFactory nodeIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, java.util.Optional.of(1234l));
         BasicAddress basicAdr1 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
         BasicAddress basicAdr2 = new BasicAddress(localHost, 10000, nodeIdFactory.randomId());
 
         byte ownerId = 1;
-        IdentifierFactory baseOverlayIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        IdentifierFactory baseOverlayIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY, java.util.Optional.of(1234l));
         OverlayIdFactory overlayIdFactory = new OverlayIdFactory(baseOverlayIdFactory, OverlayId.BasicTypes.CROUPIER, ownerId);
         original = new DecoratedHeader(new BasicHeader(basicAdr1, basicAdr2, Transport.UDP), overlayIdFactory.randomId());
         serializedOriginal = Unpooled.buffer();

@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.util.identifiable.basic;
 
 import com.google.common.primitives.Ints;
+import java.util.Optional;
 import java.util.Random;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.IdentifierBuilder;
@@ -29,54 +30,57 @@ import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
  */
 public class IntIdFactory implements IdentifierFactory<IntId> {
 
-    private final Random rand;
-    private String registeredName;
+  private final Optional<Random> rand;
+  private String registeredName;
 
-    public IntIdFactory(Random rand) {
-        this.rand = rand;
-    }
+  public IntIdFactory(Optional<Long> seed) {
+    this.rand = seed.isPresent() ? Optional.of(new Random(seed.get())) : Optional.empty();
+  }
 
-    @Override
-    public synchronized IntId randomId() {
-        return new IntId(rand.nextInt());
+  @Override
+  public synchronized IntId randomId() {
+    if (!rand.isPresent()) {
+      throw new IllegalStateException("no seed");
     }
+    return new IntId(rand.get().nextInt());
+  }
 
-    @Override
-    public IntId id(IdentifierBuilder builder) {
-        int base;
-        if (builder instanceof BasicBuilders.IntBuilder) {
-            BasicBuilders.IntBuilder aux = (BasicBuilders.IntBuilder) builder;
-            base = aux.base;
-        } else if (builder instanceof BasicBuilders.StringBuilder) {
-            BasicBuilders.StringBuilder aux = (BasicBuilders.StringBuilder) builder;
-            base = Integer.valueOf(aux.base);
-        } else if (builder instanceof BasicBuilders.ByteBuilder) {
-            BasicBuilders.ByteBuilder aux = (BasicBuilders.ByteBuilder) builder;
-            base = Ints.fromByteArray(aux.base);
-        } else if (builder instanceof BasicBuilders.UUIDBuilder) {
-            throw new UnsupportedOperationException("IntFactory does not support uuid builder");
-        } else {
-            throw new UnsupportedOperationException("IntFactory does not support builder" + builder.getClass());
-        }
-        return new IntId(base);
+  @Override
+  public IntId id(IdentifierBuilder builder) {
+    int base;
+    if (builder instanceof BasicBuilders.IntBuilder) {
+      BasicBuilders.IntBuilder aux = (BasicBuilders.IntBuilder) builder;
+      base = aux.base;
+    } else if (builder instanceof BasicBuilders.StringBuilder) {
+      BasicBuilders.StringBuilder aux = (BasicBuilders.StringBuilder) builder;
+      base = Integer.valueOf(aux.base);
+    } else if (builder instanceof BasicBuilders.ByteBuilder) {
+      BasicBuilders.ByteBuilder aux = (BasicBuilders.ByteBuilder) builder;
+      base = Ints.fromByteArray(aux.base);
+    } else if (builder instanceof BasicBuilders.UUIDBuilder) {
+      throw new UnsupportedOperationException("IntFactory does not support uuid builder");
+    } else {
+      throw new UnsupportedOperationException("IntFactory does not support builder" + builder.getClass());
     }
-    
-    public IntId rawId(int val) {
-        return new IntId(val);
-    }
+    return new IntId(base);
+  }
 
-    @Override
-    public Class<IntId> idType() {
-        return IntId.class;
-    }
+  public IntId rawId(int val) {
+    return new IntId(val);
+  }
 
-    @Override
-    public void setRegisteredName(String name) {
-        this.registeredName = name;
-    }
+  @Override
+  public Class<IntId> idType() {
+    return IntId.class;
+  }
 
-    @Override
-    public String getRegisteredName() {
-        return registeredName;
-    }
+  @Override
+  public void setRegisteredName(String name) {
+    this.registeredName = name;
+  }
+
+  @Override
+  public String getRegisteredName() {
+    return registeredName;
+  }
 }

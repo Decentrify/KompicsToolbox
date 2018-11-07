@@ -23,8 +23,6 @@ import io.netty.buffer.ByteBuf;
 import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,9 +33,9 @@ public class OverlayIdSerializer implements Serializer {
     public final OverlayId.TypeComparator overlayTypeComparator;
     public final OverlayId.TypeFactory overlayTypeFactory;
     
-    public OverlayIdSerializer(int id) {
+    public OverlayIdSerializer(int id, Class baseIdType) {
         this.id = id;
-        this.baseIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString()).idType();
+        this.baseIdType = baseIdType;
         this.overlayTypeComparator = OverlayRegistry.getTypeComparator();
         this.overlayTypeFactory = OverlayRegistry.getTypeFactory();
     }

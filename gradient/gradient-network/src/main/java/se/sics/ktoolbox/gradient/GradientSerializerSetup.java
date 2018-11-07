@@ -26,6 +26,8 @@ import se.sics.ktoolbox.gradient.util.GradientContainer;
 import se.sics.ktoolbox.gradient.util.GradientContainerSerializer;
 import se.sics.ktoolbox.gradient.util.GradientLocalView;
 import se.sics.ktoolbox.gradient.util.GradientLocalViewSerializer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 
@@ -72,11 +74,12 @@ public class GradientSerializerSetup {
         Serializers.register(gradientLocalViewSerializer, GradientSerializers.GradientLocalView.serializerName);
         Serializers.register(GradientSerializers.GradientLocalView.serializedClass, GradientSerializers.GradientLocalView.serializerName);
 
-        GradientShuffleSerializer.Request gradientShuffleRequestSerializer = new GradientShuffleSerializer.Request(currentId++);
+        Class msgIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.MSG);
+        GradientShuffleSerializer.Request gradientShuffleRequestSerializer = new GradientShuffleSerializer.Request(currentId++, msgIdType);
         Serializers.register(gradientShuffleRequestSerializer, GradientSerializers.GradientShuffleRequest.serializerName);
         Serializers.register(GradientSerializers.GradientShuffleRequest.serializedClass, GradientSerializers.GradientShuffleRequest.serializerName);
 
-        GradientShuffleSerializer.Response gradientShuffleResponseSerializer = new GradientShuffleSerializer.Response(currentId++);
+        GradientShuffleSerializer.Response gradientShuffleResponseSerializer = new GradientShuffleSerializer.Response(currentId++, msgIdType);
         Serializers.register(gradientShuffleResponseSerializer, GradientSerializers.GradientShuffleResponse.serializerName);
         Serializers.register(GradientSerializers.GradientShuffleResponse.serializedClass, GradientSerializers.GradientShuffleResponse.serializerName);
 

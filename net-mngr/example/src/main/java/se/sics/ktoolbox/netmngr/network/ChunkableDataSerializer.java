@@ -26,7 +26,7 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.netmngr.core.ChunkableData;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
@@ -39,7 +39,7 @@ public class ChunkableDataSerializer implements Serializer {
 
     public ChunkableDataSerializer(int id) {
         this.id = id;
-        this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
+        this.msgIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.MSG);
     }
 
     @Override

@@ -28,7 +28,7 @@ import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
@@ -41,7 +41,7 @@ public class OverlayIdSerializerTest {
     @BeforeClass
     public static void setup() {
         OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte)0), new OverlayId.BasicTypeComparator());
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -53,7 +53,7 @@ public class OverlayIdSerializerTest {
         ByteBuf serializedOriginal, serializedCopy;
 
         byte ownerId = 11;
-        IdentifierFactory baseIdFactory = IdentifierRegistry.lookup(BasicIdentifiers.Values.OVERLAY.toString());
+        IdentifierFactory baseIdFactory = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY, java.util.Optional.of(1234l));
         OverlayIdFactory idFactory = new OverlayIdFactory(baseIdFactory, OverlayId.BasicTypes.CROUPIER, ownerId);
         original = idFactory.randomId();
         serializedOriginal = Unpooled.buffer();

@@ -23,8 +23,6 @@ import io.netty.buffer.ByteBuf;
 import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistry;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
@@ -36,9 +34,9 @@ public class HeartbeatSerializer implements Serializer {
     private final int id;
     private final Class msgIdType;
 
-    public HeartbeatSerializer(int id) {
+    public HeartbeatSerializer(int id, Class msgIdType) {
         this.id = id;
-        this.msgIdType = IdentifierRegistry.lookup(BasicIdentifiers.Values.MSG.toString()).idType();
+        this.msgIdType = msgIdType;
     }
 
     @Override

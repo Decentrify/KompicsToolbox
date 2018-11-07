@@ -25,6 +25,8 @@ import se.sics.ktoolbox.croupier.msg.CroupierShuffle;
 import se.sics.ktoolbox.croupier.msg.CroupierShuffleSerializer;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
 import se.sics.ktoolbox.croupier.util.CroupierContainerSerializer;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -64,15 +66,23 @@ public class CroupierSerializerSetup {
         
         CroupierContainerSerializer croupierContainerSerializer = new CroupierContainerSerializer(currentId++);
         Serializers.register(croupierContainerSerializer, CroupierSerializers.CroupierContainer.serializerName);
-        Serializers.register(CroupierSerializers.CroupierContainer.serializedClass, CroupierSerializers.CroupierContainer.serializerName);
+        Serializers.register(CroupierSerializers.CroupierContainer.serializedClass, 
+          CroupierSerializers.CroupierContainer.serializerName);
         
-        CroupierShuffleSerializer.Request croupierShuffleRequestSerializer = new CroupierShuffleSerializer.Request(currentId++);
-        Serializers.register(croupierShuffleRequestSerializer, CroupierSerializers.CroupierShuffleRequest.serializerName);
-        Serializers.register(CroupierSerializers.CroupierShuffleRequest.serializedClass, CroupierSerializers.CroupierShuffleRequest.serializerName);
+        Class msgIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.MSG);
+        CroupierShuffleSerializer.Request croupierShuffleRequestSerializer
+          = new CroupierShuffleSerializer.Request(currentId++);
+        Serializers.register(croupierShuffleRequestSerializer, 
+          CroupierSerializers.CroupierShuffleRequest.serializerName);
+        Serializers.register(CroupierSerializers.CroupierShuffleRequest.serializedClass, 
+          CroupierSerializers.CroupierShuffleRequest.serializerName);
         
-        CroupierShuffleSerializer.Response croupierShuffleResponseSerializer = new CroupierShuffleSerializer.Response(currentId++);
-        Serializers.register(croupierShuffleResponseSerializer, CroupierSerializers.CroupierShuffleResponse.serializerName);
-        Serializers.register(CroupierSerializers.CroupierShuffleResponse.serializedClass, CroupierSerializers.CroupierShuffleResponse.serializerName);
+        CroupierShuffleSerializer.Response croupierShuffleResponseSerializer 
+          = new CroupierShuffleSerializer.Response(currentId++);
+        Serializers.register(croupierShuffleResponseSerializer, 
+          CroupierSerializers.CroupierShuffleResponse.serializerName);
+        Serializers.register(CroupierSerializers.CroupierShuffleResponse.serializedClass, 
+          CroupierSerializers.CroupierShuffleResponse.serializerName);
         
         Assert.assertEquals(serializerIds, currentId - startingId);
         return currentId;

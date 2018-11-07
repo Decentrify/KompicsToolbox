@@ -27,7 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -36,7 +36,7 @@ import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 public class StringByteIdSerializerTest {
     @BeforeClass
     public static void setup() {
-        BasicIdentifiers.registerDefaults(1234l);
+        IdentifierRegistryV2.registerBaseDefaults1(64);
         int serializerId = 128;
         serializerId = BasicSerializerSetup.registerBasicSerializers(serializerId);
     }
@@ -47,7 +47,7 @@ public class StringByteIdSerializerTest {
         StringByteId original, copy;
         ByteBuf serializedOriginal, serializedCopy;
 
-        StringByteIdFactory idFactory = new StringByteIdFactory(new Random(1234l), 6);
+        StringByteIdFactory idFactory = new StringByteIdFactory(java.util.Optional.of(1234l), 6);
         original = idFactory.randomId();
         serializedOriginal = Unpooled.buffer();
         serializer.toBinary(original, serializedOriginal);
