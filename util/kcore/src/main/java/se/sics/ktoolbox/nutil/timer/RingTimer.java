@@ -29,24 +29,25 @@ import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.timer.RingTimer.Container;
 
 /**
+ * Timeout semantics are for timeout of x ms the wheel will wait for x+-windowSize
+ * So if windowSize is 50 ms and your timeout is 120ms the wheel will wait for anything between 70 and 170ms.
+ * The wheel interval is [)
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class RingTimer<C extends Container> {
 
   private final long windowSize;
   private final long maxTimeout;
-  private final int ringSize;
+  final int ringSize;
   //****************************************************
   private final ArrayList<List<Timeout<C>>> ring;
   private final Map<Identifier, Timeout<C>> timeouts = new HashMap<>();
   private int ringPointer = 0;
-  //your timeout will take between (giventimeout, givenTimeout + 1window)
-  private final int timeoutShift = 1;
 
   public RingTimer(long windowSize, long maxTimeout) {
     this.windowSize = windowSize;
     this.maxTimeout = maxTimeout;
-    ringSize = (int)(maxTimeout / windowSize + timeoutShift);
+    ringSize = (int)(Math.ceil(maxTimeout / windowSize));
     ring = new ArrayList<>(ringSize);
     setupRing();
   }
@@ -61,7 +62,7 @@ public class RingTimer<C extends Container> {
     if (rto > maxTimeout) {
       return false;
     }
-    int window = ((int) (rto / windowSize) + timeoutShift + ringPointer) % ringSize;
+    int window = ((int) (rto / windowSize) + ringPointer) % ringSize;
     Timeout t = new Timeout(container);
     ring.get(window).add(t);
     timeouts.put(container.getId(), t);
