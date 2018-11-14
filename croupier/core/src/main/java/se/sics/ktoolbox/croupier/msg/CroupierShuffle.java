@@ -23,7 +23,6 @@ import java.util.Map;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.croupier.event.CroupierEvent;
 import se.sics.ktoolbox.croupier.util.CroupierContainer;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.update.View;
 
@@ -32,88 +31,70 @@ import se.sics.ktoolbox.util.update.View;
  */
 public class CroupierShuffle {
 
-    public static abstract class Basic implements CroupierEvent {
+  public static abstract class Basic implements CroupierEvent {
 
-        public final Identifier msgId;
-        public final OverlayId overlayId;
-        public final Optional<View> selfView;
-        public final Map<Identifier, CroupierContainer> publicNodes;
-        public final Map<Identifier, CroupierContainer> privateNodes;
+    public final Identifier msgId;
+    public final OverlayId overlayId;
+    public final Optional<View> selfView;
+    public final Map<Identifier, CroupierContainer> publicNodes;
+    public final Map<Identifier, CroupierContainer> privateNodes;
 
-        Basic(Identifier msgId, OverlayId overlayId,
-                Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            this.msgId = msgId;
-            this.overlayId = overlayId;
-            this.selfView = selfView;
-            this.publicNodes = publicNodes;
-            this.privateNodes = privateNodes;
-            if (publicNodes.size() > 128 || privateNodes.size() > 128) {
-                throw new RuntimeException("Croupier shuffle message is too large - limit yourself to 128 public nodes and 128 private nodes per shuffle");
-            }
-        }
-
-        Basic(OverlayId overlayId,
-                Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            this(BasicIdentifiers.msgId(), overlayId, selfView, publicNodes, privateNodes);
-        }
-
-        @Override
-        public OverlayId overlayId() {
-            return overlayId;
-        }
-
-        @Override
-        public Identifier getId() {
-            return msgId;
-        }
+    Basic(Identifier msgId, OverlayId overlayId,
+      Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
+      Map<Identifier, CroupierContainer> privateNodes) {
+      this.msgId = msgId;
+      this.overlayId = overlayId;
+      this.selfView = selfView;
+      this.publicNodes = publicNodes;
+      this.privateNodes = privateNodes;
+      if (publicNodes.size() > 128 || privateNodes.size() > 128) {
+        throw new RuntimeException(
+          "Croupier shuffle message is too large - limit yourself to 128 public nodes and 128 private nodes per shuffle");
+      }
     }
 
-    public static class Request extends Basic {
-
-        public Request(Identifier msgId, OverlayId overlayId,
-                Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            super(msgId, overlayId, selfView, publicNodes, privateNodes);
-        }
-
-        public Request(OverlayId overlayId,
-                Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            super(overlayId, selfView, publicNodes, privateNodes);
-        }
-
-        @Override
-        public String toString() {
-            return "Croupier<" + overlayId() + ">ShuffleReq<" + msgId + ">";
-        }
-        
-        public Response answer(Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            return new Response(msgId, overlayId, selfView, publicNodes, privateNodes);
-        }
+    @Override
+    public OverlayId overlayId() {
+      return overlayId;
     }
 
-    public static class Response extends Basic {
-
-        public Response(Identifier msgId, OverlayId overlayId,
-                Optional<View> selfView, 
-                Map<Identifier, CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            super(msgId, overlayId, selfView, publicNodes, privateNodes);
-        }
-        
-         public Response(OverlayId overlayId,
-                Optional<View> selfView, Map<Identifier, 
-                        CroupierContainer> publicNodes,
-                Map<Identifier, CroupierContainer> privateNodes) {
-            super(overlayId, selfView, publicNodes, privateNodes);
-        }
-
-        @Override
-        public String toString() {
-            return "Croupier<" + overlayId() + ">ShuffleResp<" + msgId + ">";
-        }
+    @Override
+    public Identifier getId() {
+      return msgId;
     }
+  }
+
+  public static class Request extends Basic {
+
+    public Request(Identifier msgId, OverlayId overlayId,
+      Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
+      Map<Identifier, CroupierContainer> privateNodes) {
+      super(msgId, overlayId, selfView, publicNodes, privateNodes);
+    }
+
+    @Override
+    public String toString() {
+      return "Croupier<" + overlayId() + ">ShuffleReq<" + msgId + ">";
+    }
+
+    public Response answer(Optional<View> selfView, Map<Identifier, CroupierContainer> publicNodes,
+      Map<Identifier, CroupierContainer> privateNodes) {
+      return new Response(msgId, overlayId, selfView, publicNodes, privateNodes);
+    }
+  }
+
+  public static class Response extends Basic {
+
+    public Response(Identifier msgId, OverlayId overlayId,
+      Optional<View> selfView,
+      Map<Identifier, CroupierContainer> publicNodes,
+      Map<Identifier, CroupierContainer> privateNodes) {
+      super(msgId, overlayId, selfView, publicNodes, privateNodes);
+    }
+
+    @Override
+    public String toString() {
+      return "Croupier<" + overlayId() + ">ShuffleResp<" + msgId + ">";
+    }
+  }
 }

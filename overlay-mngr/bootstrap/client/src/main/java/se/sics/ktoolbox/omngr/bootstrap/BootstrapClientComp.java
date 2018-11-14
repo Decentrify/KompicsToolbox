@@ -20,6 +20,7 @@ package se.sics.ktoolbox.omngr.bootstrap;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -37,6 +38,9 @@ import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
 import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
@@ -64,7 +68,8 @@ public class BootstrapClientComp extends ComponentDefinition {
   private final Map<OverlayId, BootstrapClientEvent.Start> heartbeats = new HashMap<>();
   //********************************AUX_STATE*********************************
   private UUID heartbeatTimeout;
-
+  private final IdentifierFactory msgIds;
+  
   public BootstrapClientComp(Init init) {
     bootstrapPort = provides(BootstrapClientPort.class);
     networkPort = requires(Network.class);
@@ -75,29 +80,30 @@ public class BootstrapClientComp extends ComponentDefinition {
     selfAdr = init.selfAdr;
     loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
     logger.info("initiating with seed:{}, bootstrap server:{}", systemConfig.seed, clientConfig.server);
-
+    
+    this.msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(systemConfig.seed));
     timer = new TimerProxyImpl().setup(proxy);
     rand = new Random(systemConfig.seed);
-
+    
     subscribe(handleStart, control);
     subscribe(handleHeartbeatStart, bootstrapPort);
     subscribe(handleHeartbeatStop, bootstrapPort);
     subscribe(handleSample, networkPort);
   }
-
+  
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
       heartbeatTimeout = timer.schedulePeriodicTimer(0, clientConfig.heartbeatPeriod, heartbeatTimeout());
     }
   };
-
+  
   @Override
   public void tearDown() {
     timer.cancelPeriodicTimer(heartbeatTimeout);
     heartbeatTimeout = null;
   }
-
+  
   private Consumer<Boolean> heartbeatTimeout() {
     return (_in) -> {
       logger.info("heartbeat overlays:{}", heartbeats.size());
@@ -107,21 +113,21 @@ public class BootstrapClientComp extends ComponentDefinition {
       });
     };
   }
-
+  
   private void sendHeartbeat(OverlayId overlayId) {
     logger.debug("heartbeat id:{}", overlayId);
-    Heartbeat content = new Heartbeat(overlayId, rand.nextInt(clientConfig.heartbeatPositions));
+    Heartbeat content = new Heartbeat(msgIds.randomId(), overlayId, rand.nextInt(clientConfig.heartbeatPositions));
     KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, clientConfig.server, Transport.UDP), content);
     trigger(container, networkPort);
   }
-
+  
   private void sampleRequest(OverlayId overlayId) {
     logger.debug("sample request for:{}", overlayId);
-    Sample.Request content = new Sample.Request(overlayId);
+    Sample.Request content = new Sample.Request(msgIds.randomId(), overlayId);
     KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, clientConfig.server, Transport.UDP), content);
     trigger(container, networkPort);
   }
-
+  
   Handler handleHeartbeatStart = new Handler<BootstrapClientEvent.Start>() {
     @Override
     public void handle(BootstrapClientEvent.Start req) {
@@ -131,7 +137,7 @@ public class BootstrapClientComp extends ComponentDefinition {
       sampleRequest(req.overlay);
     }
   };
-
+  
   Handler handleHeartbeatStop = new Handler<BootstrapClientEvent.Stop>() {
     @Override
     public void handle(BootstrapClientEvent.Stop req) {
@@ -139,10 +145,10 @@ public class BootstrapClientComp extends ComponentDefinition {
       heartbeats.remove(req.overlay);
     }
   };
-
+  
   ClassMatchedHandler handleSample
     = new ClassMatchedHandler<Sample.Response, KContentMsg<?, ?, Sample.Response>>() {
-
+    
     @Override
     public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> msg) {
       logger.debug("received:{}", content);
@@ -155,9 +161,9 @@ public class BootstrapClientComp extends ComponentDefinition {
 
   //**************************************************************************
   public static class Init extends se.sics.kompics.Init<BootstrapClientComp> {
-
+    
     public final KAddress selfAdr;
-
+    
     public Init(KAddress selfAdr) {
       this.selfAdr = selfAdr;
     }

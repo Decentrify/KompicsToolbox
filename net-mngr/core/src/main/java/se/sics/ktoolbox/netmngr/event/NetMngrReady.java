@@ -20,7 +20,6 @@ package se.sics.ktoolbox.netmngr.event;
 
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 
 /**
@@ -28,25 +27,22 @@ import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NetMngrReady implements NetMngrEvent {
-    public final Identifier eventId;
-    public final NatAwareAddress systemAdr;
 
-    public NetMngrReady(Identifier eventId, NatAwareAddress systemAdr) {
-        this.eventId = eventId;
-        this.systemAdr = systemAdr;
-    }
-    
-    public NetMngrReady(NatAwareAddress systemAdr) {
-        this(BasicIdentifiers.eventId(), systemAdr);
-    }
-    
-    @Override
-    public Identifier getId() {
-        return eventId;
-    }
-    
-    @Override
-    public String toString() {
-        return "NetMngrReady<" + eventId + ">";
-    }
+  public final Identifier eventId;
+  public final NatAwareAddress systemAdr;
+
+  public NetMngrReady(Identifier eventId, NatAwareAddress systemAdr) {
+    this.eventId = eventId;
+    this.systemAdr = systemAdr;
+  }
+
+  @Override
+  public Identifier getId() {
+    return eventId;
+  }
+
+  @Override
+  public String toString() {
+    return "NetMngrReady<" + eventId + ">";
+  }
 }

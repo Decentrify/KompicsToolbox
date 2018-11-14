@@ -21,68 +21,61 @@ package se.sics.ktoolbox.util.status;
 import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Status {
 
-    public static class Internal<S extends Object> implements PatternExtractor<Class<Object>, S>, Identifiable {
-        private final Identifier eventId; 
-        public final S status;
+  public static class Internal<S extends Object> implements PatternExtractor<Class<Object>, S>, Identifiable {
 
-        public Internal(Identifier eventId, S status) {
-            this.eventId = eventId;
-            this.status = status;
-        }
-        
-        public Internal(S status) {
-            this(BasicIdentifiers.eventId(), status);
-        }
+    private final Identifier eventId;
+    public final S status;
 
-        @Override
-        public Class<Object> extractPattern() {
-            return (Class)status.getClass();
-        }
-
-        @Override
-        public S extractValue() {
-            return status;
-        }
-
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
+    public Internal(Identifier eventId, S status) {
+      this.eventId = eventId;
+      this.status = status;
     }
-    
-    public static class External<S extends Object> implements PatternExtractor<Class<S>, S>, Identifiable {
-        private final Identifier eventId;
-        public final S status;
 
-        public External(Identifier eventId, S status) {
-            this.eventId = eventId;
-            this.status = status;
-        }
-        
-        public External(S status) {
-            this(BasicIdentifiers.eventId(), status);
-        }
-
-        @Override
-        public Class<S> extractPattern() {
-            return (Class<S>)status.getClass();
-        }
-
-        @Override
-        public S extractValue() {
-            return status;
-        }
-
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
+    @Override
+    public Class<Object> extractPattern() {
+      return (Class) status.getClass();
     }
+
+    @Override
+    public S extractValue() {
+      return status;
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+  }
+
+  public static class External<S extends Object> implements PatternExtractor<Class<S>, S>, Identifiable {
+
+    private final Identifier eventId;
+    public final S status;
+
+    public External(Identifier eventId, S status) {
+      this.eventId = eventId;
+      this.status = status;
+    }
+
+    @Override
+    public Class<S> extractPattern() {
+      return (Class<S>) status.getClass();
+    }
+
+    @Override
+    public S extractValue() {
+      return status;
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+  }
 }

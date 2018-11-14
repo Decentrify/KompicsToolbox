@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.netmngr.core;
 
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 
@@ -36,10 +35,6 @@ public class Data implements OverlayEvent {
         this.msgId = msgId;
         this.overlayId = overlayId;
         this.counter = counter;
-    }
-    
-    public Data(OverlayId overlayId, int counter) {
-        this(BasicIdentifiers.msgId(), overlayId, counter);
     }
     
     @Override

@@ -20,7 +20,6 @@ package se.sics.ktoolbox.netmngr.core;
 
 import java.nio.ByteBuffer;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.basic.ContentPattern;
 import se.sics.ktoolbox.util.network.other.Chunkable;
@@ -42,10 +41,6 @@ public class ChunkableData implements OverlayEvent, Chunkable, ContentPattern<Ch
         this.data = data;
     }
     
-    public ChunkableData(OverlayId overlayId, int counter, ByteBuffer data) {
-        this(BasicIdentifiers.msgId(), overlayId, counter, data);
-    }
-            
     @Override
     public OverlayId overlayId() {
         return overlayId;

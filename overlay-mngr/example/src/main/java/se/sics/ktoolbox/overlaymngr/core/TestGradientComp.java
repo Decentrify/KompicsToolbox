@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.overlaymngr.core;
 
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -30,6 +31,9 @@ import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.event.TGradientSample;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
@@ -49,11 +53,13 @@ public class TestGradientComp extends ComponentDefinition {
     
     private final int id;
     private final OverlayId tgradientId;
+    private final IdentifierFactory eventIds;
     
     public TestGradientComp(TestGradientInit init) {
         id = init.id;
         tgradientId = init.tgradientId;
         
+        this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(1234l));
         subscribe(handleStart, control);
         subscribe(handleCroupierSample, croupierPort);
         subscribe(handleGradientSample, gradientPort);
@@ -62,7 +68,7 @@ public class TestGradientComp extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            OverlayViewUpdate.Indication ovu = new OverlayViewUpdate.Indication(tgradientId, false, new IdView(id));
+            OverlayViewUpdate.Indication ovu = new OverlayViewUpdate.Indication(eventIds.randomId(), tgradientId, false, new IdView(id));
             LOG.info("{}sending:{}", new Object[]{logPrefix, ovu});
             trigger(ovu, viewUpdatePort);
         }

@@ -21,7 +21,6 @@ package se.sics.ktoolbox.gradient.temp;
 
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.gradient.event.GradientEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
@@ -38,10 +37,6 @@ public class RankUpdate implements GradientEvent {
         this.rank = rank;
     }
 
-    public RankUpdate(OverlayId overlayId, int rank) {
-        this(BasicIdentifiers.eventId(), overlayId, rank);
-    }
-    
     @Override
     public Identifier getId() {
         return eventId;

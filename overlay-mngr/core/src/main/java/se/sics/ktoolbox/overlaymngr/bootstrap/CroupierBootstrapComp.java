@@ -21,6 +21,7 @@ package se.sics.ktoolbox.overlaymngr.bootstrap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
@@ -34,6 +35,9 @@ import se.sics.ktoolbox.croupier.event.CroupierJoin;
 import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientEvent;
 import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientPort;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -51,10 +55,14 @@ public class CroupierBootstrapComp extends ComponentDefinition {
 
   private Map<Identifier, List<KAddress>> samples = new HashMap<>();
 
+  private final IdentifierFactory eventIds;
+  
   public CroupierBootstrapComp(Init init) {
     SystemKCWrapper systemConfig = new SystemKCWrapper(config());
     loggingCtxPutAlways("nId", systemConfig.id.toString());
 
+    this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(systemConfig.seed));
+ 
     subscribe(handleStart, control);
     subscribe(handleCroupierBootstrap, bootstrapPort);
     subscribe(handleExternalSample, heartbeatPort);
@@ -72,7 +80,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
     @Override
     public void handle(OMCroupierBootstrap req) {
       logger.trace("{}", req);
-      trigger(new BootstrapClientEvent.Start(req.overlayId), heartbeatPort);
+      trigger(new BootstrapClientEvent.Start(eventIds.randomId(), req.overlayId), heartbeatPort);
     }
   };
 
@@ -81,7 +89,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
     public void handle(BootstrapClientEvent.Sample sample) {
       logger.trace("{}", sample);
       samples.put(sample.req.overlay, sample.sample);
-      trigger(new CroupierJoin(sample.req.overlay, sample.sample), croupierStatusPort);
+      trigger(new CroupierJoin(eventIds.randomId(), sample.req.overlay, sample.sample), croupierStatusPort);
     }
   };
 
@@ -90,7 +98,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
     public void handle(CroupierDisconnected event) {
       List<KAddress> sample = samples.get(event.overlayId);
       if (sample != null && !sample.isEmpty()) {
-        trigger(new CroupierJoin(event.overlayId, sample), croupierStatusPort);
+        trigger(new CroupierJoin(eventIds.randomId(), event.overlayId, sample), croupierStatusPort);
       }
     }
   };

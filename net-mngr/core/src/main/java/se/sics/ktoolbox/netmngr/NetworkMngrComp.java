@@ -46,6 +46,9 @@ import se.sics.ktoolbox.netmngr.nxnet.NxNetComp;
 import se.sics.ktoolbox.netmngr.nxnet.NxNetPort;
 import se.sics.ktoolbox.netmngr.nxnet.NxNetUnbind;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddressImpl;
@@ -83,12 +86,16 @@ public class NetworkMngrComp extends ComponentDefinition {
   private Component ipSolverComp;
   private Component nxNetComp;
   private Component chunkMngrComp;
+  
+  private final IdentifierFactory eventIds;
 
   public NetworkMngrComp(Init init) {
     systemConfig = new SystemKCWrapper(config());
     logPrefix = "<nid:" + systemConfig.id + "> ";
     LOG.info("{}initializing...", logPrefix);
 
+    this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, 
+          java.util.Optional.of(systemConfig.seed));
     netMngrConfig = new NetworkKCWrapper(config());
 
     extPorts = init.extPorts;
@@ -144,7 +151,7 @@ public class NetworkMngrComp extends ComponentDefinition {
       NatAwareAddress systemAdr = NatAwareAddressImpl.open(new BasicAddress(resp.boundIp, systemConfig.port,
         systemConfig.id));
       LOG.info("{}binding system adr:{}", new Object[]{logPrefix, systemAdr});
-      trigger(NxNetBind.Request.localAdr(systemAdr), nxNetPort);
+      trigger(NxNetBind.Request.localAdr(eventIds.randomId(), systemAdr), nxNetPort);
     }
   };
 
@@ -154,9 +161,9 @@ public class NetworkMngrComp extends ComponentDefinition {
       LOG.trace("{}received:{}", logPrefix, resp);
       if (resp.req.adr.getPort() == systemConfig.port) {
         //tell everyone
-        NetMngrReady ready = new NetMngrReady((NatAwareAddress) resp.req.adr);
+        NetMngrReady ready = new NetMngrReady(eventIds.randomId(), (NatAwareAddress) resp.req.adr);
         LOG.info("{}ready", logPrefix);
-        trigger(new Status.Internal(ready), statusPort);
+        trigger(new Status.Internal(eventIds.randomId(), ready), statusPort);
       } else {
         NetMngrBind.Request req = pendingBind.remove(resp.getId());
         if (req == null) {
@@ -175,9 +182,9 @@ public class NetworkMngrComp extends ComponentDefinition {
       if (req.useAddress.isLeft()) {
         NatAwareAddress adr 
           = NatAwareAddressImpl.open(new BasicAddress(boundIp, req.useAddress.getLeft(), systemConfig.id));
-        bindReq = NxNetBind.Request.localAdr(adr);
+        bindReq = NxNetBind.Request.localAdr(eventIds.randomId(), adr);
       } else {
-        bindReq = NxNetBind.Request.providedAdr(req.useAddress.getRight(), boundIp);
+        bindReq = NxNetBind.Request.providedAdr(eventIds.randomId(), req.useAddress.getRight(), boundIp);
       }
       trigger(bindReq, nxNetPort);
       pendingBind.put(bindReq.getId(), req);
@@ -188,7 +195,7 @@ public class NetworkMngrComp extends ComponentDefinition {
     @Override
     public void handle(NetMngrUnbind.Request req) {
       LOG.trace("{}received:{}", logPrefix, req);
-      NxNetUnbind.Request unbindReq = new NxNetUnbind.Request(req.port);
+      NxNetUnbind.Request unbindReq = new NxNetUnbind.Request(eventIds.randomId(), req.port);
       trigger(unbindReq, nxNetPort);
       pendingUnbind.put(unbindReq.getId(), req);
     }

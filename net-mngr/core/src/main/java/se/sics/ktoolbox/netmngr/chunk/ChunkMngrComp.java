@@ -48,6 +48,8 @@ import se.sics.ktoolbox.netmngr.chunk.util.CompleteChunkTracker;
 import se.sics.ktoolbox.netmngr.chunk.util.IncompleteChunkTracker;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -72,13 +74,16 @@ public class ChunkMngrComp extends ComponentDefinition {
     //*******************************STATE**************************************
     private final Map<Identifier, Pair<CompleteChunkTracker, UUID>> outgoingChunks = new HashMap<>();
     private final Map<Identifier, Pair<IncompleteChunkTracker, UUID>> incomingChunks = new HashMap<>();
-
+    private final IdentifierFactory eventIds;
+    
     public ChunkMngrComp(Init init) {
         this.systemConfig = new SystemKCWrapper(config());
         this.chunkMngrConfig = new ChunkMngrKCWrapper(config());
         this.logPrefix = "<nid:" + systemConfig.id + "> ";
         LOG.info("{}initiating...", logPrefix);
-
+        
+        this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, 
+          java.util.Optional.of(systemConfig.seed));
         subscribe(handleStart, control);
         subscribe(handleOutgoing, providedNetwork);
         subscribe(handleOutgoing, requiredNetwork);
@@ -124,7 +129,7 @@ public class ChunkMngrComp extends ComponentDefinition {
                     if(content instanceof Identifiable) {
                         originId = ((Identifiable)content).getId();
                     } else {
-                        originId = BasicIdentifiers.eventId();
+                        originId = eventIds.randomId();
                     }
                     CompleteChunkTracker cct = new CompleteChunkTracker(originId, contentBytes, datagramContentSize);
                     for (Chunk chunk : cct.chunks.values()) {

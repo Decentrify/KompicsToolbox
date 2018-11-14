@@ -22,8 +22,6 @@ import com.google.common.collect.Table;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-
 
 /**
  * Event from the aggregator indicating the
@@ -40,10 +38,6 @@ public class SystemWindow implements AggregatorEvent {
         this.systemWindow = systemWindow;
     }
     
-    public SystemWindow(Table<Identifier, Class, AggregatorPacket> systemWindow){
-        this(BasicIdentifiers.eventId(), systemWindow);
-    }
-
     @Override
     public String toString() {
         return getClass() + "<" + eventId + ">";

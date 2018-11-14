@@ -21,7 +21,6 @@ package se.sics.ktoolbox.util.overlays.view;
 import se.sics.kompics.Direct;
 import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.OverlayEvent;
 import se.sics.ktoolbox.util.update.View;
@@ -77,10 +76,6 @@ public class OverlayViewUpdate {
             this.view = view;
         }
         
-        public Indication(OverlayId overlayId, boolean observer, V view) {
-            this(BasicIdentifiers.eventId(), overlayId, observer, view);
-        }
-
         @Override
         public Identifier getId() {
             return eventId;

@@ -21,7 +21,6 @@ package se.sics.ktoolbox.netmngr;
 import se.sics.kompics.Direct;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.Either;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -39,10 +38,6 @@ public class NetMngrBind {
       this.useAddress = useAddress;
     }
 
-    private Request(Either useAddress) {
-      this(BasicIdentifiers.eventId(), useAddress);
-    }
-
     @Override
     public Identifier getId() {
       return eventId;
@@ -57,12 +52,12 @@ public class NetMngrBind {
       return new Response(this, boundAdr);
     }
     
-    public static Request useLocal(int port) {
-      return new Request(Either.left(port));
+    public static Request useLocal(Identifier eventId, int port) {
+      return new Request(eventId, Either.left(port));
     }
     
-    public static Request useProvided(KAddress adr) {
-      return new Request(Either.right(adr));
+    public static Request useProvided(Identifier eventId, KAddress adr) {
+      return new Request(eventId, Either.right(adr));
     }
   }
 

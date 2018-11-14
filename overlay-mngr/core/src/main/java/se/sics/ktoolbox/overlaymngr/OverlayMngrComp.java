@@ -20,6 +20,7 @@ package se.sics.ktoolbox.overlaymngr;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.javatuples.Pair;
 import se.sics.kompics.Channel;
 import se.sics.kompics.Component;
@@ -38,7 +39,6 @@ import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.gradient.GradientComp;
 import se.sics.ktoolbox.gradient.GradientPort;
 import se.sics.ktoolbox.gradient.temp.RankUpdatePort;
-import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientComp;
 import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientPort;
 import se.sics.ktoolbox.overlaymngr.bootstrap.CroupierBootstrapComp;
 import se.sics.ktoolbox.overlaymngr.bootstrap.CroupierBootstrapPort;
@@ -47,6 +47,9 @@ import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
 import se.sics.ktoolbox.overlaymngr.events.OMngrTGradient;
 import se.sics.ktoolbox.tgradient.TreeGradientComp;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
 import se.sics.ktoolbox.util.idextractor.EventOverlayIdExtractor;
@@ -90,6 +93,8 @@ public class OverlayMngrComp extends ComponentDefinition {
   private final Map<Identifier, Pair<Component, Channel[]>> tgradientLayers = new HashMap<>();
   private final Map<Identifier, OMngrTGradient.ConnectRequest> tgradientContext = new HashMap<>();
 
+  private final IdentifierFactory eventIds;
+  
   public OverlayMngrComp(Init init) {
     SystemKCWrapper systemConfig = new SystemKCWrapper(config());
     loggingCtxPutAlways("nId", systemConfig.id.toString());
@@ -97,6 +102,7 @@ public class OverlayMngrComp extends ComponentDefinition {
 
     selfAdr = init.selfAdr;
     extPorts = init.extPorts;
+    this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(systemConfig.seed));
     croupierEnd = One2NChannel.getChannel("omngr", croupierPort, new EventOverlayIdExtractor());
     gradientEnd = One2NChannel.getChannel("omngr", gradientPort, new EventOverlayIdExtractor());
     viewUpdateEnd = One2NChannel.getChannel("omngr", viewUpdatePort, new EventOverlayIdExtractor());
@@ -166,7 +172,7 @@ public class OverlayMngrComp extends ComponentDefinition {
       croupierLayers.put(req.croupierId, Pair.with(croupierComp, croupierChannels));
       croupierContext.put(req.croupierId, req);
 
-      trigger(new OMCroupierBootstrap(req.croupierId),
+      trigger(new OMCroupierBootstrap(eventIds.randomId(), req.croupierId),
         cBootstrapComp.getValue0().getPositive(CroupierBootstrapPort.class));
       trigger(Start.event, croupierComp.control());
       answer(req, req.answer());
@@ -246,7 +252,7 @@ public class OverlayMngrComp extends ComponentDefinition {
       tgradientLayers.put(req.tgradientId, Pair.with(tgradientComp, tgradientChannels));
       tgradientContext.put(req.getId(), req);
 
-      trigger(new OMCroupierBootstrap(croupierId),
+      trigger(new OMCroupierBootstrap(eventIds.randomId(), croupierId),
         cBootstrapComp.getValue0().getPositive(CroupierBootstrapPort.class));
       trigger(Start.event, croupierComp.control());
       trigger(Start.event, gradientComp.control());

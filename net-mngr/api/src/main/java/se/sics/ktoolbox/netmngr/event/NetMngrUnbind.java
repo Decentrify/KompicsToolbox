@@ -21,55 +21,53 @@ package se.sics.ktoolbox.netmngr.event;
 import se.sics.kompics.Direct;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NetMngrUnbind {
-    public static class Request extends Direct.Request<Response> implements NetMngrEvent {
-        public final Identifier eventId;
-        public final int port;
-        
-        public Request(Identifier eventId, int port) {
-            this.eventId = eventId;
-            this.port = port;
-        }
-        
-        public Request(int port) {
-            this(BasicIdentifiers.eventId(), port);
-        }
 
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "NetMngrUnbindReq<" + eventId + ">";
-        }
-        
-        public Response answer() {
-            return new Response(this);
-        }
+  public static class Request extends Direct.Request<Response> implements NetMngrEvent {
+
+    public final Identifier eventId;
+    public final int port;
+
+    public Request(Identifier eventId, int port) {
+      this.eventId = eventId;
+      this.port = port;
     }
-    
-    public static class Response implements Direct.Response, NetMngrEvent {
-        public final Request req;
-        
-        public Response(Request req) {
-            this.req = req;
-        }
-        
-        @Override
-        public Identifier getId() {
-            return req.getId();
-        }
-        
-        @Override
-        public String toString() {
-            return "NetMngrUnbindResp<" + req.getId() + ">";
-        }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
     }
+
+    @Override
+    public String toString() {
+      return "NetMngrUnbindReq<" + eventId + ">";
+    }
+
+    public Response answer() {
+      return new Response(this);
+    }
+  }
+
+  public static class Response implements Direct.Response, NetMngrEvent {
+
+    public final Request req;
+
+    public Response(Request req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "NetMngrUnbindResp<" + req.getId() + ">";
+    }
+  }
 }

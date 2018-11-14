@@ -2,7 +2,6 @@ package se.sics.ktoolbox.election.event;
 
 import java.util.List;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -21,10 +20,6 @@ public class ExtensionUpdate implements ElectionEvent {
         this.groupMembership = groupMembership;
     }
     
-    public ExtensionUpdate(List<KAddress> groupMembership){
-        this(BasicIdentifiers.eventId(), groupMembership);
-    }
-
     @Override
     public Identifier getId() {
         return eventId;

@@ -28,74 +28,70 @@ import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
  */
 public class OMngrCroupier {
 
-    public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
+  public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
-        public final Identifier eventId;
-        public final OverlayId croupierId;
-        public final boolean observer;
+    public final Identifier eventId;
+    public final OverlayId croupierId;
+    public final boolean observer;
 
-        public ConnectRequest(Identifier eventId, OverlayId croupierId, boolean observer) {
-            this.eventId = eventId;
-            this.croupierId = croupierId;
-            this.observer = observer;
-        }
-        
-        public ConnectRequest(OverlayId croupierId, boolean observer) {
-            this(BasicIdentifiers.eventId(), croupierId, observer);
-        }
-        
-        public ConnectResponse answer() {
-            return new ConnectResponse(this);
-        }
-
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "OM_Croupier<" + croupierId + ">ConnectRequest<" + getId() + ">"; 
-        }
+    public ConnectRequest(Identifier eventId, OverlayId croupierId, boolean observer) {
+      this.eventId = eventId;
+      this.croupierId = croupierId;
+      this.observer = observer;
     }
 
-    public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
-
-        public final ConnectRequest req;
-
-        public ConnectResponse(ConnectRequest req) {
-            this.req = req;
-        }
-
-        @Override
-        public Identifier getId() {
-            return req.getId();
-        }
-        
-        @Override
-        public String toString() {
-            return "OM_Croupier<" + req.croupierId + ">ConnectResponse<" + getId() + ">"; 
-        }
+    public ConnectResponse answer() {
+      return new ConnectResponse(this);
     }
 
-    public static class Disconnect implements OverlayMngrEvent {
-
-        public final Identifier eventId;
-        public final OverlayId croupierId;
-
-        public Disconnect(Identifier eventId, OverlayId croupierId) {
-            this.eventId = eventId;
-            this.croupierId = croupierId;
-        }
-
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "OM_Croupier<" + croupierId + ">ConnectResponse<" + getId() + ">"; 
-        }
+    @Override
+    public Identifier getId() {
+      return eventId;
     }
+
+    @Override
+    public String toString() {
+      return "OM_Croupier<" + croupierId + ">ConnectRequest<" + getId() + ">";
+    }
+  }
+
+  public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
+
+    public final ConnectRequest req;
+
+    public ConnectResponse(ConnectRequest req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "OM_Croupier<" + req.croupierId + ">ConnectResponse<" + getId() + ">";
+    }
+  }
+
+  public static class Disconnect implements OverlayMngrEvent {
+
+    public final Identifier eventId;
+    public final OverlayId croupierId;
+
+    public Disconnect(Identifier eventId, OverlayId croupierId) {
+      this.eventId = eventId;
+      this.croupierId = croupierId;
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+
+    @Override
+    public String toString() {
+      return "OM_Croupier<" + croupierId + ">ConnectResponse<" + getId() + ">";
+    }
+  }
 }

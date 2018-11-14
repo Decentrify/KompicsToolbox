@@ -21,7 +21,6 @@ package se.sics.ktoolbox.netmngr.nxnet;
 import se.sics.kompics.Direct;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -36,10 +35,6 @@ public class NxNetUnbind {
             this.port = port;
         }
         
-        public Request(int port) {
-            this(BasicIdentifiers.eventId(), port);
-        }
-
         @Override
         public Identifier getId() {
             return eventId;

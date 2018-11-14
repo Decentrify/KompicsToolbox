@@ -22,7 +22,6 @@ import java.util.Comparator;
 import se.sics.kompics.Direct;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.gradient.GradientFilter;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
@@ -30,76 +29,73 @@ import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
  */
 public class OMngrTGradient {
 
-    public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
+  public static class ConnectRequest extends Direct.Request<ConnectResponse> implements OverlayMngrEvent {
 
-        public final Identifier eventId;
-        public final OverlayId tgradientId;
-        public final Comparator utilityComparator;
-        public final GradientFilter gradientFilter;
+    public final Identifier eventId;
+    public final OverlayId tgradientId;
+    public final Comparator utilityComparator;
+    public final GradientFilter gradientFilter;
 
-        public ConnectRequest(Identifier eventId, OverlayId tgradientId,
-                Comparator utilityComparator, GradientFilter gradientFilter) {
-            this.eventId = eventId;
-            this.tgradientId = tgradientId;
-            this.utilityComparator = utilityComparator;
-            this.gradientFilter = gradientFilter;
-        }
-        
-        public ConnectRequest(OverlayId tgradientId, Comparator utilityComparator, GradientFilter gradientFilter) {
-            this(BasicIdentifiers.eventId(), tgradientId, utilityComparator, gradientFilter);
-        }
-
-        public ConnectResponse answer() {
-            return new ConnectResponse(this);
-        }
-
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "OM_Gradient<" + tgradientId + ">ConnectRequest<" + getId() + ">"; 
-        }
+    public ConnectRequest(Identifier eventId, OverlayId tgradientId,
+      Comparator utilityComparator, GradientFilter gradientFilter) {
+      this.eventId = eventId;
+      this.tgradientId = tgradientId;
+      this.utilityComparator = utilityComparator;
+      this.gradientFilter = gradientFilter;
     }
 
-    public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
-
-        public final ConnectRequest req;
-
-        public ConnectResponse(ConnectRequest req) {
-            this.req = req;
-        }
-
-        @Override
-        public Identifier getId() {
-            return req.getId();
-        }
-        
-        @Override
-        public String toString() {
-            return "OM_Gradient<" + req.tgradientId + ">ConnectResponse<" + getId() + ">"; 
-        }
+    public ConnectResponse answer() {
+      return new ConnectResponse(this);
     }
 
-    public static class Disconnect implements OverlayMngrEvent {
-        public final Identifier eventId;
-        public final Identifier gradientId;
-
-        public Disconnect(Identifier id, Identifier croupierId) {
-            this.eventId = id;
-            this.gradientId = croupierId;
-        }
-
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "OM_Gradient<" + gradientId + ">Disconnect<" + getId() + ">"; 
-        }
+    @Override
+    public Identifier getId() {
+      return eventId;
     }
+
+    @Override
+    public String toString() {
+      return "OM_Gradient<" + tgradientId + ">ConnectRequest<" + getId() + ">";
+    }
+  }
+
+  public static class ConnectResponse implements Direct.Response, OverlayMngrEvent {
+
+    public final ConnectRequest req;
+
+    public ConnectResponse(ConnectRequest req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "OM_Gradient<" + req.tgradientId + ">ConnectResponse<" + getId() + ">";
+    }
+  }
+
+  public static class Disconnect implements OverlayMngrEvent {
+
+    public final Identifier eventId;
+    public final Identifier gradientId;
+
+    public Disconnect(Identifier eventId, Identifier croupierId) {
+      this.eventId = eventId;
+      this.gradientId = croupierId;
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+
+    @Override
+    public String toString() {
+      return "OM_Gradient<" + gradientId + ">Disconnect<" + getId() + ">";
+    }
+  }
 }

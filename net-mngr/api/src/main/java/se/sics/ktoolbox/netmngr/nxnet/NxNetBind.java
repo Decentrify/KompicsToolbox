@@ -23,7 +23,6 @@ import java.util.Optional;
 import se.sics.kompics.Direct;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.netmngr.NetMngrEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -44,10 +43,6 @@ public class NxNetBind {
       this.bindAdr = bindAdr;
     }
 
-    public Request(KAddress adr, Optional<InetAddress> bindAdr) {
-      this(BasicIdentifiers.eventId(), adr,bindAdr);
-    }
-
     @Override
     public Identifier getId() {
       return eventId;
@@ -62,16 +57,16 @@ public class NxNetBind {
       return new Response(this);
     }
     
-    public static Request localAdr(KAddress adr) {
-      return new Request(adr, (Optional)Optional.empty());
+    public static Request localAdr(Identifier eventId, KAddress adr) {
+      return new Request(eventId, adr, (Optional)Optional.empty());
     }
     
-    public static Request providedAdr(KAddress providedAdr, InetAddress localInterface) {
-      return new Request(providedAdr, Optional.of(localInterface));
+    public static Request providedAdr(Identifier eventId, KAddress providedAdr, InetAddress localInterface) {
+      return new Request(eventId, providedAdr, Optional.of(localInterface));
     }
     
-    public Request withPort(int port) {
-      return new Request(adr.withPort(port), bindAdr);
+    public Request withPort(Identifier eventId, int port) {
+      return new Request(eventId, adr.withPort(port), bindAdr);
     }
   }
 

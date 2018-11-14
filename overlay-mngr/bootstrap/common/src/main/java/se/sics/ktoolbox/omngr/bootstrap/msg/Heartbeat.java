@@ -20,34 +20,30 @@ package se.sics.ktoolbox.omngr.bootstrap.msg;
 
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class Heartbeat implements BootstrapEvent {
-    public final Identifier msgId;
-    public final OverlayId overlayId;
-    public final int position;
 
-    public Heartbeat(Identifier msgId, OverlayId overlayId, int position) {
-        this.msgId = msgId;
-        this.overlayId = overlayId;
-        this.position = position;
-    }
-    
-    public Heartbeat(OverlayId overlayId, int position) {
-        this(BasicIdentifiers.msgId(), overlayId, position);
-    }
-    
-    @Override
-    public Identifier getId() {
-        return msgId;
-    }
-    
-    @Override
-    public String toString() {
-        return "Heartbeat<" + overlayId + ", " + msgId + ">";
-    }
+  public final Identifier msgId;
+  public final OverlayId overlayId;
+  public final int position;
+
+  public Heartbeat(Identifier msgId, OverlayId overlayId, int position) {
+    this.msgId = msgId;
+    this.overlayId = overlayId;
+    this.position = position;
+  }
+
+  @Override
+  public Identifier getId() {
+    return msgId;
+  }
+
+  @Override
+  public String toString() {
+    return "Heartbeat<" + overlayId + ", " + msgId + ">";
+  }
 }

@@ -25,6 +25,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
@@ -41,6 +42,8 @@ import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.UUIDIdFactory;
 
 /**
@@ -187,14 +190,15 @@ public class CompTrackerImpl implements CompTracker {
     }
 
     private static class PeriodicCheck extends Timeout implements Identifiable {
-
+        IdentifierFactory ids;
         private PeriodicCheck(SchedulePeriodicTimeout request) {
             super(request);
+            ids = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(1234l));
         }
 
         @Override
         public Identifier getId() {
-            return BasicIdentifiers.eventId(new BasicBuilders.UUIDBuilder(getTimeoutId()));
+            return ids.id(new BasicBuilders.UUIDBuilder(getTimeoutId()));
         }
 
         @Override

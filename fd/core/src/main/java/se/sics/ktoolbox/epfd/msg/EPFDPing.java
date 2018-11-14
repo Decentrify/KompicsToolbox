@@ -21,7 +21,6 @@ package se.sics.ktoolbox.epfd.msg;
 import java.util.UUID;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.epfd.event.EPFDEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -35,10 +34,6 @@ public class EPFDPing implements EPFDEvent {
         this.msgId = msgId;
         this.timeoutId = timeoutId;
         this.ts = ts;
-    }
-    
-    public EPFDPing(UUID timeoutId, long ts) {
-        this(BasicIdentifiers.msgId(), timeoutId, ts);
     }
     
     @Override

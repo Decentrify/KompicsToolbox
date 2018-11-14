@@ -22,31 +22,27 @@ import java.util.Map;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.aggregator.event.AggregatorEvent;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NodeWindow implements AggregatorEvent {
-    public final Identifier eventId;
-    public final Map<Class, AggregatorPacket> window;
-    
-    public NodeWindow(Identifier eventId, Map<Class, AggregatorPacket> window) {
-        this.eventId = eventId;
-        this.window = window;
-    }
-    
-    public NodeWindow(Map<Class, AggregatorPacket> window) {
-        this(BasicIdentifiers.eventId(), window);
-    }
-    
-    @Override
-    public String toString() {
-        return "AGG_NODE_WINDOW<" + eventId + ">";
-    }
 
-    @Override
-    public Identifier getId() {
-        return eventId;
-    }
+  public final Identifier eventId;
+  public final Map<Class, AggregatorPacket> window;
+
+  public NodeWindow(Identifier eventId, Map<Class, AggregatorPacket> window) {
+    this.eventId = eventId;
+    this.window = window;
+  }
+
+  @Override
+  public String toString() {
+    return "AGG_NODE_WINDOW<" + eventId + ">";
+  }
+
+  @Override
+  public Identifier getId() {
+    return eventId;
+  }
 }

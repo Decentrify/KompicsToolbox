@@ -59,6 +59,9 @@ import se.sics.ktoolbox.croupier.view.LocalView;
 import se.sics.ktoolbox.util.aggregation.CompTracker;
 import se.sics.ktoolbox.util.aggregation.CompTrackerImpl;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
@@ -109,6 +112,8 @@ public class CroupierComp extends ComponentDefinition {
     private UUID shuffleTid;
     //*****************************TRACKING*************************************
     private CompTracker compTracker;
+    private final IdentifierFactory eventIds;
+    private final IdentifierFactory msgIds;
 
     public CroupierComp(Init init) {
         systemConfig = new SystemKCWrapper(config());
@@ -116,6 +121,10 @@ public class CroupierComp extends ComponentDefinition {
         overlayId = init.overlayId;
         logPrefix = "<nid:" + systemConfig.id + ",oid:" + overlayId + "> ";
         LOG.info("{}initiating...", logPrefix);
+        eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, 
+          java.util.Optional.of(systemConfig.seed));
+        msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, 
+          java.util.Optional.of(systemConfig.seed));
 
         selfAdr = init.selfAdr;
         behaviour = new CroupierObserver();
@@ -139,7 +148,7 @@ public class CroupierComp extends ComponentDefinition {
         if (bootstrapNodes.isEmpty() && publicView.isEmpty() && privateView.isEmpty()) {
             LOG.warn("{}no partners - not shuffling", new Object[]{logPrefix});
             //TODO Alex Disconnected -  legacy code
-            trigger(new CroupierDisconnected(overlayId), croupierControlPort);
+            trigger(new CroupierDisconnected(eventIds.randomId(), overlayId), croupierControlPort);
             return false;
         }
         return true;
@@ -257,8 +266,8 @@ public class CroupierComp extends ComponentDefinition {
     private void sendShuffleRequest(NatAwareAddress to, Map publicSample, Map privateSample) {
         DecoratedHeader requestHeader
                 = new DecoratedHeader(new BasicHeader(selfAdr, to, Transport.UDP), overlayId);
-        CroupierShuffle.Request requestContent
-                = new CroupierShuffle.Request(overlayId, behaviour.getView(), publicSample, privateSample);
+        CroupierShuffle.Request requestContent = new CroupierShuffle.Request(msgIds.randomId(), overlayId, 
+          behaviour.getView(), publicSample, privateSample);
         BasicContentMsg request = new BasicContentMsg(requestHeader, requestContent);
         LOG.trace("{}sending:{} to:{}", new Object[]{logPrefix, requestContent, request.getDestination()});
         trigger(request, network);
@@ -344,7 +353,7 @@ public class CroupierComp extends ComponentDefinition {
             }
             bootstrapNodes.remove(timeout.dest);
             if (!connected()) {
-                trigger(new CroupierDisconnected(overlayId), croupierControlPort);
+                trigger(new CroupierDisconnected(eventIds.randomId(), overlayId), croupierControlPort);
             }
         }
     };
@@ -405,7 +414,7 @@ public class CroupierComp extends ComponentDefinition {
     }
 
     private void publishSample() {
-        CroupierSample publishedSample = new CroupierSample(overlayId,
+        CroupierSample publishedSample = new CroupierSample(eventIds.randomId(), overlayId,
                 publicView.publish(), privateView.publish());
         if (publishedSample.publicSample.isEmpty()) {
             if (publishedSample.privateSample.isEmpty()) {

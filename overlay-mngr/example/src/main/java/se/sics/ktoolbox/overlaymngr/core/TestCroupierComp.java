@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.overlaymngr.core;
 
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.ComponentDefinition;
@@ -29,6 +30,9 @@ import se.sics.kompics.Start;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.overlaymngr.util.ServiceView;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdate;
 import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
@@ -38,46 +42,49 @@ import se.sics.ktoolbox.util.overlays.view.OverlayViewUpdatePort;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class TestCroupierComp extends ComponentDefinition {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestCroupierComp.class);
-    private String logPrefix = " ";
-
-    private final Positive croupierPort = requires(CroupierPort.class);
-    private final Negative viewUpdatePort = provides(OverlayViewUpdatePort.class);
+  
+  private static final Logger LOG = LoggerFactory.getLogger(TestCroupierComp.class);
+  private String logPrefix = " ";
+  
+  private final Positive croupierPort = requires(CroupierPort.class);
+  private final Negative viewUpdatePort = provides(OverlayViewUpdatePort.class);
+  
+  private final OverlayId croupierId;
+  
+  private final IdentifierFactory eventIds;
+  
+  public TestCroupierComp(TestCroupierInit init) {
+    croupierId = init.croupierId;
     
-    private final OverlayId croupierId;
-    
-    public TestCroupierComp(TestCroupierInit init) {
-        croupierId = init.croupierId;
-        
-        subscribe(handleStart, control);
-        subscribe(handleCroupierSample, croupierPort);
+    this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(1234l));
+    subscribe(handleStart, control);
+    subscribe(handleCroupierSample, croupierPort);
+  }
+  
+  Handler handleStart = new Handler<Start>() {
+    @Override
+    public void handle(Start event) {
+      OverlayViewUpdate.Indication ovu = new OverlayViewUpdate.Indication(eventIds.randomId(), croupierId, false, new ServiceView());
+      LOG.info("{}sending:{}", new Object[]{logPrefix, ovu});
+      trigger(ovu, viewUpdatePort);
     }
-
-    Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start event) {
-            OverlayViewUpdate.Indication ovu = new OverlayViewUpdate.Indication(croupierId, false, new ServiceView());
-            LOG.info("{}sending:{}", new Object[]{logPrefix, ovu});
-            trigger(ovu, viewUpdatePort);
-        }
-    };
-
-   Handler handleCroupierSample = new Handler<CroupierSample>() {
-        @Override
-        public void handle(CroupierSample sample) {
-            LOG.info("{}{}", new Object[]{logPrefix, sample});
-            LOG.info("{}public sample size:{}, private sample size:{}", 
-                    new Object[]{logPrefix, sample.publicSample.size(), sample.privateSample.size()});
-        }
-    };
-    
-    
-    public static class TestCroupierInit extends Init<TestCroupierComp> {
-        public final OverlayId croupierId;
-        
-        public TestCroupierInit(OverlayId croupierId) {
-            this.croupierId = croupierId;
-        }
+  };
+  
+  Handler handleCroupierSample = new Handler<CroupierSample>() {
+    @Override
+    public void handle(CroupierSample sample) {
+      LOG.info("{}{}", new Object[]{logPrefix, sample});
+      LOG.info("{}public sample size:{}, private sample size:{}",
+        new Object[]{logPrefix, sample.publicSample.size(), sample.privateSample.size()});
     }
+  };
+  
+  public static class TestCroupierInit extends Init<TestCroupierComp> {
+
+    public final OverlayId croupierId;
+    
+    public TestCroupierInit(OverlayId croupierId) {
+      this.croupierId = croupierId;
+    }
+  }
 }

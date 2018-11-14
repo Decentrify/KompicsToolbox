@@ -20,7 +20,6 @@ package se.sics.ktoolbox.gradient.event;
 
 import java.util.List;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
@@ -29,26 +28,22 @@ import se.sics.ktoolbox.util.other.Container;
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TGradientSample<C extends Object> extends GradientSample<C>{
-    public final List<Container<KAddress, C>> gradientFingers;
-    
-    public TGradientSample(Identifier eventId, OverlayId overlayId, C selfView, 
-            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        super(eventId, overlayId, selfView, gradientNeighbours);
-        this.gradientFingers = gradientFingers;
-    }
-    
-    public TGradientSample(OverlayId overlayId, C selfView, 
-            List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
-        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours, gradientFingers);
-    }
+public class TGradientSample<C extends Object> extends GradientSample<C> {
 
-    public List<Container<KAddress, C>> getGradientFingers() {
-        return gradientFingers;
-    }
-    
-    @Override
-    public String toString() {
-        return "TGradient<" + overlayId() + ">Sample<" + getId() + ">";
-    }
+  public final List<Container<KAddress, C>> gradientFingers;
+
+  public TGradientSample(Identifier eventId, OverlayId overlayId, C selfView,
+    List<Container<KAddress, C>> gradientNeighbours, List<Container<KAddress, C>> gradientFingers) {
+    super(eventId, overlayId, selfView, gradientNeighbours);
+    this.gradientFingers = gradientFingers;
+  }
+
+  public List<Container<KAddress, C>> getGradientFingers() {
+    return gradientFingers;
+  }
+
+  @Override
+  public String toString() {
+    return "TGradient<" + overlayId() + ">Sample<" + getId() + ">";
+  }
 }

@@ -21,6 +21,7 @@ package se.sics.ktoolbox.aggregator.server;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,95 +41,103 @@ import se.sics.ktoolbox.aggregator.msg.NodeWindow;
 import se.sics.ktoolbox.aggregator.server.event.SystemWindow;
 import se.sics.ktoolbox.aggregator.util.AggregatorPacket;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
  * Main global aggregator component.
- *
+ * <p>
  * Created by babbarshaer on 2015-09-01.
  */
 public class GlobalAggregatorComp extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GlobalAggregatorComp.class);
-    private String logPrefix;
+  private static final Logger LOG = LoggerFactory.getLogger(GlobalAggregatorComp.class);
+  private String logPrefix;
 
-    Positive network = requires(Network.class);
-    Positive timer = requires(Timer.class);
-    Negative aggregatorPort = provides(GlobalAggregatorPort.class);
+  Positive network = requires(Network.class);
+  Positive timer = requires(Timer.class);
+  Negative aggregatorPort = provides(GlobalAggregatorPort.class);
 
-    private final SystemKCWrapper systemConfig;
-    private final GlobalAggregatorKCWrapper aggregatorConfig;
-    
-    private UUID aggregationTid;
+  private final SystemKCWrapper systemConfig;
+  private final GlobalAggregatorKCWrapper aggregatorConfig;
 
-    private final Table<Identifier, Class, AggregatorPacket> currentWindow = HashBasedTable.create();
+  private UUID aggregationTid;
+  private IdentifierFactory eventIds;
 
-    public GlobalAggregatorComp(GlobalAggregatorInit init) {
-        systemConfig = new SystemKCWrapper(config());
-        aggregatorConfig = new GlobalAggregatorKCWrapper(config());
-        logPrefix = "<nid:" + systemConfig.id + ">";
-        LOG.info("{}initializing...", logPrefix);
+  private final Table<Identifier, Class, AggregatorPacket> currentWindow = HashBasedTable.create();
 
-        subscribe(handleStart, control);
-        subscribe(handleAggregationTimeout, timer);
-        subscribe(handleNodeWindow, network);
+  public GlobalAggregatorComp(GlobalAggregatorInit init) {
+    systemConfig = new SystemKCWrapper(config());
+    aggregatorConfig = new GlobalAggregatorKCWrapper(config());
+    logPrefix = "<nid:" + systemConfig.id + ">";
+    LOG.info("{}initializing...", logPrefix);
+
+    this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(systemConfig.seed));
+    subscribe(handleStart, control);
+    subscribe(handleAggregationTimeout, timer);
+    subscribe(handleNodeWindow, network);
+  }
+
+  //***************************CONTROL****************************************
+  Handler handleStart = new Handler<Start>() {
+    @Override
+    public void handle(Start start) {
+      LOG.info("{}starting...", logPrefix);
+      schedulePeriodicAggregation();
+    }
+  };
+
+  //**************************************************************************
+  Handler handleAggregationTimeout = new Handler<AggregationTimeout>() {
+    @Override
+    public void handle(AggregationTimeout timeout) {
+      LOG.trace("{}received:{}", logPrefix, timeout);
+      SystemWindow systemWindowEvent = new SystemWindow(eventIds.randomId(), currentWindow);
+      LOG.trace("{}sending:{}", logPrefix, systemWindowEvent);
+      trigger(systemWindowEvent, aggregatorPort);
+      currentWindow.clear();
+    }
+  };
+
+  ClassMatchedHandler handleNodeWindow
+    = new ClassMatchedHandler<NodeWindow, BasicContentMsg<KAddress, BasicHeader<KAddress>, NodeWindow>>() {
+    @Override
+    public void handle(NodeWindow content, BasicContentMsg<KAddress, BasicHeader<KAddress>, NodeWindow> container) {
+      LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource()});
+      for (Map.Entry<Class, AggregatorPacket> packet : content.window.entrySet()) {
+        currentWindow.put(container.getSource().getId(), packet.getKey(), packet.getValue());
+      }
+    }
+  };
+
+  public static class GlobalAggregatorInit extends Init<GlobalAggregatorComp> {
+
+    public GlobalAggregatorInit() {
+    }
+  }
+
+  private void schedulePeriodicAggregation() {
+    SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(aggregatorConfig.aggregationPeriod,
+      aggregatorConfig.aggregationPeriod);
+    AggregationTimeout agt = new AggregationTimeout(spt);
+    spt.setTimeoutEvent(agt);
+    trigger(spt, timer);
+    aggregationTid = agt.getTimeoutId();
+  }
+
+  public static class AggregationTimeout extends Timeout {
+
+    public AggregationTimeout(SchedulePeriodicTimeout request) {
+      super(request);
     }
 
-    //***************************CONTROL****************************************
-    Handler handleStart = new Handler<Start>() {
-        @Override
-        public void handle(Start start) {
-            LOG.info("{}starting...", logPrefix);
-            schedulePeriodicAggregation();
-        }
-    };
-
-    //**************************************************************************
-    Handler handleAggregationTimeout = new Handler<AggregationTimeout>() {
-        @Override
-        public void handle(AggregationTimeout timeout) {
-            LOG.trace("{}received:{}", logPrefix, timeout);
-            SystemWindow systemWindowEvent = new SystemWindow(currentWindow);
-            LOG.trace("{}sending:{}", logPrefix, systemWindowEvent);
-            trigger(systemWindowEvent, aggregatorPort);
-            currentWindow.clear();
-        }
-    };
-
-    ClassMatchedHandler handleNodeWindow = new ClassMatchedHandler<NodeWindow, BasicContentMsg<KAddress, BasicHeader<KAddress>, NodeWindow>>() {
-        @Override
-        public void handle(NodeWindow content, BasicContentMsg<KAddress, BasicHeader<KAddress>, NodeWindow> container) {
-            LOG.trace("{}received:{} from:{}", new Object[]{logPrefix, content, container.getSource()});
-            for(Map.Entry<Class, AggregatorPacket> packet : content.window.entrySet()) {
-                currentWindow.put(container.getSource().getId(), packet.getKey(), packet.getValue());
-            }
-        }
-    };
-
-    public static class GlobalAggregatorInit extends Init<GlobalAggregatorComp> {
-        public GlobalAggregatorInit() {
-        }
+    @Override
+    public String toString() {
+      return getClass() + "<" + getTimeoutId() + ">";
     }
-
-    private void schedulePeriodicAggregation() {
-        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(aggregatorConfig.aggregationPeriod, aggregatorConfig.aggregationPeriod);
-        AggregationTimeout agt = new AggregationTimeout(spt);
-        spt.setTimeoutEvent(agt);
-        trigger(spt, timer);
-        aggregationTid = agt.getTimeoutId();
-    }
-
-    public static class AggregationTimeout extends Timeout {
-
-        public AggregationTimeout(SchedulePeriodicTimeout request) {
-            super(request);
-        }
-
-        @Override
-        public String toString() {
-            return getClass() + "<" + getTimeoutId() + ">";
-        }
-    }
+  }
 }

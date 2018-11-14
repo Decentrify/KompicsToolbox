@@ -21,7 +21,6 @@ package se.sics.ktoolbox.omngr.bootstrap.msg;
 import java.util.List;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -30,54 +29,51 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class Sample {
 
-    public static class Request implements BootstrapEvent {
+  public static class Request implements BootstrapEvent {
 
-        public final Identifier msgId;
-        public final OverlayId overlayId;
+    public final Identifier msgId;
+    public final OverlayId overlayId;
 
-        public Request(Identifier msgId, OverlayId overlayId) {
-            this.msgId = msgId;
-            this.overlayId = overlayId;
-        }
-
-        public Request(OverlayId overlayId) {
-            this(BasicIdentifiers.msgId(), overlayId);
-        }
-
-        @Override
-        public Identifier getId() {
-            return msgId;
-        }
-
-        @Override
-        public String toString() {
-            return "Sample<" + overlayId + ">Request<" + msgId + ">";
-        }
-        
-        public Response answer(List<KAddress> sample) {
-            return new Response(msgId, overlayId, sample);
-        }
+    public Request(Identifier msgId, OverlayId overlayId) {
+      this.msgId = msgId;
+      this.overlayId = overlayId;
     }
 
-    public static class Response implements BootstrapEvent {
-        public final Identifier msgId;
-        public final OverlayId overlayId;
-        public final List<KAddress> sample;
-
-        Response(Identifier msgId, OverlayId overlayId, List<KAddress> sample) {
-            this.msgId = msgId;
-            this.overlayId = overlayId;
-            this.sample = sample;
-        }
-
-        @Override
-        public Identifier getId() {
-            return msgId;
-        }
-
-        @Override
-        public String toString() {
-            return "Sample<" + overlayId + ">Response<" + msgId + ">";
-        }
+    @Override
+    public Identifier getId() {
+      return msgId;
     }
+
+    @Override
+    public String toString() {
+      return "Sample<" + overlayId + ">Request<" + msgId + ">";
+    }
+
+    public Response answer(List<KAddress> sample) {
+      return new Response(msgId, overlayId, sample);
+    }
+  }
+
+  public static class Response implements BootstrapEvent {
+
+    public final Identifier msgId;
+    public final OverlayId overlayId;
+    public final List<KAddress> sample;
+
+    Response(Identifier msgId, OverlayId overlayId, List<KAddress> sample) {
+      this.msgId = msgId;
+      this.overlayId = overlayId;
+      this.sample = sample;
+    }
+
+    @Override
+    public Identifier getId() {
+      return msgId;
+    }
+
+    @Override
+    public String toString() {
+      return "Sample<" + overlayId + ">Response<" + msgId + ">";
+    }
+  }
 }

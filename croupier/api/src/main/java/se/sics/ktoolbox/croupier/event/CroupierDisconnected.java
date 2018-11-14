@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.croupier.event;
 
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 
 /**
@@ -27,26 +26,26 @@ import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
  */
 public class CroupierDisconnected implements CroupierEvent {
 
-    public final Identifier eventId;
-    public final OverlayId overlayId;
+  public final Identifier eventId;
+  public final OverlayId overlayId;
 
-    public CroupierDisconnected(OverlayId overlayId) {
-        this.eventId = BasicIdentifiers.eventId();
-        this.overlayId = overlayId;
-    }
+  public CroupierDisconnected(Identifier eventId, OverlayId overlayId) {
+    this.eventId = eventId;
+    this.overlayId = overlayId;
+  }
 
-    @Override
-    public String toString() {
-        return "Croupier<" +  overlayId + ">Disconnected<" + eventId + ">";
-    }
+  @Override
+  public String toString() {
+    return "Croupier<" + overlayId + ">Disconnected<" + eventId + ">";
+  }
 
-    @Override
-    public Identifier getId() {
-        return eventId;
-    }
+  @Override
+  public Identifier getId() {
+    return eventId;
+  }
 
-    @Override
-    public OverlayId overlayId() {
-        return overlayId;
-    }
+  @Override
+  public OverlayId overlayId() {
+    return overlayId;
+  }
 }

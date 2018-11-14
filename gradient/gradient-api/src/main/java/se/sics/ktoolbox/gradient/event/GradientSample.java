@@ -20,51 +20,46 @@ package se.sics.ktoolbox.gradient.event;
 
 import java.util.List;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.other.Container;
 
 /**
  * Set of peer views published by the gradient periodically.
- *
+ * <p>
  * Created by babbarshaer on 2015-02-26.
  */
 public class GradientSample<C extends Object> implements GradientEvent {
 
-    public final Identifier eventId;
-    public final OverlayId overlayId;
-    public final C selfView;
-    public final List<Container<KAddress, C>> gradientNeighbours;
+  public final Identifier eventId;
+  public final OverlayId overlayId;
+  public final C selfView;
+  public final List<Container<KAddress, C>> gradientNeighbours;
 
-    public GradientSample(Identifier eventId, OverlayId overlayId,
-            C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this.eventId = eventId;
-        this.overlayId = overlayId;
-        this.selfView = selfView;
-        this.gradientNeighbours = gradientNeighbours;
-    }
+  public GradientSample(Identifier eventId, OverlayId overlayId,
+    C selfView, List<Container<KAddress, C>> gradientNeighbours) {
+    this.eventId = eventId;
+    this.overlayId = overlayId;
+    this.selfView = selfView;
+    this.gradientNeighbours = gradientNeighbours;
+  }
 
-    public GradientSample(OverlayId overlayId, C selfView, List<Container<KAddress, C>> gradientNeighbours) {
-        this(BasicIdentifiers.eventId(), overlayId, selfView, gradientNeighbours);
-    }
+  public List<Container<KAddress, C>> getGradientNeighbours() {
+    return gradientNeighbours;
+  }
 
-    public List<Container<KAddress, C>> getGradientNeighbours() {
-        return gradientNeighbours;
-    }
+  @Override
+  public Identifier getId() {
+    return eventId;
+  }
 
-    @Override
-    public Identifier getId() {
-        return eventId;
-    }
+  @Override
+  public OverlayId overlayId() {
+    return overlayId;
+  }
 
-    @Override
-    public OverlayId overlayId() {
-        return overlayId;
-    }
-
-    @Override
-    public String toString() {
-        return "Gradient<" + overlayId() + ">Sample<" + getId() + ">";
-    }
+  @Override
+  public String toString() {
+    return "Gradient<" + overlayId() + ">Sample<" + getId() + ">";
+  }
 }
