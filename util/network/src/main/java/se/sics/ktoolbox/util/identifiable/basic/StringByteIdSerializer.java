@@ -33,7 +33,7 @@ public class StringByteIdSerializer implements Serializer {
 
     public StringByteIdSerializer(int id) {
         this.id = id;
-        this.factory = new StringByteIdFactory(null, 0);
+        this.factory = new StringByteIdFactory(java.util.Optional.empty(), 0);
     }
 
     @Override
