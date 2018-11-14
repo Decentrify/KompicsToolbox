@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.util.idextractor;
 
+import java.util.Optional;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.network.KContentMsg;
@@ -28,14 +29,14 @@ import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class DestinationPortIdExtractor extends ChannelIdExtractor<KContentMsg, Identifier>{
-
+    private final IntIdFactory intIdFactory;
     public DestinationPortIdExtractor() {
         super(KContentMsg.class);
+        this.intIdFactory = new IntIdFactory(Optional.empty());
     }
     
     @Override
     public Identifier getValue(KContentMsg msg) {
-        IntIdFactory intIdFactory = new IntIdFactory(null);
         Identifier portId = intIdFactory.rawId(msg.getHeader().getDestination().getPort());
         return portId;
     }

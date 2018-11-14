@@ -20,6 +20,7 @@ package se.sics.ktoolbox.netmngr.nxnet;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
@@ -46,7 +47,7 @@ public class NxNetComp extends ComponentDefinition {
   private static final Logger LOG = LoggerFactory.getLogger(NetworkMngrComp.class);
   private String logPrefix = "";
 
-    //*****************************CONNECTIONS**********************************
+   //*****************************CONNECTIONS**********************************
   //***************************EXTERNAL_CONNECT*******************************
   Negative<NxNetPort> nxNetPort = provides(NxNetPort.class);
   Negative<Network> networkPort = provides(Network.class);
@@ -56,6 +57,7 @@ public class NxNetComp extends ComponentDefinition {
   private One2NChannel<Network> networkEnd;
   //***************************INTERNAL_STATE*********************************
   private Map<Integer, Component> networks = new HashMap<>();
+  private final IntIdFactory portIds;
 
   public NxNetComp(Init init) {
     systemConfig = new SystemKCWrapper(config());
@@ -63,7 +65,8 @@ public class NxNetComp extends ComponentDefinition {
     LOG.info("{}starting...", logPrefix);
 
     networkEnd = One2NChannel.getChannel("nxnet", networkPort, new SourcePortIdExtractor());
-
+    this.portIds = new IntIdFactory(Optional.of(systemConfig.seed));
+    
     subscribe(handleStart, control);
     subscribe(handleBindReq, nxNetPort);
     subscribe(handleUnbindReq, nxNetPort);
@@ -90,8 +93,7 @@ public class NxNetComp extends ComponentDefinition {
         c.setValue("netty.bindInterface", req.bindAdr.get());
       }
       Component network = create(NettyNetwork.class, new NettyInit(req.adr), c.finalise());
-      IntIdFactory intIdFactory = new IntIdFactory(null);
-      networkEnd.addChannel(intIdFactory.rawId(req.adr.getPort()), network.getPositive(Network.class));
+      networkEnd.addChannel(portIds.rawId(req.adr.getPort()), network.getPositive(Network.class));
       trigger(Start.event, network.control());
       networks.put(req.adr.getPort(), network);
       LOG.info("{}binding port:{}", new Object[]{logPrefix, req.adr.getPort()});
@@ -110,8 +112,7 @@ public class NxNetComp extends ComponentDefinition {
         answer(req, req.answer());
         return;
       }
-      IntIdFactory intIdFactory = new IntIdFactory(null);
-      networkEnd.removeChannel(intIdFactory.rawId(req.port), network.getPositive(Network.class));
+      networkEnd.removeChannel(portIds.rawId(req.port), network.getPositive(Network.class));
       trigger(Kill.event, network.control());
       LOG.info("{}unbinding port:{}", new Object[]{logPrefix, req.port});
       answer(req, req.answer());
