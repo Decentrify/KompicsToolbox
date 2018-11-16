@@ -73,7 +73,7 @@ public class BootstrapServerComp extends ComponentDefinition {
 
     @Override
     public void handle(Heartbeat content, BasicContentMsg<?, ?, Heartbeat> container) {
-      logger.debug("heartbeat:{} from:{}", content,  container.getHeader().getSource());
+      logger.debug("heartbeat:{} from:{}", content.overlayId,  container.getHeader().getSource());
       samples.put(content.overlayId, content.position, container.getHeader().getSource());
     }
   };
