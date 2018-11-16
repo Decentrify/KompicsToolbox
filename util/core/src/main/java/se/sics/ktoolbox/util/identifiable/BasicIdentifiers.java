@@ -37,25 +37,25 @@ public class BasicIdentifiers {
     NODE;
   }
 
-  public static Identifier eventId() {
-    return IdentifierRegistryV2.instance(Values.EVENT, backupSeed).randomId();
-  }
-
-  public static Identifier eventId(IdentifierBuilder builder) {
-    return IdentifierRegistryV2.instance(Values.EVENT, backupSeed).id(builder);
-  }
+//  public static Identifier eventId() {
+//    return IdentifierRegistryV2.instance(Values.EVENT, backupSeed).randomId();
+//  }
+//
+//  public static Identifier eventId(IdentifierBuilder builder) {
+//    return IdentifierRegistryV2.instance(Values.EVENT, backupSeed).id(builder);
+//  }
 
   public static Class<? extends Identifier> eventIdType() {
     return IdentifierRegistryV2.idType(Values.EVENT);
   }
 
-  public static Identifier msgId() {
-    return IdentifierRegistryV2.instance(Values.MSG, backupSeed).randomId();
-  }
-
-  public static Identifier msgId(IdentifierBuilder builder) {
-    return IdentifierRegistryV2.instance(Values.MSG, backupSeed).id(builder);
-  }
+//  public static Identifier msgId() {
+//    return IdentifierRegistryV2.instance(Values.MSG, backupSeed).randomId();
+//  }
+//
+//  public static Identifier msgId(IdentifierBuilder builder) {
+//    return IdentifierRegistryV2.instance(Values.MSG, backupSeed).id(builder);
+//  }
 
   public static Class<? extends Identifier> msgIdType() {
     return IdentifierRegistryV2.idType(Values.MSG);
