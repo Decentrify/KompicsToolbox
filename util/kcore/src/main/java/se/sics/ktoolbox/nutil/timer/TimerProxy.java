@@ -28,6 +28,12 @@ import se.sics.kompics.ComponentProxy;
 public interface TimerProxy {
 
   public TimerProxy setup(ComponentProxy proxy);
+  
+  public void cancel();
+
+  public UUID scheduleTimer(long delay, Consumer<Boolean> callback);
+
+  public void cancelTimer(UUID timeoutId);
 
   public UUID schedulePeriodicTimer(long delay, long period, Consumer<Boolean> callback);
 

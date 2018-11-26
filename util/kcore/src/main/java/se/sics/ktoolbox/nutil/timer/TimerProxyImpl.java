@@ -26,6 +26,7 @@ import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
+import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
@@ -38,6 +39,7 @@ public class TimerProxyImpl implements TimerProxy {
   private Positive<Timer> timer;
   private ComponentProxy proxy;
   private Map<UUID, Consumer<Boolean>> periodicCallbacks = new HashMap<>();
+  private Map<UUID, Consumer<Boolean>> oneTimeCallbacks = new HashMap<>();
 
   public TimerProxyImpl() {
   }
@@ -48,6 +50,31 @@ public class TimerProxyImpl implements TimerProxy {
     timer = proxy.getNegative(Timer.class).getPair();
     proxy.subscribe(handleTimeout, timer);
     return this;
+  }
+  
+  @Override
+  public void cancel() {
+    periodicCallbacks.keySet().forEach((timeoutId) -> cancelPeriodicTimer(timeoutId));
+    periodicCallbacks.clear();
+    oneTimeCallbacks.keySet().forEach((timeoutId) -> cancelTimer(timeoutId));
+    oneTimeCallbacks.clear();
+  }
+
+  @Override
+  public UUID scheduleTimer(long delay, Consumer<Boolean> callback) {
+    ScheduleTimeout spt = new ScheduleTimeout(delay);
+    Timeout t = new Timeout(spt);
+    spt.setTimeoutEvent(t);
+    oneTimeCallbacks.put(t.getTimeoutId(), callback);
+    proxy.trigger(spt, timer);
+    return t.getTimeoutId();
+  }
+
+  @Override
+  public void cancelTimer(UUID timeoutId) {
+    CancelTimeout cpt = new CancelTimeout(timeoutId);
+    proxy.trigger(cpt, timer);
+    oneTimeCallbacks.remove(timeoutId);
   }
 
   @Override
@@ -64,6 +91,7 @@ public class TimerProxyImpl implements TimerProxy {
   public void cancelPeriodicTimer(UUID timeoutId) {
     CancelPeriodicTimeout cpt = new CancelPeriodicTimeout(timeoutId);
     proxy.trigger(cpt, timer);
+    periodicCallbacks.remove(timeoutId);
   }
 
   Handler handleTimeout = new Handler<Timeout>() {
