@@ -18,11 +18,6 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Consumer;
 import org.slf4j.Logger;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentProxy;
@@ -31,10 +26,9 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.Timer;
-import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
-import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.TupleHelper;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -49,26 +43,17 @@ public class ConnProxy {
   public static class Client {
 
     private final KAddress self;
-    private final ConnCtrl ctrl;
-    private final ConnConfig config;
-    private final IdentifierFactory msgIds;
+    private final Connection.Client base;
 
-    private ConnState state;
     private ComponentProxy proxy;
     private Positive<Network> network;
     private Positive<Timer> timerPort;
     private TimerProxy timer;
     private Logger logger;
-    private UUID periodicCheck;
-    private final Map<Identifier, ServerState> servers = new HashMap<>();
 
-    public Client(KAddress self, ConnCtrl ctrl, ConnConfig config, IdentifierFactory msgIds,
-      ConnState state) {
+    public Client(KAddress self, Connection.Client base) {
       this.self = self;
-      this.ctrl = ctrl;
-      this.config = config;
-      this.msgIds = msgIds;
-      this.state = state;
+      this.base = base;
     }
 
     public void setup(ComponentProxy proxy, Logger logger) {
@@ -82,51 +67,23 @@ public class ConnProxy {
 
       proxy.subscribe(handleServer, network);
 
-      timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
+      base.setup(timer, networkSend());
     }
 
-    private Consumer<Boolean> periodicCheck() {
-      return (_ignore) -> {
-        Iterator<Map.Entry<Identifier, ServerState>> it = servers.entrySet().iterator();
-        while (it.hasNext()) {
-          Map.Entry<Identifier, ServerState> aux = it.next();
-          Identifier connId = aux.getKey();
-          ServerState serverState = aux.getValue();
-          serverState.period();
-          if (serverState.isDead()) {
-            ctrl.close(connId);
-            it.remove();
-          }
-        }
-      };
+    public void update(ConnState state) {
+      base.update(state);
     }
 
     public void close() {
-      servers.entrySet().forEach((server) -> {
-        Identifier connId = server.getKey();
-        KAddress serverAddress = server.getValue().address;
-        ctrl.close(connId);
-        sendToServer(serverAddress, connId, ConnStatus.Base.DISCONNECT);
-      });
-      if (periodicCheck != null) {
-        timer.cancelPeriodicTimer(periodicCheck);
-        periodicCheck = null;
-      }
+      base.close();
     }
-    
-    public void update(ConnState state) {
-      this.state = state;
-      ctrl.updateState(state).entrySet().forEach((server) -> {
-        Identifier connId = server.getKey();
-        ConnStatus serverStatus = server.getValue();
-        ServerState serverState = servers.get(connId);
-        if (serverState == null) {
-          throw new RuntimeException("weird - server is disconnected?");
-        }
-        sendToServer(serverState.address, connId, serverStatus);
-        if (serverStatus.equals(ConnStatus.Base.DISCONNECT)) {
-          servers.remove(connId);
-        }
+
+    TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend() {
+      return TupleHelper.pairConsumer((server) -> (content) -> {
+        KHeader header = new BasicHeader<>(self, server, Transport.UDP);
+        KContentMsg msg = new BasicContentMsg(header, content);
+        logger.trace("conn proxy client send:{} to:{}", content, server);
+        proxy.trigger(msg, network);
       });
     }
 
@@ -137,47 +94,24 @@ public class ConnProxy {
       public void handle(ConnMsgs.Server content, KContentMsg<KAddress, ?, ConnMsgs.Server> container) {
         KAddress serverAddress = container.getHeader().getSource();
         logger.trace("conn client rec:{} from:{}", content, serverAddress);
-        Map.Entry<Identifier, ConnStatus> connStatus = ctrl.update(state, content.state, content.status, serverAddress);
-        if (connStatus.getValue().equals(ConnStatus.Base.DISCONNECT)) {
-          servers.remove(connStatus.getKey());
-        } else if(connStatus.getValue().equals(ConnStatus.Base.CONNECTED)) {
-          servers.put(connStatus.getKey(), new ServerState(serverAddress, config));
-        } else if (connStatus.getValue().equals(ConnStatus.Base.HEARTBEAT_ACK)) {
-          ServerState serverState = servers.get(connStatus.getKey());
-          if (serverState == null) {
-            throw new RuntimeException("weird - server is disconnected?");
-          }
-          serverState.heartbeat();
-        }
+        base.handleContent(serverAddress, content);
       }
     };
-
-    private void sendToServer(KAddress server, Identifier connId, ConnStatus status) {
-      KHeader header = new BasicHeader<>(self, server, Transport.UDP);
-      ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, state, status);
-      KContentMsg msg = new BasicContentMsg(header, content);
-      logger.trace("conn client send:{} to:{}", content, server);
-      proxy.trigger(msg, network);
-    }
   }
 
   public static class Server {
 
-    private final ConnCtrl ctrl;
-    private final ConnConfig config;
-    private ConnState state;
+    private final KAddress self;
+    private Connection.Server base;
     private ComponentProxy proxy;
     private Positive<Network> network;
     private Positive<Timer> timerPort;
     private TimerProxy timer;
     private Logger logger;
-    private UUID periodicCheck;
-    private final Map<Identifier, ClientState> clients = new HashMap<>();
 
-    public Server(ConnCtrl ctrl, ConnConfig config, ConnState state) {
-      this.ctrl = ctrl;
-      this.config = config;
-      this.state = state;
+    public Server(KAddress self, Connection.Server base) {
+      this.self = self;
+      this.base = base;
     }
 
     public void setup(ComponentProxy proxy, Logger logger) {
@@ -190,54 +124,23 @@ public class ConnProxy {
       timer.setup(proxy);
 
       proxy.subscribe(handleClient, network);
-
-      timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
+      base.setup(timer, networkSend());
     }
 
-    private Consumer<Boolean> periodicCheck() {
-      return (_ignore) -> {
-        Iterator<Map.Entry<Identifier, ClientState>> it = clients.entrySet().iterator();
-        while (it.hasNext()) {
-          Map.Entry<Identifier, ClientState> aux = it.next();
-          Identifier connId = aux.getKey();
-          ClientState clientState = aux.getValue();
-          clientState.period();
-          if (clientState.isDead()) {
-            ctrl.close(connId);
-            it.remove();
-          }
-        }
-      };
+    public void update(ConnState state) {
+      base.update(state);
     }
 
     public void close() {
-      clients.entrySet().forEach((client) -> {
-        Identifier connId = client.getKey();
-        ClientState clientState = client.getValue();
-        ctrl.close(connId);
-        ConnMsgs.Server reply = clientState.connect.reply(state, ConnStatus.Base.DISCONNECTED);
-        replyToClient(clientState.address, clientState.msg, reply);
-      });
-      if (periodicCheck != null) {
-        timer.cancelPeriodicTimer(periodicCheck);
-        periodicCheck = null;
-      }
+      base.close();
     }
 
-    public void updateState(ConnState state) {
-      this.state = state;
-      ctrl.updateState(state).entrySet().forEach((client) -> {
-        Identifier clientId = client.getKey();
-        ConnStatus clientStatus = client.getValue();
-        ClientState clientState = clients.get(clientId);
-        if (clientState == null) {
-          throw new RuntimeException("weird - client is disconnected?");
-        }
-        ConnMsgs.Server reply = clientState.connect.reply(state, clientStatus);
-        replyToClient(clientState.address, clientState.msg, reply);
-        if (clientStatus.equals(ConnStatus.Base.DISCONNECTED)) {
-          clients.remove(clientId);
-        }
+    TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend() {
+      return TupleHelper.pairConsumer((client) -> (content) -> {
+        KHeader header = new BasicHeader<>(self, client, Transport.UDP);
+        KContentMsg msg = new BasicContentMsg(header, content);
+        logger.trace("conn proxy server send:{} to:{}", content, client);
+        proxy.trigger(msg, network);
       });
     }
 
@@ -254,80 +157,8 @@ public class ConnProxy {
       public void handle(ConnMsgs.Client content, KContentMsg<KAddress, ?, ConnMsgs.Client> container) {
         KAddress clientAddress = container.getHeader().getSource();
         logger.trace("conn server rec:{} from:{}", content, clientAddress);
-        Map.Entry<Identifier, ConnStatus> aux = ctrl.update(state, content.state, content.status, clientAddress);
-        Identifier connId = aux.getKey();
-        ConnStatus connStatus = aux.getValue();
-        ConnMsgs.Server reply = container.getContent().reply(state, connStatus);
-        replyToClient(clientAddress, container, reply);
-        if (connStatus.equals(ConnStatus.Base.CONNECTED) 
-          && content.status.equals(ConnStatus.Base.CONNECT)) {
-          clients.put(connId, new ClientState(container, config));
-        } else if (connStatus.equals(ConnStatus.Base.DISCONNECTED)) {
-          clients.remove(connId);
-        } else if (connStatus.equals(ConnStatus.Base.HEARTBEAT)) {
-          ClientState clientState = clients.get(connId);
-          if (clientState == null) {
-            throw new RuntimeException("weird - client is disconnected?");
-          }
-          clientState.heartbeat();
-        }
+        base.handleContent(clientAddress, content);
       }
     };
-  }
-
-  public static class ClientState {
-
-    public final ConnConfig config;
-
-    public final KAddress address;
-    public final ConnMsgs.Client connect;
-    public final KContentMsg<?, ?, ConnMsgs.Client> msg;
-
-    private int missedHeartbeat = 0;
-
-    public ClientState(KContentMsg<?, ?, ConnMsgs.Client> msg, ConnConfig config) {
-      this.address = msg.getHeader().getSource();
-      this.connect = msg.getContent();
-      this.msg = msg;
-      this.config = config;
-    }
-
-    public void heartbeat() {
-      missedHeartbeat = 0;
-    }
-
-    public void period() {
-      missedHeartbeat++;
-    }
-
-    public boolean isDead() {
-      return missedHeartbeat > config.missedHeartbeats;
-    }
-  }
-
-  public static class ServerState {
-
-    public final ConnConfig config;
-
-    public final KAddress address;
-
-    private int missedHeartbeatAck = 0;
-
-    public ServerState(KAddress address, ConnConfig config) {
-      this.address = address;
-      this.config = config;
-    }
-
-    public void heartbeat() {
-      missedHeartbeatAck = 0;
-    }
-
-    public void period() {
-      missedHeartbeatAck++;
-    }
-
-    public boolean isDead() {
-      return missedHeartbeatAck > config.missedHeartbeats;
-    }
   }
 }
