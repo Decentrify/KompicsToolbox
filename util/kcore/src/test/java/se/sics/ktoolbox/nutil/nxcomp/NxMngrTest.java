@@ -30,13 +30,12 @@ import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NxCompTest {
+public class NxMngrTest {
 
   @BeforeClass
   public static void setup() {
     Config.Impl config = (Config.Impl) Kompics.getConfig();
     Config.Builder builder = Kompics.getConfig().modify(UUID.randomUUID());
-//    TorrentIds.registerDefaults(builder.getValue("system.seed", Long.class));
     IdentifierRegistryV2.registerBaseDefaults1(64);
     config.apply(builder.finalise(), (Optional) Optional.absent());
     Kompics.setConfig(config);

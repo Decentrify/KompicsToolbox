@@ -30,17 +30,17 @@ import se.sics.kompics.util.Identifier;
  */
 public class NxMngrEvents {
 
-  public static class CreateReq<D extends ComponentDefinition> extends Direct.Request<CreateAck>
+  public static class CreateReq extends Direct.Request<CreateAck>
     implements Identifiable {
 
     public final Identifier eventId;
-    public final Identifier compId;
-    public final Init<D> compInit;
+    public final Identifier stackId;
+    public final NxStackInit stackInit;
 
-    public CreateReq(Identifier eventId, Identifier compId, Init<D> compInit) {
+    public CreateReq(Identifier eventId, Identifier stackId, NxStackInit stackInit) {
       this.eventId = eventId;
-      this.compId = compId;
-      this.compInit = compInit;
+      this.stackId = stackId;
+      this.stackInit = stackInit;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class NxMngrEvents {
 
     @Override
     public String toString() {
-      return "CreateReq{" + "eventId=" + eventId + ", compId=" + compId + '}';
+      return "CreateReq{" + "eventId=" + eventId + ", compId=" + stackId + '}';
     }
   }
 
@@ -73,7 +73,7 @@ public class NxMngrEvents {
 
     @Override
     public String toString() {
-      return "CreateAck{" + "eventId=" + req.eventId + ", compId=" + req.compId + '}';
+      return "CreateAck{" + "eventId=" + req.eventId + ", compId=" + req.stackId + '}';
     }
   }
 

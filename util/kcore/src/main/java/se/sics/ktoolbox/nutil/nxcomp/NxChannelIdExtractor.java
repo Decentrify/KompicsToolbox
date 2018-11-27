@@ -18,20 +18,17 @@
  */
 package se.sics.ktoolbox.nutil.nxcomp;
 
+import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestChannelIdExtractor extends NxChannelIdExtractor<TestEvent> {
+public abstract class NxChannelIdExtractor<E extends KompicsEvent> extends ChannelIdExtractor<E, Identifier> {
 
-  public TestChannelIdExtractor(Class<TestEvent> eventType) {
+  protected NxChannelIdExtractor(Class<E> eventType) {
     super(eventType);
-  }
-
-  @Override
-  public Identifier getValue(TestEvent event) {
-    return event.compId;
   }
 }

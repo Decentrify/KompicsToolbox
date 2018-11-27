@@ -18,12 +18,36 @@
  */
 package se.sics.ktoolbox.nutil.nxcomp;
 
-import se.sics.kompics.util.Identifier;
+import java.util.List;
+import se.sics.kompics.Component;
+import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface NxProvider {
-  public Identifier compId();
+public abstract class NxStackInstance {
+  public final List<Component> components;
+  public final List<Positive> positivePorts;
+  public final List<Negative> negativePorts;
+  
+  protected NxStackInstance(List<Component> components, List<Positive> positivePorts, List<Negative> negativePorts) {
+    this.components = components;
+    this.positivePorts = positivePorts;
+    this.negativePorts = negativePorts;
+  }
+  
+  public abstract void disconnect();
+  
+  public static class OneComp extends NxStackInstance {
+
+    public OneComp(List<Component> components, List<Positive> positivePorts, List<Negative> negativePorts) {
+      super(components, positivePorts, negativePorts);
+    }
+    
+    @Override
+    public void disconnect() {
+      //nothing to do
+    }
+  }
 }

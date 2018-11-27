@@ -18,20 +18,19 @@
  */
 package se.sics.ktoolbox.nutil.nxcomp;
 
-import se.sics.kompics.util.Identifier;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Init;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestChannelIdExtractor extends NxChannelIdExtractor<TestEvent> {
-
-  public TestChannelIdExtractor(Class<TestEvent> eventType) {
-    super(eventType);
-  }
-
-  @Override
-  public Identifier getValue(TestEvent event) {
-    return event.compId;
+public interface NxStackInit {
+  
+  public static class OneComp<D extends ComponentDefinition> implements NxStackInit {
+    public final Init<D> init;
+    
+    public OneComp(Init<D> init) {
+      this.init = init;
+    }
   }
 }
