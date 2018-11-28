@@ -28,6 +28,7 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.TupleHelper;
@@ -77,12 +78,20 @@ public class ConnMngrProxy {
     timer.cancel();
   }
 
-  public void connectClient(Identifier clientId, ConnCtrl ctrl, ConnState state) {
-    Connection.Client client = new Connection.Client(ctrl, config, msgIds, state);
+  public void addClient(InstanceId clientId, ConnCtrl ctrl, ConnState state) {
+    Connection.Client client = new Connection.Client(clientId, ctrl, config, msgIds, state);
     client.setup(timer, clientNetworkSend());
     clients.put(clientId, client);
   }
 
+  public void connectClient(InstanceId clientId, InstanceId serverId, KAddress serverAddress) {
+    Connection.Client client =  clients.get(clientId);
+    if(client == null) {
+      throw new RuntimeException("logic error");
+    }
+    client.connect(serverId, self);
+  }
+  
   public void updateClient(Identifier clientId, ConnState state) {
     Connection.Client client = clients.get(clientId);
     if (client == null) {
@@ -99,8 +108,8 @@ public class ConnMngrProxy {
     client.close();
   }
   
-  public void connectServer(Identifier serverId, ConnCtrl ctrl, ConnState state) {
-    Connection.Server server = new Connection.Server(ctrl, config, state);
+  public void addServer(InstanceId serverId, ConnCtrl ctrl, ConnState state) {
+    Connection.Server server = new Connection.Server(serverId, ctrl, config, state);
     server.setup(timer, serverNetworkSend());
     servers.put(serverId, server);
   }
@@ -169,4 +178,5 @@ public class ConnMngrProxy {
       server.handleContent(clientAddress, content);
     }
   };
+  
 }

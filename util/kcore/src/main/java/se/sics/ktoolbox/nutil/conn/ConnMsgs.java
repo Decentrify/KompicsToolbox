@@ -21,6 +21,7 @@ package se.sics.ktoolbox.nutil.conn;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -28,10 +29,10 @@ import se.sics.kompics.util.Identifier;
 public class ConnMsgs {
   private static abstract class Base implements KompicsEvent, Identifiable {
     public final Identifier msgId;
-    public final Identifier connId;
+    public final ConnId connId;
     public final ConnState state;
     
-    protected Base(Identifier msgId, Identifier connId, ConnState state) {
+    protected Base(Identifier msgId, ConnId connId, ConnState state) {
       this.msgId = msgId;
       this.connId = connId;
       this.state = state;
@@ -46,7 +47,8 @@ public class ConnMsgs {
   public static class Client extends Base {
     
     public final ConnStatus status;
-    public Client(Identifier msgId, Identifier connId, ConnState state, ConnStatus status) {
+    public Client(Identifier msgId, ConnId connId, ConnState state, 
+      ConnStatus status) {
       super(msgId, connId, state);
       this.status = status;
     }
@@ -58,8 +60,9 @@ public class ConnMsgs {
   
   public static class Server extends Base {
     public final ConnStatus status;
-    public Server(Identifier msgId, Identifier torrentId, ConnState state, ConnStatus status) {
-      super(msgId, torrentId, state);
+    public Server(Identifier msgId, ConnId connId, ConnState state, 
+      ConnStatus status) {
+      super(msgId, connId, state);
       this.status = status;
     }
   }
