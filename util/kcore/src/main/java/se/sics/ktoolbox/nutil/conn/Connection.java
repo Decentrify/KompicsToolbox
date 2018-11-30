@@ -119,6 +119,7 @@ public class Connection {
       } else if (connStatus.equals(ConnStatus.Base.CONNECTED)) {
         servers.put(connId, new ServerState(connId.serverId, serverAddress, config));
       } else if (connStatus.equals(ConnStatus.Base.HEARTBEAT_ACK)) {
+        logger.debug("{} {}", new Object[]{connId, content});
         ServerState serverState = servers.get(connId);
         if (serverState == null) {
           throw new RuntimeException("weird - server is disconnected?");

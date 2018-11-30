@@ -71,7 +71,7 @@ public class ClientComp extends ComponentDefinition {
   
   private Consumer<Boolean> connect() {
     return (_ignore) -> {
-      logger.trace("connect");
+      logger.trace("{}connect", init.batchId);
       connMngr.connectClient(fullId, init.serverId, init.serverAddress);
     };
   }
