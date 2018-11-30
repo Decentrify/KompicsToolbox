@@ -23,7 +23,20 @@ package se.sics.ktoolbox.nutil.conn;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public interface ConnStatus {
+
   public static enum Base implements ConnStatus {
-    CONNECT, CONNECTED, DISCONNECT, DISCONNECTED, HEARTBEAT, HEARTBEAT_ACK
+    //do not change numbers
+    CONNECT(1),
+    CONNECTED(2),
+    DISCONNECT(3),
+    DISCONNECTED(4),
+    HEARTBEAT(5),
+    HEARTBEAT_ACK(6);
+
+    public final int ord;
+
+    private Base(int ord) {
+      this.ord = ord;
+    }
   }
 }

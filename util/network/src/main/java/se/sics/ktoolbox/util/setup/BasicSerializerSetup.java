@@ -19,6 +19,12 @@
 package se.sics.ktoolbox.util.setup;
 
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.nutil.conn.ConnIdsSerializer;
+import se.sics.ktoolbox.nutil.conn.ConnMsgs;
+import se.sics.ktoolbox.nutil.conn.ConnStatus;
+import se.sics.ktoolbox.nutil.conn.ConnBaseStatusSerializer;
+import se.sics.ktoolbox.nutil.conn.ConnMsgsSerializer;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.IntId;
@@ -52,7 +58,7 @@ public class BasicSerializerSetup {
 
      //You may add up to max serializers without the need to recompile all the projects that use the serializer space after gvod
     public static int maxSerializers = 20;
-    public static final int serializerIds = 12;
+    public static final int serializerIds = 17;
 
     public static enum BasicSerializers {
         SimpleByteIdentifier(SimpleByteId.class, "simpleByteIdentifierSerializer"),
@@ -66,7 +72,12 @@ public class BasicSerializerSetup {
         DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
         BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
         NatType(NatType.class, "natTypeSerializer"),
-        ResultStatusSerializer(ResultSerializer.class, "resultSerializer");
+        ResultStatusSerializer(ResultSerializer.class, "resultSerializer"),
+        ConnIdsInstanceId(ConnIds.InstanceId.class, "connIdsInstanceIdSerializer"),
+        ConnIdsConnId(ConnIds.ConnId.class, "connIdsConnIdSerializer"),
+        ConnBaseStatus(ConnStatus.Base.class, "connBaseStatusSerializer"),
+        ConnMsgsClient(ConnMsgs.Client.class, "connMsgsClientSerializer"),
+        ConnMsgsServer(ConnMsgs.Server.class, "connMsgsServerSerializer");
                 
         public final Class serializedClass;
         public final String serializerName;
@@ -141,6 +152,26 @@ public class BasicSerializerSetup {
         ResultSerializer.Status resultSerializer = new ResultSerializer.Status(currentId++);
         Serializers.register(resultSerializer, BasicSerializers.ResultStatusSerializer.serializerName);
         Serializers.register(BasicSerializers.ResultStatusSerializer.serializedClass, BasicSerializers.ResultStatusSerializer.serializerName);
+        
+        Serializers.register(new ConnIdsSerializer.InstanceId(currentId++), BasicSerializers.ConnIdsInstanceId.serializerName);
+        Serializers.register(BasicSerializers.ConnIdsInstanceId.serializedClass, 
+          BasicSerializers.ConnIdsInstanceId.serializerName);
+        
+        Serializers.register(new ConnIdsSerializer.ConnId(currentId++), BasicSerializers.ConnIdsConnId.serializerName);
+        Serializers.register(BasicSerializers.ConnIdsConnId.serializedClass, 
+          BasicSerializers.ConnIdsConnId.serializerName);
+        
+        Serializers.register(new ConnBaseStatusSerializer(currentId++), BasicSerializers.ConnBaseStatus.serializerName);
+        Serializers.register(BasicSerializers.ConnBaseStatus.serializedClass, 
+          BasicSerializers.ConnBaseStatus.serializerName);
+        
+        Serializers.register(new ConnMsgsSerializer.Client(currentId++), BasicSerializers.ConnMsgsClient.serializerName);
+        Serializers.register(BasicSerializers.ConnMsgsClient.serializedClass, 
+          BasicSerializers.ConnMsgsClient.serializerName);
+        
+        Serializers.register(new ConnMsgsSerializer.Server(currentId++), BasicSerializers.ConnMsgsServer.serializerName);
+        Serializers.register(BasicSerializers.ConnMsgsServer.serializedClass, 
+          BasicSerializers.ConnMsgsServer.serializerName);
         
         assert startingId + serializerIds == currentId;
         assert serializerIds <= maxSerializers;

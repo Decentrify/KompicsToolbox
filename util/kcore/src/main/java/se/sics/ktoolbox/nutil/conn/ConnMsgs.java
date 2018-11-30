@@ -32,11 +32,13 @@ public class ConnMsgs {
     public final Identifier msgId;
     public final ConnId connId;
     public final ConnState state;
+    public final ConnStatus status;
     
-    protected Base(Identifier msgId, ConnId connId, ConnState state) {
+    protected Base(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
       this.msgId = msgId;
       this.connId = connId;
       this.state = state;
+      this.status = status;
     }
 
     @Override
@@ -52,10 +54,9 @@ public class ConnMsgs {
 
   public static class Client extends Base {
     
-    public final ConnStatus status;
+    
     public Client(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
-      super(msgId, connId, state);
-      this.status = status;
+      super(msgId, connId, state, status);
     }
     
     public Server reply(ConnState state, ConnStatus status) {
@@ -69,10 +70,8 @@ public class ConnMsgs {
   }
   
   public static class Server extends Base {
-    public final ConnStatus status;
     public Server(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
-      super(msgId, connId, state);
-      this.status = status;
+      super(msgId, connId, state, status);
     }
 
     @Override
