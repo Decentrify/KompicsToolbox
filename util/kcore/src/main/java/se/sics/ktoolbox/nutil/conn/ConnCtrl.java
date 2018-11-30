@@ -19,6 +19,7 @@
 package se.sics.ktoolbox.nutil.conn;
 
 import java.util.Map;
+import org.javatuples.Pair;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
@@ -31,7 +32,7 @@ public interface ConnCtrl {
 
   public Map<ConnId, ConnStatus> updateState(InstanceId instanceId, ConnState state);
 
-  public Map.Entry<ConnId, ConnStatus> update(ConnId connId, ConnState selfState, 
+  public Pair<ConnId, ConnStatus> update(ConnId connId, ConnState selfState, 
     ConnState peerState, ConnStatus peerStatus, KAddress peer);
 
   public void close(Identifier connId);

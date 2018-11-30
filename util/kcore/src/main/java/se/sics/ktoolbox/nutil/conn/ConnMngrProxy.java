@@ -43,7 +43,7 @@ import se.sics.ktoolbox.util.network.basic.BasicHeader;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ConnMngrProxy {
-
+  public final Identifier batchId;
   private final ConnConfig config;
   private final IdentifierFactory msgIds;
   private final KAddress self;
@@ -57,7 +57,8 @@ public class ConnMngrProxy {
   private Map<Identifier, Connection.Client> clients = new HashMap<>();
   private Map<Identifier, Connection.Server> servers = new HashMap<>();
 
-  public ConnMngrProxy(KAddress self, ConnConfig config, IdentifierFactory msgIds) {
+  public ConnMngrProxy(Identifier batchId, KAddress self, ConnConfig config, IdentifierFactory msgIds) {
+    this.batchId = batchId;
     this.self = self;
     this.config = config;
     this.msgIds = msgIds;
@@ -66,9 +67,12 @@ public class ConnMngrProxy {
   public ConnMngrProxy setup(ComponentProxy proxy, Logger logger) {
     this.proxy = proxy;
     this.logger = logger;
-    network = proxy.getPositive(Network.class);
-    timerPort = proxy.getPositive(Timer.class);
-    timer = new TimerProxyImpl().setup(proxy);
+    network = proxy.getNegative(Network.class).getPair();
+    timerPort = proxy.getNegative(Timer.class).getPair();
+    timer = new TimerProxyImpl().setup(proxy, logger);
+    proxy.subscribe(handleClient, network);
+    proxy.subscribe(handleServer, network);
+    logger.info("conn mngr proxy node:{} batch:{}",  self, batchId);
     return this;
   }
   
@@ -78,21 +82,25 @@ public class ConnMngrProxy {
     timer.cancel();
   }
 
-  public void addClient(InstanceId clientId, ConnCtrl ctrl, ConnState state) {
+  public InstanceId addClient(Identifier instanceId, ConnCtrl ctrl, ConnState state) {
+    InstanceId clientId = new InstanceId(self.getId(), batchId, instanceId, false);
+    logger.info("conn mngr proxy client:{} add",  clientId);
     Connection.Client client = new Connection.Client(clientId, ctrl, config, msgIds, state);
-    client.setup(timer, clientNetworkSend());
+    client.setup(timer, clientNetworkSend(), logger);
     clients.put(clientId, client);
+    return clientId;
   }
 
   public void connectClient(InstanceId clientId, InstanceId serverId, KAddress serverAddress) {
+    logger.info("conn mngr proxy client:{} connect to:{}",  clientId, serverId);
     Connection.Client client =  clients.get(clientId);
     if(client == null) {
       throw new RuntimeException("logic error");
     }
-    client.connect(serverId, self);
+    client.connect(serverId, serverAddress);
   }
   
-  public void updateClient(Identifier clientId, ConnState state) {
+  public void updateClient(InstanceId clientId, ConnState state) {
     Connection.Client client = clients.get(clientId);
     if (client == null) {
       throw new RuntimeException("logic error");
@@ -100,7 +108,7 @@ public class ConnMngrProxy {
     client.update(state);
   }
   
-  public void closeClient(Identifier clientId) {
+  public void closeClient(InstanceId clientId) {
     Connection.Client client = clients.remove(clientId);
     if (client == null) {
       throw new RuntimeException("logic error");
@@ -108,13 +116,16 @@ public class ConnMngrProxy {
     client.close();
   }
   
-  public void addServer(InstanceId serverId, ConnCtrl ctrl, ConnState state) {
+  public InstanceId addServer(Identifier instanceId, ConnCtrl ctrl, ConnState state) {
+    InstanceId serverId = new InstanceId(self.getId(), batchId, instanceId, true);
+    logger.info("conn mngr proxy server:{} add",  serverId);
     Connection.Server server = new Connection.Server(serverId, ctrl, config, state);
-    server.setup(timer, serverNetworkSend());
+    server.setup(timer, serverNetworkSend(), logger);
     servers.put(serverId, server);
+    return serverId;
   }
 
-  public void updateServer(Identifier serverId, ConnState state) {
+  public void updateServer(InstanceId serverId, ConnState state) {
     Connection.Server server = servers.get(serverId);
     if (server == null) {
       throw new RuntimeException("logic error");
@@ -122,7 +133,7 @@ public class ConnMngrProxy {
     server.update(state);
   }
   
-  public void closeServer(Identifier serverId) {
+  public void closeServer(InstanceId serverId) {
     Connection.Server server = servers.remove(serverId);
     if (server == null) {
       throw new RuntimeException("logic error");
@@ -154,7 +165,7 @@ public class ConnMngrProxy {
     public void handle(ConnMsgs.Server content, KContentMsg<KAddress, ?, ConnMsgs.Server> container) {
       KAddress serverAddress = container.getHeader().getSource();
       logger.trace("conn mngr proxy client rec:{} from:{}", content, serverAddress);
-      Connection.Client client = clients.get(content.connId);
+      Connection.Client client = clients.get(content.connId.clientId);
       if (client == null) {
         //TODO Alex - investigate later
         return;
@@ -170,7 +181,7 @@ public class ConnMngrProxy {
     public void handle(ConnMsgs.Client content, KContentMsg<KAddress, ?, ConnMsgs.Client> container) {
       KAddress clientAddress = container.getHeader().getSource();
       logger.trace("conn mngr proxy server rec:{} from:{}", content, clientAddress);
-      Connection.Server server = servers.get(content.connId);
+      Connection.Server server = servers.get(content.connId.serverId);
       if (server == null) {
         //TODO Alex - investigate later
         return;

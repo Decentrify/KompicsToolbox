@@ -16,11 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn;
+package se.sics.ktoolbox.nutil.conn.util;
+
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Negative;
+import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnCtrlFactory {
+public class NetworkEmulator extends ComponentDefinition {
+  private Negative<Network> network = provides(Network.class);
   
+  public NetworkEmulator() {
+    subscribe(handleMsg, network);
+  }
+
+  Handler handleMsg =new Handler<KContentMsg<KAddress,KHeader<KAddress>,?>>() {
+    @Override
+    public void handle(KContentMsg<KAddress,KHeader<KAddress>,?> msg) {
+      logger.trace("{}", msg);
+      trigger(msg, network);
+    }
+  };
 }

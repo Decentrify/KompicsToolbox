@@ -18,7 +18,9 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
+import java.util.Objects;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.util.MathHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -28,22 +30,24 @@ public class ConnIds {
   public static class InstanceId implements Identifier {
 
     public final Identifier nodeId;
+    public final Identifier batchId;
     public final Identifier instanceId;
+    public final Boolean server;
 
-    public InstanceId(Identifier nodeId, Identifier instanceId) {
+    public InstanceId(Identifier nodeId, Identifier batchId, Identifier instanceId, boolean server) {
       this.nodeId = nodeId;
+      this.batchId = batchId;
       this.instanceId = instanceId;
+      this.server = server;
     }
 
     @Override
     public int partition(int nrPartitions) {
-      int part1 = nodeId.partition(nrPartitions);
-      int part2 = instanceId.partition(nrPartitions);
-      if (Integer.MAX_VALUE - part1 < part2) {
-        return part2 - (Integer.MAX_VALUE - part1);
-      } else {
-        return part1 + part2;
-      }
+      return MathHelper.moduloWrappedSum(nrPartitions,
+        nodeId.partition(nrPartitions),
+        batchId.partition(nrPartitions),
+        instanceId.partition(nrPartitions), 
+        server ? 0 : 1);
     }
 
     @Override
@@ -52,9 +56,58 @@ public class ConnIds {
       InstanceId that = (InstanceId) o;
       res = this.nodeId.compareTo(that.nodeId);
       if (res == 0) {
-        res = this.instanceId.compareTo(that.instanceId);
+        res = this.batchId.compareTo(that.batchId);
+        if (res == 0) {
+          res = this.instanceId.compareTo(that.instanceId);
+          if(res == 0) {
+            res = this.server.compareTo(that.server);
+          }
+        }
       }
       return res;
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 7;
+      hash = 83 * hash + Objects.hashCode(this.nodeId);
+      hash = 83 * hash + Objects.hashCode(this.batchId);
+      hash = 83 * hash + Objects.hashCode(this.instanceId);
+      hash = 83 * hash + Objects.hashCode(this.server);
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      final InstanceId other = (InstanceId) obj;
+      if (!Objects.equals(this.nodeId, other.nodeId)) {
+        return false;
+      }
+      if (!Objects.equals(this.batchId, other.batchId)) {
+        return false;
+      }
+      if (!Objects.equals(this.instanceId, other.instanceId)) {
+        return false;
+      }
+      if (!Objects.equals(this.server, other.server)) {
+        return false;
+      }
+      return true;
+    }
+
+    
+    @Override
+    public String toString() {
+      return '<' + "nid=" + nodeId + ", bid=" + batchId + ", iid=" + instanceId + ", s=" + server + '>';
     }
   }
 
@@ -88,6 +141,42 @@ public class ConnIds {
         res = this.clientId.compareTo(that.instanceId);
       }
       return res;
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 3;
+      hash = 37 * hash + Objects.hashCode(this.serverId);
+      hash = 37 * hash + Objects.hashCode(this.clientId);
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      final ConnId other = (ConnId) obj;
+      if (!Objects.equals(this.serverId, other.serverId)) {
+        return false;
+      }
+      if (!Objects.equals(this.clientId, other.clientId)) {
+        return false;
+      }
+      return true;
+    }
+    
+    
+
+    @Override
+    public String toString() {
+      return '<' + "sid=" + serverId + ", cid=" + clientId + '>';
     }
   }
 }

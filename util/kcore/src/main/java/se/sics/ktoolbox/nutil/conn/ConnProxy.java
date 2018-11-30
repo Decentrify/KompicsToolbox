@@ -60,14 +60,13 @@ public class ConnProxy {
       this.proxy = proxy;
       this.logger = logger;
 
-      network = proxy.requires(Network.class);
-      timerPort = proxy.requires(Timer.class);
-      timer = new TimerProxyImpl();
-      timer.setup(proxy);
+      network = proxy.getNegative(Network.class).getPair();
+      timerPort = proxy.getNegative(Timer.class).getPair();
+      timer = new TimerProxyImpl().setup(proxy, logger);
 
       proxy.subscribe(handleServer, network);
 
-      base.setup(timer, networkSend());
+      base.setup(timer, networkSend(), logger);
     }
 
     public void update(ConnState state) {
@@ -120,11 +119,10 @@ public class ConnProxy {
 
       network = proxy.requires(Network.class);
       timerPort = proxy.requires(Timer.class);
-      timer = new TimerProxyImpl();
-      timer.setup(proxy);
+      timer = new TimerProxyImpl().setup(proxy, logger);
 
       proxy.subscribe(handleClient, network);
-      base.setup(timer, networkSend());
+      base.setup(timer, networkSend(), logger);
     }
 
     public void update(ConnState state) {

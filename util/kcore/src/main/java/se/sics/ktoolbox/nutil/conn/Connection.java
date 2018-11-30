@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.javatuples.Pair;
+import org.slf4j.Logger;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
@@ -47,6 +49,8 @@ public class Connection {
 
     private TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend;
     private TimerProxy timer;
+    private Logger logger;
+    
     private UUID periodicCheck;
 
     private final Map<ConnId, ServerState> servers = new HashMap<>();
@@ -59,10 +63,12 @@ public class Connection {
       this.state = state;
     }
 
-    public Client setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend) {
+    public Client setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend, 
+      Logger logger) {
       this.timer = timer;
       this.networkSend = networkSend;
-      timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
+      this.logger = logger;
+      periodicCheck = timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
       return this;
     }
 
@@ -104,14 +110,16 @@ public class Connection {
     }
 
     public void handleContent(KAddress serverAddress, ConnMsgs.Server content) {
-      Map.Entry<ConnId, ConnStatus> connStatus = ctrl.update(content.connId, state,
+      Pair<ConnId, ConnStatus> connRes = ctrl.update(content.connId, state,
         content.state, content.status, serverAddress);
-      if (connStatus.getValue().equals(ConnStatus.Base.DISCONNECT)) {
-        servers.remove(connStatus.getKey());
-      } else if (connStatus.getValue().equals(ConnStatus.Base.CONNECTED)) {
-        servers.put(connStatus.getKey(), new ServerState(connStatus.getKey().serverId, serverAddress, config));
-      } else if (connStatus.getValue().equals(ConnStatus.Base.HEARTBEAT_ACK)) {
-        ServerState serverState = servers.get(connStatus.getKey());
+      ConnId connId = connRes.getValue0();
+      ConnStatus connStatus = connRes.getValue1();
+      if (connStatus.equals(ConnStatus.Base.DISCONNECT)) {
+        servers.remove(connId);
+      } else if (connStatus.equals(ConnStatus.Base.CONNECTED)) {
+        servers.put(connId, new ServerState(connId.serverId, serverAddress, config));
+      } else if (connStatus.equals(ConnStatus.Base.HEARTBEAT_ACK)) {
+        ServerState serverState = servers.get(connId);
         if (serverState == null) {
           throw new RuntimeException("weird - server is disconnected?");
         }
@@ -130,6 +138,9 @@ public class Connection {
           if (serverState.isDead()) {
             ctrl.close(connId);
             it.remove();
+          } else {
+            ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, state, ConnStatus.Base.HEARTBEAT);
+            networkSend.accept(serverState.address, content);
           }
         }
       };
@@ -145,6 +156,7 @@ public class Connection {
 
     private TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend;
     private TimerProxy timer;
+    private Logger logger;
     private UUID periodicCheck;
 
     private final Map<ConnId, ClientState> clients = new HashMap<>();
@@ -156,10 +168,12 @@ public class Connection {
       this.state = state;
     }
 
-    public Server setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend) {
+    public Server setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend,
+      Logger logger) {
       this.timer = timer;
       this.networkSend = networkSend;
-      timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
+      this.logger = logger;
+      periodicCheck = timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
       return this;
     }
 
@@ -195,10 +209,10 @@ public class Connection {
     }
 
     public void handleContent(KAddress clientAddress, ConnMsgs.Client content) {
-      Map.Entry<ConnId, ConnStatus> aux = ctrl.update(content.connId, state,
+      Pair<ConnId, ConnStatus> aux = ctrl.update(content.connId, state,
         content.state, content.status, clientAddress);
-      ConnId connId = aux.getKey();
-      ConnStatus connStatus = aux.getValue();
+      ConnId connId = aux.getValue0();
+      ConnStatus connStatus = aux.getValue1();
       ConnMsgs.Server reply = content.reply(state, connStatus);
       networkSend.accept(clientAddress, reply);
       if (connStatus.equals(ConnStatus.Base.CONNECTED)

@@ -18,16 +18,17 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
-import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
+import se.sics.ktoolbox.nutil.network.portsv2.SelectableMsgV2;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ConnMsgs {
-  private static abstract class Base implements KompicsEvent, Identifiable {
+  public static final String CONNECTION = "CONNECTION";
+  public static abstract class Base implements SelectableMsgV2, Identifiable {
     public final Identifier msgId;
     public final ConnId connId;
     public final ConnState state;
@@ -42,13 +43,17 @@ public class ConnMsgs {
     public Identifier getId() {
       return msgId;
     }
+    
+    @Override
+    public String eventType() {
+      return CONNECTION;
+    }
   }
 
   public static class Client extends Base {
     
     public final ConnStatus status;
-    public Client(Identifier msgId, ConnId connId, ConnState state, 
-      ConnStatus status) {
+    public Client(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
       super(msgId, connId, state);
       this.status = status;
     }
@@ -56,14 +61,23 @@ public class ConnMsgs {
     public Server reply(ConnState state, ConnStatus status) {
       return new Server(msgId, connId, state, status);
     }
+
+    @Override
+    public String toString() {
+      return "Client{" + "status=" + status + '}';
+    }
   }
   
   public static class Server extends Base {
     public final ConnStatus status;
-    public Server(Identifier msgId, ConnId connId, ConnState state, 
-      ConnStatus status) {
+    public Server(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
       super(msgId, connId, state);
       this.status = status;
+    }
+
+    @Override
+    public String toString() {
+      return "Server{" + "status=" + status + '}';
     }
   }
 }
