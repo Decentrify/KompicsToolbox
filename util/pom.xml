@@ -65,6 +65,13 @@
       <version>${logger.version}</version>
     </dependency>
     
+    <!-- testing -->
+    <dependency>
+      <groupId>se.sics.kompics.basic</groupId>
+      <artifactId>kompics-component-java-timer</artifactId>
+      <version>${kompics.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -77,5 +84,6 @@
       <version>${logger.version}</version>
       <scope>test</scope>
     </dependency>
+    
   </dependencies>
 </project>

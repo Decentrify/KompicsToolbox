@@ -20,6 +20,7 @@ package se.sics.ktoolbox.nutil.timer;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
 import se.sics.kompics.ComponentProxy;
 
 /**
@@ -27,7 +28,7 @@ import se.sics.kompics.ComponentProxy;
  */
 public interface TimerProxy {
 
-  public TimerProxy setup(ComponentProxy proxy);
+  public TimerProxy setup(ComponentProxy proxy, Logger logger);
   
   public void cancel();
 

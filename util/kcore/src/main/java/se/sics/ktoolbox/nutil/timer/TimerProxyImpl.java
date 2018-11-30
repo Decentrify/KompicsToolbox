@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
@@ -35,7 +36,7 @@ import se.sics.kompics.timer.Timer;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class TimerProxyImpl implements TimerProxy {
-
+  private Logger logger;
   private Positive<Timer> timer;
   private ComponentProxy proxy;
   private Map<UUID, Consumer<Boolean>> periodicCallbacks = new HashMap<>();
@@ -45,8 +46,9 @@ public class TimerProxyImpl implements TimerProxy {
   }
 
   @Override
-  public TimerProxy setup(ComponentProxy proxy) {
+  public TimerProxy setup(ComponentProxy proxy, Logger logger) {
     this.proxy = proxy;
+    this.logger = logger;
     timer = proxy.getNegative(Timer.class).getPair();
     proxy.subscribe(handleTimeout, timer);
     return this;
@@ -97,9 +99,18 @@ public class TimerProxyImpl implements TimerProxy {
   Handler handleTimeout = new Handler<Timeout>() {
     @Override
     public void handle(Timeout t) {
-      Consumer<Boolean> callback = periodicCallbacks.get(t.getTimeoutId());
+      Consumer<Boolean> callback;
+      callback = periodicCallbacks.get(t.getTimeoutId());
       if (callback != null) {
+        logger.trace("periodic timer");
         callback.accept(true);
+        return;
+      }
+      callback = oneTimeCallbacks.get(t.getTimeoutId());
+      if (callback != null) {
+        logger.trace("onetime timer");
+        callback.accept(true);
+        return;
       }
     }
   };
