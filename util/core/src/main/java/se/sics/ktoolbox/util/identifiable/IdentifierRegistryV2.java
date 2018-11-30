@@ -20,11 +20,11 @@ package se.sics.ktoolbox.util.identifiable;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Optional;
-import java.util.Random;
 import java.util.function.Function;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.util.SettableMemo;
 import se.sics.ktoolbox.util.identifiable.basic.IntId;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
@@ -42,6 +42,7 @@ public class IdentifierRegistryV2 {
   private static SettableMemo<ImmutableMap<String, Pair<Class, Function<Optional<Long>, IdentifierFactory>>>> identifierFactories
     = new SettableMemo("idRegistryV2");
 
+  private static SettableMemo<IdentifierFactory> connBatchIds = new SettableMemo("connIdBatchIds");
   public final static Function<Optional<Long>, IdentifierFactory> UUID_FGEN = (Optional<Long> seed) -> {
     logger.warn("UUIDFactory does not have a settable seed");
     return new UUIDIdFactory();
@@ -54,6 +55,10 @@ public class IdentifierRegistryV2 {
     = (Integer sequenceSize) -> (Optional<Long> seed) -> new StringByteIdFactory(seed, sequenceSize);
 
   public static void registerBaseDefaults1(int stringSequenceSize) {
+    registerBaseDefaults1(stringSequenceSize, 1234l);
+  }
+  
+  public static void registerBaseDefaults1(int stringSequenceSize, long baseSeed) {
     ImmutableMap.Builder<String, Pair<Class, Function<Optional<Long>, IdentifierFactory>>> factoryGenerators
       = ImmutableMap.builder();
     factoryGenerators.put(BasicIdentifiers.Values.EVENT.toString(), Pair.with(UUIDId.class, UUID_FGEN));
@@ -61,7 +66,9 @@ public class IdentifierRegistryV2 {
     factoryGenerators.put(BasicIdentifiers.Values.OVERLAY.toString(),
       Pair.with(StringByteId.class, STRINGBYTEID_FGEN.apply(stringSequenceSize)));
     factoryGenerators.put(BasicIdentifiers.Values.NODE.toString(), Pair.with(IntId.class, INTID_FGEN));
+    factoryGenerators.put(BasicIdentifiers.Values.CONN_INSTANCE.toString(), Pair.with(IntId.class, INTID_FGEN));
     identifierFactories.set(factoryGenerators.build());
+    connBatchIds.set(new IntIdFactory(Optional.of(baseSeed)));
   }
 
   public static IdentifierFactory instance(BasicIdentifiers.Values idType, Optional<Long> seed) {
@@ -70,5 +77,9 @@ public class IdentifierRegistryV2 {
 
   public static Class idType(BasicIdentifiers.Values idName) {
     return identifierFactories.get().get(idName.toString()).getValue0();
+  }
+  
+  public static synchronized Identifier connBatchId() {
+    return connBatchIds.get().randomId();
   }
 }

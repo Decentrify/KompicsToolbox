@@ -28,13 +28,13 @@ import se.sics.kompics.util.Identifier;
 public class BasicIdentifiers {
 
   public static Optional<Long> backupSeed = Optional.of(1234l);
-
   public static enum Values {
 
     EVENT,
     MSG,
     OVERLAY,
-    NODE;
+    NODE,
+    CONN_INSTANCE;
   }
 
 //  public static Identifier eventId() {
