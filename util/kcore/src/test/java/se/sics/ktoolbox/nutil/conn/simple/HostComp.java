@@ -39,6 +39,7 @@ import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorsV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgTypeExtractorsV2;
 import se.sics.ktoolbox.nutil.network.portsv2.OutgoingOne2NMsgChannelV2;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -70,7 +71,7 @@ public class HostComp extends ComponentDefinition {
       
       InstanceId serverId = new ConnIds.InstanceId(init.serverAddress.getId(), 
         init.serverBatch, init.serverBaseId, true);
-      Component client = create(ClientComp.class, new ClientComp.Init(init.clientBatch, init.clientBaseId, 
+      Component client = create(ClientComp.class, new ClientComp.Init(IdentifierRegistryV2.connBatchId(),
         init.clientAddress, serverId, init.serverAddress));
       channel.addChannel(init.clientAddress.getId(), client.getNegative(Network.class));
       connect(timer.getPositive(Timer.class), client.getNegative(Timer.class), Channel.TWO_WAY);
@@ -88,18 +89,13 @@ public class HostComp extends ComponentDefinition {
     public final Identifier serverBaseId;
     
     public final KAddress clientAddress;
-    public final Identifier clientBatch;
-    public final Identifier clientBaseId;
     
     public Init(KAddress serverAddress, KAddress clientAddress,
-      Identifier serverBatch, Identifier serverBaseId, 
-      Identifier clientBatch, Identifier clientBaseId) { 
+      Identifier serverBatch, Identifier serverBaseId) { 
       this.serverAddress = serverAddress;
       this.clientAddress = clientAddress;
       this.serverBatch = serverBatch;
       this.serverBaseId = serverBaseId;
-      this.clientBatch = clientBatch;
-      this.clientBaseId = clientBaseId;
     }
   }
 }

@@ -81,11 +81,9 @@ public class HostComp extends ComponentDefinition {
       InstanceId serverId4 = new ConnIds.InstanceId(init.serverAddress2.getId(), 
         init.serverBatch4, init.baseServerId4, true);
       
-      Component client1 = create(ClientParentComp.class, new ClientParentComp.Init(init.clientAddress1, 
-          init.clientBatch1, init.baseClientId1, init.clientBatch2, init.baseClientId2, 
+      Component client1 = create(ClientParentComp.class, new ClientParentComp.Init(init.clientAddress1,
           serverId1, init.serverAddress1, serverId3, init.serverAddress2));
-      Component client2 = create(ClientParentComp.class, new ClientParentComp.Init(init.clientAddress2, 
-          init.clientBatch3, init.baseClientId3, init.clientBatch4, init.baseClientId4,
+      Component client2 = create(ClientParentComp.class, new ClientParentComp.Init(init.clientAddress2,
           serverId2, init.serverAddress1, serverId4, init.serverAddress2));
       
       channel.addChannel(init.clientAddress1.getId(), client1.getNegative(Network.class));
@@ -117,25 +115,13 @@ public class HostComp extends ComponentDefinition {
     
     public final KAddress clientAddress1;
     public final KAddress clientAddress2;
-    public final Identifier clientBatch1;
-    public final Identifier baseClientId1;
-    public final Identifier clientBatch2;
-    public final Identifier baseClientId2;
-    public final Identifier clientBatch3;
-    public final Identifier baseClientId3;
-    public final Identifier clientBatch4;
-    public final Identifier baseClientId4;
     
     public Init(KAddress serverAddress1, KAddress serverAddress2, 
       Identifier serverBatch1, Identifier baseServerId1, 
       Identifier serverBatch2, Identifier baseServerId2,
       Identifier serverBatch3, Identifier baseServerId3,
       Identifier serverBatch4, Identifier baseServerId4,
-      KAddress clientAddress1, KAddress clientAddress2, 
-      Identifier clientBatch1, Identifier baseClientId1, 
-      Identifier clientBatch2, Identifier baseClientId2,
-      Identifier clientBatch3, Identifier baseClientId3,
-      Identifier clientBatch4, Identifier baseClientId4) {
+      KAddress clientAddress1, KAddress clientAddress2) {
       this.serverAddress1 = serverAddress1;
       this.serverAddress2 = serverAddress2;
       this.serverBatch1 = serverBatch1;
@@ -148,14 +134,6 @@ public class HostComp extends ComponentDefinition {
       this.baseServerId4 = baseServerId4;
       this.clientAddress1 = clientAddress1;
       this.clientAddress2 = clientAddress2;
-      this.clientBatch1 = clientBatch1;
-      this.baseClientId1 = baseClientId1;
-      this.clientBatch2 = clientBatch2;
-      this.baseClientId2 = baseClientId2;
-      this.clientBatch3 = clientBatch3;
-      this.baseClientId3 = baseClientId3;
-      this.clientBatch4 = clientBatch4;
-      this.baseClientId4 = baseClientId4;
     }
   }
 }

@@ -54,7 +54,7 @@ public class ConnectionTest {
       + File.separator + "test"
       + File.separator + "log4j.properties";
     System.setProperty("log4j.configuration", new File(log4jFile).toURI().toURL().toString());
-    IdentifierRegistryV2.registerBaseDefaults1(64);
+    IdentifierRegistryV2.registerBaseDefaults1(64, 1234l);
   }
 
   @Ignore //run manually 
@@ -67,13 +67,9 @@ public class ConnectionTest {
     KAddress clientAdr = new BasicAddress(InetAddress.getLocalHost(), 20000, id2);
 
     Identifier serverBatchId = ids.id(new BasicBuilders.IntBuilder(1));
-    Identifier clientBatchId = ids.id(new BasicBuilders.IntBuilder(2));
-
     Identifier serverBaseId = ids.id(new BasicBuilders.IntBuilder(1));
-    Identifier clientBaseId = ids.id(new BasicBuilders.IntBuilder(2));
 
-    Init init = new se.sics.ktoolbox.nutil.conn.simple.HostComp.Init(serverAdr, clientAdr,
-      serverBatchId, serverBaseId, clientBatchId, clientBaseId);
+    Init init = new se.sics.ktoolbox.nutil.conn.simple.HostComp.Init(serverAdr, clientAdr, serverBatchId, serverBaseId);
     if (Kompics.isOn()) {
       Kompics.shutdown();
     }
@@ -104,26 +100,16 @@ public class ConnectionTest {
     Identifier serverBatchId2 = ids.id(new BasicBuilders.IntBuilder(2));
     Identifier serverBatchId3 = ids.id(new BasicBuilders.IntBuilder(3));
     Identifier serverBatchId4 = ids.id(new BasicBuilders.IntBuilder(4));
-    Identifier clientBatchId1 = ids.id(new BasicBuilders.IntBuilder(5));
-    Identifier clientBatchId2 = ids.id(new BasicBuilders.IntBuilder(6));
-    Identifier clientBatchId3 = ids.id(new BasicBuilders.IntBuilder(7));
-    Identifier clientBatchId4 = ids.id(new BasicBuilders.IntBuilder(8));
 
     Identifier serverBaseId1 = ids.id(new BasicBuilders.IntBuilder(1));
     Identifier serverBaseId2 = ids.id(new BasicBuilders.IntBuilder(2));
     Identifier serverBaseId3 = ids.id(new BasicBuilders.IntBuilder(3));
     Identifier serverBaseId4 = ids.id(new BasicBuilders.IntBuilder(4));
-    Identifier clientBaseId1 = ids.id(new BasicBuilders.IntBuilder(5));
-    Identifier clientBaseId2 = ids.id(new BasicBuilders.IntBuilder(6));
-    Identifier clientBaseId3 = ids.id(new BasicBuilders.IntBuilder(7));
-    Identifier clientBaseId4 = ids.id(new BasicBuilders.IntBuilder(8));
 
     Init init = new se.sics.ktoolbox.nutil.conn.multi2by2with2.HostComp.Init(serverAdr1, serverAdr2,
       serverBatchId1, serverBaseId1, serverBatchId2, serverBaseId2,
       serverBatchId3, serverBaseId3, serverBatchId4, serverBaseId4,
-      clientAdr1, clientAdr2,
-      clientBatchId1, clientBaseId1, clientBatchId2, clientBaseId2,
-      clientBatchId3, clientBaseId3, clientBatchId4, clientBaseId4);
+      clientAdr1, clientAdr2);
     if (Kompics.isOn()) {
       Kompics.shutdown();
     }

@@ -59,38 +59,37 @@ public class ServerParentComp extends ComponentDefinition {
       channelSelectors.put(ConnMsgs.CONNECTION, new BatchIdExtractors.Server());
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-server-channel", logger,
         network, new MsgTypeExtractorsV2.Base(), channelSelectors);
-      
-      Component comp1 = create(ServerComp.class, 
-        new ServerComp.Init(init.serverBatch1, init.baseServerId1, init.selfAddress));
-      Component comp2 = create(ServerComp.class, 
-        new ServerComp.Init(init.serverBatch2, init.baseServerId2, init.selfAddress));
 
-      channel.addChannel(init.serverBatch1, comp1.getNegative(Network.class));
-      channel.addChannel(init.serverBatch2, comp2.getNegative(Network.class));
-      
+      Component comp1 = create(ServerComp.class, new ServerComp.Init(init.batchId1, init.baseId1, init.selfAddress));
+      Component comp2 = create(ServerComp.class, new ServerComp.Init(init.batchId2, init.baseId2, init.selfAddress));
+
+      channel.addChannel(init.batchId1, comp1.getNegative(Network.class));
+      channel.addChannel(init.batchId2, comp2.getNegative(Network.class));
+
       connect(timer, comp1.getNegative(Timer.class), Channel.TWO_WAY);
       connect(timer, comp2.getNegative(Timer.class), Channel.TWO_WAY);
-      
+
       trigger(Start.event, comp1.control());
       trigger(Start.event, comp2.control());
     }
   };
 
   public static class Init extends se.sics.kompics.Init<ServerParentComp> {
-    
-    public final KAddress selfAddress;
-    public final Identifier serverBatch1;
-    public final Identifier baseServerId1;
-    public final Identifier serverBatch2;
-    public final Identifier baseServerId2;
 
-    public Init(KAddress selfAddress, Identifier serverBatch1, Identifier baseServerId1, 
-      Identifier serverBatch2, Identifier baseServerId2) {
+    public final KAddress selfAddress;
+    public final Identifier batchId1;
+    public final Identifier baseId1;
+    public final Identifier batchId2;
+    public final Identifier baseId2;
+
+    public Init(KAddress selfAddress,
+      Identifier batchId1, Identifier baseId1,
+      Identifier batchId2, Identifier baseId2) {
       this.selfAddress = selfAddress;
-      this.serverBatch1 = serverBatch1;
-      this.baseServerId1 = baseServerId1;
-      this.serverBatch2 = serverBatch2;
-      this.baseServerId2 = baseServerId2;
+      this.batchId1 = batchId1;
+      this.baseId1 = baseId1;
+      this.batchId2 = batchId2;
+      this.baseId2 = baseId2;
     }
   }
 }

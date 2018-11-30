@@ -50,10 +50,12 @@ public class ClientComp extends ComponentDefinition {
   public final ConnMngrProxy connMngr;
   private final Init init;
   private InstanceId fullId;
+  private final IdentifierFactory connBaseIds;
 
   public ClientComp(Init init) {
     this.init = init;
-    IdentifierFactory msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(123l));
+    IdentifierFactory msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
+    connBaseIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.CONN_INSTANCE, Optional.of(1235l));
     ConnConfig connConfig = new ConnConfig(1000);
     connMngr = new ConnMngrProxy(init.batchId, init.selfAddress, connConfig, msgIds);
     timer = new TimerProxyImpl().setup(proxy, logger);
@@ -64,7 +66,8 @@ public class ClientComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       connMngr.setup(proxy, logger);
-      fullId = connMngr.addClient(init.baseId, new ConnHelper.SimpleConnCtrl(), new ConnHelper.NoConnState());
+      fullId = connMngr.addClient(connBaseIds.randomId(), new ConnHelper.SimpleConnCtrl(), 
+        new ConnHelper.NoConnState());
       timer.scheduleTimer(1000, connect());
     }
   };
@@ -79,17 +82,15 @@ public class ClientComp extends ComponentDefinition {
   public static class Init extends se.sics.kompics.Init<ClientComp> {
 
     public final Identifier batchId;
-    public final Identifier baseId;
     public final KAddress selfAddress;
 
     public final KAddress serverAddress;
     public final InstanceId serverId;
 
-    public Init(Identifier batchId, Identifier baseId, KAddress selfAddress,
+    public Init(Identifier batchId, KAddress selfAddress,
       InstanceId serverId, KAddress serverAddress) {
       this.batchId = batchId;
       this.selfAddress = selfAddress;
-      this.baseId = baseId;
       this.serverAddress = serverAddress;
       this.serverId = serverId;
     }

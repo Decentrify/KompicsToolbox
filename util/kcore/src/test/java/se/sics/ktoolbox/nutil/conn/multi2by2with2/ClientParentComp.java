@@ -36,6 +36,7 @@ import se.sics.ktoolbox.nutil.conn.ConnMsgs;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgTypeExtractorsV2;
 import se.sics.ktoolbox.nutil.network.portsv2.OutgoingOne2NMsgChannelV2;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -63,13 +64,15 @@ public class ClientParentComp extends ComponentDefinition {
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-client-channel", logger,
         network, new MsgTypeExtractorsV2.Base(), channelSelectors);
 
-      Component comp1 = create(ClientComp.class, new ClientComp.Init(init.clientBatch1, init.baseClientId1,
-        init.selfAddress, init.serverId1, init.serverAddress1));
-      Component comp2 = create(ClientComp.class, new ClientComp.Init(init.clientBatch2, init.baseClientId2,
-        init.selfAddress, init.serverId2, init.serverAddress2));
+      Identifier batchId1 = IdentifierRegistryV2.connBatchId();
+      Identifier batchId2 = IdentifierRegistryV2.connBatchId();
+      Component comp1 = create(ClientComp.class, new ClientComp.Init(batchId1,init.selfAddress, 
+        init.serverId1, init.serverAddress1));
+      Component comp2 = create(ClientComp.class, new ClientComp.Init(batchId2, init.selfAddress, 
+        init.serverId2, init.serverAddress2));
 
-      channel.addChannel(init.clientBatch1, comp1.getNegative(Network.class));
-      channel.addChannel(init.clientBatch2, comp2.getNegative(Network.class));
+      channel.addChannel(batchId1, comp1.getNegative(Network.class));
+      channel.addChannel(batchId2, comp2.getNegative(Network.class));
       
       connect(timer, comp1.getNegative(Timer.class), Channel.TWO_WAY);
       connect(timer, comp2.getNegative(Timer.class), Channel.TWO_WAY);
@@ -83,26 +86,15 @@ public class ClientParentComp extends ComponentDefinition {
 
     public final KAddress selfAddress;
 
-    public final Identifier clientBatch1;
-    public final Identifier baseClientId1;
-    public final Identifier clientBatch2;
-    public final Identifier baseClientId2;
-
     public final InstanceId serverId1;
     public final KAddress serverAddress1;
     public final InstanceId serverId2;
     public final KAddress serverAddress2;
 
     public Init(KAddress selfAddress,
-      Identifier clientBatch1, Identifier baseClientId1,
-      Identifier clientBatch2, Identifier baseClientId2,
       InstanceId serverId1, KAddress serverAddress1,
       InstanceId serverId2, KAddress serverAddress2) {
       this.selfAddress = selfAddress;
-      this.clientBatch1 = clientBatch1;
-      this.baseClientId1 = baseClientId1;
-      this.clientBatch2 = clientBatch2;
-      this.baseClientId2 = baseClientId2;
       this.serverId1 = serverId1;
       this.serverAddress1 = serverAddress1;
       this.serverId2 = serverId2;
