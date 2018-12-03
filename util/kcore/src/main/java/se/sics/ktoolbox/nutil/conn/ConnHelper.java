@@ -20,8 +20,10 @@ package se.sics.ktoolbox.nutil.conn;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.javatuples.Pair;
-import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
+import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -29,16 +31,25 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class ConnHelper {
 
-  public static class SimpleConnCtrl implements ConnCtrl {
+  public static <C extends ConnState> ServerListener<C> noServerListener() {
+    return new ServerListener<C>() {
+      @Override
+      public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnId connId, ConnStatus peerStatus,
+        KAddress peer, Optional<C> peerState) {
+        return Pair.with(ConnStatus.Base.DISCONNECTED, Optional.empty());
+      }
+    };
+  }
+  public static class SimpleConnCtrl<S extends ConnState, P extends ConnState> implements ConnCtrl<S,P> {
 
     @Override
-    public Map<ConnIds.ConnId, ConnStatus> updateState(ConnIds.InstanceId instanceId, ConnState state) {
+    public Map<ConnId, ConnStatus> selfUpdate(InstanceId instanceId, S state) {
       return new HashMap<>();
     }
 
     @Override
-    public Pair<ConnIds.ConnId, ConnStatus> update(ConnIds.ConnId connId, ConnState selfState, ConnState peerState,
-      ConnStatus peerStatus, KAddress peer) {
+    public Pair<ConnId, ConnStatus> partnerUpdate(ConnId connId, S selfState,
+      ConnStatus peerStatus, KAddress peer, Optional<P> peerState) {
       if (peerStatus.equals(ConnStatus.Base.CONNECT)) {
         return Pair.with(connId, ConnStatus.Base.CONNECTED);
       } else if(peerStatus.equals(ConnStatus.Base.CONNECTED)) {
@@ -54,10 +65,10 @@ public class ConnHelper {
     }
 
     @Override
-    public void close(Identifier connId) {
+    public void close(ConnId connId) {
     }
   }
 
-  public static class NoConnState implements ConnState {
+  public static class EmptyState implements ConnState {
   }
 }

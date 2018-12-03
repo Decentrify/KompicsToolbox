@@ -36,7 +36,7 @@ public class OverlayIdFactory implements IdentifierFactory<OverlayId> {
         this.baseFactory = baseFactory;
         this.overlayType = overlayType;
         this.overlayOwner = overlayOwner;
-        this.typeComparator = OverlayRegistry.getTypeComparator();
+        this.typeComparator = OverlayRegistryV2.getTypeComparator();
     }
 
     @Override

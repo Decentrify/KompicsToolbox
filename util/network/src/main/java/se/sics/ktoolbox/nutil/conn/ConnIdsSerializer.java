@@ -45,6 +45,7 @@ public class ConnIdsSerializer {
     @Override
     public void toBinary(Object o, ByteBuf buf) {
       ConnIds.InstanceId obj = (ConnIds.InstanceId) o;
+      Serializers.toBinary(obj.overlayId, buf);
       Serializers.toBinary(obj.nodeId, buf);
       Serializers.toBinary(obj.batchId, buf);
       Serializers.toBinary(obj.instanceId, buf);
@@ -53,11 +54,12 @@ public class ConnIdsSerializer {
 
     @Override
     public ConnIds.InstanceId fromBinary(ByteBuf buf, Optional<Object> hint) {
+      Identifier overlayId = (Identifier) Serializers.fromBinary(buf, hint);
       Identifier nodeId = (Identifier) Serializers.fromBinary(buf, hint);
       Identifier batchId = (Identifier) Serializers.fromBinary(buf, hint);
       Identifier instanceId = (Identifier) Serializers.fromBinary(buf, hint);
       boolean server = buf.readBoolean();
-      return new ConnIds.InstanceId(nodeId, batchId, instanceId, server);
+      return new ConnIds.InstanceId(overlayId, nodeId, batchId, instanceId, server);
     }
   }
 
@@ -83,9 +85,9 @@ public class ConnIdsSerializer {
 
     @Override
     public ConnIds.ConnId fromBinary(ByteBuf buf, Optional<Object> hint) {
-      ConnIds.InstanceId serverId = (ConnIds.InstanceId)Serializers.lookupSerializer(ConnIds.InstanceId.class)
+      ConnIds.InstanceId serverId = (ConnIds.InstanceId) Serializers.lookupSerializer(ConnIds.InstanceId.class)
         .fromBinary(buf, hint);
-      ConnIds.InstanceId clientId = (ConnIds.InstanceId)Serializers.lookupSerializer(ConnIds.InstanceId.class)
+      ConnIds.InstanceId clientId = (ConnIds.InstanceId) Serializers.lookupSerializer(ConnIds.InstanceId.class)
         .fromBinary(buf, hint);
       return new ConnIds.ConnId(serverId, clientId);
     }

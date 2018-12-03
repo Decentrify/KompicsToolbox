@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
+import java.util.Optional;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
@@ -27,14 +28,17 @@ import se.sics.ktoolbox.nutil.network.portsv2.SelectableMsgV2;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class ConnMsgs {
+
   public static final String CONNECTION = "CONNECTION";
-  public static abstract class Base implements SelectableMsgV2, Identifiable {
+
+  public static abstract class Base<O extends ConnState> implements SelectableMsgV2, Identifiable {
+
     public final Identifier msgId;
     public final ConnId connId;
-    public final ConnState state;
     public final ConnStatus status;
-    
-    protected Base(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
+    public final Optional<O> state;
+
+    protected Base(Identifier msgId, ConnId connId, ConnStatus status, Optional<O> state) {
       this.msgId = msgId;
       this.connId = connId;
       this.state = state;
@@ -45,22 +49,29 @@ public class ConnMsgs {
     public Identifier getId() {
       return msgId;
     }
-    
+
     @Override
     public String eventType() {
       return CONNECTION;
     }
   }
 
-  public static class Client extends Base {
-    
-    
-    public Client(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
-      super(msgId, connId, state, status);
+  public static class Client<C extends ConnState> extends Base<C> {
+
+    public Client(Identifier msgId, ConnId connId, ConnStatus status, C state) {
+      super(msgId, connId, status, Optional.of(state));
+    }
+
+    public Client(Identifier msgId, ConnId connId, ConnStatus status) {
+      super(msgId, connId, status, Optional.empty());
+    }
+
+    public <S extends ConnState> Server<S> reply(ConnStatus status, S state) {
+      return new Server(msgId, connId, status, state);
     }
     
-    public Server reply(ConnState state, ConnStatus status) {
-      return new Server(msgId, connId, state, status);
+    public <S extends ConnState> Server<S> reply(ConnStatus status) {
+      return new Server(msgId, connId, status);
     }
 
     @Override
@@ -68,10 +79,15 @@ public class ConnMsgs {
       return "Client{" + "status=" + status + '}';
     }
   }
-  
-  public static class Server extends Base {
-    public Server(Identifier msgId, ConnId connId, ConnState state, ConnStatus status) {
-      super(msgId, connId, state, status);
+
+  public static class Server<S extends ConnState> extends Base<S> {
+
+    public Server(Identifier msgId, ConnId connId, ConnStatus status, S state) {
+      super(msgId, connId, status, Optional.of(state));
+    }
+    
+    public Server(Identifier msgId, ConnId connId, ConnStatus status) {
+      super(msgId, connId, status, Optional.empty());
     }
 
     @Override

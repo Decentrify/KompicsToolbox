@@ -18,7 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.conn.multi2by2with2;
 
-import se.sics.ktoolbox.nutil.conn.util.ClientComp;
+import se.sics.ktoolbox.nutil.conn.util.ConnProxyMngrClientComp;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.kompics.Channel;
@@ -66,9 +66,9 @@ public class ClientParentComp extends ComponentDefinition {
 
       Identifier batchId1 = IdentifierRegistryV2.connBatchId();
       Identifier batchId2 = IdentifierRegistryV2.connBatchId();
-      Component comp1 = create(ClientComp.class, new ClientComp.Init(batchId1,init.selfAddress, 
+      Component comp1 = create(ConnProxyMngrClientComp.class, new ConnProxyMngrClientComp.Init(init.overlayId, batchId1,init.selfAddress, 
         init.serverId1, init.serverAddress1));
-      Component comp2 = create(ClientComp.class, new ClientComp.Init(batchId2, init.selfAddress, 
+      Component comp2 = create(ConnProxyMngrClientComp.class, new ConnProxyMngrClientComp.Init(init.overlayId, batchId2, init.selfAddress, 
         init.serverId2, init.serverAddress2));
 
       channel.addChannel(batchId1, comp1.getNegative(Network.class));
@@ -83,7 +83,7 @@ public class ClientParentComp extends ComponentDefinition {
   };
 
   public static class Init extends se.sics.kompics.Init<ClientParentComp> {
-
+    public final Identifier overlayId;
     public final KAddress selfAddress;
 
     public final InstanceId serverId1;
@@ -91,9 +91,10 @@ public class ClientParentComp extends ComponentDefinition {
     public final InstanceId serverId2;
     public final KAddress serverAddress2;
 
-    public Init(KAddress selfAddress,
+    public Init(Identifier overlayId, KAddress selfAddress,
       InstanceId serverId1, KAddress serverAddress1,
       InstanceId serverId2, KAddress serverAddress2) {
+      this.overlayId = overlayId;
       this.selfAddress = selfAddress;
       this.serverId1 = serverId1;
       this.serverAddress1 = serverAddress1;

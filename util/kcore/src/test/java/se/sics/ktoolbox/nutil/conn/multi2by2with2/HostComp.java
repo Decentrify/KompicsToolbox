@@ -61,9 +61,9 @@ public class HostComp extends ComponentDefinition {
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-host-channel", logger,
         networkEmulator.getPositive(Network.class), new MsgTypeExtractorsV2.Base(), channelSelectors);
 
-      Component server1 = create(ServerParentComp.class, new ServerParentComp.Init(init.serverAddress1, 
+      Component server1 = create(ServerParentComp.class, new ServerParentComp.Init(init.overlayId, init.serverAddress1, 
           init.serverBatch1, init.baseServerId1, init.serverBatch2, init.baseServerId2));
-      Component server2 = create(ServerParentComp.class, new ServerParentComp.Init(init.serverAddress2, 
+      Component server2 = create(ServerParentComp.class, new ServerParentComp.Init(init.overlayId, init.serverAddress2, 
           init.serverBatch3, init.baseServerId3, init.serverBatch4, init.baseServerId4));
       
       channel.addChannel(init.serverAddress1.getId(), server1.getNegative(Network.class));
@@ -72,18 +72,18 @@ public class HostComp extends ComponentDefinition {
       connect(timer.getPositive(Timer.class), server1.getNegative(Timer.class), Channel.TWO_WAY);
       connect(timer.getPositive(Timer.class), server2.getNegative(Timer.class), Channel.TWO_WAY);
       
-      InstanceId serverId1 = new ConnIds.InstanceId(init.serverAddress1.getId(), 
+      InstanceId serverId1 = new ConnIds.InstanceId(init.overlayId, init.serverAddress1.getId(), 
         init.serverBatch1, init.baseServerId1, true);
-      InstanceId serverId2 = new ConnIds.InstanceId(init.serverAddress1.getId(), 
+      InstanceId serverId2 = new ConnIds.InstanceId(init.overlayId, init.serverAddress1.getId(), 
         init.serverBatch2, init.baseServerId2, true);
-      InstanceId serverId3 = new ConnIds.InstanceId(init.serverAddress2.getId(), 
+      InstanceId serverId3 = new ConnIds.InstanceId(init.overlayId, init.serverAddress2.getId(), 
         init.serverBatch3, init.baseServerId3, true);
-      InstanceId serverId4 = new ConnIds.InstanceId(init.serverAddress2.getId(), 
+      InstanceId serverId4 = new ConnIds.InstanceId(init.overlayId, init.serverAddress2.getId(), 
         init.serverBatch4, init.baseServerId4, true);
       
-      Component client1 = create(ClientParentComp.class, new ClientParentComp.Init(init.clientAddress1,
+      Component client1 = create(ClientParentComp.class, new ClientParentComp.Init(init.overlayId, init.clientAddress1,
           serverId1, init.serverAddress1, serverId3, init.serverAddress2));
-      Component client2 = create(ClientParentComp.class, new ClientParentComp.Init(init.clientAddress2,
+      Component client2 = create(ClientParentComp.class, new ClientParentComp.Init(init.overlayId, init.clientAddress2,
           serverId2, init.serverAddress1, serverId4, init.serverAddress2));
       
       channel.addChannel(init.clientAddress1.getId(), client1.getNegative(Network.class));
@@ -102,6 +102,7 @@ public class HostComp extends ComponentDefinition {
   };
   
   public static class Init extends se.sics.kompics.Init<HostComp> {
+    public final Identifier overlayId;
     public final KAddress serverAddress1;
     public final KAddress serverAddress2;
     public final Identifier serverBatch1;
@@ -116,12 +117,13 @@ public class HostComp extends ComponentDefinition {
     public final KAddress clientAddress1;
     public final KAddress clientAddress2;
     
-    public Init(KAddress serverAddress1, KAddress serverAddress2, 
+    public Init(Identifier overlayId, KAddress serverAddress1, KAddress serverAddress2, 
       Identifier serverBatch1, Identifier baseServerId1, 
       Identifier serverBatch2, Identifier baseServerId2,
       Identifier serverBatch3, Identifier baseServerId3,
       Identifier serverBatch4, Identifier baseServerId4,
       KAddress clientAddress1, KAddress clientAddress2) {
+      this.overlayId = overlayId;
       this.serverAddress1 = serverAddress1;
       this.serverAddress2 = serverAddress2;
       this.serverBatch1 = serverBatch1;

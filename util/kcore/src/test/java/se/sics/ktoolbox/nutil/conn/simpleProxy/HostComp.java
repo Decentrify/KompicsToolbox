@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.simple;
+package se.sics.ktoolbox.nutil.conn.simpleProxy;
 
 import se.sics.ktoolbox.nutil.conn.util.NetworkEmulator;
 import java.util.HashMap;
@@ -33,8 +33,8 @@ import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMsgs;
-import se.sics.ktoolbox.nutil.conn.util.ClientComp;
-import se.sics.ktoolbox.nutil.conn.util.ServerComp;
+import se.sics.ktoolbox.nutil.conn.util.ConnProxyClientComp;
+import se.sics.ktoolbox.nutil.conn.util.ConnProxyServerComp;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorsV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgTypeExtractorsV2;
@@ -64,15 +64,16 @@ public class HostComp extends ComponentDefinition {
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-host-channel", logger,
         networkEmulator.getPositive(Network.class), new MsgTypeExtractorsV2.Base(), channelSelectors);
 
-      Component server = create(ServerComp.class, new ServerComp.Init(init.serverBatch, init.serverBaseId,
-        init.serverAddress));
+      InstanceId serverId = new ConnIds.InstanceId(init.overlayId, init.serverAddress.getId(), 
+        init.serverBatch, init.serverBaseId, true);
+      
+      Component server = create(ConnProxyServerComp.class, new ConnProxyServerComp.Init(init.serverAddress, serverId));
       channel.addChannel(init.serverAddress.getId(), server.getNegative(Network.class));
       connect(timer.getPositive(Timer.class), server.getNegative(Timer.class), Channel.TWO_WAY);
       
-      InstanceId serverId = new ConnIds.InstanceId(init.serverAddress.getId(), 
-        init.serverBatch, init.serverBaseId, true);
-      Component client = create(ClientComp.class, new ClientComp.Init(IdentifierRegistryV2.connBatchId(),
-        init.clientAddress, serverId, init.serverAddress));
+      Component client = create(ConnProxyClientComp.class, new ConnProxyClientComp.Init(init.overlayId, 
+        IdentifierRegistryV2.connBatchId(), init.clientAddress, 
+        serverId, init.serverAddress));
       channel.addChannel(init.clientAddress.getId(), client.getNegative(Network.class));
       connect(timer.getPositive(Timer.class), client.getNegative(Timer.class), Channel.TWO_WAY);
 
@@ -84,14 +85,16 @@ public class HostComp extends ComponentDefinition {
   };
   
   public static class Init extends se.sics.kompics.Init<HostComp> {
+    public final Identifier overlayId;
     public final KAddress serverAddress;
     public final Identifier serverBatch;
     public final Identifier serverBaseId;
     
     public final KAddress clientAddress;
     
-    public Init(KAddress serverAddress, KAddress clientAddress,
+    public Init(Identifier overlayId, KAddress serverAddress, KAddress clientAddress,
       Identifier serverBatch, Identifier serverBaseId) { 
+      this.overlayId = overlayId;
       this.serverAddress = serverAddress;
       this.clientAddress = clientAddress;
       this.serverBatch = serverBatch;

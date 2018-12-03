@@ -38,16 +38,16 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class Connection {
 
-  public static class Client {
+  public static class Client<S extends ConnState, C extends ConnState> {
 
-    private final InstanceId clientId;
-    private final ConnCtrl ctrl;
+    public final InstanceId clientId;
+    private final ConnCtrl<C,S> ctrl;
     private final ConnConfig config;
     private final IdentifierFactory msgIds;
 
-    private ConnState state;
+    private C state;
 
-    private TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend;
+    private TupleHelper.PairConsumer<KAddress, ConnMsgs.Client<C>> networkSend;
     private TimerProxy timer;
     private Logger logger;
     
@@ -55,7 +55,7 @@ public class Connection {
 
     private final Map<ConnId, ServerState> servers = new HashMap<>();
 
-    public Client(InstanceId clientId, ConnCtrl ctrl, ConnConfig config, IdentifierFactory msgIds, ConnState state) {
+    public Client(InstanceId clientId, ConnCtrl<C,S> ctrl, ConnConfig config, IdentifierFactory msgIds, C state) {
       this.clientId = clientId;
       this.ctrl = ctrl;
       this.config = config;
@@ -63,7 +63,7 @@ public class Connection {
       this.state = state;
     }
 
-    public Client setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend, 
+    public Client setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Client<C>> networkSend, 
       Logger logger) {
       this.timer = timer;
       this.networkSend = networkSend;
@@ -77,7 +77,7 @@ public class Connection {
         ConnId connId = server.getKey();
         KAddress serverAddress = server.getValue().address;
         ctrl.close(connId);
-        ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, state, ConnStatus.Base.DISCONNECT);
+        ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, ConnStatus.Base.DISCONNECT);
         networkSend.accept(serverAddress, content);
       });
       if (periodicCheck != null) {
@@ -88,20 +88,20 @@ public class Connection {
 
     public void connect(InstanceId serverId, KAddress server) {
       ConnId connId = new ConnId(serverId, clientId);
-      ConnMsgs.Client msg = new ConnMsgs.Client(msgIds.randomId(), connId, state, ConnStatus.Base.CONNECT);
+      ConnMsgs.Client msg = new ConnMsgs.Client(msgIds.randomId(), connId, ConnStatus.Base.CONNECT, state);
       networkSend.accept(server, msg);
     }
 
-    public void update(ConnState state) {
+    public void update(C state) {
       this.state = state;
-      ctrl.updateState(clientId, state).entrySet().forEach((server) -> {
+      ctrl.selfUpdate(clientId, state).entrySet().forEach((server) -> {
         ConnId connId = server.getKey();
         ConnStatus serverStatus = server.getValue();
         ServerState serverState = servers.get(connId);
         if (serverState == null) {
           throw new RuntimeException("weird - server is disconnected?");
         }
-        ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, state, serverStatus);
+        ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, serverStatus, state);
         networkSend.accept(serverState.address, content);
         if (serverStatus.equals(ConnStatus.Base.DISCONNECT)) {
           servers.remove(connId);
@@ -109,9 +109,9 @@ public class Connection {
       });
     }
 
-    public void handleContent(KAddress serverAddress, ConnMsgs.Server content) {
-      Pair<ConnId, ConnStatus> connRes = ctrl.update(content.connId, state,
-        content.state, content.status, serverAddress);
+    public void handleContent(KAddress serverAddress, ConnMsgs.Server<S> content) {
+      Pair<ConnId, ConnStatus> connRes = ctrl.partnerUpdate(content.connId, state,
+        content.status, serverAddress, content.state);
       ConnId connId = connRes.getValue0();
       ConnStatus connStatus = connRes.getValue1();
       if (connStatus.equals(ConnStatus.Base.DISCONNECT)) {
@@ -119,7 +119,7 @@ public class Connection {
       } else if (connStatus.equals(ConnStatus.Base.CONNECTED)) {
         servers.put(connId, new ServerState(connId.serverId, serverAddress, config));
       } else if (connStatus.equals(ConnStatus.Base.HEARTBEAT_ACK)) {
-        logger.debug("{} {}", new Object[]{connId, content});
+        logger.debug("{} heartbeat", connId);
         ServerState serverState = servers.get(connId);
         if (serverState == null) {
           throw new RuntimeException("weird - server is disconnected?");
@@ -140,7 +140,7 @@ public class Connection {
             ctrl.close(connId);
             it.remove();
           } else {
-            ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, state, ConnStatus.Base.HEARTBEAT);
+            ConnMsgs.Client content = new ConnMsgs.Client(msgIds.randomId(), connId, ConnStatus.Base.HEARTBEAT, state);
             networkSend.accept(serverState.address, content);
           }
         }
@@ -148,28 +148,28 @@ public class Connection {
     }
   }
 
-  public static class Server {
+  public static class Server<S extends ConnState, C extends ConnState> {
 
-    private final InstanceId serverId;
-    private final ConnCtrl ctrl;
+    public final InstanceId serverId;
+    private final ConnCtrl<S,C> ctrl;
     private final ConnConfig config;
-    private ConnState state;
+    private S state;
 
-    private TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend;
+    private TupleHelper.PairConsumer<KAddress, ConnMsgs.Server<S>> networkSend;
     private TimerProxy timer;
     private Logger logger;
     private UUID periodicCheck;
 
     private final Map<ConnId, ClientState> clients = new HashMap<>();
 
-    public Server(InstanceId serverId, ConnCtrl ctrl, ConnConfig config, ConnState state) {
+    public Server(InstanceId serverId, ConnCtrl ctrl, ConnConfig config, S state) {
       this.serverId = serverId;
       this.ctrl = ctrl;
       this.config = config;
       this.state = state;
     }
 
-    public Server setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend,
+    public Server setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Server<S>> networkSend,
       Logger logger) {
       this.timer = timer;
       this.networkSend = networkSend;
@@ -183,7 +183,7 @@ public class Connection {
         ConnId connId = client.getKey();
         ClientState clientState = client.getValue();
         ctrl.close(connId);
-        ConnMsgs.Server reply = clientState.connect.reply(state, ConnStatus.Base.DISCONNECTED);
+        ConnMsgs.Server reply = clientState.connect.reply(ConnStatus.Base.DISCONNECTED);
         networkSend.accept(clientState.address, reply);
       });
       if (periodicCheck != null) {
@@ -192,16 +192,16 @@ public class Connection {
       }
     }
 
-    public void update(ConnState state) {
+    public void update(S state) {
       this.state = state;
-      ctrl.updateState(serverId, state).entrySet().forEach((client) -> {
+      ctrl.selfUpdate(serverId, state).entrySet().forEach((client) -> {
         ConnId connId = client.getKey();
         ConnStatus clientStatus = client.getValue();
         ClientState clientState = clients.get(connId);
         if (clientState == null) {
           throw new RuntimeException("weird - client is disconnected?");
         }
-        ConnMsgs.Server reply = clientState.connect.reply(state, clientStatus);
+        ConnMsgs.Server reply = clientState.connect.reply(clientStatus, state);
         networkSend.accept(clientState.address, reply);
         if (clientStatus.equals(ConnStatus.Base.DISCONNECTED)) {
           clients.remove(connId);
@@ -209,12 +209,12 @@ public class Connection {
       });
     }
 
-    public void handleContent(KAddress clientAddress, ConnMsgs.Client content) {
-      Pair<ConnId, ConnStatus> aux = ctrl.update(content.connId, state,
-        content.state, content.status, clientAddress);
+    public void handleContent(KAddress clientAddress, ConnMsgs.Client<C> content) {
+      Pair<ConnId, ConnStatus> aux = ctrl.partnerUpdate(content.connId, state,
+        content.status, clientAddress, content.state);
       ConnId connId = aux.getValue0();
       ConnStatus connStatus = aux.getValue1();
-      ConnMsgs.Server reply = content.reply(state, connStatus);
+      ConnMsgs.Server reply = content.reply(connStatus, state);
       networkSend.accept(clientAddress, reply);
       if (connStatus.equals(ConnStatus.Base.CONNECTED)
         && content.status.equals(ConnStatus.Base.CONNECT)) {
@@ -222,6 +222,7 @@ public class Connection {
       } else if (connStatus.equals(ConnStatus.Base.DISCONNECTED)) {
         clients.remove(connId);
       } else if (connStatus.equals(ConnStatus.Base.HEARTBEAT)) {
+        logger.debug("{} hearbeat", connId);
         ClientState clientState = clients.get(connId);
         if (clientState == null) {
           throw new RuntimeException("weird - client is disconnected?");
@@ -235,7 +236,7 @@ public class Connection {
         Iterator<Map.Entry<ConnId, ClientState>> it = clients.entrySet().iterator();
         while (it.hasNext()) {
           Map.Entry<ConnId, ClientState> aux = it.next();
-          Identifier connId = aux.getKey();
+          ConnId connId = aux.getKey();
           ClientState clientState = aux.getValue();
           clientState.period();
           if (clientState.isDead()) {
@@ -274,16 +275,16 @@ public class Connection {
     }
   }
 
-  public static class ClientState {
+  public static class ClientState<C extends ConnState> {
 
     public final ConnConfig config;
 
     public final KAddress address;
-    public final ConnMsgs.Client connect;
+    public final ConnMsgs.Client<C> connect;
 
     private int missedHeartbeat = 0;
 
-    public ClientState(KAddress address, ConnMsgs.Client connect, ConnConfig config) {
+    public ClientState(KAddress address, ConnMsgs.Client<C> connect, ConnConfig config) {
       this.address = address;
       this.connect = connect;
       this.config = config;

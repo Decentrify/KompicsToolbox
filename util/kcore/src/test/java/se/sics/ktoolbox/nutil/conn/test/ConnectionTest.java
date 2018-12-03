@@ -57,10 +57,12 @@ public class ConnectionTest {
     IdentifierRegistryV2.registerBaseDefaults1(64, 1234l);
   }
 
-  @Ignore //run manually 
+//  @Ignore //run manually 
   @Test
-  public void testConnection1to1() throws UnknownHostException {
+  public void testSimpleProxy() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());
+    Identifier overlayId = ids.id(new BasicBuilders.IntBuilder(0));
+    
     Identifier id1 = ids.id(new BasicBuilders.IntBuilder(1));
     Identifier id2 = ids.id(new BasicBuilders.IntBuilder(2));
     KAddress serverAdr = new BasicAddress(InetAddress.getLocalHost(), 20000, id1);
@@ -69,12 +71,42 @@ public class ConnectionTest {
     Identifier serverBatchId = ids.id(new BasicBuilders.IntBuilder(1));
     Identifier serverBaseId = ids.id(new BasicBuilders.IntBuilder(1));
 
-    Init init = new se.sics.ktoolbox.nutil.conn.simple.HostComp.Init(serverAdr, clientAdr, serverBatchId, serverBaseId);
+    Init init = new se.sics.ktoolbox.nutil.conn.simpleProxy.HostComp.Init(overlayId, serverAdr, clientAdr, 
+      serverBatchId, serverBaseId);
     if (Kompics.isOn()) {
       Kompics.shutdown();
     }
     // Yes 20 is totally arbitrary
-    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.simple.HostComp.class, init,
+    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.simpleProxy.HostComp.class, init,
+      Runtime.getRuntime().availableProcessors(), 20);
+    try {
+      Kompics.waitForTermination();
+    } catch (InterruptedException ex) {
+      System.exit(1);
+    }
+  }
+  
+  @Ignore //run manually 
+  @Test
+  public void testSimpleProxyMngr() throws UnknownHostException {
+    IntIdFactory ids = new IntIdFactory(Optional.empty());
+    Identifier overlayId = ids.id(new BasicBuilders.IntBuilder(0));
+    
+    Identifier id1 = ids.id(new BasicBuilders.IntBuilder(1));
+    Identifier id2 = ids.id(new BasicBuilders.IntBuilder(2));
+    KAddress serverAdr = new BasicAddress(InetAddress.getLocalHost(), 20000, id1);
+    KAddress clientAdr = new BasicAddress(InetAddress.getLocalHost(), 20000, id2);
+
+    Identifier serverBatchId = ids.id(new BasicBuilders.IntBuilder(1));
+    Identifier serverBaseId = ids.id(new BasicBuilders.IntBuilder(1));
+
+    Init init = new se.sics.ktoolbox.nutil.conn.simpleProxyMngr.HostComp.Init(overlayId, serverAdr, clientAdr, 
+      serverBatchId, serverBaseId);
+    if (Kompics.isOn()) {
+      Kompics.shutdown();
+    }
+    // Yes 20 is totally arbitrary
+    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.simpleProxyMngr.HostComp.class, init,
       Runtime.getRuntime().availableProcessors(), 20);
     try {
       Kompics.waitForTermination();
@@ -83,10 +115,11 @@ public class ConnectionTest {
     }
   }
 
-//  @Ignore //run manually 
+  @Ignore //run manually 
   @Test
   public void testConnection2by2with2() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());
+    Identifier overlayId = ids.id(new BasicBuilders.IntBuilder(0));
     Identifier id1 = ids.id(new BasicBuilders.IntBuilder(1));
     Identifier id2 = ids.id(new BasicBuilders.IntBuilder(2));
     Identifier id3 = ids.id(new BasicBuilders.IntBuilder(3));
@@ -106,7 +139,7 @@ public class ConnectionTest {
     Identifier serverBaseId3 = ids.id(new BasicBuilders.IntBuilder(3));
     Identifier serverBaseId4 = ids.id(new BasicBuilders.IntBuilder(4));
 
-    Init init = new se.sics.ktoolbox.nutil.conn.multi2by2with2.HostComp.Init(serverAdr1, serverAdr2,
+    Init init = new se.sics.ktoolbox.nutil.conn.multi2by2with2.HostComp.Init(overlayId, serverAdr1, serverAdr2,
       serverBatchId1, serverBaseId1, serverBatchId2, serverBaseId2,
       serverBatchId3, serverBaseId3, serverBatchId4, serverBaseId4,
       clientAdr1, clientAdr2);

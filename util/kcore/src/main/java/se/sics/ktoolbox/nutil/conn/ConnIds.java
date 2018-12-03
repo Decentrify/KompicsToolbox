@@ -29,12 +29,15 @@ public class ConnIds {
 
   public static class InstanceId implements Identifier {
 
+    public final Identifier overlayId;
     public final Identifier nodeId;
     public final Identifier batchId;
     public final Identifier instanceId;
     public final Boolean server;
 
-    public InstanceId(Identifier nodeId, Identifier batchId, Identifier instanceId, boolean server) {
+    public InstanceId(Identifier overlayId, Identifier nodeId, Identifier batchId, Identifier instanceId,
+      boolean server) {
+      this.overlayId = overlayId;
       this.nodeId = nodeId;
       this.batchId = batchId;
       this.instanceId = instanceId;
@@ -44,9 +47,10 @@ public class ConnIds {
     @Override
     public int partition(int nrPartitions) {
       return MathHelper.moduloWrappedSum(nrPartitions,
+        overlayId.partition(nrPartitions),
         nodeId.partition(nrPartitions),
         batchId.partition(nrPartitions),
-        instanceId.partition(nrPartitions), 
+        instanceId.partition(nrPartitions),
         server ? 0 : 1);
     }
 
@@ -54,13 +58,16 @@ public class ConnIds {
     public int compareTo(Identifier o) {
       int res;
       InstanceId that = (InstanceId) o;
-      res = this.nodeId.compareTo(that.nodeId);
+      res = this.overlayId.compareTo(that.overlayId);
       if (res == 0) {
-        res = this.batchId.compareTo(that.batchId);
+        res = this.nodeId.compareTo(that.nodeId);
         if (res == 0) {
-          res = this.instanceId.compareTo(that.instanceId);
-          if(res == 0) {
-            res = this.server.compareTo(that.server);
+          res = this.batchId.compareTo(that.batchId);
+          if (res == 0) {
+            res = this.instanceId.compareTo(that.instanceId);
+            if (res == 0) {
+              res = this.server.compareTo(that.server);
+            }
           }
         }
       }
@@ -70,6 +77,7 @@ public class ConnIds {
     @Override
     public int hashCode() {
       int hash = 7;
+      hash = 83 * hash + Objects.hashCode(this.overlayId);
       hash = 83 * hash + Objects.hashCode(this.nodeId);
       hash = 83 * hash + Objects.hashCode(this.batchId);
       hash = 83 * hash + Objects.hashCode(this.instanceId);
@@ -89,6 +97,9 @@ public class ConnIds {
         return false;
       }
       final InstanceId other = (InstanceId) obj;
+      if (!Objects.equals(this.overlayId, other.overlayId)) {
+        return false;
+      }
       if (!Objects.equals(this.nodeId, other.nodeId)) {
         return false;
       }
@@ -104,10 +115,10 @@ public class ConnIds {
       return true;
     }
 
-    
     @Override
     public String toString() {
-      return '<' + "nid=" + nodeId + ", bid=" + batchId + ", iid=" + instanceId + ", s=" + server + '>';
+      return '<' + "oid:" + overlayId + "nid:" + nodeId + ", bid:" + batchId + ", iid:" + instanceId + 
+        ", s:" + server + '>';
     }
   }
 
@@ -171,12 +182,10 @@ public class ConnIds {
       }
       return true;
     }
-    
-    
 
     @Override
     public String toString() {
-      return '<' + "sid=" + serverId + ", cid=" + clientId + '>';
+      return '<' + "sid:" + serverId + ", cid:" + clientId + '>';
     }
   }
 }

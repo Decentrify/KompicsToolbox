@@ -48,7 +48,10 @@ public class ConnMsgsSerializer {
       Serializers.toBinary(obj.msgId, buf);
       Serializers.lookupSerializer(ConnIds.ConnId.class).toBinary(obj.connId, buf);
       Serializers.lookupSerializer(ConnStatus.Base.class).toBinary(obj.status, buf);
-      Serializers.toBinary(obj.state, buf);
+      buf.writeBoolean(obj.state.isPresent());
+      if (obj.state.isPresent()) {
+        Serializers.toBinary(obj.state, buf);
+      }
     }
 
     @Override
@@ -56,13 +59,18 @@ public class ConnMsgsSerializer {
       Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
       ConnIds.ConnId connId = (ConnIds.ConnId) Serializers.lookupSerializer(ConnIds.ConnId.class)
         .fromBinary(buf, hint);
-      ConnStatus.Base status = (ConnStatus.Base)Serializers.lookupSerializer(ConnStatus.Base.class)
+      ConnStatus.Base status = (ConnStatus.Base) Serializers.lookupSerializer(ConnStatus.Base.class)
         .fromBinary(buf, hint);
-      ConnState state = (ConnState)Serializers.fromBinary(buf, hint);
-      return new ConnMsgs.Client(msgId, connId, state, status);
+      boolean hasState = buf.readBoolean();
+      if (hasState) {
+        ConnState state = (ConnState) Serializers.fromBinary(buf, hint);
+        return new ConnMsgs.Client(msgId, connId, status, state);
+      } else {
+        return new ConnMsgs.Client(msgId, connId, status);
+      }
     }
   }
-  
+
   public static class Server implements Serializer {
 
     private final int id;
@@ -82,7 +90,10 @@ public class ConnMsgsSerializer {
       Serializers.toBinary(obj.msgId, buf);
       Serializers.lookupSerializer(ConnIds.ConnId.class).toBinary(obj.connId, buf);
       Serializers.lookupSerializer(ConnStatus.Base.class).toBinary(obj.status, buf);
-      Serializers.toBinary(obj.state, buf);
+      buf.writeBoolean(obj.state.isPresent());
+      if (obj.state.isPresent()) {
+        Serializers.toBinary(obj.state, buf);
+      }
     }
 
     @Override
@@ -90,10 +101,15 @@ public class ConnMsgsSerializer {
       Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
       ConnIds.ConnId connId = (ConnIds.ConnId) Serializers.lookupSerializer(ConnIds.ConnId.class)
         .fromBinary(buf, hint);
-      ConnStatus.Base status = (ConnStatus.Base)Serializers.lookupSerializer(ConnStatus.Base.class)
+      ConnStatus.Base status = (ConnStatus.Base) Serializers.lookupSerializer(ConnStatus.Base.class)
         .fromBinary(buf, hint);
-      ConnState state = (ConnState)Serializers.fromBinary(buf, hint);
-      return new ConnMsgs.Server(msgId, connId, state, status);
+      boolean hasState = buf.readBoolean();
+      if (hasState) {
+        ConnState state = (ConnState) Serializers.fromBinary(buf, hint);
+        return new ConnMsgs.Server(msgId, connId, status, state);
+      } else {
+        return new ConnMsgs.Server(msgId, connId, status);
+      }
     }
   }
 }

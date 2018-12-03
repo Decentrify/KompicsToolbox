@@ -18,22 +18,14 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
-import java.util.Map;
 import java.util.Optional;
 import org.javatuples.Pair;
-import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
-import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnCtrl<S extends ConnState, P extends ConnState> {
-
-  public Map<ConnId, ConnStatus> selfUpdate(InstanceId instanceId, S selfSate);
-
-  public Pair<ConnId, ConnStatus> partnerUpdate(ConnId connId, S selfState, 
-    ConnStatus peerStatus, KAddress peer, Optional<P> peerState);
-
-  public void close(ConnId connId);
+public interface ServerListener<C extends ConnState> {
+  public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus, 
+    KAddress peer, Optional<C> peerState);
 }

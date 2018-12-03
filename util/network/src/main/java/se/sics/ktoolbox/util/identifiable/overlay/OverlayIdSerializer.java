@@ -36,8 +36,8 @@ public class OverlayIdSerializer implements Serializer {
     public OverlayIdSerializer(int id, Class baseIdType) {
         this.id = id;
         this.baseIdType = baseIdType;
-        this.overlayTypeComparator = OverlayRegistry.getTypeComparator();
-        this.overlayTypeFactory = OverlayRegistry.getTypeFactory();
+        this.overlayTypeComparator = OverlayRegistryV2.getTypeComparator();
+        this.overlayTypeFactory = OverlayRegistryV2.getTypeFactory();
     }
     
     @Override

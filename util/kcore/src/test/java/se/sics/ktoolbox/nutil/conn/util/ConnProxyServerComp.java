@@ -18,40 +18,36 @@
  */
 package se.sics.ktoolbox.nutil.conn.util;
 
-import java.util.Optional;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
 import se.sics.ktoolbox.nutil.conn.ConnHelper;
-import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
-import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
+import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.nutil.conn.ConnProxy;
+import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class ServerComp extends ComponentDefinition {
+public class ConnProxyServerComp extends ComponentDefinition {
 
   private Positive<Network> network = requires(Network.class);
   private Positive<Timer> timer = requires(Timer.class);
 
-  public final ConnMngrProxy connMngr;
   private final Init init;
-  private InstanceId fullId;
 
-  public ServerComp(Init init) {
+  private final ConnProxy.Server connMngr;
+  private final ConnConfig connConfig;
+
+  public ConnProxyServerComp(Init init) {
     this.init = init;
-    IdentifierFactory msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1235l));
-    ConnConfig connConfig = new ConnConfig(1000);
-    connMngr = new ConnMngrProxy(init.batchId, init.selfAddress, connConfig, msgIds);
+    connConfig = new ConnConfig(1000);
+    connMngr = new ConnProxy.Server(init.selfAddress);
     subscribe(handleStart, control);
   }
 
@@ -59,20 +55,21 @@ public class ServerComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       connMngr.setup(proxy, logger);
-      fullId = connMngr.addServer(init.baseId, new ConnHelper.SimpleConnCtrl(), new ConnHelper.NoConnState());
+      ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
+      ConnHelper.EmptyState initState = new ConnHelper.EmptyState();
+      Connection.Server server = new Connection.Server<>(init.serverId, serverCtrl, connConfig, initState);
+      connMngr.add(init.serverId, server);
     }
   };
 
-  public static class Init extends se.sics.kompics.Init<ServerComp> {
+  public static class Init extends se.sics.kompics.Init<ConnProxyServerComp> {
 
-    public final Identifier batchId;
-    public final Identifier baseId;
     public final KAddress selfAddress;
+    public final ConnIds.InstanceId serverId;
 
-    public Init(Identifier batchId, Identifier baseId, KAddress selfAddress) {
-      this.batchId = batchId;
-      this.baseId = baseId;
+    public Init(KAddress selfAddress, ConnIds.InstanceId serverId) {
       this.selfAddress = selfAddress;
+      this.serverId = serverId;
     }
   }
 }

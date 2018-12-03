@@ -21,11 +21,12 @@ package se.sics.ktoolbox.nutil.conn;
 import org.slf4j.Logger;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentProxy;
-import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.Timer;
+import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.TupleHelper;
@@ -43,20 +44,21 @@ public class ConnProxy {
   public static class Client {
 
     private final KAddress self;
-    private final Connection.Client base;
 
+    private Logger logger;
     private ComponentProxy proxy;
     private Positive<Network> network;
     private Positive<Timer> timerPort;
     private TimerProxy timer;
-    private Logger logger;
 
-    public Client(KAddress self, Connection.Client base) {
+    private ConnIds.InstanceId clientId;
+    private Connection.Client client;
+
+    public Client(KAddress self) {
       this.self = self;
-      this.base = base;
     }
 
-    public void setup(ComponentProxy proxy, Logger logger) {
+    public ConnProxy.Client setup(ComponentProxy proxy, Logger logger) {
       this.proxy = proxy;
       this.logger = logger;
 
@@ -65,23 +67,34 @@ public class ConnProxy {
       timer = new TimerProxyImpl().setup(proxy, logger);
 
       proxy.subscribe(handleServer, network);
-
-      base.setup(timer, networkSend(), logger);
+      return this;
     }
 
-    public void update(ConnState state) {
-      base.update(state);
+    public void add(ConnIds.InstanceId clientId, Connection.Client client) {
+      this.clientId = clientId;
+      this.client = client.setup(timer, networkSend(), logger);
+      logger.info("conn proxy {}", clientId);
+    }
+
+    public void connect(InstanceId serverId, KAddress serverAddress) {
+      logger.info("conn mngr proxy client:{} connect to:{}", client.clientId, serverId);
+      client.connect(serverId, serverAddress);
     }
 
     public void close() {
-      base.close();
+      client.close();
+      timer.cancel();
+    }
+
+    public void update(ConnState state) {
+      client.update(state);
     }
 
     TupleHelper.PairConsumer<KAddress, ConnMsgs.Client> networkSend() {
       return TupleHelper.pairConsumer((server) -> (content) -> {
         KHeader header = new BasicHeader<>(self, server, Transport.UDP);
         KContentMsg msg = new BasicContentMsg(header, content);
-        logger.trace("conn proxy client send:{} to:{}", content, server);
+        logger.trace("{} conn proxy client send:{} to:{}", new Object[]{content.connId, content, server});
         proxy.trigger(msg, network);
       });
     }
@@ -92,8 +105,8 @@ public class ConnProxy {
       @Override
       public void handle(ConnMsgs.Server content, KContentMsg<KAddress, ?, ConnMsgs.Server> container) {
         KAddress serverAddress = container.getHeader().getSource();
-        logger.trace("conn client rec:{} from:{}", content, serverAddress);
-        base.handleContent(serverAddress, content);
+        logger.trace("{} conn client rec:{} from:{}", new Object[]{content.connId, content, serverAddress});
+        client.handleContent(serverAddress, content);
       }
     };
   }
@@ -101,51 +114,55 @@ public class ConnProxy {
   public static class Server {
 
     private final KAddress self;
-    private Connection.Server base;
+
+    private Logger logger;
     private ComponentProxy proxy;
     private Positive<Network> network;
     private Positive<Timer> timerPort;
     private TimerProxy timer;
-    private Logger logger;
 
-    public Server(KAddress self, Connection.Server base) {
+    private ConnIds.InstanceId serverId;
+    private Connection.Server server;
+
+    public Server(KAddress self) {
       this.self = self;
-      this.base = base;
     }
 
-    public void setup(ComponentProxy proxy, Logger logger) {
-      this.proxy = proxy;
+    public ConnProxy.Server setup(ComponentProxy proxy, Logger logger) {
       this.logger = logger;
+      this.proxy = proxy;
 
-      network = proxy.requires(Network.class);
-      timerPort = proxy.requires(Timer.class);
+      network = proxy.getNegative(Network.class).getPair();
+      timerPort = proxy.getNegative(Timer.class).getPair();
       timer = new TimerProxyImpl().setup(proxy, logger);
 
       proxy.subscribe(handleClient, network);
-      base.setup(timer, networkSend(), logger);
+
+      return this;
+    }
+
+    public void add(ConnIds.InstanceId serverId, Connection.Server server) {
+      this.serverId = serverId;
+      this.server = server.setup(timer, networkSend(), logger);
+      logger.info("conn proxy {}", serverId);
     }
 
     public void update(ConnState state) {
-      base.update(state);
+      server.update(state);
     }
 
     public void close() {
-      base.close();
+      server.close();
+      timer.cancel();
     }
 
     TupleHelper.PairConsumer<KAddress, ConnMsgs.Server> networkSend() {
       return TupleHelper.pairConsumer((client) -> (content) -> {
         KHeader header = new BasicHeader<>(self, client, Transport.UDP);
         KContentMsg msg = new BasicContentMsg(header, content);
-        logger.trace("conn proxy server send:{} to:{}", content, client);
+        logger.trace("{} conn proxy server send:{} to:{}", new Object[]{content.connId, content, client});
         proxy.trigger(msg, network);
       });
-    }
-
-    private void replyToClient(KAddress client, KContentMsg clientMsg, KompicsEvent reply) {
-      KContentMsg<KAddress, ?, ConnMsgs.Server> replyMsg = clientMsg.answer(reply);
-      logger.trace("conn server send:{} to:{}", reply, client);
-      proxy.trigger(replyMsg, network);
     }
 
     ClassMatchedHandler handleClient
@@ -154,8 +171,8 @@ public class ConnProxy {
       @Override
       public void handle(ConnMsgs.Client content, KContentMsg<KAddress, ?, ConnMsgs.Client> container) {
         KAddress clientAddress = container.getHeader().getSource();
-        logger.trace("conn server rec:{} from:{}", content, clientAddress);
-        base.handleContent(clientAddress, content);
+        logger.trace("{} conn proxy server rec:{} from:{}", new Object[]{content.connId, content, clientAddress});
+        server.handleContent(clientAddress, content);
       }
     };
   }
