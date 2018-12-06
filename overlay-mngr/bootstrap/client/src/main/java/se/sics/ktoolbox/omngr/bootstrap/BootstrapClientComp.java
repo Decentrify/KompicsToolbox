@@ -19,122 +19,90 @@
 package se.sics.ktoolbox.omngr.bootstrap;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
 import java.util.function.Consumer;
-import se.sics.kompics.ClassMatchedHandler;
+import org.javatuples.Pair;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
-import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.Timer;
-import se.sics.ktoolbox.nutil.timer.TimerProxy;
-import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
-import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
-import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
+import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnConfig;
+import se.sics.ktoolbox.nutil.conn.ConnCtrl;
+import se.sics.ktoolbox.nutil.conn.ConnHelper;
+import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
+import se.sics.ktoolbox.nutil.conn.ConnStatus;
+import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
-import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 /**
- * TODO removed caracal - fix CC bootstrap
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BootstrapClientComp extends ComponentDefinition {
 
   //******************************CONNECTIONS*********************************
-  private final Negative<BootstrapClientPort> bootstrapPort;
-  private final Positive<Network> networkPort;
-  private final Positive<Timer> timerPort;
-  private final TimerProxy timer;
+  private final Negative<BootstrapClientPort> bootstrapPort = provides(BootstrapClientPort.class);
+  private final Positive<Network> networkPort = requires(Network.class);
+  private final Positive<Timer> timerPort = requires(Timer.class);
   //*****************************EXTERNAL_STATE*******************************
   private final KAddress selfAdr;
   private final SystemKCWrapper systemConfig;
   private final BootstrapClientConfig clientConfig;
+  private final ConnConfig connConfig;
+  private final Identifier overlayBootstrapConnBatchId;
+  private final Identifier overlayBootstrapConnBaseId;
   //*****************************INTERNAL_STATE*******************************
-  private final Random rand;
-  private final Map<OverlayId, BootstrapClientEvent.Start> heartbeats = new HashMap<>();
-  //********************************AUX_STATE*********************************
-  private UUID heartbeatTimeout;
+  //modified only by the ConnCtrl - read on request
+  private final Map<Identifier, List<KAddress>> samples = new HashMap<>();
+  private final ConnMngrProxy connMngr;
   private final IdentifierFactory msgIds;
-  
+
   public BootstrapClientComp(Init init) {
-    bootstrapPort = provides(BootstrapClientPort.class);
-    networkPort = requires(Network.class);
-    timerPort = requires(Timer.class);
-    
     systemConfig = new SystemKCWrapper(config());
     clientConfig = BootstrapClientConfig.instance(config()).get();
+    connConfig = new ConnConfig(clientConfig.baseConfig.heartbeatPeriod);
     selfAdr = init.selfAdr;
+    overlayBootstrapConnBatchId = init.overlayBootstrapConnBatchId;
+    overlayBootstrapConnBaseId = init.overlayBootstrapConnBaseId;
+    
     loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
-    logger.info("initiating with seed:{}, bootstrap server:{}", systemConfig.seed, clientConfig.server);
-    
-    this.msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(systemConfig.seed));
-    timer = new TimerProxyImpl().setup(proxy);
-    rand = new Random(systemConfig.seed);
-    
+    logger.info("initiating with seed:{}, bootstrap server:{}", systemConfig.seed, clientConfig.serverAdr);
+
+    connMngr = new ConnMngrProxy(selfAdr, ConnHelper.noServerListener());
+    msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(systemConfig.seed));
+
     subscribe(handleStart, control);
     subscribe(handleHeartbeatStart, bootstrapPort);
     subscribe(handleHeartbeatStop, bootstrapPort);
-    subscribe(handleSample, networkPort);
   }
-  
+
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      heartbeatTimeout = timer.schedulePeriodicTimer(0, clientConfig.heartbeatPeriod, heartbeatTimeout());
+      connMngr.setup(proxy, logger);
     }
   };
-  
+
   @Override
   public void tearDown() {
-    timer.cancelPeriodicTimer(heartbeatTimeout);
-    heartbeatTimeout = null;
+    connMngr.close();
   }
-  
-  private Consumer<Boolean> heartbeatTimeout() {
-    return (_in) -> {
-      logger.info("heartbeat overlays:{}", heartbeats.size());
-      heartbeats.keySet().forEach((overlayId) -> {
-        sendHeartbeat(overlayId);
-        sampleRequest(overlayId);
-      });
-    };
-  }
-  
-  private void sendHeartbeat(OverlayId overlayId) {
-    logger.debug("heartbeat id:{}", overlayId);
-    Heartbeat content = new Heartbeat(msgIds.randomId(), overlayId, rand.nextInt(clientConfig.heartbeatPositions));
-    KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, clientConfig.server, Transport.UDP), content);
-    trigger(container, networkPort);
-  }
-  
-  private void sampleRequest(OverlayId overlayId) {
-    logger.debug("sample request for:{}", overlayId);
-    Sample.Request content = new Sample.Request(msgIds.randomId(), overlayId);
-    KContentMsg container = new BasicContentMsg(new BasicHeader(selfAdr, clientConfig.server, Transport.UDP), content);
-    trigger(container, networkPort);
-  }
-  
+
   Handler handleHeartbeatStart = new Handler<BootstrapClientEvent.Start>() {
     @Override
     public void handle(BootstrapClientEvent.Start req) {
       logger.info("heartbeat start:{}", req.overlay);
-      heartbeats.put(req.overlay, req);
-      sendHeartbeat(req.overlay);
-      sampleRequest(req.overlay);
+      createClient(req.overlay, periodicReBootstrap(req));
     }
   };
   
@@ -142,30 +110,75 @@ public class BootstrapClientComp extends ComponentDefinition {
     @Override
     public void handle(BootstrapClientEvent.Stop req) {
       logger.info("heartbeat stop:{}", req.overlay);
-      heartbeats.remove(req.overlay);
-    }
-  };
-  
-  ClassMatchedHandler handleSample
-    = new ClassMatchedHandler<Sample.Response, KContentMsg<?, ?, Sample.Response>>() {
-    
-    @Override
-    public void handle(Sample.Response content, KContentMsg<?, ?, Sample.Response> msg) {
-      logger.debug("received:{}", content);
-      BootstrapClientEvent.Start req = heartbeats.get(content.overlayId);
-      if (req != null) {
-        answer(req, req.sample(content.sample));
-      }
+      ConnIds.InstanceId clientId = clientId(req.overlay);
+      connMngr.closeClient(clientId);
     }
   };
 
+  private Consumer<List<KAddress>> periodicReBootstrap(BootstrapClientEvent.Start sampleReq) {
+    return (sample) -> {
+      answer(sampleReq, sampleReq.sample(sample));
+    };
+  }
+
+  private ConnCtrl connCtrl(Consumer<List<KAddress>> periodicReBootstrap) {
+    return new ConnCtrl<BootstrapState.Init, BootstrapState.Sample>() {
+      @Override
+      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId,
+        BootstrapState.Init selfSate) {
+        //no necessary updates on the connections
+        return new HashMap<>();
+      }
+
+      @Override
+      public Pair<ConnIds.ConnId, ConnStatus> partnerUpdate(ConnIds.ConnId connId, BootstrapState.Init selfState,
+        ConnStatus peerStatus, KAddress peer, Optional<BootstrapState.Sample> peerState) {
+        if (peerState.isPresent()) {
+          samples.put(connId.clientId.overlayId, peerState.get().sample);
+          periodicReBootstrap.accept(peerState.get().sample);
+        }
+        if (peerStatus.equals(ConnStatus.Base.DISCONNECTED)) {
+          logger.warn("{} disconnected", connId);
+          //TODO - Alex reconnect logic?
+        }
+        return Pair.with(connId, peerStatus);
+      }
+
+      @Override
+      public void close(ConnIds.ConnId connId) {
+        samples.remove(connId.clientId.overlayId);
+      }
+    };
+  }
+
+  private void createClient(Identifier overlayId, Consumer<List<KAddress>> periodicReBootstrap) {
+    ConnIds.InstanceId clientId = clientId(overlayId);
+    ConnIds.InstanceId serverId = new ConnIds.InstanceId(overlayId, clientConfig.serverAdr.getId(),
+      overlayBootstrapConnBatchId, overlayBootstrapConnBaseId, true);
+
+    BootstrapState.Init initState = new BootstrapState.Init();
+    Connection.Client client = new Connection.Client<>(clientId, connCtrl(periodicReBootstrap), connConfig, msgIds, 
+      initState);
+    connMngr.addClient(clientId, client);
+    connMngr.connectClient(clientId, serverId, clientConfig.serverAdr);
+  }
+
+  private ConnIds.InstanceId clientId(Identifier overlayId) {
+    return new ConnIds.InstanceId(overlayId, selfAdr.getId(),
+      overlayBootstrapConnBatchId, overlayBootstrapConnBaseId, false);
+  }
+
   //**************************************************************************
   public static class Init extends se.sics.kompics.Init<BootstrapClientComp> {
-    
+
+    public final Identifier overlayBootstrapConnBatchId;
+    public final Identifier overlayBootstrapConnBaseId;
     public final KAddress selfAdr;
-    
-    public Init(KAddress selfAdr) {
+
+    public Init(KAddress selfAdr, Identifier overlayBootstrapConnBatchId, Identifier overlayBootstrapConnBaseId) {
       this.selfAdr = selfAdr;
+      this.overlayBootstrapConnBatchId = overlayBootstrapConnBatchId;
+      this.overlayBootstrapConnBaseId = overlayBootstrapConnBaseId;
     }
   }
 }

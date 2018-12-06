@@ -18,8 +18,7 @@
  */
 package se.sics.ktoolbox.omngr.bootstrap.system;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Optional;
 import se.sics.kompics.Channel;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.Component;
@@ -29,7 +28,6 @@ import se.sics.kompics.Init;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
@@ -37,12 +35,14 @@ import se.sics.ktoolbox.gradient.GradientSerializerSetup;
 import se.sics.ktoolbox.netmngr.NetworkMngrComp;
 import se.sics.ktoolbox.netmngr.NetworkMngrSerializerSetup;
 import se.sics.ktoolbox.netmngr.event.NetMngrReady;
-import se.sics.ktoolbox.omngr.bootstrap.BootstrapServerComp;
 import se.sics.ktoolbox.omngr.OMngrSerializerSetup;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
+import se.sics.ktoolbox.util.identifiable.overlay.BaseOverlayIdentifiers;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistryV2;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 import se.sics.ktoolbox.util.status.Status;
@@ -92,24 +92,29 @@ public class BootstrapServerLauncherComp extends ComponentDefinition {
     public void handle(NetMngrReady content, Status.Internal<NetMngrReady> container) {
       logger.info("network mngr ready");
       systemAdr = content.systemAdr;
-      setBootstrapServer();
       trigger(Start.event, bootstrapServerComp.control());
     }
   };
 
-  private void setBootstrapServer() {
-    logger.info("setting up bootstrap server");
-    bootstrapServerComp = create(BootstrapServerComp.class, new BootstrapServerComp.Init(systemAdr));
-    connect(bootstrapServerComp.getNegative(Network.class), netMngrComp.getPositive(Network.class), Channel.TWO_WAY);
-  }
-
-  private static void systemSetup() {
+  private static void systemSetup(long seed) {
     IdentifierRegistryV2.registerBaseDefaults1(64);
-    OverlayRegistry.initiate(new OverlayId.BasicTypeFactory((byte) 0), new OverlayId.BasicTypeComparator());
+    OverlayRegistryV2.initiate(new OverlayId.BasicTypeFactory((byte) 0), new OverlayId.BasicTypeComparator());
 
+    setupOverlayIdFactory(seed);
     serializerSetup();
   }
 
+  private static OverlayIdFactory setupOverlayIdFactory(long seed) {
+    OverlayRegistryV2.initiate(new BaseOverlayIdentifiers.TypeFactory(), new BaseOverlayIdentifiers.TypeComparator());
+
+    byte torrentOwnerId = 1;
+    OverlayRegistryV2.registerPrefix(BaseOverlayIdentifiers.BASE_OVERLAYS, torrentOwnerId);
+
+    IdentifierFactory torrentBaseIdFactory 
+      = IdentifierRegistryV2.instance(BasicIdentifiers.Values.OVERLAY, Optional.of(seed));
+    return new OverlayIdFactory(torrentBaseIdFactory, BaseOverlayIdentifiers.Types.BASE, torrentOwnerId);
+  }
+  
   private static void serializerSetup() {
     //serializers setup
     int serializerId = 128;
@@ -128,7 +133,7 @@ public class BootstrapServerLauncherComp extends ComponentDefinition {
   }
 
   public static void main(String[] args) {
-    systemSetup();
+    systemSetup(1234l);
     start();
     try {
       Kompics.waitForTermination();

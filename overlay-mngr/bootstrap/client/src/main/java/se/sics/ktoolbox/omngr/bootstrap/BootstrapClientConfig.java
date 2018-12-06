@@ -19,44 +19,42 @@
 package se.sics.ktoolbox.omngr.bootstrap;
 
 import com.google.common.base.Optional;
+import java.util.function.BiFunction;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 import se.sics.ktoolbox.util.trysf.Try;
+import se.sics.ktoolbox.util.trysf.TryHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class BootstrapClientConfig {
+
   public static String BOOTSTRAP_SERVER = "overlays.bootstrap.server";
-  public static String BOOTSTRAP_HEARTBEAT_POSITIONS = "overlays.bootstrap.heartbeat.positions";
-  public static String BOOTSTRAP_HEARTBEAT_PERIOD = "overlays.bootstrap.heartbeat.period";
-  
-  public final int heartbeatPositions;
-  public final long heartbeatPeriod;
-  public final KAddress server;
-  
-  public BootstrapClientConfig(KAddress server, Integer heartbeatPositions, Long heartbeatPeriod) {
-    this.server = server;
-    this.heartbeatPositions = heartbeatPositions;
-    this.heartbeatPeriod = heartbeatPeriod;
+
+  public final BootstrapConfig baseConfig;
+  public final KAddress serverAdr;
+
+  public BootstrapClientConfig(BootstrapConfig baseConfig, KAddress server) {
+    this.baseConfig = baseConfig;
+    this.serverAdr = server;
   }
-  
+
   public static Try<BootstrapClientConfig> instance(Config config) {
-    Optional<Integer> heartbeatPositions = config.readValue(BOOTSTRAP_HEARTBEAT_POSITIONS, Integer.class);
-    if(!heartbeatPositions.isPresent()) {
-      return new Try.Failure(new IllegalArgumentException("config - no value for " + BOOTSTRAP_HEARTBEAT_POSITIONS));
-    }
-    Optional<Long> heartbeatPeriod = config.readValue(BOOTSTRAP_HEARTBEAT_PERIOD, Long.class);
-    if(!heartbeatPeriod.isPresent()) {
-      return new Try.Failure(new IllegalArgumentException("config - no value for " + BOOTSTRAP_HEARTBEAT_PERIOD));
-    }
-    BasicAddressOption bootstrapServerOpt = new BasicAddressOption(BOOTSTRAP_SERVER);
-    Optional<BasicAddress> server = bootstrapServerOpt.readValue(config);
-    if(!server.isPresent()) {
-      return new Try.Failure(new IllegalArgumentException("config - no value for " + BOOTSTRAP_SERVER));
-    }
-    return new Try.Success(new BootstrapClientConfig(server.get(), heartbeatPositions.get(), heartbeatPeriod.get()));
+    return BootstrapConfig.instance(config)
+      .flatMap(clientConfig(config));
+  }
+
+  private static BiFunction<BootstrapConfig, Throwable, Try<BootstrapClientConfig>> clientConfig(Config config) {
+    return TryHelper.tryFSucc1((baseConfig) -> {
+      BasicAddressOption bootstrapServerOpt = new BasicAddressOption(BOOTSTRAP_SERVER);
+      Optional<BasicAddress> server = bootstrapServerOpt.readValue(config);
+      if (!server.isPresent()) {
+        return new Try.Failure(new IllegalArgumentException("config - no value for " + BOOTSTRAP_SERVER));
+      }
+      return new Try.Success(new BootstrapClientConfig(baseConfig, server.get()));
+    });
   }
 }

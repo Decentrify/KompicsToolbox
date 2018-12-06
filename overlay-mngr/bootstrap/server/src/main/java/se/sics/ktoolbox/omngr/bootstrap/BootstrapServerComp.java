@@ -20,21 +20,35 @@ package se.sics.ktoolbox.omngr.bootstrap;
 
 import com.google.common.collect.HashBasedTable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
-import se.sics.kompics.ClassMatchedHandler;
+import java.util.UUID;
+import org.javatuples.Pair;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
-import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
-import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
+import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnConfig;
+import se.sics.ktoolbox.nutil.conn.ConnCtrl;
+import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
+import se.sics.ktoolbox.nutil.conn.ConnStatus;
+import se.sics.ktoolbox.nutil.conn.Connection;
+import se.sics.ktoolbox.nutil.conn.ServerListener;
+import se.sics.ktoolbox.nutil.timer.TimerProxy;
+import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.trysf.Try;
+import se.sics.ktoolbox.util.trysf.TryHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -42,53 +56,115 @@ import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 public class BootstrapServerComp extends ComponentDefinition {
 
   //******************************CONNECTIONS*********************************
-  Positive<Network> networkPort = requires(Network.class);
+  private final Positive<Network> networkPort = requires(Network.class);
+  private final Positive<Timer> timerPort = requires(Timer.class);
   //*****************************EXTERNAL_STATE*******************************
   private final KAddress selfAdr;
   //*****************************INTERNAL_STATE*******************************
+  private BootstrapConfig config;
+  private ConnConfig connConfig;
+  private final Identifier overlayBootstrapConnBatchId;
+  private final Identifier overlayBootstrapConnBaseId;
+  private final Random rand;
+  //
+  private ConnMngrProxy connMngr;
+  //<overlay,pos,adr>
   private HashBasedTable<Identifier, Integer, KAddress> samples = HashBasedTable.create();
+  private UUID rebootstrapTId;
 
   public BootstrapServerComp(Init init) {
     selfAdr = init.selfAdr;
     loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
-    logger.info("initiating...");
+
+    readConfig();
+    overlayBootstrapConnBatchId = init.overlayBootstrapConnBatchId;
+    overlayBootstrapConnBaseId = init.overlayBootstrapConnBaseId;
+
+    rand = new Random(1234l);
+
+    connMngr = new ConnMngrProxy(selfAdr, serverListener());
 
     subscribe(handleStart, control);
-    subscribe(handleHeartbeat, networkPort);
-    subscribe(handleSampleRequest, networkPort);
+  }
+
+  private void readConfig() {
+    Try<BootstrapConfig> bootstrapConfig = BootstrapConfig.instance(config());
+    if (bootstrapConfig.isFailure()) {
+      throw new RuntimeException(TryHelper.tryError(bootstrapConfig));
+    } else {
+      config = bootstrapConfig.get();
+    }
+    connConfig = new ConnConfig(bootstrapConfig.get().heartbeatPeriod);
+  }
+
+  private ServerListener serverListener() {
+    return new ServerListener<BootstrapState.Init>() {
+      @Override
+      public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus,
+        KAddress peer, Optional<BootstrapState.Init> peerState) {
+        ConnCtrl ctrl = connCtrl();
+        BootstrapState.Sample initState = new BootstrapState.Sample(new LinkedList<>());
+        ConnIds.InstanceId serverId = new ConnIds.InstanceId(connId.serverId.overlayId, selfAdr.getId(),
+          overlayBootstrapConnBatchId, overlayBootstrapConnBaseId, true);
+        if (serverId.equals(connId.serverId)) {
+          Connection.Server server = new Connection.Server(serverId, connCtrl(), connConfig, initState);
+          connMngr.addServer(serverId, server);
+          return Pair.with(ConnStatus.Base.CONNECTED, Optional.of(server));
+        } else {
+          logger.warn("bad server adr expected:{}, found:{}", serverId, connId.serverId);
+          return Pair.with(ConnStatus.Base.DISCONNECTED, Optional.empty());
+        }
+      }
+    };
+  }
+
+  private ConnCtrl<BootstrapState.Sample, BootstrapState.Init> connCtrl() {
+    return new ConnCtrl<BootstrapState.Sample, BootstrapState.Init>() {
+      @Override
+      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId serverId, BootstrapState.Sample state) {
+        //nothing
+        //we do not partnerUpdate any of the connection states;
+        return new HashMap<>();
+      }
+
+      @Override
+      public Pair<ConnIds.ConnId, ConnStatus> partnerUpdate(ConnIds.ConnId connId, BootstrapState.Sample selfState,
+        ConnStatus peerStatus, KAddress peer, Optional<BootstrapState.Init> peerState) {
+        Identifier overlayId = connId.serverId.overlayId;
+        int pos = rand.nextInt(config.bootstrapSize);
+        if (ConnStatus.Base.CONNECT.equals(peerStatus)) {
+          samples.put(overlayId, pos, peer);
+          connMngr.updateServer(connId.serverId, new BootstrapState.Sample(sampleWithoutDuplicates(overlayId)));
+          return Pair.with(connId, ConnStatus.Base.CONNECTED);
+        } else if (ConnStatus.Base.HEARTBEAT.equals(peerStatus)) {
+          samples.put(overlayId, pos, peer);
+          connMngr.updateServer(connId.serverId, new BootstrapState.Sample(sampleWithoutDuplicates(overlayId)));
+          return Pair.with(connId, ConnStatus.Base.HEARTBEAT_ACK);
+        } else if (ConnStatus.Base.DISCONNECT.equals(peerStatus)) {
+          return Pair.with(connId, ConnStatus.Base.DISCONNECTED);
+        } else {
+          throw new RuntimeException("unknown:" + peerStatus);
+        }
+      }
+
+      @Override
+      public void close(ConnIds.ConnId connId) {
+        //nothing - live nodes will repopulate the sample
+      }
+    };
   }
 
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
+      connMngr.setup(proxy, logger);
     }
   };
 
   @Override
   public void tearDown() {
+    connMngr.close();
   }
-
-  ClassMatchedHandler handleHeartbeat
-    = new ClassMatchedHandler<Heartbeat, BasicContentMsg<?, ?, Heartbeat>>() {
-
-    @Override
-    public void handle(Heartbeat content, BasicContentMsg<?, ?, Heartbeat> container) {
-      logger.debug("heartbeat:{} from:{}", content.overlayId,  container.getHeader().getSource());
-      samples.put(content.overlayId, content.position, container.getHeader().getSource());
-    }
-  };
-
-  ClassMatchedHandler handleSampleRequest
-    = new ClassMatchedHandler<Sample.Request, BasicContentMsg<?, ?, Sample.Request>>() {
-
-    @Override
-    public void handle(Sample.Request content, BasicContentMsg<?, ?, Sample.Request> container) {
-      logger.trace("sample request:{}", container);
-      List<KAddress> sample = sampleWithoutDuplicates(content.overlayId);
-      KContentMsg response = container.answer(content.answer(sample));
-      trigger(response, networkPort);
-    }
-  };
 
   private List<KAddress> sampleWithoutDuplicates(Identifier overlayId) {
     Set<Identifier> ids = new HashSet<>();
@@ -106,9 +182,13 @@ public class BootstrapServerComp extends ComponentDefinition {
   public static class Init extends se.sics.kompics.Init<BootstrapServerComp> {
 
     public final KAddress selfAdr;
+    public final Identifier overlayBootstrapConnBatchId;
+    public final Identifier overlayBootstrapConnBaseId;
 
-    public Init(KAddress selfAdr) {
+    public Init(KAddress selfAdr, Identifier overlayBootstrapConnBatchId, Identifier overlayBootstrapConnBaseId) {
       this.selfAdr = selfAdr;
+      this.overlayBootstrapConnBatchId = overlayBootstrapConnBatchId;
+      this.overlayBootstrapConnBaseId = overlayBootstrapConnBaseId;
     }
   }
 }

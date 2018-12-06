@@ -16,15 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.omngr.bootstrap.event;
+package se.sics.ktoolbox.overlaymngr.bootstrap.util;
 
-import se.sics.kompics.util.Identifiable;
-import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.network.portsv2.SelectableEventV2;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Negative;
+import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface BootstrapEvent extends SelectableEventV2, Identifiable<Identifier> {
-  public static final String BOOTSTRAP_EVENT_TYPE = "BOOTSTRAP_EVENT";
+public class NetworkEmulator extends ComponentDefinition {
+  private Negative<Network> network = provides(Network.class);
+  
+  public NetworkEmulator() {
+    subscribe(handleMsg, network);
+  }
+
+  Handler handleMsg =new Handler<KContentMsg<KAddress,KHeader<KAddress>,?>>() {
+    @Override
+    public void handle(KContentMsg<KAddress,KHeader<KAddress>,?> msg) {
+      logger.trace("{}", msg);
+      trigger(msg, network);
+    }
+  };
 }

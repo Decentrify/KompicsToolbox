@@ -16,34 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.omngr.bootstrap.msg;
+package se.sics.ktoolbox.omngr.bootstrap;
 
-import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.omngr.bootstrap.event.BootstrapEvent;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import java.util.List;
+import se.sics.ktoolbox.nutil.conn.ConnState;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class Heartbeat implements BootstrapEvent {
+public class BootstrapState {
 
-  public final Identifier msgId;
-  public final OverlayId overlayId;
-  public final int position;
-
-  public Heartbeat(Identifier msgId, OverlayId overlayId, int position) {
-    this.msgId = msgId;
-    this.overlayId = overlayId;
-    this.position = position;
+  public static class Init implements ConnState {
   }
 
-  @Override
-  public Identifier getId() {
-    return msgId;
-  }
+  public static class Sample implements ConnState {
 
-  @Override
-  public String toString() {
-    return "Heartbeat<" + overlayId + ", " + msgId + ">";
+    public final List<KAddress> sample;
+
+    public Sample(List<KAddress> sample) {
+      this.sample = sample;
+    }
   }
 }

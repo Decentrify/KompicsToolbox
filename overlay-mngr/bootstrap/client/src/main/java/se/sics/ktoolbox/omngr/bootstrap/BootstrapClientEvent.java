@@ -23,7 +23,6 @@ import se.sics.kompics.Direct;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -32,9 +31,9 @@ import se.sics.ktoolbox.util.network.KAddress;
 public class BootstrapClientEvent {
   public static class Start extends Direct.Request<Sample> implements Identifiable {
     public final Identifier eventId;
-    public final OverlayId overlay;
+    public final Identifier overlay;
     
-    public Start(Identifier eventId, OverlayId overlay) {
+    public Start(Identifier eventId, Identifier overlay) {
       this.eventId = eventId;
       this.overlay = overlay;
     }
@@ -66,9 +65,9 @@ public class BootstrapClientEvent {
   
   public static class Stop implements Identifiable, KompicsEvent {
     public final Identifier eventId;
-    public final OverlayId overlay;
+    public final Identifier overlay;
 
-    public Stop(Identifier eventId, OverlayId overlay) {
+    public Stop(Identifier eventId, Identifier overlay) {
       this.eventId = eventId;
       this.overlay = overlay;
     }

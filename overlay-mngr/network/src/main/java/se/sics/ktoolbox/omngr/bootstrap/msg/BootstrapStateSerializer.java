@@ -20,43 +20,72 @@ package se.sics.ktoolbox.omngr.bootstrap.msg;
 
 import com.google.common.base.Optional;
 import io.netty.buffer.ByteBuf;
+import java.util.LinkedList;
+import java.util.List;
 import se.sics.kompics.util.Identifier;
 import se.sics.kompics.network.netty.serialization.Serializer;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.ktoolbox.omngr.bootstrap.BootstrapState;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class HeartbeatSerializer implements Serializer {
+public class BootstrapStateSerializer {
+
+  public static class Init implements Serializer {
 
     private final int id;
-    private final Class msgIdType;
 
-    public HeartbeatSerializer(int id, Class msgIdType) {
-        this.id = id;
-        this.msgIdType = msgIdType;
+    public Init(int id) {
+      this.id = id;
     }
 
     @Override
     public int identifier() {
-        return id;
+      return id;
     }
 
     @Override
     public void toBinary(Object o, ByteBuf buf) {
-        Heartbeat obj = (Heartbeat) o;
-        Serializers.lookupSerializer(msgIdType).toBinary(obj.msgId, buf);
-        Serializers.lookupSerializer(OverlayId.class).toBinary(obj.overlayId, buf);
-        buf.writeInt(obj.position);
     }
 
     @Override
-    public Object fromBinary(ByteBuf buf, Optional<Object> hint) {
-        Identifier msgId = (Identifier) Serializers.lookupSerializer(msgIdType).fromBinary(buf, hint);
-        OverlayId overlayId = (OverlayId) Serializers.lookupSerializer(OverlayId.class).fromBinary(buf, hint);
-        int position = buf.readInt();
-        return new Heartbeat(msgId, overlayId, position);
+    public BootstrapState.Init fromBinary(ByteBuf buf, Optional<Object> hint) {
+      return new BootstrapState.Init();
     }
+  }
+
+  public static class Sample implements Serializer {
+
+    private final int id;
+
+    public Sample(int id) {
+      this.id = id;
+    }
+
+    @Override
+    public int identifier() {
+      return id;
+    }
+
+    @Override
+    public void toBinary(Object o, ByteBuf buf) {
+      BootstrapState.Sample obj = (BootstrapState.Sample) o;
+      buf.writeInt(obj.sample.size());
+      obj.sample.forEach((val) -> Serializers.toBinary(val, buf));
+    }
+
+    @Override
+    public BootstrapState.Sample fromBinary(ByteBuf buf, Optional<Object> hint) {
+      int sampleSize = buf.readInt();
+      List<KAddress> sample = new LinkedList<>();
+      for (int i = 0; i < sampleSize; i++) {
+        sample.add((KAddress)Serializers.fromBinary(buf, hint));
+      }
+      return new BootstrapState.Sample(sample);
+    }
+  }
 }

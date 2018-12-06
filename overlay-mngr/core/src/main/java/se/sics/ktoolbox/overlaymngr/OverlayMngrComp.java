@@ -51,7 +51,7 @@ import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistryV2;
 import se.sics.ktoolbox.util.idextractor.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.idextractor.MsgOverlayIdExtractor;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
@@ -149,7 +149,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     public void handle(OMngrCroupier.ConnectRequest req) {
       logger.info("{}", new Object[]{req});
 
-      if (!OverlayRegistry.isRegistered(req.croupierId)) {
+      if (!OverlayRegistryV2.isRegistered(req.croupierId)) {
         throw new RuntimeException("unregisterd id:" + req.croupierId);
       }
 
@@ -185,7 +185,7 @@ public class OverlayMngrComp extends ComponentDefinition {
     public void handle(OMngrTGradient.ConnectRequest req) {
       logger.info("{}", new Object[]{req});
 
-      if (!OverlayRegistry.isRegistered(req.tgradientId)) {
+      if (!OverlayRegistryV2.isRegistered(req.tgradientId)) {
         throw new RuntimeException("unregisterd id:" + req.tgradientId);
       }
       OverlayId croupierId = req.tgradientId.changeType(OverlayId.BasicTypes.CROUPIER);

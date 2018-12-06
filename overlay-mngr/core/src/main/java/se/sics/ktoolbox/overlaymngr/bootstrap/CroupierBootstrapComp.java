@@ -38,6 +38,7 @@ import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -89,7 +90,7 @@ public class CroupierBootstrapComp extends ComponentDefinition {
     public void handle(BootstrapClientEvent.Sample sample) {
       logger.trace("{}", sample);
       samples.put(sample.req.overlay, sample.sample);
-      trigger(new CroupierJoin(eventIds.randomId(), sample.req.overlay, sample.sample), croupierStatusPort);
+      trigger(new CroupierJoin(eventIds.randomId(), (OverlayId)sample.req.overlay, sample.sample), croupierStatusPort);
     }
   };
 

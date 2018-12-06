@@ -48,7 +48,7 @@ import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayIdFactory;
-import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistry;
+import se.sics.ktoolbox.util.identifiable.overlay.OverlayRegistryV2;
 import se.sics.ktoolbox.util.idextractor.EventOverlayIdExtractor;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.nat.NatAwareAddress;
@@ -108,7 +108,7 @@ public class OMngrHostComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       LOG.info("{}starting...", logPrefix);
-      OverlayRegistry.registerPrefix("test", owner);
+      OverlayRegistryV2.registerPrefix("test", owner);
       connectTestCroupier1Comp();
       connectTestCroupier2Comp();
       connectTestGradient1Comp();

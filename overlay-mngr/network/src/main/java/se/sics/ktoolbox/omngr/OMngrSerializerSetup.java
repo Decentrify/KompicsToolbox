@@ -22,14 +22,10 @@ import org.junit.Assert;
 import se.sics.kompics.network.netty.serialization.Serializers;
 import se.sics.ktoolbox.croupier.CroupierSerializerSetup;
 import se.sics.ktoolbox.gradient.GradientSerializerSetup;
-import se.sics.ktoolbox.omngr.bootstrap.msg.Heartbeat;
-import se.sics.ktoolbox.omngr.bootstrap.msg.HeartbeatSerializer;
-import se.sics.ktoolbox.omngr.bootstrap.msg.Sample;
-import se.sics.ktoolbox.omngr.bootstrap.msg.SampleSerializer;
+import se.sics.ktoolbox.omngr.bootstrap.BootstrapState;
+import se.sics.ktoolbox.omngr.bootstrap.msg.BootstrapStateSerializer;
 import se.sics.ktoolbox.omngr.util.ServiceViewSerializer;
 import se.sics.ktoolbox.overlaymngr.util.ServiceView;
-import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
-import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
 
 /**
@@ -37,14 +33,13 @@ import se.sics.ktoolbox.util.setup.BasicSerializerSetup;
  */
 public class OMngrSerializerSetup {
 
-    public static int serializerIds = 4;
+    public static int serializerIds = 3;
 
     public static enum OMngrSerializers {
 
-        ServiceView(ServiceView.class, "serviceViewSerializer"),
-        Heartbeat(Heartbeat.class, "hearbeatSerializer"),
-        SampleRequest(Sample.Request.class, "sampleRequestSerializer"),
-        SampleResponse(Sample.Response.class, "sampleResponseSerializer");
+        ServiceView(ServiceView.class, "overlayServiceViewSerializer"),
+        BootstrapStateInit(BootstrapState.Init.class, "overlaysBootstrapStateInitSerializer"),
+        BootstrapStateSample(BootstrapState.Sample.class, "overlayBootstrapStateSampleSerializer");
 
         public final Class serializedClass;
         public final String serializerName;
@@ -69,22 +64,20 @@ public class OMngrSerializerSetup {
     public static int registerSerializers(int startingId) {
         int currentId = startingId;
 
-        ServiceViewSerializer serviceViewSerializer = new ServiceViewSerializer(currentId++);
-        Serializers.register(serviceViewSerializer, OMngrSerializers.ServiceView.serializerName);
-        Serializers.register(OMngrSerializers.ServiceView.serializedClass, OMngrSerializers.ServiceView.serializerName);
+        Serializers.register(new ServiceViewSerializer(currentId++), 
+          OMngrSerializers.ServiceView.serializerName);
+        Serializers.register(OMngrSerializers.ServiceView.serializedClass, 
+          OMngrSerializers.ServiceView.serializerName);
         
-        Class msgIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.MSG);
-        HeartbeatSerializer heartbeatSerializer = new HeartbeatSerializer(currentId++, msgIdType);
-        Serializers.register(heartbeatSerializer, OMngrSerializers.Heartbeat.serializerName);
-        Serializers.register(OMngrSerializers.Heartbeat.serializedClass, OMngrSerializers.Heartbeat.serializerName);
+        Serializers.register(new BootstrapStateSerializer.Init(currentId++), 
+          OMngrSerializers.BootstrapStateInit.serializerName);
+        Serializers.register(OMngrSerializers.BootstrapStateInit.serializedClass, 
+          OMngrSerializers.BootstrapStateInit.serializerName);
         
-        SampleSerializer.Request sampleRequestSerializer = new SampleSerializer.Request(currentId++);
-        Serializers.register(sampleRequestSerializer, OMngrSerializers.SampleRequest.serializerName);
-        Serializers.register(OMngrSerializers.SampleRequest.serializedClass, OMngrSerializers.SampleRequest.serializerName);
-        
-        SampleSerializer.Response sampleResponseSerializer = new SampleSerializer.Response(currentId++);
-        Serializers.register(sampleResponseSerializer, OMngrSerializers.SampleResponse.serializerName);
-        Serializers.register(OMngrSerializers.SampleResponse.serializedClass, OMngrSerializers.SampleResponse.serializerName);
+        Serializers.register(new BootstrapStateSerializer.Sample(currentId++), 
+          OMngrSerializers.BootstrapStateSample.serializerName);
+        Serializers.register(OMngrSerializers.BootstrapStateSample.serializedClass, 
+          OMngrSerializers.BootstrapStateSample.serializerName);
 
         Assert.assertEquals(serializerIds, currentId - startingId);
         return currentId;
