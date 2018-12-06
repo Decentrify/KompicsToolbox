@@ -198,7 +198,7 @@ public class CroupierComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      timerProxy.setup(proxy);
+      timerProxy.setup(proxy, logger);
       long shuffleCycleDelay = croupierConfig.shufflePeriod;
       long shuffleCyclePeriod = croupierConfig.shufflePeriod;
       shuffleCycleTid = timerProxy.schedulePeriodicTimer(shuffleCycleDelay, shuffleCyclePeriod, shuffleCycleTimer());
