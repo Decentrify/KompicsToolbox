@@ -57,14 +57,14 @@ public class ConnProxyMngrServerComp extends ComponentDefinition {
     subscribe(handleStart, control);
   }
 
-  private ServerListener<ConnHelper.EmptyState> serverListener(ConnConfig connConfig) {
-    return new ServerListener<ConnHelper.EmptyState>() {
+  private ServerListener<ConnState.Empty> serverListener(ConnConfig connConfig) {
+    return new ServerListener<ConnState.Empty>() {
       @Override
       public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus,
-        KAddress peer, Optional<ConnHelper.EmptyState> peerState) {
+        KAddress peer, Optional<ConnState.Empty> peerState) {
         if (peerStatus.equals(ConnStatus.Base.CONNECT)) {
           ConnIds.InstanceId serverId = connId.serverId;
-          ConnHelper.EmptyState initState = new ConnHelper.EmptyState();
+          ConnState.Empty initState = new ConnState.Empty();
           ConnCtrl connCtrl = new ConnHelper.SimpleConnCtrl<>();
           Connection.Server server = new Connection.Server<>(serverId, connCtrl, connConfig, initState);
           return Pair.with(ConnStatus.Base.CONNECTED, Optional.of(server));
@@ -81,7 +81,7 @@ public class ConnProxyMngrServerComp extends ComponentDefinition {
       connMngr.setup(proxy, logger);
       if (init.serverId.isPresent()) {
         ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
-        ConnHelper.EmptyState initState = new ConnHelper.EmptyState();
+        ConnState.Empty initState = new ConnState.Empty();
         Connection.Server server = new Connection.Server<>(init.serverId.get(), serverCtrl, connConfig, initState);
         connMngr.addServer(init.serverId.get(), server);
       }

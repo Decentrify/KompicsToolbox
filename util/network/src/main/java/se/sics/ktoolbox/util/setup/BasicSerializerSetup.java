@@ -25,6 +25,8 @@ import se.sics.ktoolbox.nutil.conn.ConnMsgs;
 import se.sics.ktoolbox.nutil.conn.ConnStatus;
 import se.sics.ktoolbox.nutil.conn.ConnBaseStatusSerializer;
 import se.sics.ktoolbox.nutil.conn.ConnMsgsSerializer;
+import se.sics.ktoolbox.nutil.conn.ConnState;
+import se.sics.ktoolbox.nutil.conn.EmptyConnStateSerializer;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.IntId;
@@ -58,7 +60,7 @@ public class BasicSerializerSetup {
 
      //You may add up to max serializers without the need to recompile all the projects that use the serializer space after gvod
     public static int maxSerializers = 20;
-    public static final int serializerIds = 17;
+    public static final int serializerIds = 18;
 
     public static enum BasicSerializers {
         SimpleByteIdentifier(SimpleByteId.class, "simpleByteIdentifierSerializer"),
@@ -77,7 +79,8 @@ public class BasicSerializerSetup {
         ConnIdsConnId(ConnIds.ConnId.class, "connIdsConnIdSerializer"),
         ConnBaseStatus(ConnStatus.Base.class, "connBaseStatusSerializer"),
         ConnMsgsClient(ConnMsgs.Client.class, "connMsgsClientSerializer"),
-        ConnMsgsServer(ConnMsgs.Server.class, "connMsgsServerSerializer");
+        ConnMsgsServer(ConnMsgs.Server.class, "connMsgsServerSerializer"),
+        ConnEmptyState(ConnState.Empty.class, "connEmptyState");
                 
         public final Class serializedClass;
         public final String serializerName;
@@ -172,6 +175,10 @@ public class BasicSerializerSetup {
         Serializers.register(new ConnMsgsSerializer.Server(currentId++), BasicSerializers.ConnMsgsServer.serializerName);
         Serializers.register(BasicSerializers.ConnMsgsServer.serializedClass, 
           BasicSerializers.ConnMsgsServer.serializerName);
+
+        Serializers.register(new EmptyConnStateSerializer(currentId++), BasicSerializers.ConnEmptyState.serializerName);
+        Serializers.register(BasicSerializers.ConnEmptyState.serializedClass, 
+          BasicSerializers.ConnEmptyState.serializerName);
         
         assert startingId + serializerIds == currentId;
         assert serializerIds <= maxSerializers;

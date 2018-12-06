@@ -28,6 +28,7 @@ import se.sics.ktoolbox.nutil.conn.ConnConfig;
 import se.sics.ktoolbox.nutil.conn.ConnHelper;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnProxy;
+import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -56,7 +57,7 @@ public class ConnProxyServerComp extends ComponentDefinition {
     public void handle(Start event) {
       connMngr.setup(proxy, logger);
       ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
-      ConnHelper.EmptyState initState = new ConnHelper.EmptyState();
+      ConnState.Empty initState = new ConnState.Empty();
       Connection.Server server = new Connection.Server<>(init.serverId, serverCtrl, connConfig, initState);
       connMngr.add(init.serverId, server);
     }

@@ -18,12 +18,34 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import se.sics.kompics.network.netty.serialization.Serializer;
+import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.util.Identifier;
+
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnState {
+public class EmptyConnStateSerializer implements Serializer {
 
-  public static class Empty implements ConnState {
+  private final int id;
+
+  public EmptyConnStateSerializer(int id) {
+    this.id = id;
+  }
+
+  @Override
+  public int identifier() {
+    return id;
+  }
+
+  @Override
+  public void toBinary(Object o, ByteBuf buf) {
+  }
+
+  @Override
+  public ConnState.Empty fromBinary(ByteBuf buf, Optional<Object> hint) {
+    return new ConnState.Empty();
   }
 }

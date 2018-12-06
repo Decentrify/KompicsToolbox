@@ -68,7 +68,4 @@ public class ConnHelper {
     public void close(ConnId connId) {
     }
   }
-
-  public static class EmptyState implements ConnState {
-  }
 }

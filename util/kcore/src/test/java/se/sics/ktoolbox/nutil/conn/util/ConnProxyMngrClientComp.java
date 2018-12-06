@@ -32,6 +32,7 @@ import se.sics.ktoolbox.nutil.conn.ConnHelper;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
+import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
@@ -75,7 +76,7 @@ public class ConnProxyMngrClientComp extends ComponentDefinition {
       Identifier instanceId = connBaseIds.randomId();
       clientId = new ConnIds.InstanceId(init.overlayId, nodeId, init.batchId, instanceId, false);
       ConnHelper.SimpleConnCtrl clientCtrl = new ConnHelper.SimpleConnCtrl();
-      ConnHelper.EmptyState initState = new ConnHelper.EmptyState();
+      ConnState.Empty initState = new ConnState.Empty();
       Connection.Client client = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
       connMngr.addClient(clientId, client);
       timer.scheduleTimer(1000, connect());
