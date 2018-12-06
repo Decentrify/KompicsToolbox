@@ -39,6 +39,13 @@ public class TryHelper {
   public static Try<Boolean> tryStart() {
     return new Try.Success(true);
   }
+  
+  public static <I> BiFunction<I, Throwable, Try<Boolean>> tryCTSucc1(Consumer<I> c) {
+    return (I input, Throwable fail) -> {
+      c.accept(input);
+      return new Try.Success(true);
+    };
+  }
 
   public static <I, O> BiFunction<I, Throwable, Try<O>> tryTSucc0(Supplier<Try<O>> s) {
     return (I input, Throwable fail) -> {
