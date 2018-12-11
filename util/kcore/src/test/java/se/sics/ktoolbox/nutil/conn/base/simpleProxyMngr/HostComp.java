@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.simpleProxyMngr;
+package se.sics.ktoolbox.nutil.conn.base.simpleProxyMngr;
 
 import se.sics.ktoolbox.nutil.conn.util.NetworkEmulator;
 import java.util.HashMap;
@@ -34,8 +34,8 @@ import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMsgs;
-import se.sics.ktoolbox.nutil.conn.util.ConnProxyMngrClientComp;
-import se.sics.ktoolbox.nutil.conn.util.ConnProxyMngrServerComp;
+import se.sics.ktoolbox.nutil.conn.base.util.ConnProxyMngrClientComp;
+import se.sics.ktoolbox.nutil.conn.base.util.ConnProxyMngrServerComp;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorsV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgTypeExtractorsV2;

@@ -19,8 +19,6 @@
 package se.sics.ktoolbox.nutil.conn;
 
 import java.util.Map;
-import java.util.Optional;
-import org.javatuples.Pair;
 import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.util.network.KAddress;
@@ -32,8 +30,7 @@ public interface ConnCtrl<S extends ConnState, P extends ConnState> {
 
   public Map<ConnId, ConnStatus> selfUpdate(InstanceId instanceId, S selfSate);
 
-  public Pair<ConnId, ConnStatus> partnerUpdate(ConnId connId, S selfState, 
-    ConnStatus peerStatus, KAddress peer, Optional<P> peerState);
+  public ConnStatus partnerUpdate(ConnId connId, S selfState, ConnStatus peerStatus, KAddress peer, P peerState);
 
   public void close(ConnId connId);
 }

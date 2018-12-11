@@ -16,8 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.util;
+package se.sics.ktoolbox.nutil.conn.base.util;
 
+import java.util.UUID;
+import java.util.function.Consumer;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
@@ -30,6 +32,8 @@ import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnProxy;
 import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.Connection;
+import se.sics.ktoolbox.nutil.timer.TimerProxy;
+import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -37,16 +41,20 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class ConnProxyServerComp extends ComponentDefinition {
 
-  private Positive<Network> network = requires(Network.class);
-  private Positive<Timer> timer = requires(Timer.class);
+  private Positive<Network> networkPort = requires(Network.class);
+  private Positive<Timer> timerPort = requires(Timer.class);
+  private TimerProxy timer;
 
   private final Init init;
 
   private final ConnProxy.Server connMngr;
   private final ConnConfig connConfig;
+  
+  private UUID periodicUpdate;
 
   public ConnProxyServerComp(Init init) {
     this.init = init;
+    timer = new TimerProxyImpl();
     connConfig = new ConnConfig(1000);
     connMngr = new ConnProxy.Server(init.selfAddress);
     subscribe(handleStart, control);
@@ -55,14 +63,23 @@ public class ConnProxyServerComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
+      timer.setup(proxy, logger);
       connMngr.setup(proxy, logger);
-      ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
+      ConnHelper.SimpleServerConnCtrl serverCtrl = new ConnHelper.SimpleServerConnCtrl<>();
       ConnState.Empty initState = new ConnState.Empty();
       Connection.Server server = new Connection.Server<>(init.serverId, serverCtrl, connConfig, initState);
       connMngr.add(init.serverId, server);
+      periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
     }
   };
-
+  
+  private Consumer<Boolean> update() {
+    return (_ignore) -> {
+      logger.trace("server update");
+      connMngr.update(new ConnState.Empty());
+    };
+  }
+      
   public static class Init extends se.sics.kompics.Init<ConnProxyServerComp> {
 
     public final KAddress selfAddress;

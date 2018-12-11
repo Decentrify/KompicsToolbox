@@ -16,35 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn;
+package se.sics.ktoolbox.nutil.conn.workers;
+
+import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnStatus {
-  public static enum System {
-    EMPTY,
-    SETUP,
-    READY
-  }
-  public static enum Base implements ConnStatus {
-    //do not change numbers
-    NOTHING(0),
-    CONNECT(1),
-    CONNECTED(2),
-    CONNECTED_ACK(3),
-    DISCONNECT(4),
-    DISCONNECTED(5),
-    HEARTBEAT(6),
-    HEARTBEAT_ACK(7),
-    CLIENT_STATE(8),
-    SERVER_STATE(9);
-
-    public final int ord;
-
-    private Base(int ord) {
-      this.ord = ord;
-    }
+public class WorkCtrl {
+  public static interface Server<C extends WorkState.Client> {
+    public void connected(ConnIds.ConnId connId, KAddress peer, WorkState.Client clientState);
   }
 }

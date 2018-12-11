@@ -21,6 +21,7 @@ package se.sics.ktoolbox.util;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
 /**
@@ -48,6 +49,16 @@ public class TupleHelper {
     };
   }
   
+  public static <I1, I2, I3, I4> QuartetConsumer<I1, I2, I3, I4> quartetConsumer(
+    Function<I1, Function<I2, Function<I3, Consumer<I4>>>> f) {
+    return new QuartetConsumer<I1,I2,I3,I4>() {
+      @Override
+      public void accept(I1 i1, I2 i2, I3 i3, I4 i4) {
+        f.apply(i1).apply(i2).apply(i3).accept(i4);
+      }
+    };
+  }
+  
   public static abstract class PairConsumer<I1, I2> implements Consumer<Pair<I1,I2>> {
 
     @Override
@@ -66,5 +77,15 @@ public class TupleHelper {
     }
     
     public abstract void accept(I1 i1, I2 i2, I3 i3);
+  }
+  
+  public static abstract class QuartetConsumer<I1, I2, I3, I4> implements Consumer<Quartet<I1,I2,I3, I4>> {
+
+    @Override
+    public void accept(Quartet<I1,I2,I3, I4> in) {
+      accept(in.getValue0(), in.getValue1(), in.getValue2(), in.getValue3());
+    }
+    
+    public abstract void accept(I1 i1, I2 i2, I3 i3, I4 i4);
   }
 }

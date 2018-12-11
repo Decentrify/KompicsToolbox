@@ -16,33 +16,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.util;
+package se.sics.ktoolbox.nutil.conn.workers;
 
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.conn.ConnMsgs;
-import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
+import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.nutil.conn.workers.MngrCenter.WorkConnCtrl;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.KHeader;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class BatchIdExtractors {
-
-  public static class Client implements MsgIdExtractorV2<ConnMsgs.Base> {
-
-    @Override
-    public Identifier getValue(KContentMsg<KAddress, KHeader<KAddress>, ConnMsgs.Base> msg) {
-      return msg.getContent().connId.clientId.batchId;
+public class MngrCtrl {
+  public static abstract class Server<C extends MngrState.Client> {
+    private WorkConnCtrl<WorkState.Client, WorkState.Server> workCtrl;
+    
+    void setWorkConnCtrl(WorkConnCtrl<WorkState.Client, WorkState.Server> workCtrl) {
+      this.workCtrl = workCtrl;
     }
-  }
-  
-  public static class Server implements MsgIdExtractorV2<ConnMsgs.Base> {
-
-    @Override
-    public Identifier getValue(KContentMsg<KAddress, KHeader<KAddress>, ConnMsgs.Base> msg) {
-      return msg.getContent().connId.serverId.batchId;
+    
+    public abstract void connected(ConnIds.ConnId ctrlConnId, KAddress peerId);
+    
+    public ConnIds.ConnId connectWorker(Identifier clientBaseId, WorkState.Client clientState, KAddress serverAdr) {
+      return workCtrl.connectClient(clientBaseId, clientState, serverAdr);
     }
   }
 }

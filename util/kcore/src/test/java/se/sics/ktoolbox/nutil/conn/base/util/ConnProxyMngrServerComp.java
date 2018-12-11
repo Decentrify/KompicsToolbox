@@ -16,9 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.util;
+package se.sics.ktoolbox.nutil.conn.base.util;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
 import org.javatuples.Pair;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -30,11 +34,14 @@ import se.sics.ktoolbox.nutil.conn.ConnConfig;
 import se.sics.ktoolbox.nutil.conn.ConnCtrl;
 import se.sics.ktoolbox.nutil.conn.ConnHelper;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
+import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
 import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.ConnStatus;
 import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.nutil.conn.ServerListener;
+import se.sics.ktoolbox.nutil.timer.TimerProxy;
+import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -42,16 +49,21 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class ConnProxyMngrServerComp extends ComponentDefinition {
 
-  private Positive<Network> network = requires(Network.class);
-  private Positive<Timer> timer = requires(Timer.class);
+  private Positive<Network> networkPort = requires(Network.class);
+  private Positive<Timer> timerPort = requires(Timer.class);
+  private TimerProxy timer;
 
   private final Init init;
 
   private final ConnMngrProxy connMngr;
   private final ConnConfig connConfig;
 
+  private UUID periodicUpdate;
+  private Set<ConnIds.InstanceId> servers = new HashSet<>();
+
   public ConnProxyMngrServerComp(Init init) {
     this.init = init;
+    timer = new TimerProxyImpl();
     connConfig = new ConnConfig(1000);
     connMngr = new ConnMngrProxy(init.selfAddress, serverListener(connConfig));
     subscribe(handleStart, control);
@@ -61,11 +73,12 @@ public class ConnProxyMngrServerComp extends ComponentDefinition {
     return new ServerListener<ConnState.Empty>() {
       @Override
       public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus,
-        KAddress peer, Optional<ConnState.Empty> peerState) {
+        KAddress peer, ConnState.Empty peerState) {
         if (peerStatus.equals(ConnStatus.Base.CONNECT)) {
           ConnIds.InstanceId serverId = connId.serverId;
+          servers.add(serverId);
           ConnState.Empty initState = new ConnState.Empty();
-          ConnCtrl connCtrl = new ConnHelper.SimpleConnCtrl<>();
+          ConnCtrl connCtrl = new ConnHelper.SimpleServerConnCtrl<>();
           Connection.Server server = new Connection.Server<>(serverId, connCtrl, connConfig, initState);
           return Pair.with(ConnStatus.Base.CONNECTED, Optional.of(server));
         } else {
@@ -78,15 +91,25 @@ public class ConnProxyMngrServerComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
+      timer.setup(proxy, logger);
       connMngr.setup(proxy, logger);
+      periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
       if (init.serverId.isPresent()) {
-        ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
+        servers.add(init.serverId.get());
+        ConnHelper.SimpleServerConnCtrl serverCtrl = new ConnHelper.SimpleServerConnCtrl<>();
         ConnState.Empty initState = new ConnState.Empty();
         Connection.Server server = new Connection.Server<>(init.serverId.get(), serverCtrl, connConfig, initState);
         connMngr.addServer(init.serverId.get(), server);
       }
     }
   };
+
+  private Consumer<Boolean> update() {
+    return (_ignore) -> {
+      logger.trace("server update");
+      servers.forEach((serverId) -> connMngr.updateServer(serverId, new ConnState.Empty()));
+    };
+  }
 
   public static class Init extends se.sics.kompics.Init<ConnProxyMngrServerComp> {
 

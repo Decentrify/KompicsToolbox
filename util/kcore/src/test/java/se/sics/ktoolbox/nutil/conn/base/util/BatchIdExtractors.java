@@ -16,35 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn;
+package se.sics.ktoolbox.nutil.conn.base.util;
+
+import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnMsgs;
+import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnStatus {
-  public static enum System {
-    EMPTY,
-    SETUP,
-    READY
+public class BatchIdExtractors {
+
+  public static class Client implements MsgIdExtractorV2<ConnMsgs.Base> {
+
+    @Override
+    public Identifier getValue(KContentMsg<KAddress, KHeader<KAddress>, ConnMsgs.Base> msg) {
+      return msg.getContent().connId.clientId.batchId;
+    }
   }
-  public static enum Base implements ConnStatus {
-    //do not change numbers
-    NOTHING(0),
-    CONNECT(1),
-    CONNECTED(2),
-    CONNECTED_ACK(3),
-    DISCONNECT(4),
-    DISCONNECTED(5),
-    HEARTBEAT(6),
-    HEARTBEAT_ACK(7),
-    CLIENT_STATE(8),
-    SERVER_STATE(9);
+  
+  public static class Server implements MsgIdExtractorV2<ConnMsgs.Base> {
 
-    public final int ord;
-
-    private Base(int ord) {
-      this.ord = ord;
+    @Override
+    public Identifier getValue(KContentMsg<KAddress, KHeader<KAddress>, ConnMsgs.Base> msg) {
+      return msg.getContent().connId.serverId.batchId;
     }
   }
 }

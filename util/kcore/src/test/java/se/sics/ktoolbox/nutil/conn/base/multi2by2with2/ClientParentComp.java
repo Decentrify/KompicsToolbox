@@ -16,9 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.multi2by2with2;
+package se.sics.ktoolbox.nutil.conn.base.multi2by2with2;
 
-import se.sics.ktoolbox.nutil.conn.util.ConnProxyMngrClientComp;
+import se.sics.ktoolbox.nutil.conn.base.util.ConnProxyMngrClientComp;
 import java.util.HashMap;
 import java.util.Map;
 import se.sics.kompics.Channel;
@@ -30,7 +30,7 @@ import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.conn.util.BatchIdExtractors;
+import se.sics.ktoolbox.nutil.conn.base.util.BatchIdExtractors;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMsgs;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;

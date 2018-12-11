@@ -57,15 +57,18 @@ public class ConnBaseStatusSerializer implements Serializer {
         status = ConnStatus.Base.CONNECTED;
         break;
       case 3:
-        status = ConnStatus.Base.DISCONNECT;
+        status = ConnStatus.Base.CONNECTED_ACK;
         break;
       case 4:
-        status = ConnStatus.Base.DISCONNECTED;
+        status = ConnStatus.Base.DISCONNECT;
         break;
       case 5:
-        status = ConnStatus.Base.HEARTBEAT;
+        status = ConnStatus.Base.DISCONNECTED;
         break;
       case 6:
+        status = ConnStatus.Base.HEARTBEAT;
+        break;
+      case 7:
         status = ConnStatus.Base.HEARTBEAT_ACK;
         break;
       default:

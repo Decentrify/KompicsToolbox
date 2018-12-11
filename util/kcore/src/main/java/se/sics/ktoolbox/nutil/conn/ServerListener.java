@@ -27,5 +27,5 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public interface ServerListener<C extends ConnState> {
   public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus, 
-    KAddress peer, Optional<C> peerState);
+    KAddress peer, C peerState);
 }

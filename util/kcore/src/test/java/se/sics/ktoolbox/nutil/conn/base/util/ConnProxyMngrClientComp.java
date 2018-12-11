@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.util;
+package se.sics.ktoolbox.nutil.conn.base.util;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -57,6 +58,8 @@ public class ConnProxyMngrClientComp extends ComponentDefinition {
   private final IdentifierFactory connBaseIds;
   
   private ConnIds.InstanceId clientId;
+  
+  private UUID periodicUpdate;
 
   public ConnProxyMngrClientComp(Init init) {
     this.init = init;
@@ -75,11 +78,11 @@ public class ConnProxyMngrClientComp extends ComponentDefinition {
       Identifier nodeId = init.selfAddress.getId();
       Identifier instanceId = connBaseIds.randomId();
       clientId = new ConnIds.InstanceId(init.overlayId, nodeId, init.batchId, instanceId, false);
-      ConnHelper.SimpleConnCtrl clientCtrl = new ConnHelper.SimpleConnCtrl();
+      ConnHelper.SimpleClientConnCtrl clientCtrl = new ConnHelper.SimpleClientConnCtrl();
       ConnState.Empty initState = new ConnState.Empty();
       Connection.Client client = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
       connMngr.addClient(clientId, client);
-      timer.scheduleTimer(1000, connect());
+      timer.scheduleTimer(connConfig.checkPeriod, connect());
     }
   };
 
@@ -87,9 +90,16 @@ public class ConnProxyMngrClientComp extends ComponentDefinition {
     return (_ignore) -> {
       logger.trace("{}connect", init.batchId);
       connMngr.connectClient(clientId, init.serverId, init.serverAddress);
+      periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
     };
   }
-
+  
+  private Consumer<Boolean> update() {
+    return (_ignore) -> {
+      logger.trace("client update");
+      connMngr.updateClient(clientId, new ConnState.Empty());
+    };
+  }
   public static class Init extends se.sics.kompics.Init<ConnProxyMngrClientComp> {
 
     public final Identifier overlayId;

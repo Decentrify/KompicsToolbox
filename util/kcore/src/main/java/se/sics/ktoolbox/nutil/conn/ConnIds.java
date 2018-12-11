@@ -117,8 +117,11 @@ public class ConnIds {
 
     @Override
     public String toString() {
-      return '<' + "oid:" + overlayId + "nid:" + nodeId + ", bid:" + batchId + ", iid:" + instanceId + 
-        ", s:" + server + '>';
+      return "<o:" + overlayId + ",n:" + nodeId + ",b:" + batchId + ",i:" + instanceId + ",s:" + server + ">";
+    }
+    
+    public String shortString() {
+      return "<" + overlayId + "," + nodeId + "," + batchId + "," + instanceId +  "," + server + ">";
     }
   }
 
@@ -185,7 +188,7 @@ public class ConnIds {
 
     @Override
     public String toString() {
-      return '<' + "sid:" + serverId + ", cid:" + clientId + '>';
+      return '<' + "s:" + serverId.shortString() + ", c:" + clientId.shortString() + '>';
     }
   }
 }

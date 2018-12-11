@@ -25,7 +25,6 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
 import se.sics.kompics.timer.Timer;
-import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
@@ -70,7 +69,7 @@ public class ConnProxy {
       return this;
     }
 
-    public void add(ConnIds.InstanceId clientId, Connection.Client client) {
+    public void set(ConnIds.InstanceId clientId, Connection.Client client) {
       this.clientId = clientId;
       this.client = client.setup(timer, networkSend(), logger);
       logger.info("conn proxy {}", clientId);
@@ -94,7 +93,7 @@ public class ConnProxy {
       return TupleHelper.pairConsumer((server) -> (content) -> {
         KHeader header = new BasicHeader<>(self, server, Transport.UDP);
         KContentMsg msg = new BasicContentMsg(header, content);
-        logger.trace("{} conn proxy client send:{} to:{}", new Object[]{content.connId, content, server});
+        logger.trace("n:{} c:{} conn proxy client send:{} to:{}", new Object[]{self.getId(), content.connId, content, server});
         proxy.trigger(msg, network);
       });
     }
@@ -105,7 +104,7 @@ public class ConnProxy {
       @Override
       public void handle(ConnMsgs.Server content, KContentMsg<KAddress, ?, ConnMsgs.Server> container) {
         KAddress serverAddress = container.getHeader().getSource();
-        logger.trace("{} conn client rec:{} from:{}", new Object[]{content.connId, content, serverAddress});
+        logger.trace("n:{} c:{} conn client rec:{} from:{}", new Object[]{self.getId(), content.connId, content, serverAddress});
         client.handleContent(serverAddress, content);
       }
     };
@@ -160,7 +159,7 @@ public class ConnProxy {
       return TupleHelper.pairConsumer((client) -> (content) -> {
         KHeader header = new BasicHeader<>(self, client, Transport.UDP);
         KContentMsg msg = new BasicContentMsg(header, content);
-        logger.trace("{} conn proxy server send:{} to:{}", new Object[]{content.connId, content, client});
+        logger.trace("n:{} c:{} conn proxy server send:{} to:{}", new Object[]{self.getId(), content.connId, content, client});
         proxy.trigger(msg, network);
       });
     }
@@ -171,7 +170,8 @@ public class ConnProxy {
       @Override
       public void handle(ConnMsgs.Client content, KContentMsg<KAddress, ?, ConnMsgs.Client> container) {
         KAddress clientAddress = container.getHeader().getSource();
-        logger.trace("{} conn proxy server rec:{} from:{}", new Object[]{content.connId, content, clientAddress});
+        logger.trace("n:{} c:{} conn proxy server rec:{} from:{}", 
+          new Object[]{self.getId(),content.connId, content, clientAddress});
         server.handleContent(clientAddress, content);
       }
     };

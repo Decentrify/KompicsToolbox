@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.util;
+package se.sics.ktoolbox.nutil.conn.base.util;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -28,12 +29,14 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
+import se.sics.ktoolbox.nutil.conn.ConnCtrl;
 import se.sics.ktoolbox.nutil.conn.ConnHelper;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnProxy;
 import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.Connection;
+import se.sics.ktoolbox.nutil.conn.util.TestConnHelper;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
@@ -50,43 +53,53 @@ public class ConnProxyClientComp extends ComponentDefinition {
   private Positive<Timer> timerPort = requires(Timer.class);
   private TimerProxy timer;
 
-  private final ConnProxy.Client connMngr;
+  private final ConnProxy.Client client;
   private final ConnConfig connConfig;
   private final Init init;
   private final IdentifierFactory msgIds;
   private final IdentifierFactory connBaseIds;
   
   private ConnIds.InstanceId clientId;
+  private UUID periodicUpdate;
 
   public ConnProxyClientComp(Init init) {
     this.init = init;
     msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
     connBaseIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.CONN_INSTANCE, Optional.of(1235l));
     connConfig = new ConnConfig(1000);
-    connMngr = new ConnProxy.Client(init.selfAddress);
-    timer = new TimerProxyImpl().setup(proxy, logger);
+    client = new ConnProxy.Client(init.selfAddress);
+    timer = new TimerProxyImpl();
     subscribe(handleStart, control);
   }
   
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      connMngr.setup(proxy, logger);
+      timer.setup(proxy, logger);
+      client.setup(proxy, logger);
       Identifier nodeId = init.selfAddress.getId();
       Identifier instanceId = connBaseIds.randomId();
       clientId = new ConnIds.InstanceId(init.overlayId, nodeId, init.batchId, instanceId, false);
-      ConnHelper.SimpleConnCtrl clientCtrl = new ConnHelper.SimpleConnCtrl();
+      ConnCtrl clientCtrl = new TestConnHelper.AutoCloseClientCtrl<>(5);
       ConnState.Empty initState = new ConnState.Empty();
-      Connection.Client client = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
-      connMngr.add(clientId, client);
-      timer.scheduleTimer(1000, connect());
+      Connection.Client cClient = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
+      client.set(clientId, cClient);
+      timer.scheduleTimer(connConfig.checkPeriod, connect());
     }
   };
 
   private Consumer<Boolean> connect() {
     return (_ignore) -> {
       logger.trace("{}connect", init.batchId);
-      connMngr.connect(init.serverId, init.serverAddress);
+      client.connect(init.serverId, init.serverAddress);
+      periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
+    };
+  }
+  
+  private Consumer<Boolean> update() {
+    return (_ignore) -> {
+      logger.trace("client update");
+      client.update(new ConnState.Empty());
     };
   }
 
@@ -95,7 +108,6 @@ public class ConnProxyClientComp extends ComponentDefinition {
     public final Identifier overlayId;
     public final Identifier batchId;
     public final KAddress selfAddress;
-
     public final KAddress serverAddress;
     public final InstanceId serverId;
 

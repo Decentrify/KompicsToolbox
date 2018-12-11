@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.test;
+package se.sics.ktoolbox.nutil.conn.base.test;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -51,13 +51,14 @@ public class ConnectionTest {
       + File.separator + "ktoolbox"
       + File.separator + "nutil"
       + File.separator + "conn"
+      + File.separator + "base"
       + File.separator + "test"
       + File.separator + "log4j.properties";
     System.setProperty("log4j.configuration", new File(log4jFile).toURI().toURL().toString());
     IdentifierRegistryV2.registerBaseDefaults1(64, 1234l);
   }
 
-  @Ignore //run manually 
+//  @Ignore //run manually 
   @Test
   public void testSimpleProxy() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());
@@ -71,13 +72,13 @@ public class ConnectionTest {
     Identifier serverBatchId = ids.id(new BasicBuilders.IntBuilder(1));
     Identifier serverBaseId = ids.id(new BasicBuilders.IntBuilder(1));
 
-    Init init = new se.sics.ktoolbox.nutil.conn.simpleProxy.HostComp.Init(overlayId, serverAdr, clientAdr, 
+    Init init = new se.sics.ktoolbox.nutil.conn.base.simpleProxy.HostComp.Init(overlayId, serverAdr, clientAdr, 
       serverBatchId, serverBaseId);
     if (Kompics.isOn()) {
       Kompics.shutdown();
     }
     // Yes 20 is totally arbitrary
-    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.simpleProxy.HostComp.class, init,
+    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.base.simpleProxy.HostComp.class, init,
       Runtime.getRuntime().availableProcessors(), 20);
     try {
       Kompics.waitForTermination();
@@ -100,13 +101,13 @@ public class ConnectionTest {
     Identifier serverBatchId = ids.id(new BasicBuilders.IntBuilder(1));
     Identifier serverBaseId = ids.id(new BasicBuilders.IntBuilder(1));
 
-    Init init = new se.sics.ktoolbox.nutil.conn.simpleProxyMngr.HostComp.Init(overlayId, serverAdr, clientAdr, 
+    Init init = new se.sics.ktoolbox.nutil.conn.base.simpleProxyMngr.HostComp.Init(overlayId, serverAdr, clientAdr, 
       serverBatchId, serverBaseId);
     if (Kompics.isOn()) {
       Kompics.shutdown();
     }
     // Yes 20 is totally arbitrary
-    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.simpleProxyMngr.HostComp.class, init,
+    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.base.simpleProxyMngr.HostComp.class, init,
       Runtime.getRuntime().availableProcessors(), 20);
     try {
       Kompics.waitForTermination();
@@ -139,7 +140,7 @@ public class ConnectionTest {
     Identifier serverBaseId3 = ids.id(new BasicBuilders.IntBuilder(3));
     Identifier serverBaseId4 = ids.id(new BasicBuilders.IntBuilder(4));
 
-    Init init = new se.sics.ktoolbox.nutil.conn.multi2by2with2.HostComp.Init(overlayId, serverAdr1, serverAdr2,
+    Init init = new se.sics.ktoolbox.nutil.conn.base.multi2by2with2.HostComp.Init(overlayId, serverAdr1, serverAdr2,
       serverBatchId1, serverBaseId1, serverBatchId2, serverBaseId2,
       serverBatchId3, serverBaseId3, serverBatchId4, serverBaseId4,
       clientAdr1, clientAdr2);
@@ -147,7 +148,7 @@ public class ConnectionTest {
       Kompics.shutdown();
     }
     // Yes 20 is totally arbitrary
-    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.multi2by2with2.HostComp.class, init,
+    Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.base.multi2by2with2.HostComp.class, init,
       Runtime.getRuntime().availableProcessors(), 20);
     try {
       Kompics.waitForTermination();

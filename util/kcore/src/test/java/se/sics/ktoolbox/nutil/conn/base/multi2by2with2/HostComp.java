@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn.multi2by2with2;
+package se.sics.ktoolbox.nutil.conn.base.multi2by2with2;
 
 import se.sics.ktoolbox.nutil.conn.util.NetworkEmulator;
 import java.util.HashMap;

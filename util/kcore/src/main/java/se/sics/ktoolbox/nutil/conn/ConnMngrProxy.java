@@ -19,7 +19,6 @@
 package se.sics.ktoolbox.nutil.conn;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,14 +88,14 @@ public class ConnMngrProxy {
     server.setup(timer, serverNetworkSend(), logger);
     servers.put(serverId, server);
   }
-  
+
   public List<ConnIds.InstanceId> overlayServers(Identifier overlayId) {
     List<ConnIds.InstanceId> result = servers.keySet().parallelStream()
       .filter((serverId) -> serverId.overlayId.equals(overlayId))
       .collect(Collectors.toList());
     return result;
   }
-  
+
   public void addClient(InstanceId clientId, Connection.Client client) {
     logger.info("conn mngr proxy client:{} add", clientId);
     client.setup(timer, clientNetworkSend(), logger);
@@ -179,22 +178,30 @@ public class ConnMngrProxy {
   };
 
   ClassMatchedHandler handleClient
-    = new ClassMatchedHandler<ConnMsgs.Client, KContentMsg<KAddress, ?, ConnMsgs.Client>>() {
+    = new ClassMatchedHandler<ConnMsgs.Client<ConnState>, KContentMsg<KAddress, ?, ConnMsgs.Client<ConnState>>>() {
 
     @Override
-    public void handle(ConnMsgs.Client content, KContentMsg<KAddress, ?, ConnMsgs.Client> container) {
+    public void handle(ConnMsgs.Client<ConnState> content, KContentMsg<KAddress, ?, ConnMsgs.Client<ConnState>> container) {
       KAddress clientAddress = container.getHeader().getSource();
       logger.trace("{} conn mngr proxy server rec:{} from:{}", new Object[]{content.connId, content, clientAddress});
       Connection.Server server = servers.get(content.connId.serverId);
       if (server == null) {
-        Pair<ConnStatus, Optional<Connection.Server>> connect = serverListener.connect(content.connId, content.status,
-          clientAddress, content.state);
-        if (connect.getValue0().equals(ConnStatus.Base.CONNECTED)) {
-          server = connect.getValue1().get().setup(timer, serverNetworkSend(), logger);
-          servers.put(server.serverId, server);
-          server.handleContent(clientAddress, content);
-        } else if (connect.getValue0().equals(ConnStatus.Base.DISCONNECTED)) {
-          ConnMsgs.Server reply = content.reply(connect.getValue0());
+        if (content.status.equals(ConnStatus.Base.CONNECT)) {
+          ConnState state = content.state.get();
+          Pair<ConnStatus, Optional<Connection.Server>> connect = serverListener.connect(content.connId, content.status,
+            clientAddress, state);
+          ConnStatus decidedStatus = connect.getValue0();
+          if (decidedStatus.equals(ConnStatus.Base.CONNECTED)) {
+            Connection.Server protoServer = connect.getValue1().get();
+            server = protoServer.setup(timer, serverNetworkSend(), logger);
+            servers.put(server.serverId, server);
+            server.handleContent(clientAddress, content);
+          } else {
+            ConnMsgs.Server reply = ConnMsgs.serverDisconnect(content.msgId, content.connId);
+            serverNetworkSend().accept(clientAddress, reply);
+          }
+        } else {
+          ConnMsgs.Server reply = ConnMsgs.serverDisconnect(content.msgId, content.connId);
           serverNetworkSend().accept(clientAddress, reply);
         }
       } else {

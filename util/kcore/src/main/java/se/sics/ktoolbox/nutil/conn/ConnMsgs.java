@@ -38,11 +38,11 @@ public class ConnMsgs {
     public final ConnStatus status;
     public final Optional<O> state;
 
-    protected Base(Identifier msgId, ConnId connId, ConnStatus status, Optional<O> state) {
+    public Base(Identifier msgId, ConnId connId, ConnStatus status, Optional<O> state) {
       this.msgId = msgId;
       this.connId = connId;
-      this.state = state;
       this.status = status;
+      this.state = state;
     }
 
     @Override
@@ -58,20 +58,12 @@ public class ConnMsgs {
 
   public static class Client<C extends ConnState> extends Base<C> {
 
-    public Client(Identifier msgId, ConnId connId, ConnStatus status, C state) {
-      super(msgId, connId, status, Optional.of(state));
-    }
-
-    public Client(Identifier msgId, ConnId connId, ConnStatus status) {
+    Client(Identifier msgId, ConnId connId, ConnStatus status) {
       super(msgId, connId, status, Optional.empty());
     }
 
-    public <S extends ConnState> Server<S> reply(ConnStatus status, S state) {
-      return new Server(msgId, connId, status, state);
-    }
-    
-    public <S extends ConnState> Server<S> reply(ConnStatus status) {
-      return new Server(msgId, connId, status);
+    Client(Identifier msgId, ConnId connId, ConnStatus status, C state) {
+      super(msgId, connId, status, Optional.of(state));
     }
 
     @Override
@@ -82,17 +74,53 @@ public class ConnMsgs {
 
   public static class Server<S extends ConnState> extends Base<S> {
 
-    public Server(Identifier msgId, ConnId connId, ConnStatus status, S state) {
-      super(msgId, connId, status, Optional.of(state));
-    }
-    
-    public Server(Identifier msgId, ConnId connId, ConnStatus status) {
+    Server(Identifier msgId, ConnId connId, ConnStatus status) {
       super(msgId, connId, status, Optional.empty());
+    }
+
+    Server(Identifier msgId, ConnId connId, ConnStatus status, S state) {
+      super(msgId, connId, status, Optional.of(state));
     }
 
     @Override
     public String toString() {
       return "Server{" + "status=" + status + '}';
     }
+  }
+  
+  public static <C extends ConnState> Client clientConnect(Identifier msgId, ConnIds.ConnId connId, C state) {
+    return new Client(msgId, connId, ConnStatus.Base.CONNECT, state);
+  }
+  
+  public static <C extends ConnState> Server serverConnected(Identifier msgId, ConnIds.ConnId connId, C state) {
+    return new Server(msgId, connId, ConnStatus.Base.CONNECTED, state);
+  }
+  
+  public static <C extends ConnState> Client clientConnectedAck(Identifier msgId, ConnIds.ConnId connId) {
+    return new Client(msgId, connId, ConnStatus.Base.CONNECTED_ACK);
+  }
+  
+  public static <C extends ConnState> Client clientState(Identifier msgId, ConnIds.ConnId connId, C state) {
+    return new Client(msgId, connId, ConnStatus.Base.CLIENT_STATE, state);
+  }
+  
+  public static <C extends ConnState> Server serverState(Identifier msgId, ConnIds.ConnId connId, C state) {
+    return new Server(msgId, connId, ConnStatus.Base.SERVER_STATE, state);
+  }
+  
+  public static <C extends ConnState> Client clientHeartbeat(Identifier msgId, ConnIds.ConnId connId) {
+    return new Client(msgId, connId, ConnStatus.Base.HEARTBEAT);
+  }
+  
+  public static <C extends ConnState> Server serverHeartbeat(Identifier msgId, ConnIds.ConnId connId) {
+    return new Server(msgId, connId, ConnStatus.Base.HEARTBEAT_ACK);
+  }
+  
+  public static <C extends ConnState> Client clientDisconnect(Identifier msgId, ConnIds.ConnId connId) {
+    return new Client(msgId, connId, ConnStatus.Base.DISCONNECT);
+  }
+  
+  public static <C extends ConnState> Server serverDisconnect(Identifier msgId, ConnIds.ConnId connId) {
+    return new Server(msgId, connId, ConnStatus.Base.DISCONNECTED);
   }
 }

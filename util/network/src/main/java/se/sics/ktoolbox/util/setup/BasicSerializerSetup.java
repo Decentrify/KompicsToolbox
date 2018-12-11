@@ -175,7 +175,7 @@ public class BasicSerializerSetup {
         Serializers.register(new ConnMsgsSerializer.Server(currentId++), BasicSerializers.ConnMsgsServer.serializerName);
         Serializers.register(BasicSerializers.ConnMsgsServer.serializedClass, 
           BasicSerializers.ConnMsgsServer.serializerName);
-
+        
         Serializers.register(new EmptyConnStateSerializer(currentId++), BasicSerializers.ConnEmptyState.serializerName);
         Serializers.register(BasicSerializers.ConnEmptyState.serializedClass, 
           BasicSerializers.ConnEmptyState.serializerName);
