@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
+import java.util.Optional;
 import org.slf4j.Logger;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentProxy;
@@ -29,6 +30,7 @@ import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.TupleHelper;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -77,7 +79,7 @@ public class ConnProxy {
 
     public void connect(InstanceId serverId, KAddress serverAddress) {
       logger.info("conn mngr proxy client:{} connect to:{}", client.clientId, serverId);
-      client.connect(serverId, serverAddress);
+      client.connect(serverId, serverAddress, Optional.empty());
     }
 
     public void close() {
@@ -120,6 +122,7 @@ public class ConnProxy {
     private Positive<Timer> timerPort;
     private TimerProxy timer;
 
+    private IdentifierFactory msgIds;
     private ConnIds.InstanceId serverId;
     private Connection.Server server;
 
@@ -127,9 +130,10 @@ public class ConnProxy {
       this.self = self;
     }
 
-    public ConnProxy.Server setup(ComponentProxy proxy, Logger logger) {
+    public ConnProxy.Server setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds) {
       this.logger = logger;
       this.proxy = proxy;
+      this.msgIds = msgIds;
 
       network = proxy.getNegative(Network.class).getPair();
       timerPort = proxy.getNegative(Timer.class).getPair();
@@ -142,7 +146,7 @@ public class ConnProxy {
 
     public void add(ConnIds.InstanceId serverId, Connection.Server server) {
       this.serverId = serverId;
-      this.server = server.setup(timer, networkSend(), logger);
+      this.server = server.setup(timer, networkSend(), logger, msgIds);
       logger.info("conn proxy {}", serverId);
     }
 

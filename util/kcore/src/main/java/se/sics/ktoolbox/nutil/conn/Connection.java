@@ -18,7 +18,6 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
-import com.google.common.collect.HashBasedTable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,8 +26,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
-import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.util.TupleHelper;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
@@ -41,7 +38,7 @@ public class Connection {
 
   public static class Client<S extends ConnState, C extends ConnState> {
 
-    public final InstanceId clientId;
+    public final ConnIds.InstanceId clientId;
     private final ConnCtrl<C, S> ctrl;
     private final ConnConfig config;
     private final IdentifierFactory msgIds;
@@ -51,15 +48,11 @@ public class Connection {
     private Logger logger;
 
     private UUID periodicCheck;
-
-    private final Map<ConnId, ServerState> servers = new HashMap<>();
-
+    private final Map<ConnIds.ConnId, ClientConn> connections = new HashMap<>();
     private C state;
-    private ConnStatus.System systemStatus;
 
-    
-
-    public Client(InstanceId clientId, ConnCtrl<C, S> ctrl, ConnConfig config, IdentifierFactory msgIds, C state) {
+    public Client(ConnIds.InstanceId clientId, ConnCtrl<C, S> ctrl, ConnConfig config, IdentifierFactory msgIds,
+      C state) {
       this.clientId = clientId;
       this.ctrl = ctrl;
       this.config = config;
@@ -76,154 +69,281 @@ public class Connection {
       return this;
     }
 
+    private Consumer<Boolean> periodicCheck() {
+      return (_ignore) -> {
+        Iterator<ClientConn> it = connections.values().iterator();
+        while (it.hasNext()) {
+          ClientConn conn = it.next();
+          ConnStatus.Decision decision = conn.period();
+          if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
+            it.remove();
+          }
+        }
+      };
+    }
+
     public void close() {
-      servers.entrySet().forEach((server) -> {
-        ConnId connId = server.getKey();
-        KAddress serverAddress = server.getValue().address;
-        ctrl.close(connId);
-        ConnMsgs.Client content = ConnMsgs.clientDisconnect(msgIds.randomId(), connId);
-        networkSend.accept(serverAddress, content);
-      });
+      connections.values().forEach((conn) -> conn.close());
       if (periodicCheck != null) {
         timer.cancelPeriodicTimer(periodicCheck);
         periodicCheck = null;
       }
     }
 
-    public void connect(InstanceId serverId, KAddress server) {
-      ConnId connId = new ConnId(serverId, clientId);
-      ConnMsgs.Client msg = ConnMsgs.clientConnect(msgIds.randomId(), connId, state);
-      networkSend.accept(server, msg);
+    public void connect(ConnIds.InstanceId serverId, KAddress server, Optional<S> serverState) {
+      ConnIds.ConnId connId = new ConnIds.ConnId(serverId, clientId);
+      ClientConn conn = new ClientConn(ctrl, connId, server, state, msgIds, networkSend, logger, config);
+      ConnStatus.Decision decision = conn.connect(serverState);
+      if (ConnStatus.Decision.PROCEED.equals(decision)) {
+        connections.put(connId, conn);
+      }
     }
 
     public void update(C state) {
       this.state = state;
-      ctrl.selfUpdate(clientId, state).entrySet().forEach((server) -> {
-        ConnId connId = server.getKey();
-        ConnStatus decidedStatus = server.getValue();
-        ServerState serverState = servers.get(server.getKey());
-        if (serverState == null) {
-          throw new RuntimeException("weird");
+      Iterator<ClientConn> it = connections.values().iterator();
+      while (it.hasNext()) {
+        ClientConn conn = it.next();
+        ConnStatus.Decision decision = conn.update(state);
+        if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
+          it.remove();
         }
-        logger.debug("{} up:{}", connId, decidedStatus);
-        processUpdateDecision(connId, decidedStatus, serverState.address);
-      });
+      }
     }
 
-    private Consumer<Boolean> periodicCheck() {
-      return (_ignore) -> {
-        Iterator<Map.Entry<ConnId, ServerState>> it = servers.entrySet().iterator();
-        while (it.hasNext()) {
-          Map.Entry<ConnId, ServerState> aux = it.next();
-          ConnId connId = aux.getKey();
-          ServerState serverState = aux.getValue();
-          serverState.period();
-          if (serverState.isDead()) {
-            ctrl.close(connId);
-            it.remove();
-          } else {
-            ConnMsgs.Client content = ConnMsgs.clientHeartbeat(msgIds.randomId(), connId);
-            networkSend.accept(serverState.address, content);
-          }
-        }
-      };
-    }
-
-    public void handleContent(KAddress serverAddress, ConnMsgs.Server<S> content) {
+    public void handleContent(KAddress serverAdr, ConnMsgs.Server<S> content) {
       ConnIds.ConnId connId = content.connId;
-      ConnStatus status = content.status;
-      Identifier msgId = content.msgId;
-      logger.debug("{} partner:{}", connId, status);
-      if (ConnStatus.Base.CONNECTED.equals(status)) {
-        ConnStatus decidedStatus = ctrl.partnerUpdate(connId, state, status, serverAddress, content.state.get());
-        logger.debug("{} self:{}", connId, decidedStatus);
-        processConnectedDecision(connId, decidedStatus, msgId, serverAddress, content.state.get());
+      ClientConn conn = connections.get(connId);
+      if (conn == null) {
+        if (!ConnStatus.BaseServer.DISCONNECT.equals(content.getStatus())) {
+          ConnMsgs.Client resp = ConnMsgs.clientDisconnect(msgIds.randomId(), connId);
+          networkSend.accept(serverAdr, resp);
+        }
+        return;
+      }
+      ConnStatus.Decision decision = conn.handleContent(content);
+    }
+  }
+
+  static class ClientConn<S extends ConnState, C extends ConnState> {
+
+    final IdentifierFactory msgIds;
+    final TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend;
+    final ConnConfig config;
+    final Logger logger;
+    final ConnCtrl<C, S> ctrl;
+    final ConnIds.ConnId connId;
+    final KAddress serverAdr;
+    C selfState;
+    S serverState;
+    ConnStatus.System connStatus;
+    int missedHeartbeatAck = 0;
+
+    ClientConn(ConnCtrl<C, S> ctrl, ConnIds.ConnId connId, KAddress serverAddres, C selfState,
+      IdentifierFactory msgIds, TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend, Logger logger,
+      ConnConfig config) {
+      this.ctrl = ctrl;
+      this.connId = connId;
+      this.serverAdr = serverAddres;
+      this.selfState = selfState;
+      this.msgIds = msgIds;
+      this.networkSend = networkSend;
+      this.logger = logger;
+      this.config = config;
+      this.connStatus = ConnStatus.System.EMPTY;
+    }
+
+    ConnStatus.Decision connect(Optional<S> serverState) {
+      ConnStatus.Decision decision = ctrl.connect(connId, serverAdr, selfState, serverState);
+      if (ConnStatus.Decision.PROCEED.equals(decision)) {
+        if (serverState.isPresent()) {
+          this.serverState = serverState.get();
+        }
+        connect();
+      }
+      return decision;
+    }
+
+    void close() {
+      if (ConnStatus.System.EMPTY.equals(connStatus)) {
+        //nothing to do;
+        return;
+      }
+      disconnectAll();
+    }
+
+    ConnStatus.Decision update(C selfState) {
+      if (!ConnStatus.System.READY.equals(connStatus)) {
+        //nothing to do;
+        return ConnStatus.Decision.PROCEED;
+      }
+      this.selfState = selfState;
+      ConnStatus.Decision decision = ctrl.selfUpdate(connId, selfState, serverState);
+      switch (decision) {
+        case PROCEED: {
+          ConnMsgs.Client content = ConnMsgs.clientState(msgIds.randomId(), connId, selfState);
+          networkSend.accept(serverAdr, content);
+        }
+        break;
+        case DISCONNECT: {
+          disconnectAll();
+        }
+        break;
+        case NOTHING: {
+        }
+        break;
+        default:
+          throw new UnsupportedOperationException();
+      }
+      return decision;
+    }
+
+    ConnStatus.Decision period() {
+      if (!ConnStatus.System.READY.equals(connStatus)) {
+        //nothing to do;
+        return ConnStatus.Decision.PROCEED;
+      }
+      missedHeartbeatAck++;
+      if (missedHeartbeatAck > config.missedHeartbeats) {
+        disconnectAll();
+        return ConnStatus.Decision.DISCONNECT;
       } else {
-        ServerState serverState = servers.get(connId);
-        if (serverState == null) {
-          if (!ConnStatus.Base.DISCONNECTED.equals(status)) {
-            logger.debug("{} self:{}", connId, ConnStatus.Base.DISCONNECT);
-            disconnectMsg(connId, connId, serverAddress);
+        ConnMsgs.Client content = ConnMsgs.clientHeartbeat(msgIds.randomId(), connId);
+        networkSend.accept(serverAdr, content);
+        return ConnStatus.Decision.PROCEED;
+      }
+    }
+
+    public ConnStatus.Decision handleContent(ConnMsgs.Server<S> content) {
+      logger.debug("{} server:{}", connId, content.getStatus());
+      ConnStatus.Decision decision;
+      switch (connStatus) {
+        case EMPTY: {
+          //ignore all for the moment;
+          decision = ConnStatus.Decision.PROCEED;
+        }
+        break;
+        case SETUP: {
+          switch (content.getStatus()) {
+            case CONNECT: {
+              decision = ctrl.connected(connId, selfState, content.state.get());
+              switch (decision) {
+                case NOTHING:
+                case PROCEED: {
+                  connectAck(content);
+                }
+                break;
+                case DISCONNECT: {
+                  disconnectAll();
+                }
+                break;
+                default:
+                  throw new UnsupportedOperationException();
+              }
+            }
+            break;
+            case DISCONNECT: {
+              disconnectBase();
+              decision = ConnStatus.Decision.DISCONNECT;
+            }
+            break;
+            case HEARTBEAT:
+            case STATE: {
+              //ignore for the moment;
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            default:
+              throw new UnsupportedOperationException();
           }
-          return;
         }
-        if (ConnStatus.Base.HEARTBEAT_ACK.equals(status)) {
-          serverState.heartbeat();
-        } else if (ConnStatus.Base.DISCONNECTED.equals(status)) {
-          disconnectCleanup(connId);
-        } else if (ConnStatus.Base.SERVER_STATE.equals(status)) {
-          S newServerState = content.state.get();
-          ConnStatus decidedStatus = ctrl.partnerUpdate(connId, state, status, serverAddress, newServerState);
-          logger.debug("{} self:{}", connId, decidedStatus);
-          processStateDecision(connId, decidedStatus, msgId, serverAddress, newServerState);
+        break;
+        case READY: {
+          switch (content.getStatus()) {
+            case CONNECT: {
+              connectAckAgain(content);
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            case HEARTBEAT: {
+              missedHeartbeatAck = 0;
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            case STATE: {
+              decision = ctrl.serverUpdate(connId, selfState, content.state.get());
+              switch (decision) {
+                case PROCEED: {
+                  serverState = content.state.get();
+                }
+                break;
+                case NOTHING: {
+                }
+                break;
+                case DISCONNECT: {
+                  disconnectAll();
+                }
+                break;
+                default:
+                  throw new UnsupportedOperationException();
+              }
+            }
+            break;
+            default:
+              throw new UnsupportedOperationException();
+          }
         }
+        break;
+        default:
+          throw new UnsupportedOperationException();
       }
+      return decision;
     }
 
-    private void processConnectedDecision(ConnId connId, ConnStatus decided, Identifier msgId, KAddress peer, S state) {
-      if (decided.equals(ConnStatus.Base.CONNECTED_ACK)) {
-        servers.put(connId, new ServerState(connId.serverId, peer, config));
-        ConnMsgs.Client reply = ConnMsgs.clientConnectedAck(msgId, connId);
-        networkSend.accept(peer, reply);
-      } else if (decided.equals(ConnStatus.Base.DISCONNECTED)) {
-        disconnect(connId, msgId, peer);
-      } else {
-        throw new RuntimeException("weird:" + decided);
-      }
+    private void connect() {
+      connStatus = ConnStatus.System.SETUP;
+      ConnMsgs.Client msg = ConnMsgs.clientConnect(msgIds.randomId(), connId, selfState);
+      networkSend.accept(serverAdr, msg);
     }
 
-    private void processStateDecision(ConnId connId, ConnStatus decided, Identifier msgId, KAddress peer, S state) {
-      if (decided.equals(ConnStatus.Base.DISCONNECTED)) {
-        disconnect(connId, msgId, peer);
-      } else if (decided.equals(ConnStatus.Base.NOTHING)) {
-        //nothing
-      } else {
-        throw new RuntimeException("weird");
-      }
+    private void connectAck(ConnMsgs.Server<S> content) {
+      connStatus = ConnStatus.System.READY;
+      connectAckAgain(content);
     }
 
-    private void processUpdateDecision(ConnId connId, ConnStatus decided, KAddress peer) {
-      if (decided.equals(ConnStatus.Base.DISCONNECT)) {
-        disconnect(connId, msgIds.randomId(), peer);
-      } else if (decided.equals(ConnStatus.Base.CLIENT_STATE)) {
-        ConnMsgs.Client content = ConnMsgs.clientState(msgIds.randomId(), connId, state);
-        networkSend.accept(peer, content);
-      } else {
-        throw new RuntimeException("weird update:" + decided);
-      }
+    private void connectAckAgain(ConnMsgs.Server<S> content) {
+      serverState = content.state.get();
+      ConnMsgs.Client resp = ConnMsgs.clientConnectedAck(content.msgId, connId);
+      networkSend.accept(serverAdr, resp);
     }
 
-    private void disconnect(ConnId connId, Identifier msgId, KAddress peer) {
-      disconnectCleanup(connId);
-      disconnectMsg(connId, msgId, peer);
+    private void disconnectAll() {
+      disconnectBase();
+      ConnMsgs.Client content = ConnMsgs.clientDisconnect(msgIds.randomId(), connId);
+      networkSend.accept(serverAdr, content);
     }
 
-    private void disconnectCleanup(ConnId connId) {
-      servers.remove(connId);
+    private void disconnectBase() {
+      connStatus = ConnStatus.System.EMPTY;
       ctrl.close(connId);
-    }
-
-    private void disconnectMsg(ConnId connId, Identifier msgId, KAddress peer) {
-      ConnMsgs.Client reply = ConnMsgs.clientDisconnect(msgId, connId);
-      networkSend.accept(peer, reply);
     }
   }
 
   public static class Server<S extends ConnState, C extends ConnState> {
 
-    public final InstanceId serverId;
+    public final ConnIds.InstanceId serverId;
     private final ConnCtrl<S, C> ctrl;
     private final ConnConfig config;
-    private S state;
 
     private TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend;
     private TimerProxy timer;
     private Logger logger;
+    private IdentifierFactory msgIds;
     private UUID periodicCheck;
 
-    private final Map<ConnId, ClientState> clients = new HashMap<>();
+    private S state;
+    private final Map<ConnIds.ConnId, ServerConn> connections = new HashMap<>();
 
-    public Server(InstanceId serverId, ConnCtrl ctrl, ConnConfig config, S state) {
+    public Server(ConnIds.InstanceId serverId, ConnCtrl ctrl, ConnConfig config, S state) {
       this.serverId = serverId;
       this.ctrl = ctrl;
       this.config = config;
@@ -231,210 +351,286 @@ public class Connection {
     }
 
     public Server setup(TimerProxy timer, TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend,
-      Logger logger) {
+      Logger logger, IdentifierFactory msgIds) {
       this.timer = timer;
       this.networkSend = networkSend;
       this.logger = logger;
+      this.msgIds = msgIds;
       periodicCheck = timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
       return this;
     }
 
+    public void update(S state) {
+      this.state = state;
+      Iterator<ServerConn> it = connections.values().iterator();
+      while (it.hasNext()) {
+        ServerConn conn = it.next();
+        ConnStatus.Decision decision = conn.update(state);
+        if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
+          it.remove();
+        }
+      }
+    }
+
+    private Consumer<Boolean> periodicCheck() {
+      return (_ignore) -> {
+        Iterator<ServerConn> it = connections.values().iterator();
+        while (it.hasNext()) {
+          ServerConn conn = it.next();
+          ConnStatus.Decision decision = conn.period();
+          if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
+            it.remove();
+          }
+        }
+      };
+    }
+
     public void close() {
-      clients.entrySet().forEach((client) -> {
-        ConnId connId = client.getKey();
-        ClientState clientState = client.getValue();
-        ctrl.close(connId);
-        disconnectMsg(connId, clientState.connectMsgId, clientState.address);
-      });
+      connections.values().forEach((conn) -> conn.close());
       if (periodicCheck != null) {
         timer.cancelPeriodicTimer(periodicCheck);
         periodicCheck = null;
       }
     }
 
-    public void update(S state) {
-      this.state = state;
-      ctrl.selfUpdate(serverId, state).entrySet().forEach((client) -> {
-        ConnId connId = client.getKey();
-        ClientState clientState = clients.get(connId);
-        if (clientState == null) {
-          throw new RuntimeException("weird - client is disconnected?");
-        }
-        ConnStatus decidedStatus = client.getValue();
-        logger.debug("{} up:{}", connId, decidedStatus);
-        processUpdateDecision(connId, decidedStatus, clientState.connectMsgId, clientState.address);
-      });
-    }
-
-    public void handleContent(KAddress clientAddress, ConnMsgs.Base<C> content) {
+    public void handleContent(KAddress serverAdr, ConnMsgs.Client<C> content) {
       ConnIds.ConnId connId = content.connId;
-      ConnStatus status = content.status;
-      logger.debug("{} partner:{}", connId, status);
-      if (ConnStatus.Base.CONNECT.equals(status)) {
-        C newClientState = content.state.get();
-        ConnStatus decidedStatus = ctrl.partnerUpdate(connId, state, status, clientAddress, newClientState);
-        logger.debug("{} self:{}", connId, decidedStatus);
-        processConnectDecision(connId, decidedStatus, content.msgId, clientAddress, newClientState);
-      } else {
-        ClientState<C> clientState = clients.get(connId);
-        if (clientState == null) {
-          if (!ConnStatus.Base.DISCONNECT.equals(status)) {
-            logger.debug("{} self:{}", connId, ConnStatus.Base.DISCONNECTED);
-            disconnectMsg(connId, content.msgId, clientAddress);
-          }
-          return;
-        }
-        if (ConnStatus.Base.HEARTBEAT.equals(status)) {
-          clientState.heartbeat();
-          ConnMsgs.Server reply = ConnMsgs.serverHeartbeat(content.msgId, content.connId);
-          networkSend.accept(clientAddress, reply);
-        } else if (ConnStatus.Base.DISCONNECT.equals(status)) {
-          disconnectCleanup(connId);
-        } else if (ConnStatus.Base.CONNECTED_ACK.equals(status)) {
-          ConnStatus decidedStatus = ctrl.partnerUpdate(connId, state, status, clientAddress, clientState.state);
-          logger.debug("{} self:{}", connId, decidedStatus);
-          processOtherDecision(connId, decidedStatus, content.msgId, clientAddress);
-        } else if (ConnStatus.Base.CLIENT_STATE.equals(status)) {
-          C newClientState = content.state.get();
-          ConnStatus decidedStatus = ctrl.partnerUpdate(connId, state, status, clientAddress, newClientState);
-          logger.debug("{} self:{}", connId, decidedStatus);
-          processOtherDecision(connId, decidedStatus, content.msgId, clientAddress);
-        }
+      ServerConn conn = connections.get(connId);
+      if (conn == null) {
+        conn = new ServerConn(ctrl, connId, serverAdr, state, msgIds, networkSend, logger, config);
+        connections.put(connId, conn);
       }
-    }
-
-    private void processConnectDecision(ConnId connId, ConnStatus decided, Identifier msgId, KAddress peer, C state) {
-      if (decided.equals(ConnStatus.Base.CONNECTED)) {
-        clients.put(connId, new ClientState(peer, msgId, state, config));
-        ConnMsgs.Server reply = ConnMsgs.serverConnected(msgId, connId, state);
-        networkSend.accept(peer, reply);
-      } else if (decided.equals(ConnStatus.Base.DISCONNECTED)) {
-        disconnect(connId, msgId, peer);
-      } else {
-        throw new RuntimeException("weird:" + decided);
+      ConnStatus.Decision decision = conn.handleContent(content);
+      if(ConnStatus.Decision.DISCONNECT.equals(decision)) {
+        connections.remove(connId);
       }
-    }
-
-    private void processUpdateDecision(ConnId connId, ConnStatus decided, Identifier msgId, KAddress peer) {
-      if (decided.equals(ConnStatus.Base.DISCONNECTED)) {
-        disconnect(connId, msgId, peer);
-      } else if (decided.equals(ConnStatus.Base.SERVER_STATE)) {
-        ConnMsgs.Server content = ConnMsgs.serverState(msgId, connId, state);
-        networkSend.accept(peer, content);
-      } else {
-        throw new RuntimeException("unknown:" + decided);
-      }
-    }
-
-    private void processOtherDecision(ConnId connId, ConnStatus status, Identifier msgId, KAddress peer) {
-      if (status.equals(ConnStatus.Base.DISCONNECTED)) {
-        disconnect(connId, msgId, peer);
-      } else if (status.equals(ConnStatus.Base.NOTHING)) {
-        //nothing
-      } else {
-        throw new RuntimeException("weird");
-      }
-    }
-
-    private void disconnect(ConnId connId, Identifier msgId, KAddress peer) {
-      disconnectCleanup(connId);
-      disconnectMsg(connId, msgId, peer);
-    }
-
-    private void disconnectCleanup(ConnId connId) {
-      clients.remove(connId);
-      ctrl.close(connId);
-    }
-
-    private void disconnectMsg(ConnId connId, Identifier msgId, KAddress peer) {
-      ConnMsgs.Server reply = ConnMsgs.serverDisconnect(msgId, connId);
-      networkSend.accept(peer, reply);
-    }
-
-    private Consumer<Boolean> periodicCheck() {
-      return (_ignore) -> {
-        Iterator<Map.Entry<ConnId, ClientState>> it = clients.entrySet().iterator();
-        while (it.hasNext()) {
-          Map.Entry<ConnId, ClientState> aux = it.next();
-          ConnId connId = aux.getKey();
-          ClientState clientState = aux.getValue();
-          clientState.period();
-          if (clientState.isDead()) {
-            ctrl.close(connId);
-            it.remove();
-          }
-        }
-      };
     }
   }
 
-  public static class ServerState {
+  public static class ServerConn<S extends ConnState, C extends ConnState> {
 
-    public final ConnConfig config;
-    public final Identifier id;
-    public final KAddress address;
+    final IdentifierFactory msgIds;
+    final TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend;
+    final ConnConfig config;
+    final Logger logger;
 
-    private int missedHeartbeatAck = 0;
+    final ConnCtrl<S, C> ctrl;
+    final ConnIds.ConnId connId;
+    final KAddress clientAdr;
+    S selfState;
+    C clientState;
+    ConnStatus.System connStatus;
+    int missedHeartbeatAck = 0;
 
-    public ServerState(Identifier id, KAddress address, ConnConfig config) {
-      this.id = id;
-      this.address = address;
-      this.config = config;
-    }
-
-    public void heartbeat() {
-      missedHeartbeatAck = 0;
-    }
-
-    public void period() {
-      missedHeartbeatAck++;
-    }
-
-    public boolean isDead() {
-      return missedHeartbeatAck > config.missedHeartbeats;
-    }
-  }
-
-  public static class ClientState<C extends ConnState> {
-
-    public final ConnConfig config;
-
-    public final KAddress address;
-    public final Identifier connectMsgId;
-    public final C state;
-
-    private int missedHeartbeat = 0;
-
-    public ClientState(KAddress address, Identifier connectMsgId, C state, ConnConfig config) {
-      this.address = address;
-      this.connectMsgId = connectMsgId;
-      this.state = state;
-      this.config = config;
-    }
-
-    public void heartbeat() {
-      missedHeartbeat = 0;
-    }
-
-    public void period() {
-      missedHeartbeat++;
-    }
-
-    public boolean isDead() {
-      return missedHeartbeat > config.missedHeartbeats;
-    }
-  }
-
-  public static class ServerSendState {
-
-    public final Identifier msgId;
-    public final ConnIds.ConnId connId;
-    public final KAddress serverAdr;
-
-    public ServerSendState(Identifier msgId, ConnIds.ConnId connId, KAddress serverAdr) {
-      this.msgId = msgId;
+    ServerConn(ConnCtrl<S, C> ctrl, ConnIds.ConnId connId, KAddress clientAdr, S selfState,
+      IdentifierFactory msgIds, TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend, Logger logger,
+      ConnConfig config) {
+      this.ctrl = ctrl;
       this.connId = connId;
-      this.serverAdr = serverAdr;
+      this.clientAdr = clientAdr;
+      this.selfState = selfState;
+      this.msgIds = msgIds;
+      this.networkSend = networkSend;
+      this.logger = logger;
+      this.config = config;
+      this.connStatus = ConnStatus.System.EMPTY;
+    }
+
+    void close() {
+      if (ConnStatus.System.EMPTY.equals(connStatus)) {
+        //nothing to do;
+        return;
+      }
+      disconnectAll(msgIds.randomId());
+    }
+
+    ConnStatus.Decision update(S selfState) {
+      if (!ConnStatus.System.READY.equals(connStatus)) {
+        //nothing to do;
+        return ConnStatus.Decision.PROCEED;
+      }
+      this.selfState = selfState;
+      ConnStatus.Decision decision = ctrl.selfUpdate(connId, selfState, clientState);
+      switch (decision) {
+        case PROCEED: {
+          ConnMsgs.Server content = ConnMsgs.serverState(msgIds.randomId(), connId, selfState);
+          networkSend.accept(clientAdr, content);
+        }
+        break;
+        case NOTHING: {
+        }
+        break;
+        case DISCONNECT: {
+          disconnectAll(msgIds.randomId());
+        }
+        break;
+      }
+      return decision;
+    }
+
+    ConnStatus.Decision period() {
+      //period goes through all system states. If you do not get to ready state until your heartbeat times out, you are too slow.
+      missedHeartbeatAck++;
+      if (missedHeartbeatAck > config.missedHeartbeats) {
+        disconnectAll(msgIds.randomId());
+        return ConnStatus.Decision.DISCONNECT;
+      }
+      return ConnStatus.Decision.PROCEED;
+    }
+
+    public ConnStatus.Decision handleContent(ConnMsgs.Client<C> content) {
+      logger.debug("{} client:{}", connId, content.getStatus());
+      missedHeartbeatAck = 0;
+      ConnStatus.Decision decision;
+      switch (connStatus) {
+        case EMPTY: {
+          switch (content.getStatus()) {
+            case CONNECT: {
+              clientState = content.state.get();
+              decision = ctrl.connect(connId, clientAdr, selfState, Optional.of(clientState));
+              switch (decision) {
+                case NOTHING:
+                case PROCEED: {
+                  connected(content);
+                }
+                break;
+                case DISCONNECT: {
+                  disconnectAll(content.msgId);
+                }
+                break;
+                default:
+                  throw new UnsupportedOperationException();
+              }
+            }
+            break;
+            case DISCONNECT: {
+              disconnectBase();
+              decision = ConnStatus.Decision.DISCONNECT;
+            }
+            break;
+            case CONNECT_ACK:
+            case HEARTBEAT:
+            case STATE: {
+              //ignore for the moment;
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            default:
+              throw new UnsupportedOperationException();
+          }
+        }
+        break;
+        case SETUP: {
+          switch (content.getStatus()) {
+            case CONNECT: {
+              connectedAgain(content);
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            case CONNECT_ACK: {
+              connStatus = ConnStatus.System.READY;
+              decision = ctrl.connected(connId, selfState, clientState);
+              if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
+                disconnectAll(content.msgId);
+              }
+            }
+            break;
+            case DISCONNECT: {
+              disconnectBase();
+              decision = ConnStatus.Decision.DISCONNECT;
+            }
+            break;
+            case HEARTBEAT:
+            case STATE: {
+              //ignore for the moment;
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            default:
+              throw new UnsupportedOperationException();
+          }
+        }
+        break;
+        case READY: {
+          switch (content.getStatus()) {
+            case CONNECT: {
+              connectedAgain(content);
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            case HEARTBEAT: {
+              heartbeat(content);
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            break;
+            case STATE: {
+              decision = ctrl.serverUpdate(connId, selfState, content.state.get());
+              switch (decision) {
+                case NOTHING:
+                case PROCEED: {
+                  state(content);
+                }
+                break;
+                case DISCONNECT: {
+                  disconnectAll(content.msgId);
+                }
+                break;
+                default:
+                  throw new UnsupportedOperationException();
+              }
+            }
+            break;
+            case DISCONNECT: {
+              disconnectBase();
+              decision = ConnStatus.Decision.DISCONNECT;
+            }
+            break;
+            case CONNECT_ACK: {
+              //ignore;
+              decision = ConnStatus.Decision.PROCEED;
+            }
+            default:
+              throw new UnsupportedOperationException();
+          }
+        }
+        break;
+        default:
+          throw new UnsupportedOperationException();
+      }
+      return decision;
+    }
+
+    private void heartbeat(ConnMsgs.Client<C> req) {
+      ConnMsgs.Server resp = ConnMsgs.serverHeartbeat(req.msgId, connId);
+      networkSend.accept(clientAdr, resp);
+    }
+
+    private void state(ConnMsgs.Client<C> req) {
+      clientState = req.state.get();
+      ConnMsgs.Server resp = ConnMsgs.serverHeartbeat(req.msgId, connId);
+      networkSend.accept(clientAdr, resp);
+    }
+
+    private void connected(ConnMsgs.Client<C> req) {
+      connStatus = ConnStatus.System.SETUP;
+      connectedAgain(req);
+    }
+
+    private void connectedAgain(ConnMsgs.Client<C> req) {
+      clientState = req.state.get();
+      ConnMsgs.Server resp = ConnMsgs.serverConnected(req.msgId, connId, selfState);
+      networkSend.accept(clientAdr, resp);
+    }
+
+    private void disconnectAll(Identifier msgId) {
+      disconnectBase();
+      ConnMsgs.Server content = ConnMsgs.serverDisconnect(msgId, connId);
+      networkSend.accept(clientAdr, content);
+    }
+
+    private void disconnectBase() {
+      connStatus = ConnStatus.System.EMPTY;
+      ctrl.close(connId);
     }
   }
 }

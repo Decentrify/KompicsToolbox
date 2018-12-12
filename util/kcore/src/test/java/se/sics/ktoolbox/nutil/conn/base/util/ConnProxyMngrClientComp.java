@@ -29,12 +29,14 @@ import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
+import se.sics.ktoolbox.nutil.conn.ConnCtrl;
 import se.sics.ktoolbox.nutil.conn.ConnHelper;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
 import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.Connection;
+import se.sics.ktoolbox.nutil.conn.util.TestConnHelper;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
@@ -74,11 +76,11 @@ public class ConnProxyMngrClientComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      connMngr.setup(proxy, logger);
+      connMngr.setup(proxy, logger, msgIds);
       Identifier nodeId = init.selfAddress.getId();
       Identifier instanceId = connBaseIds.randomId();
       clientId = new ConnIds.InstanceId(init.overlayId, nodeId, init.batchId, instanceId, false);
-      ConnHelper.SimpleClientConnCtrl clientCtrl = new ConnHelper.SimpleClientConnCtrl();
+      ConnCtrl clientCtrl = new TestConnHelper.AutoCloseClientCtrl<>(5);
       ConnState.Empty initState = new ConnState.Empty();
       Connection.Client client = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
       connMngr.addClient(clientId, client);

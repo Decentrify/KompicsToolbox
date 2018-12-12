@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Optional;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.util.Identifier;
@@ -74,7 +75,7 @@ public class CtrlWorkerTest {
     IdentifierRegistryV2.registerBaseDefaults1(64, 1234l);
   }
 
-//  @Ignore //run manually 
+  @Ignore //run manually 
   @Test
   public void testFilterMsgsOnOnePort() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());

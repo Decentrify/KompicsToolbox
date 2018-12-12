@@ -34,7 +34,6 @@ import se.sics.ktoolbox.nutil.conn.ConnConfig;
 import se.sics.ktoolbox.nutil.conn.ConnCtrl;
 import se.sics.ktoolbox.nutil.conn.ConnHelper;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
-import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
 import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.ConnStatus;
@@ -42,6 +41,9 @@ import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.nutil.conn.ServerListener;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -60,30 +62,29 @@ public class ConnProxyMngrServerComp extends ComponentDefinition {
 
   private UUID periodicUpdate;
   private Set<ConnIds.InstanceId> servers = new HashSet<>();
+  
+  private final IdentifierFactory msgIds;
 
   public ConnProxyMngrServerComp(Init init) {
     this.init = init;
     timer = new TimerProxyImpl();
     connConfig = new ConnConfig(1000);
     connMngr = new ConnMngrProxy(init.selfAddress, serverListener(connConfig));
+    msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
     subscribe(handleStart, control);
   }
 
   private ServerListener<ConnState.Empty> serverListener(ConnConfig connConfig) {
     return new ServerListener<ConnState.Empty>() {
       @Override
-      public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus,
+      public Pair<ConnStatus.Decision, Optional<Connection.Server>> connect(ConnIds.ConnId connId,
         KAddress peer, ConnState.Empty peerState) {
-        if (peerStatus.equals(ConnStatus.Base.CONNECT)) {
-          ConnIds.InstanceId serverId = connId.serverId;
-          servers.add(serverId);
-          ConnState.Empty initState = new ConnState.Empty();
-          ConnCtrl connCtrl = new ConnHelper.SimpleServerConnCtrl<>();
-          Connection.Server server = new Connection.Server<>(serverId, connCtrl, connConfig, initState);
-          return Pair.with(ConnStatus.Base.CONNECTED, Optional.of(server));
-        } else {
-          return Pair.with(ConnStatus.Base.DISCONNECTED, Optional.empty());
-        }
+        ConnIds.InstanceId serverId = connId.serverId;
+        servers.add(serverId);
+        ConnState.Empty initState = new ConnState.Empty();
+        ConnCtrl connCtrl = new ConnHelper.SimpleConnCtrl<>();
+        Connection.Server server = new Connection.Server<>(serverId, connCtrl, connConfig, initState);
+        return Pair.with(ConnStatus.Decision.PROCEED, Optional.of(server));
       }
     };
   }
@@ -92,11 +93,11 @@ public class ConnProxyMngrServerComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       timer.setup(proxy, logger);
-      connMngr.setup(proxy, logger);
+      connMngr.setup(proxy, logger, msgIds);
       periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
       if (init.serverId.isPresent()) {
         servers.add(init.serverId.get());
-        ConnHelper.SimpleServerConnCtrl serverCtrl = new ConnHelper.SimpleServerConnCtrl<>();
+        ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
         ConnState.Empty initState = new ConnState.Empty();
         Connection.Server server = new Connection.Server<>(init.serverId.get(), serverCtrl, connConfig, initState);
         connMngr.addServer(init.serverId.get(), server);

@@ -18,13 +18,9 @@
  */
 package se.sics.ktoolbox.nutil.conn;
 
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.javatuples.Pair;
 import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
-import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -35,78 +31,36 @@ public class ConnHelper {
   public static <C extends ConnState> ServerListener<C> noServerListener() {
     return new ServerListener<C>() {
       @Override
-      public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnId connId, ConnStatus peerStatus,
-        KAddress peer, C peerState) {
-        return Pair.with(ConnStatus.Base.DISCONNECTED, Optional.empty());
+      public Pair<ConnStatus.Decision, Optional<Connection.Server>> connect(ConnId connId, KAddress peer, C peerState) {
+        return Pair.with(ConnStatus.Decision.PROCEED, Optional.empty());
       }
     };
   }
   
-  public static class SimpleClientConnCtrl<S extends ConnState, P extends ConnState> implements ConnCtrl<S, P> {
-
-    private final HashSet<ConnId> connected = new HashSet<>();
+  public static class SimpleConnCtrl<S extends ConnState, P extends ConnState> implements ConnCtrl<S, P> {
 
     @Override
-    public Map<ConnId, ConnStatus> selfUpdate(InstanceId instanceId, S state) {
-      Map<ConnId, ConnStatus> updateAll = connected.stream()
-        .collect(Collectors.toMap((connId) -> connId, (connId) -> ConnStatus.Base.CLIENT_STATE));
-      return updateAll;
+    public ConnStatus.Decision connect(ConnId connId, KAddress partnerAdr, S selfState, Optional<P> partnerState) {
+      return ConnStatus.Decision.PROCEED;
     }
 
     @Override
-    public ConnStatus partnerUpdate(ConnId connId, S selfState,
-      ConnStatus peerStatus, KAddress peer, P peerState) {
-      if (peerStatus.equals(ConnStatus.Base.CONNECTED)) {
-        connected.add(connId);
-        return ConnStatus.Base.CONNECTED_ACK;
-      } else if (ConnStatus.Base.DISCONNECTED.equals(peerStatus)
-        || ConnStatus.Base.HEARTBEAT_ACK.equals(peerStatus)
-        || ConnStatus.Base.SERVER_STATE.equals(peerStatus)) {
-        return ConnStatus.Base.NOTHING;
-      } else {
-        throw new RuntimeException("ups");
-      }
+    public ConnStatus.Decision connected(ConnId connId, S selfState, P partnerState) {
+      return ConnStatus.Decision.PROCEED;
+    }
+
+    @Override
+    public ConnStatus.Decision selfUpdate(ConnId connId, S selfState, P partnerState) {
+      return ConnStatus.Decision.PROCEED;
+    }
+
+    @Override
+    public ConnStatus.Decision serverUpdate(ConnId connId, S selfState, P partnerState) {
+      return ConnStatus.Decision.PROCEED;
     }
 
     @Override
     public void close(ConnId connId) {
-      connected.remove(connId);
-    }
-  }
-
-  public static class SimpleServerConnCtrl<S extends ConnState, P extends ConnState> implements ConnCtrl<S, P> {
-
-    private final HashSet<ConnId> connected = new HashSet<>();
-
-    @Override
-    public Map<ConnId, ConnStatus> selfUpdate(InstanceId instanceId, S state) {
-      Map<ConnId, ConnStatus> updateAll = connected.stream()
-        .collect(Collectors.toMap((connId) -> connId, (connId) -> ConnStatus.Base.SERVER_STATE));
-      return updateAll;
-    }
-
-    @Override
-    public ConnStatus partnerUpdate(ConnId connId, S selfState,
-      ConnStatus peerStatus, KAddress peer, P peerState) {
-      if (peerStatus.equals(ConnStatus.Base.CONNECT)) {
-        return ConnStatus.Base.CONNECTED;
-      } else if (peerStatus.equals(ConnStatus.Base.CONNECTED_ACK)) {
-        connected.add(connId);
-        return ConnStatus.Base.NOTHING;
-      } else if (peerStatus.equals(ConnStatus.Base.DISCONNECT)) {
-        return ConnStatus.Base.DISCONNECTED;
-      } else if (peerStatus.equals(ConnStatus.Base.HEARTBEAT)) {
-        return ConnStatus.Base.HEARTBEAT_ACK;
-      } else if (peerStatus.equals(ConnStatus.Base.CLIENT_STATE)) {
-        return ConnStatus.Base.NOTHING;
-      } else {
-        throw new RuntimeException("ups");
-      }
-    }
-
-    @Override
-    public void close(ConnId connId) {
-      connected.remove(connId);
     }
   }
 }

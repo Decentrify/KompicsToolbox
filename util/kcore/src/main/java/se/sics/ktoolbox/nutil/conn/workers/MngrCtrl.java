@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
+import java.util.HashMap;
+import java.util.Map;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.workers.MngrCenter.WorkConnCtrl;
@@ -29,12 +31,20 @@ import se.sics.ktoolbox.util.network.KAddress;
 public class MngrCtrl {
   public static abstract class Server<C extends MngrState.Client> {
     private WorkConnCtrl<WorkState.Client, WorkState.Server> workCtrl;
-    
+    private Map<ConnIds.ConnId, KAddress> peers = new HashMap<>();
     void setWorkConnCtrl(WorkConnCtrl<WorkState.Client, WorkState.Server> workCtrl) {
       this.workCtrl = workCtrl;
     }
     
-    public abstract void connected(ConnIds.ConnId ctrlConnId, KAddress peerId);
+    public void connect(ConnIds.ConnId connId, KAddress peerAdr) {
+      peers.put(connId, peerAdr);
+    }
+    
+    public void connected(ConnIds.ConnId connId) {
+      connected(connId, peers.get(connId));
+    } 
+    
+    protected abstract void connected(ConnIds.ConnId connId, KAddress peerId);
     
     public ConnIds.ConnId connectWorker(Identifier clientBaseId, WorkState.Client clientState, KAddress serverAdr) {
       return workCtrl.connectClient(clientBaseId, clientState, serverAdr);

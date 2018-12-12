@@ -18,13 +18,9 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.ktoolbox.nutil.conn.workers.WorkCtrl;
-import se.sics.ktoolbox.nutil.conn.workers.MngrState;
-import se.sics.ktoolbox.nutil.conn.workers.WorkState;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.ComponentProxy;
@@ -82,7 +78,7 @@ public class WorkCenter extends ComponentDefinition {
     MngrState.Client clientInitState, WorkState.Server serverInitState) {
     this.connConfig = connConfig;
     ctrlClient.setup(proxy, logger);
-    workServer.setup(proxy, logger);
+    workServer.setup(proxy, logger, msgIds);
     ConnIds.InstanceId ctrlClientId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), ctrlBatchId, baseId, false);
     ConnIds.InstanceId workServerId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), workBatchId, baseId, true);
     mngrCtrl = clientCtrl();
@@ -109,26 +105,29 @@ public class WorkCenter extends ComponentDefinition {
 
   private ConnCtrl<MngrState.Client, ConnState.Empty> clientCtrl() {
     return new ConnCtrl<MngrState.Client, ConnState.Empty>() {
+
       @Override
-      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId, MngrState.Client selfSate) {
-        //nothing
-        return new HashMap<>();
+      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, MngrState.Client selfState,
+        Optional<ConnState.Empty> partnerState) {
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public ConnStatus partnerUpdate(ConnIds.ConnId connId, MngrState.Client selfState,
-        ConnStatus peerStatus, KAddress peer, ConnState.Empty peerState) {
-        if (ConnStatus.Base.CONNECTED.equals(peerStatus)) {
-          return ConnStatus.Base.CONNECTED_ACK;
-        } else if (ConnStatus.Base.CONNECTED_ACK.equals(peerStatus)) {
-          return peerStatus;
-        } else if (ConnStatus.Base.HEARTBEAT_ACK.equals(peerStatus)) {
-          return peerStatus;
-        } else if (ConnStatus.Base.DISCONNECT.equals(peerStatus)) {
-          return peerStatus;
-        } else {
-          throw new RuntimeException("unknown:" + peerStatus);
-        }
+      public ConnStatus.Decision connected(ConnIds.ConnId connId, MngrState.Client selfState,
+        ConnState.Empty partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
+      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, MngrState.Client selfState,
+        ConnState.Empty partnerState) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+
+      @Override
+      public ConnStatus.Decision serverUpdate(ConnIds.ConnId connId, MngrState.Client selfState,
+        ConnState.Empty partnerState) {
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
@@ -145,31 +144,35 @@ public class WorkCenter extends ComponentDefinition {
 
   private ConnCtrl<WorkState.Server, WorkState.Client> serverCtrl() {
     return new ConnCtrl<WorkState.Server, WorkState.Client>() {
+      Map<ConnIds.ConnId, KAddress> peers = new HashMap<>();
+
       @Override
-      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId, WorkState.Server selfSate) {
-        //nothing urgent - allow periodic update to send state
-        return new HashMap<>();
+      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, WorkState.Server selfState,
+        Optional<WorkState.Client> partnerState) {
+        peers.put(connId, partnerAdr);
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public ConnStatus partnerUpdate(ConnIds.ConnId connId, WorkState.Server selfState,
-        ConnStatus peerStatus, KAddress peer, WorkState.Client peerState) {
-        if (ConnStatus.Base.CONNECT.equals(peerStatus)) {
-          return ConnStatus.Base.CONNECTED;
-        } else if (ConnStatus.Base.CONNECTED_ACK.equals(peerStatus)) {
-          workServerC.connected(connId, peer, peerState);
-          return peerStatus;
-        } else if (ConnStatus.Base.HEARTBEAT.equals(peerStatus)) {
-          return ConnStatus.Base.HEARTBEAT_ACK;
-        } else if (ConnStatus.Base.DISCONNECT.equals(peerStatus)) {
-          return ConnStatus.Base.DISCONNECTED;
-        } else {
-          throw new RuntimeException("unknown:" + peerStatus);
-        }
+      public ConnStatus.Decision connected(ConnIds.ConnId connId, WorkState.Server selfState,
+        WorkState.Client partnerState) {
+        workServerC.connected(connId, peers.get(connId), partnerState);
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
+      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, WorkState.Server selfState,
+        WorkState.Client partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
 
+      @Override
+      public ConnStatus.Decision serverUpdate(ConnIds.ConnId connId, WorkState.Server selfState,
+        WorkState.Client partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
       public void close(ConnIds.ConnId connId) {
         //nothing
       }

@@ -18,15 +18,9 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.ktoolbox.nutil.conn.workers.MngrState;
-import se.sics.ktoolbox.nutil.conn.workers.WorkState;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import org.javatuples.Pair;
 import org.slf4j.Logger;
 import se.sics.kompics.ComponentProxy;
-import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
 import se.sics.ktoolbox.nutil.conn.ConnCtrl;
@@ -34,7 +28,6 @@ import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnProxy;
 import se.sics.ktoolbox.nutil.conn.ConnStatus;
 import se.sics.ktoolbox.nutil.conn.Connection;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCtrl;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -74,7 +67,7 @@ public class MngrCenter {
     MngrState.Server serverInitState) {
     this.msgIds = msgIds;
     this.connConfig = connConfig;
-    mngrServer.setup(proxy, logger);
+    mngrServer.setup(proxy, logger, msgIds);
     workClient.setup(proxy, logger);
     ConnIds.InstanceId ctrlServerId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), ctrlBatchId, baseId, true);
     mngrCtrl = mngrCtrl();
@@ -90,29 +83,33 @@ public class MngrCenter {
 
   private ConnCtrl<MngrState.Server, MngrState.Client> mngrCtrl() {
     return new ConnCtrl<MngrState.Server, MngrState.Client>() {
+
       @Override
-      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId, MngrState.Server selfSate) {
-        //nothing
-        return new HashMap<>();
+      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, MngrState.Server selfState,
+        Optional<MngrState.Client> partnerState) {
+        mngrServerC.connect(connId, partnerAdr);
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public ConnStatus partnerUpdate(ConnIds.ConnId connId, MngrState.Server selfState,
-        ConnStatus peerStatus, KAddress peerAdr, MngrState.Client peerState) {
-        if (ConnStatus.Base.CONNECT.equals(peerStatus)) {
-          return ConnStatus.Base.CONNECTED;
-        } else if (ConnStatus.Base.CONNECTED_ACK.equals(peerStatus)) {
-          mngrServerC.connected(connId, peerAdr);
-          return peerStatus;
-        } else if (ConnStatus.Base.HEARTBEAT.equals(peerStatus)) {
-          return ConnStatus.Base.HEARTBEAT_ACK;
-        } else if (ConnStatus.Base.DISCONNECT.equals(peerStatus)) {
-          return ConnStatus.Base.DISCONNECTED;
-        } else {
-          throw new RuntimeException("unknown:" + peerStatus);
-        }
+      public ConnStatus.Decision connected(ConnIds.ConnId connId, MngrState.Server selfState,
+        MngrState.Client partnerState) {
+        mngrServerC.connected(connId);
+        return ConnStatus.Decision.PROCEED;
       }
 
+      @Override
+      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, MngrState.Server selfState,
+        MngrState.Client partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
+      public ConnStatus.Decision serverUpdate(ConnIds.ConnId connId, MngrState.Server selfState,
+        MngrState.Client partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+      
       @Override
       public void close(ConnIds.ConnId connId) {
         //nothing
@@ -137,25 +134,32 @@ public class MngrCenter {
   }
 
   class WorkConnCtrl<C extends WorkState.Client, S extends WorkState.Server> implements ConnCtrl<C, S> {
-
-    //inside protocol control
+    //protocol
     @Override
-    public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId, C selfSate) {
-      //nothing
-      return new HashMap<>();
+    public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, C selfState, Optional<S> partnerState) {
+      return ConnStatus.Decision.PROCEED;
     }
 
     @Override
-    public ConnStatus partnerUpdate(ConnIds.ConnId connId, C selfState,
-      ConnStatus peerStatus, KAddress peer, S peerState) {
-      return peerStatus;
+    public ConnStatus.Decision connected(ConnIds.ConnId connId, C selfState, S partnerState) {
+      return ConnStatus.Decision.PROCEED;
     }
 
+    @Override
+    public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, C selfState, S partnerState) {
+      return ConnStatus.Decision.PROCEED;
+    }
+
+    @Override
+    public ConnStatus.Decision serverUpdate(ConnIds.ConnId connId, C selfState, S partnerState) {
+      return ConnStatus.Decision.PROCEED;
+    }
+    
     @Override
     public void close(ConnIds.ConnId connId) {
       //nothing
     }
-
+    
     //outside control
     public ConnIds.ConnId connectClient(Identifier clientBaseId, WorkState.Client clientState, KAddress workServerAdr) {
       ConnIds.InstanceId workClientId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), workBatchId, baseId, false);

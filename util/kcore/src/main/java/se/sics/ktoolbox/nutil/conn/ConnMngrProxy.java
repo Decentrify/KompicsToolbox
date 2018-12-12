@@ -36,6 +36,7 @@ import se.sics.ktoolbox.nutil.conn.ConnIds.InstanceId;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
 import se.sics.ktoolbox.util.TupleHelper;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
@@ -55,6 +56,8 @@ public class ConnMngrProxy {
   private Positive<Network> network;
   private Positive<Timer> timerPort;
   private TimerProxy timer;
+  
+  private IdentifierFactory msgIds;
 
   private Map<ConnIds.InstanceId, Connection.Client> clients = new HashMap<>();
   private Map<ConnIds.InstanceId, Connection.Server> servers = new HashMap<>();
@@ -64,9 +67,10 @@ public class ConnMngrProxy {
     this.serverListener = serverListener;
   }
 
-  public ConnMngrProxy setup(ComponentProxy proxy, Logger logger) {
+  public ConnMngrProxy setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds) {
     this.proxy = proxy;
     this.logger = logger;
+    this.msgIds = msgIds;
 
     network = proxy.getNegative(Network.class).getPair();
     timerPort = proxy.getNegative(Timer.class).getPair();
@@ -85,7 +89,7 @@ public class ConnMngrProxy {
 
   public void addServer(InstanceId serverId, Connection.Server server) {
     logger.info("conn mngr proxy server:{} add", serverId);
-    server.setup(timer, serverNetworkSend(), logger);
+    server.setup(timer, serverNetworkSend(), logger, msgIds);
     servers.put(serverId, server);
   }
 
@@ -109,7 +113,7 @@ public class ConnMngrProxy {
     }
     logger.info("conn mngr proxy client:{} connect to:{}", client.clientId, serverId);
 
-    client.connect(serverId, serverAddress);
+    client.connect(serverId, serverAddress, Optional.empty());
   }
 
   public void updateClient(InstanceId clientId, ConnState state) {
@@ -181,24 +185,33 @@ public class ConnMngrProxy {
     = new ClassMatchedHandler<ConnMsgs.Client<ConnState>, KContentMsg<KAddress, ?, ConnMsgs.Client<ConnState>>>() {
 
     @Override
-    public void handle(ConnMsgs.Client<ConnState> content, KContentMsg<KAddress, ?, ConnMsgs.Client<ConnState>> container) {
+    public void handle(ConnMsgs.Client<ConnState> content,
+      KContentMsg<KAddress, ?, ConnMsgs.Client<ConnState>> container) {
       KAddress clientAddress = container.getHeader().getSource();
       logger.trace("{} conn mngr proxy server rec:{} from:{}", new Object[]{content.connId, content, clientAddress});
       Connection.Server server = servers.get(content.connId.serverId);
       if (server == null) {
-        if (content.status.equals(ConnStatus.Base.CONNECT)) {
+        if (ConnStatus.BaseClient.CONNECT.equals(content.status)) {
           ConnState state = content.state.get();
-          Pair<ConnStatus, Optional<Connection.Server>> connect = serverListener.connect(content.connId, content.status,
-            clientAddress, state);
-          ConnStatus decidedStatus = connect.getValue0();
-          if (decidedStatus.equals(ConnStatus.Base.CONNECTED)) {
-            Connection.Server protoServer = connect.getValue1().get();
-            server = protoServer.setup(timer, serverNetworkSend(), logger);
-            servers.put(server.serverId, server);
-            server.handleContent(clientAddress, content);
-          } else {
-            ConnMsgs.Server reply = ConnMsgs.serverDisconnect(content.msgId, content.connId);
-            serverNetworkSend().accept(clientAddress, reply);
+          Pair<ConnStatus.Decision, Optional<Connection.Server>> connect
+            = serverListener.connect(content.connId, clientAddress, state);
+          ConnStatus.Decision decision = connect.getValue0();
+          switch (decision) {
+            case NOTHING:
+            case PROCEED: {
+              Connection.Server protoServer = connect.getValue1().get();
+              server = protoServer.setup(timer, serverNetworkSend(), logger, msgIds);
+              servers.put(server.serverId, server);
+              server.handleContent(clientAddress, content);
+            }
+            break;
+            case DISCONNECT: {
+              ConnMsgs.Server reply = ConnMsgs.serverDisconnect(content.msgId, content.connId);
+              serverNetworkSend().accept(clientAddress, reply);
+            }
+            break;
+            default:
+              throw new UnsupportedOperationException(decision.toString());
           }
         } else {
           ConnMsgs.Server reply = ConnMsgs.serverDisconnect(content.msgId, content.connId);

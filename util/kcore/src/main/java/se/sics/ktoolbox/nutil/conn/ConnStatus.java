@@ -19,31 +19,43 @@
 package se.sics.ktoolbox.nutil.conn;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnStatus {
+public class ConnStatus {
   public static enum System {
     EMPTY,
     SETUP,
     READY
   }
-  public static enum Base implements ConnStatus {
-    //do not change numbers
-    NOTHING(0),
+  
+  public static enum Decision {
+    PROCEED,
+    DISCONNECT,
+    NOTHING
+  }
+  public static enum BaseClient {
     CONNECT(1),
-    CONNECTED(2),
-    CONNECTED_ACK(3),
-    DISCONNECT(4),
-    DISCONNECTED(5),
-    HEARTBEAT(6),
-    HEARTBEAT_ACK(7),
-    CLIENT_STATE(8),
-    SERVER_STATE(9);
-
+    CONNECT_ACK(2),
+    DISCONNECT(3),
+    HEARTBEAT(4),
+    STATE(5);
+    
     public final int ord;
 
-    private Base(int ord) {
+    private BaseClient(int ord) {
+      this.ord = ord;
+    }
+  }
+  
+  public static enum BaseServer {
+    CONNECT(1),
+    DISCONNECT(2),
+    HEARTBEAT(3),
+    STATE(4);
+    
+    public final int ord;
+
+    private BaseServer(int ord) {
       this.ord = ord;
     }
   }

@@ -58,7 +58,7 @@ public class ConnectionTest {
     IdentifierRegistryV2.registerBaseDefaults1(64, 1234l);
   }
 
-//  @Ignore //run manually 
+  @Ignore //run manually 
   @Test
   public void testSimpleProxy() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());
@@ -87,7 +87,7 @@ public class ConnectionTest {
     }
   }
   
-  @Ignore //run manually 
+//  @Ignore //run manually 
   @Test
   public void testSimpleProxyMngr() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());

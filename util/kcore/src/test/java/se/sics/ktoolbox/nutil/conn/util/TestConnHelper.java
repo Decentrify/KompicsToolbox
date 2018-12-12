@@ -19,9 +19,7 @@
 package se.sics.ktoolbox.nutil.conn.util;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import se.sics.ktoolbox.nutil.conn.ConnCtrl;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnState;
@@ -36,43 +34,41 @@ public class TestConnHelper {
   public static class AutoCloseClientCtrl<S extends ConnState, P extends ConnState> implements ConnCtrl<S, P> {
 
     private final HashMap<ConnIds.ConnId, Integer> connected = new HashMap<>();
-    private final int heartbeatCounts;
+    private final int updateCount;
 
-    public AutoCloseClientCtrl(int heartbeatCounts) {
-      this.heartbeatCounts = heartbeatCounts;
+    public AutoCloseClientCtrl(int updateCount) {
+      this.updateCount = updateCount;
     }
 
     @Override
-    public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId, S state) {
-      Map<ConnIds.ConnId, ConnStatus> updateAll = connected.keySet().stream()
-        .collect(Collectors.toMap((connId) -> connId, (connId) -> ConnStatus.Base.CLIENT_STATE));
-      return updateAll;
+    public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, S selfState, Optional<P> partnerState) {
+      return ConnStatus.Decision.PROCEED;
     }
 
     @Override
-    public ConnStatus partnerUpdate(ConnIds.ConnId connId, S selfState,
-      ConnStatus peerStatus, KAddress peer, P peerState) {
-      if (peerStatus.equals(ConnStatus.Base.CONNECTED)) {
-        connected.put(connId, heartbeatCounts);
-        return ConnStatus.Base.CONNECTED_ACK;
-      } else if (ConnStatus.Base.DISCONNECTED.equals(peerStatus)
-        || ConnStatus.Base.SERVER_STATE.equals(peerStatus)) {
-        return ConnStatus.Base.NOTHING;
-      } else if (ConnStatus.Base.HEARTBEAT_ACK.equals(peerStatus)) {
-        if (connected.containsKey(connId)) {
-          int heartbeatsLeft = connected.get(connId) - 1;
-          if (heartbeatsLeft == 0) {
-            return ConnStatus.Base.DISCONNECT;
-          } else {
-            connected.put(connId, heartbeatsLeft);
-            return ConnStatus.Base.NOTHING;
-          }
+    public ConnStatus.Decision connected(ConnIds.ConnId connId, S selfState, P partnerState) {
+      connected.put(connId, updateCount);
+      return ConnStatus.Decision.PROCEED;
+    }
+
+    @Override
+    public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, S selfState, P partnerState) {
+      if (connected.containsKey(connId)) {
+        int updatesLeft = connected.get(connId) - 1;
+        if (updatesLeft == 0) {
+          return ConnStatus.Decision.DISCONNECT;
         } else {
-          return ConnStatus.Base.DISCONNECT;
+          connected.put(connId, updatesLeft);
+          return ConnStatus.Decision.PROCEED;
         }
       } else {
-        throw new RuntimeException("ups");
+        return ConnStatus.Decision.DISCONNECT;
       }
+    }
+
+    @Override
+    public ConnStatus.Decision serverUpdate(ConnIds.ConnId connId, S selfState, P partnerState) {
+      return ConnStatus.Decision.PROCEED;
     }
 
     @Override

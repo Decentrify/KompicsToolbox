@@ -47,7 +47,7 @@ public class ConnMsgsSerializer {
       ConnMsgs.Client obj = (ConnMsgs.Client) o;
       Serializers.toBinary(obj.msgId, buf);
       Serializers.lookupSerializer(ConnIds.ConnId.class).toBinary(obj.connId, buf);
-      Serializers.lookupSerializer(ConnStatus.Base.class).toBinary(obj.status, buf);
+      Serializers.lookupSerializer(ConnStatus.BaseClient.class).toBinary(obj.status, buf);
       buf.writeBoolean(obj.state.isPresent());
       if (obj.state.isPresent()) {
         Serializers.toBinary(obj.state, buf);
@@ -59,7 +59,7 @@ public class ConnMsgsSerializer {
       Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
       ConnIds.ConnId connId = (ConnIds.ConnId) Serializers.lookupSerializer(ConnIds.ConnId.class)
         .fromBinary(buf, hint);
-      ConnStatus.Base status = (ConnStatus.Base) Serializers.lookupSerializer(ConnStatus.Base.class)
+      ConnStatus.BaseClient status = (ConnStatus.BaseClient) Serializers.lookupSerializer(ConnStatus.BaseClient.class)
         .fromBinary(buf, hint);
       boolean hasState = buf.readBoolean();
       if (hasState) {
@@ -89,7 +89,7 @@ public class ConnMsgsSerializer {
       ConnMsgs.Server obj = (ConnMsgs.Server) o;
       Serializers.toBinary(obj.msgId, buf);
       Serializers.lookupSerializer(ConnIds.ConnId.class).toBinary(obj.connId, buf);
-      Serializers.lookupSerializer(ConnStatus.Base.class).toBinary(obj.status, buf);
+      Serializers.lookupSerializer(ConnStatus.BaseServer.class).toBinary(obj.status, buf);
       buf.writeBoolean(obj.state.isPresent());
       if (obj.state.isPresent()) {
         Serializers.toBinary(obj.state, buf);
@@ -101,7 +101,7 @@ public class ConnMsgsSerializer {
       Identifier msgId = (Identifier) Serializers.fromBinary(buf, hint);
       ConnIds.ConnId connId = (ConnIds.ConnId) Serializers.lookupSerializer(ConnIds.ConnId.class)
         .fromBinary(buf, hint);
-      ConnStatus.Base status = (ConnStatus.Base) Serializers.lookupSerializer(ConnStatus.Base.class)
+      ConnStatus.BaseServer status = (ConnStatus.BaseServer) Serializers.lookupSerializer(ConnStatus.BaseServer.class)
         .fromBinary(buf, hint);
       boolean hasState = buf.readBoolean();
       if (hasState) {

@@ -18,6 +18,7 @@
  */
 package se.sics.ktoolbox.nutil.conn.base.util;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import se.sics.kompics.ComponentDefinition;
@@ -34,6 +35,9 @@ import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 
 /**
@@ -51,12 +55,15 @@ public class ConnProxyServerComp extends ComponentDefinition {
   private final ConnConfig connConfig;
   
   private UUID periodicUpdate;
+  
+  private final IdentifierFactory msgIds;
 
   public ConnProxyServerComp(Init init) {
     this.init = init;
     timer = new TimerProxyImpl();
     connConfig = new ConnConfig(1000);
     connMngr = new ConnProxy.Server(init.selfAddress);
+    msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
     subscribe(handleStart, control);
   }
 
@@ -64,8 +71,8 @@ public class ConnProxyServerComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       timer.setup(proxy, logger);
-      connMngr.setup(proxy, logger);
-      ConnHelper.SimpleServerConnCtrl serverCtrl = new ConnHelper.SimpleServerConnCtrl<>();
+      connMngr.setup(proxy, logger, msgIds);
+      ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
       ConnState.Empty initState = new ConnState.Empty();
       Connection.Server server = new Connection.Server<>(init.serverId, serverCtrl, connConfig, initState);
       connMngr.add(init.serverId, server);
