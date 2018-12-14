@@ -22,6 +22,7 @@ import se.sics.ktoolbox.util.config.KConfigOption;
 import se.sics.ktoolbox.util.config.options.BasicAddressOption;
 
 /**
+ * deprecated use SystemConfig
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKConfig {

@@ -18,23 +18,33 @@
  */
 package se.sics.ktoolbox.netmngr;
 
+import com.google.common.base.Optional;
 import java.util.EnumSet;
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolve;
-import se.sics.ktoolbox.util.config.KConfigHelper;
+import se.sics.ktoolbox.util.trysf.Try;
 
 /**
- * deprecated - use NetworkConfig
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class NetworkKCWrapper {
-    public final Config configCore;
-    
-    public final EnumSet<IpSolve.NetworkInterfacesMask> ipTypes;
-    
-    public NetworkKCWrapper(Config configCore) {
-        this.configCore = configCore;
-        String sType = KConfigHelper.read(configCore, NetworkKConfig.ipType);
-        ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.valueOf(sType));
+public class NetworkConfig {
+
+  public static final String IP_TYPES = "network.ipType";
+
+  public final EnumSet<IpSolve.NetworkInterfacesMask> ipTypes;
+
+  public NetworkConfig(EnumSet<IpSolve.NetworkInterfacesMask> ipTypes) {
+    this.ipTypes = ipTypes;
+  }
+
+  public static Try<NetworkConfig> instance(Config config) {
+    Optional<String> sType = config.readValue(IP_TYPES, String.class);
+    EnumSet<IpSolve.NetworkInterfacesMask> ipTypes;
+    if (sType.isPresent()) {
+      ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.valueOf(sType.get()));
+    } else {
+      ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.ALL);
     }
+    return new Try.Success(new NetworkConfig(ipTypes));
+  }
 }

@@ -28,6 +28,7 @@ import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.network.basic.BasicAddress;
 
 /**
+ * deprecated use SystemConfig
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class SystemKCWrapper {

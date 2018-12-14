@@ -40,7 +40,7 @@ public class BaseOverlayIdentifiers {
 
     private final byte torrent;
 
-    protected TypeFactory(byte startWith) {
+    public TypeFactory(byte startWith) {
       assert startWith < 255;
       this.torrent = (byte) (startWith + 1);
     }

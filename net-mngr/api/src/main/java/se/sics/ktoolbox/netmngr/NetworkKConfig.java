@@ -21,7 +21,7 @@ package se.sics.ktoolbox.netmngr;
 import se.sics.ktoolbox.util.config.KConfigOption;
 
 /**
- *
+ * deprecated - use NetworkConfig
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NetworkKConfig {
