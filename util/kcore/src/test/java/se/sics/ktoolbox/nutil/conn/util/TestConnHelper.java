@@ -46,13 +46,13 @@ public class TestConnHelper {
     }
 
     @Override
-    public ConnStatus.Decision connected(ConnIds.ConnId connId, S selfState, P partnerState) {
+    public ConnStatus.Decision connected(ConnIds.ConnId connId, KAddress partnerAdr, S selfState, P partnerState) {
       connected.put(connId, updateCount);
       return ConnStatus.Decision.PROCEED;
     }
 
     @Override
-    public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, S selfState, P partnerState) {
+    public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, KAddress partnerAdr, S selfState, P partnerState) {
       if (connected.containsKey(connId)) {
         int updatesLeft = connected.get(connId) - 1;
         if (updatesLeft == 0) {
@@ -67,7 +67,7 @@ public class TestConnHelper {
     }
 
     @Override
-    public ConnStatus.Decision serverUpdate(ConnIds.ConnId connId, S selfState, P partnerState) {
+    public ConnStatus.Decision partnerUpdate(ConnIds.ConnId connId, KAddress partnerAdr, S selfState, P partnerState) {
       return ConnStatus.Decision.PROCEED;
     }
 

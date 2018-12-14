@@ -56,7 +56,7 @@ public class ConnMngrProxy {
   private Positive<Network> network;
   private Positive<Timer> timerPort;
   private TimerProxy timer;
-  
+
   private IdentifierFactory msgIds;
 
   private Map<ConnIds.InstanceId, Connection.Client> clients = new HashMap<>();
@@ -89,7 +89,7 @@ public class ConnMngrProxy {
 
   public void addServer(InstanceId serverId, Connection.Server server) {
     logger.info("conn mngr proxy server:{} add", serverId);
-    server.setup(timer, serverNetworkSend(), logger, msgIds);
+    server.setup(timer, serverNetworkSend(), logger, msgIds).start();
     servers.put(serverId, server);
   }
 
@@ -102,7 +102,7 @@ public class ConnMngrProxy {
 
   public void addClient(InstanceId clientId, Connection.Client client) {
     logger.info("conn mngr proxy client:{} add", clientId);
-    client.setup(timer, clientNetworkSend(), logger);
+    client.setup(timer, clientNetworkSend(), logger).start();
     clients.put(clientId, client);
   }
 
@@ -200,7 +200,9 @@ public class ConnMngrProxy {
             case NOTHING:
             case PROCEED: {
               Connection.Server protoServer = connect.getValue1().get();
-              server = protoServer.setup(timer, serverNetworkSend(), logger, msgIds);
+              server = protoServer
+                .setup(timer, serverNetworkSend(), logger, msgIds)
+                .start();
               servers.put(server.serverId, server);
               server.handleContent(clientAddress, content);
             }

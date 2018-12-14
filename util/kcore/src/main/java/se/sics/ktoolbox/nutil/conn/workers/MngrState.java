@@ -24,9 +24,5 @@ import se.sics.ktoolbox.nutil.conn.ConnState;
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MngrState {
-  public static interface Server extends ConnState {
-  }
-  public static interface Client extends ConnState {
-  }
+public interface MngrState extends ConnState {
 }

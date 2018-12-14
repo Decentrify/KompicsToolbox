@@ -79,10 +79,6 @@ public class ConnProxyClientComp extends ComponentDefinition {
       Identifier nodeId = init.selfAddress.getId();
       Identifier instanceId = connBaseIds.randomId();
       clientId = new ConnIds.InstanceId(init.overlayId, nodeId, init.batchId, instanceId, false);
-      ConnCtrl clientCtrl = new TestConnHelper.AutoCloseClientCtrl<>(5);
-      ConnState.Empty initState = new ConnState.Empty();
-      Connection.Client cClient = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
-      client.set(clientId, cClient);
       timer.scheduleTimer(connConfig.checkPeriod, connect());
     }
   };
@@ -90,7 +86,10 @@ public class ConnProxyClientComp extends ComponentDefinition {
   private Consumer<Boolean> connect() {
     return (_ignore) -> {
       logger.trace("{}connect", init.batchId);
-      client.connect(init.serverId, init.serverAddress);
+      ConnCtrl clientCtrl = new TestConnHelper.AutoCloseClientCtrl<>(5);
+      ConnState.Empty initState = new ConnState.Empty();
+      Connection.Client cClient = new Connection.Client<>(clientId, clientCtrl, connConfig, msgIds, initState);
+      client.startClient(clientId, cClient, init.serverId, init.serverAddress);
       periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
     };
   }

@@ -60,7 +60,7 @@ public class HostComp extends ComponentDefinition {
       Component networkEmulator = create(NetworkEmulator.class, Init.NONE);
 
       Map<String, MsgIdExtractorV2> channelSelectors = new HashMap<>();
-      channelSelectors.put(ConnMsgs.CONNECTION, new MsgIdExtractorsV2.Destination<>());
+      channelSelectors.put(ConnMsgs.MSG_TYPE, new MsgIdExtractorsV2.Destination<>());
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-host-channel", logger,
         networkEmulator.getPositive(Network.class), new MsgTypeExtractorsV2.Base(), channelSelectors);
 

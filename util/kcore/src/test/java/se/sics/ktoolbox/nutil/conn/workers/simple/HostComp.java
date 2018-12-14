@@ -30,15 +30,13 @@ import se.sics.kompics.timer.Timer;
 import se.sics.kompics.timer.java.JavaTimer;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
-import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.nutil.conn.ConnMsgs;
 import se.sics.ktoolbox.nutil.conn.util.NetworkEmulator;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCtrl;
-import se.sics.ktoolbox.nutil.conn.workers.MngrState;
 import se.sics.ktoolbox.nutil.conn.workers.MngrCenterComp;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCtrl;
 import se.sics.ktoolbox.nutil.conn.workers.WorkCenterComp;
-import se.sics.ktoolbox.nutil.conn.workers.WorkState;
+import se.sics.ktoolbox.nutil.conn.workers.MngrCenterPort;
+import se.sics.ktoolbox.nutil.conn.workers.WorkCenterPort;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMsgs;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorsV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgTypeExtractorsV2;
@@ -49,12 +47,14 @@ import se.sics.ktoolbox.util.network.KAddress;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class HostComp extends ComponentDefinition {
+
   private final Init init;
+
   public HostComp(Init init) {
     this.init = init;
     subscribe(handleStart, control);
   }
-  
+
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
@@ -62,50 +62,56 @@ public class HostComp extends ComponentDefinition {
       Component networkEmulator = create(NetworkEmulator.class, Init.NONE);
 
       Map<String, MsgIdExtractorV2> channelSelectors = new HashMap<>();
-      channelSelectors.put(ConnMsgs.CONNECTION, new MsgIdExtractorsV2.Destination<>());
+      channelSelectors.put(ConnMsgs.MSG_TYPE, new MsgIdExtractorsV2.Destination<>());
+      channelSelectors.put(WorkMsgs.MSG_TYPE, new MsgIdExtractorsV2.Destination<>());
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-host-channel", logger,
         networkEmulator.getPositive(Network.class), new MsgTypeExtractorsV2.Base(), channelSelectors);
 
       ConnConfig connConfig = new ConnConfig(1000);
-      Component ctrlCenter = create(MngrCenterComp.class, new MngrCenterComp.Init(init.ctrlCenterAdr, init.overlayId, 
-        init.ctrlBatchId, init.workBatchId, init.baseId, connConfig, init.ctrlServerC));
-      Component workCenter = create(WorkCenterComp.class, new WorkCenterComp.Init(init.workCenterAdr, init.overlayId, 
-        init.ctrlBatchId, init.workBatchId, init.baseId, connConfig, init.ctrlCenterAdr, init.workServerC));
-      
-      channel.addChannel(init.ctrlCenterAdr.getId(), ctrlCenter.getNegative(Network.class));
+      Component workMngr = create(MngrCenterComp.class, new MngrCenterComp.Init(init.workMngrAdr, init.overlayId,
+        init.batchId, init.baseId, connConfig));
+      Component workCenter = create(WorkCenterComp.class, new WorkCenterComp.Init(init.workCenterAdr, init.overlayId,
+        init.batchId, init.baseId, connConfig, init.workMngrAdr));
+
+      channel.addChannel(init.workMngrAdr.getId(), workMngr.getNegative(Network.class));
       channel.addChannel(init.workCenterAdr.getId(), workCenter.getNegative(Network.class));
-      
-      connect(timer.getPositive(Timer.class), ctrlCenter.getNegative(Timer.class), Channel.TWO_WAY);
+
+      connect(timer.getPositive(Timer.class), workMngr.getNegative(Timer.class), Channel.TWO_WAY);
       connect(timer.getPositive(Timer.class), workCenter.getNegative(Timer.class), Channel.TWO_WAY);
-      
+
+      Component workMngrDriver = create(WorkMngrDriverComp.class, new WorkMngrDriverComp.Init(init.workMngrAdr));
+      connect(workMngr.getPositive(MngrCenterPort.class), workMngrDriver.getNegative(MngrCenterPort.class),
+        Channel.TWO_WAY);
+
+      Component workCenterDriver = create(WorkCenterDriverComp.class, new WorkCenterDriverComp.Init(init.workMngrAdr));
+      connect(workCenter.getPositive(WorkCenterPort.class), workCenterDriver.getNegative(WorkCenterPort.class),
+        Channel.TWO_WAY);
+      connect(timer.getPositive(Timer.class), workCenterDriver.getNegative(Timer.class), Channel.TWO_WAY);
+
       trigger(Start.event, timer.control());
       trigger(Start.event, networkEmulator.control());
-      trigger(Start.event, ctrlCenter.control());
+      trigger(Start.event, workMngr.control());
       trigger(Start.event, workCenter.control());
+      trigger(Start.event, workMngrDriver.control());
+      trigger(Start.event, workCenterDriver.control());
     }
   };
-  
+
   public static class Init extends se.sics.kompics.Init<HostComp> {
-    public final KAddress ctrlCenterAdr;
+
+    public final KAddress workMngrAdr;
     public final KAddress workCenterAdr;
     public final Identifier overlayId;
-    public final Identifier ctrlBatchId;
-    public final Identifier workBatchId;
+    public final Identifier batchId;
     public final Identifier baseId;
-    public final MngrCtrl.Server<MngrState.Client> ctrlServerC;
-    public final WorkCtrl.Server<WorkState.Client> workServerC;
-    
-    public Init(KAddress ctrlCenterAdr, KAddress workCenterAdr, Identifier overlayId, 
-      Identifier ctrlBatchId, Identifier workBatchId, Identifier baseId,
-      MngrCtrl.Server<MngrState.Client> ctrlServerC, WorkCtrl.Server<WorkState.Client> workServerC) {
-      this.ctrlCenterAdr = ctrlCenterAdr;
+
+    public Init(KAddress workMngrAdr, KAddress workCenterAdr, Identifier overlayId,
+      Identifier batchId, Identifier baseId) {
+      this.workMngrAdr = workMngrAdr;
       this.workCenterAdr = workCenterAdr;
       this.overlayId = overlayId;
-      this.ctrlBatchId = ctrlBatchId;
-      this.workBatchId = workBatchId;
+      this.batchId = batchId;
       this.baseId = baseId;
-      this.ctrlServerC = ctrlServerC;
-      this.workServerC = workServerC;
     }
   }
 }

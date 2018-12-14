@@ -65,6 +65,10 @@ public class Connection {
       this.timer = timer;
       this.networkSend = networkSend;
       this.logger = logger;
+      return this;
+    }
+
+    public Client start() {
       periodicCheck = timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
       return this;
     }
@@ -90,13 +94,14 @@ public class Connection {
       }
     }
 
-    public void connect(ConnIds.InstanceId serverId, KAddress server, Optional<S> serverState) {
+    public Client connect(ConnIds.InstanceId serverId, KAddress server, Optional<S> serverState) {
       ConnIds.ConnId connId = new ConnIds.ConnId(serverId, clientId);
       ClientConn conn = new ClientConn(ctrl, connId, server, state, msgIds, networkSend, logger, config);
       ConnStatus.Decision decision = conn.connect(serverState);
       if (ConnStatus.Decision.PROCEED.equals(decision)) {
         connections.put(connId, conn);
       }
+      return this;
     }
 
     public void update(C state) {
@@ -178,7 +183,7 @@ public class Connection {
         return ConnStatus.Decision.PROCEED;
       }
       this.selfState = selfState;
-      ConnStatus.Decision decision = ctrl.selfUpdate(connId, selfState, serverState);
+      ConnStatus.Decision decision = ctrl.selfUpdate(connId, serverAdr, selfState, serverState);
       switch (decision) {
         case PROCEED: {
           ConnMsgs.Client content = ConnMsgs.clientState(msgIds.randomId(), connId, selfState);
@@ -226,7 +231,7 @@ public class Connection {
         case SETUP: {
           switch (content.getStatus()) {
             case CONNECT: {
-              decision = ctrl.connected(connId, selfState, content.state.get());
+              decision = ctrl.connected(connId, serverAdr, selfState, content.state.get());
               switch (decision) {
                 case NOTHING:
                 case PROCEED: {
@@ -270,7 +275,7 @@ public class Connection {
             }
             break;
             case STATE: {
-              decision = ctrl.serverUpdate(connId, selfState, content.state.get());
+              decision = ctrl.partnerUpdate(connId, serverAdr, selfState, content.state.get());
               switch (decision) {
                 case PROCEED: {
                   serverState = content.state.get();
@@ -356,6 +361,10 @@ public class Connection {
       this.networkSend = networkSend;
       this.logger = logger;
       this.msgIds = msgIds;
+      return this;
+    }
+
+    public Server start() {
       periodicCheck = timer.schedulePeriodicTimer(config.checkPeriod, config.checkPeriod, periodicCheck());
       return this;
     }
@@ -401,13 +410,13 @@ public class Connection {
         connections.put(connId, conn);
       }
       ConnStatus.Decision decision = conn.handleContent(content);
-      if(ConnStatus.Decision.DISCONNECT.equals(decision)) {
+      if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
         connections.remove(connId);
       }
     }
   }
 
-  public static class ServerConn<S extends ConnState, C extends ConnState> {
+  static class ServerConn<S extends ConnState, C extends ConnState> {
 
     final IdentifierFactory msgIds;
     final TupleHelper.PairConsumer<KAddress, ConnMsgs.Base> networkSend;
@@ -450,7 +459,7 @@ public class Connection {
         return ConnStatus.Decision.PROCEED;
       }
       this.selfState = selfState;
-      ConnStatus.Decision decision = ctrl.selfUpdate(connId, selfState, clientState);
+      ConnStatus.Decision decision = ctrl.selfUpdate(connId, clientAdr, selfState, clientState);
       switch (decision) {
         case PROCEED: {
           ConnMsgs.Server content = ConnMsgs.serverState(msgIds.randomId(), connId, selfState);
@@ -529,7 +538,7 @@ public class Connection {
             break;
             case CONNECT_ACK: {
               connStatus = ConnStatus.System.READY;
-              decision = ctrl.connected(connId, selfState, clientState);
+              decision = ctrl.connected(connId, clientAdr, selfState, clientState);
               if (ConnStatus.Decision.DISCONNECT.equals(decision)) {
                 disconnectAll(content.msgId);
               }
@@ -564,7 +573,7 @@ public class Connection {
             }
             break;
             case STATE: {
-              decision = ctrl.serverUpdate(connId, selfState, content.state.get());
+              decision = ctrl.partnerUpdate(connId, clientAdr, selfState, content.state.get());
               switch (decision) {
                 case NOTHING:
                 case PROCEED: {

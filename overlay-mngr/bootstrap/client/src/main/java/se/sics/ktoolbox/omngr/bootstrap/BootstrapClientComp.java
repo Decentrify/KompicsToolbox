@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.javatuples.Pair;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Negative;
@@ -74,7 +73,7 @@ public class BootstrapClientComp extends ComponentDefinition {
     selfAdr = init.selfAdr;
     overlayBootstrapConnBatchId = init.overlayBootstrapConnBatchId;
     overlayBootstrapConnBaseId = init.overlayBootstrapConnBaseId;
-    
+
     loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
     logger.info("initiating with seed:{}, bootstrap server:{}", systemConfig.seed, clientConfig.serverAdr);
 
@@ -89,7 +88,7 @@ public class BootstrapClientComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      connMngr.setup(proxy, logger);
+      connMngr.setup(proxy, logger, msgIds);
     }
   };
 
@@ -105,7 +104,7 @@ public class BootstrapClientComp extends ComponentDefinition {
       createClient(req.overlay, periodicReBootstrap(req));
     }
   };
-  
+
   Handler handleHeartbeatStop = new Handler<BootstrapClientEvent.Stop>() {
     @Override
     public void handle(BootstrapClientEvent.Stop req) {
@@ -123,30 +122,40 @@ public class BootstrapClientComp extends ComponentDefinition {
 
   private ConnCtrl connCtrl(Consumer<List<KAddress>> periodicReBootstrap) {
     return new ConnCtrl<BootstrapState.Init, BootstrapState.Sample>() {
+
       @Override
-      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId instanceId,
-        BootstrapState.Init selfSate) {
-        //no necessary updates on the connections
-        return new HashMap<>();
+      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Init selfState,
+        Optional<BootstrapState.Sample> partnerState) {
+        samples.put(connId.clientId.overlayId, partnerState.get().sample);
+        periodicReBootstrap.accept(partnerState.get().sample);
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public Pair<ConnIds.ConnId, ConnStatus> partnerUpdate(ConnIds.ConnId connId, BootstrapState.Init selfState,
-        ConnStatus peerStatus, KAddress peer, Optional<BootstrapState.Sample> peerState) {
-        if (peerState.isPresent()) {
-          samples.put(connId.clientId.overlayId, peerState.get().sample);
-          periodicReBootstrap.accept(peerState.get().sample);
-        }
-        if (peerStatus.equals(ConnStatus.Base.DISCONNECTED)) {
-          logger.warn("{} disconnected", connId);
-          //TODO - Alex reconnect logic?
-        }
-        return Pair.with(connId, peerStatus);
+      public ConnStatus.Decision connected(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Init selfState,
+        BootstrapState.Sample partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
+      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Init selfState,
+        BootstrapState.Sample partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
+      public ConnStatus.Decision partnerUpdate(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Init selfState,
+        BootstrapState.Sample partnerState) {
+        samples.put(connId.clientId.overlayId, partnerState.sample);
+        periodicReBootstrap.accept(partnerState.sample);
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
       public void close(ConnIds.ConnId connId) {
         samples.remove(connId.clientId.overlayId);
+        logger.warn("{} disconnected", connId);
+        //TODO - Alex reconnect logic?
       }
     };
   }
@@ -157,7 +166,7 @@ public class BootstrapClientComp extends ComponentDefinition {
       overlayBootstrapConnBatchId, overlayBootstrapConnBaseId, true);
 
     BootstrapState.Init initState = new BootstrapState.Init();
-    Connection.Client client = new Connection.Client<>(clientId, connCtrl(periodicReBootstrap), connConfig, msgIds, 
+    Connection.Client client = new Connection.Client<>(clientId, connCtrl(periodicReBootstrap), connConfig, msgIds,
       initState);
     connMngr.addClient(clientId, client);
     connMngr.connectClient(clientId, serverId, clientConfig.serverAdr);

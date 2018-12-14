@@ -24,15 +24,9 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Optional;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import se.sics.kompics.Kompics;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.conn.ConnIds;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCtrl;
-import se.sics.ktoolbox.nutil.conn.workers.MngrState;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCtrl;
-import se.sics.ktoolbox.nutil.conn.workers.WorkState;
 import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
@@ -75,7 +69,7 @@ public class CtrlWorkerTest {
     IdentifierRegistryV2.registerBaseDefaults1(64, 1234l);
   }
 
-  @Ignore //run manually 
+//  @Ignore //run manually 
   @Test
   public void testFilterMsgsOnOnePort() throws UnknownHostException {
     IntIdFactory ids = new IntIdFactory(Optional.empty());
@@ -85,8 +79,7 @@ public class CtrlWorkerTest {
     KAddress workCenterAdr = new BasicAddress(InetAddress.getLocalHost(), 20000, node2);
 
     Identifier overlayId = ids.id(new BasicBuilders.IntBuilder(1));
-    Identifier ctrlBatchId = ids.id(new BasicBuilders.IntBuilder(0));
-    Identifier workBatchId = ids.id(new BasicBuilders.IntBuilder(1));
+    Identifier batchId = ids.id(new BasicBuilders.IntBuilder(0));
     Identifier baseId = ids.id(new BasicBuilders.IntBuilder(0));
 
     if (Kompics.isOn()) {
@@ -94,8 +87,8 @@ public class CtrlWorkerTest {
     }
     // Yes 20 is totally arbitrary
     Kompics.createAndStart(se.sics.ktoolbox.nutil.conn.workers.simple.HostComp.class,
-      new se.sics.ktoolbox.nutil.conn.workers.simple.HostComp.Init(ctrlCenterAdr, workCenterAdr, overlayId, ctrlBatchId,
-        workBatchId, baseId, ctrlServerC(), workServerC()),
+      new se.sics.ktoolbox.nutil.conn.workers.simple.HostComp.Init(ctrlCenterAdr, workCenterAdr, overlayId, batchId,
+        baseId),
       Runtime.getRuntime().availableProcessors(), 20);
     try {
       Kompics.waitForTermination();
@@ -104,24 +97,6 @@ public class CtrlWorkerTest {
     }
   }
 
-  private MngrCtrl.Server<MngrState.Client> ctrlServerC() {
-    return new MngrCtrl.Server<MngrState.Client>() {
-      @Override
-      public void connected(ConnIds.ConnId ctrlConnId, KAddress peerId) {
-        System.err.println("mngr connected");
-      }
-    };
-  }
-
-  private WorkCtrl.Server<WorkState.Client> workServerC() {
-    return new WorkCtrl.Server<WorkState.Client>() {
-      @Override
-      public void connected(ConnIds.ConnId connId, KAddress peer, WorkState.Client peerState) {
-        System.err.println("worker connected");
-      }
-    };
-  }
-  
 //  {
 //    ConnIds.InstanceId workClientId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), workBatchId, baseId,
 //            false);

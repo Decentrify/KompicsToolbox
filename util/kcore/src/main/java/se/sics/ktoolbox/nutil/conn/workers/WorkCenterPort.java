@@ -16,24 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.nutil.conn;
+package se.sics.ktoolbox.nutil.conn.workers;
 
-import java.util.Optional;
-import se.sics.ktoolbox.nutil.conn.ConnIds.ConnId;
-import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.kompics.PortType;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface ConnCtrl<S extends ConnState, P extends ConnState> {
-
-  public ConnStatus.Decision connect(ConnId connId, KAddress partnerAdr, S selfState, Optional<P> partnerState);
-
-  public ConnStatus.Decision connected(ConnId connId, KAddress partnerAdr, S selfState, P partnerState);
-
-  public ConnStatus.Decision selfUpdate(ConnId connId, KAddress partnerAdr, S selfState, P partnerState);
-
-  public ConnStatus.Decision partnerUpdate(ConnId connId, KAddress partnerAdr, S selfState, P partnerState);
-
-  public void close(ConnId connId);
+public class WorkCenterPort extends PortType {
+  {
+    indication(WorkCenterEvents.NewTask.class);
+    request(WorkCenterEvents.TaskStatus.class);
+    request(WorkCenterEvents.TaskCompleted.class);
+  }
 }

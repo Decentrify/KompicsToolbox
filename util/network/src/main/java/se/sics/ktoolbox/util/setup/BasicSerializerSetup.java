@@ -27,6 +27,8 @@ import se.sics.ktoolbox.nutil.conn.ConnStatusSerializer;
 import se.sics.ktoolbox.nutil.conn.ConnMsgsSerializer;
 import se.sics.ktoolbox.nutil.conn.ConnState;
 import se.sics.ktoolbox.nutil.conn.EmptyConnStateSerializer;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMsgs;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMsgsSerializer;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.IntId;
@@ -59,8 +61,8 @@ import se.sics.ktoolbox.util.result.ResultSerializer;
 public class BasicSerializerSetup {
 
      //You may add up to max serializers without the need to recompile all the projects that use the serializer space after gvod
-    public static int maxSerializers = 20;
-    public static final int serializerIds = 19;
+    public static int maxSerializers = 30;
+    public static final int serializerIds = 23;
 
     public static enum BasicSerializers {
         SimpleByteIdentifier(SimpleByteId.class, "simpleByteIdentifierSerializer"),
@@ -81,7 +83,11 @@ public class BasicSerializerSetup {
         ConnBaseServerStatus(ConnStatus.BaseServer.class, "connBaseServerStatus"),
         ConnMsgsClient(ConnMsgs.Client.class, "connMsgsClientSerializer"),
         ConnMsgsServer(ConnMsgs.Server.class, "connMsgsServerSerializer"),
-        ConnEmptyState(ConnState.Empty.class, "connEmptyState");
+        ConnEmptyState(ConnState.Empty.class, "connEmptyState"),
+        WorkMsgNew(WorkMsgs.NewTask.class, "workMsgNew"),
+        WorkMsgStatus(WorkMsgs.StatusTask.class, "workMsgStatus"),
+        WorkMsgCompleted(WorkMsgs.CompletedTask.class, "workMsgCompleted"),
+        WorkMsgCancel(WorkMsgs.CancelTask.class, "workMsgCancel");
                 
         public final Class serializedClass;
         public final String serializerName;
@@ -186,6 +192,22 @@ public class BasicSerializerSetup {
         Serializers.register(new EmptyConnStateSerializer(currentId++), BasicSerializers.ConnEmptyState.serializerName);
         Serializers.register(BasicSerializers.ConnEmptyState.serializedClass, 
           BasicSerializers.ConnEmptyState.serializerName);
+        
+        Serializers.register(new WorkMsgsSerializer.NewTask(currentId++), BasicSerializers.WorkMsgNew.serializerName);
+        Serializers.register(BasicSerializers.WorkMsgNew.serializedClass, 
+          BasicSerializers.WorkMsgNew.serializerName);
+        
+        Serializers.register(new WorkMsgsSerializer.StatusTask(currentId++), BasicSerializers.WorkMsgStatus.serializerName);
+        Serializers.register(BasicSerializers.WorkMsgStatus.serializedClass, 
+          BasicSerializers.WorkMsgStatus.serializerName);
+        
+        Serializers.register(new WorkMsgsSerializer.CompletedTask(currentId++), BasicSerializers.WorkMsgCompleted.serializerName);
+        Serializers.register(BasicSerializers.WorkMsgCompleted.serializedClass, 
+          BasicSerializers.WorkMsgCompleted.serializerName);
+        
+        Serializers.register(new WorkMsgsSerializer.CancelTask(currentId++), BasicSerializers.WorkMsgCancel.serializerName);
+        Serializers.register(BasicSerializers.WorkMsgCancel.serializedClass, 
+          BasicSerializers.WorkMsgCancel.serializerName);
         
         assert startingId + serializerIds == currentId;
         assert serializerIds <= maxSerializers;

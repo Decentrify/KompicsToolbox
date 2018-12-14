@@ -75,7 +75,7 @@ public class ConnProxyServerComp extends ComponentDefinition {
       ConnHelper.SimpleConnCtrl serverCtrl = new ConnHelper.SimpleConnCtrl<>();
       ConnState.Empty initState = new ConnState.Empty();
       Connection.Server server = new Connection.Server<>(init.serverId, serverCtrl, connConfig, initState);
-      connMngr.add(init.serverId, server);
+      connMngr.startServer(init.serverId, server);
       periodicUpdate = timer.schedulePeriodicTimer(connConfig.checkPeriod, connConfig.checkPeriod, update());
     }
   };

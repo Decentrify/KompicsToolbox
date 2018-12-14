@@ -45,17 +45,17 @@ public class ConnHelper {
     }
 
     @Override
-    public ConnStatus.Decision connected(ConnId connId, S selfState, P partnerState) {
+    public ConnStatus.Decision connected(ConnId connId, KAddress partnerAdr, S selfState, P partnerState) {
       return ConnStatus.Decision.PROCEED;
     }
 
     @Override
-    public ConnStatus.Decision selfUpdate(ConnId connId, S selfState, P partnerState) {
+    public ConnStatus.Decision selfUpdate(ConnId connId, KAddress partnerAdr, S selfState, P partnerState) {
       return ConnStatus.Decision.PROCEED;
     }
 
     @Override
-    public ConnStatus.Decision serverUpdate(ConnId connId, S selfState, P partnerState) {
+    public ConnStatus.Decision partnerUpdate(ConnId connId, KAddress partnerAdr, S selfState, P partnerState) {
       return ConnStatus.Decision.PROCEED;
     }
 

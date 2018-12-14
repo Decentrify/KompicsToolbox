@@ -18,18 +18,16 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.ktoolbox.nutil.conn.workers.MngrState;
 import java.util.Optional;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
-import se.sics.ktoolbox.nutil.conn.ConnIds;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCtrl;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
@@ -42,22 +40,28 @@ public class MngrCenterComp extends ComponentDefinition {
 
   private final Positive<Network> network = requires(Network.class);
   private final Positive<Timer> timer = requires(Timer.class);
-  private MngrCenter ctrlCenter;
+  private final Negative<MngrCenterPort> appPort = provides(MngrCenterPort.class);
+  private MngrCenterProxy workMngr;
   private final Init init;
+  private IdentifierFactory eventIds;
+  private IdentifierFactory msgIds;
 
   public MngrCenterComp(Init init) {
     this.init = init;
-    ctrlCenter = new MngrCenter(init.selfAdr, init.overlayId, init.ctrlBatchId, init.workBatchId, init.baseId, init.ctrlServerC);
+
+    msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
+    eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(1234l));
+    workMngr = new MngrCenterProxy(init.selfAdr, init.overlayId, init.batchId, init.baseId);
+    workMngr.setup(proxy, logger, init.connConfig, msgIds, eventIds);
     subscribe(handleStart, control);
   }
 
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      IdentifierFactory msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
-      MngrState.Server initState = new MngrState.Server() {
+      MngrState initState = new MngrState() {
       };
-      ctrlCenter.setup(proxy, logger, init.connConfig, msgIds, initState);
+      workMngr.start(initState);
     }
   };
 
@@ -65,21 +69,17 @@ public class MngrCenterComp extends ComponentDefinition {
 
     public final KAddress selfAdr;
     public final Identifier overlayId;
-    public final Identifier ctrlBatchId;
-    public final Identifier workBatchId;
+    public final Identifier batchId;
     public final Identifier baseId;
     public final ConnConfig connConfig;
-    public final MngrCtrl.Server<MngrState.Client> ctrlServerC;
 
-    public Init(KAddress selfAdr, Identifier overlayId, Identifier ctrlBatchId, Identifier workBatchId,
-      Identifier baseId, ConnConfig connConfig, MngrCtrl.Server<MngrState.Client> ctrlServerC) {
+    public Init(KAddress selfAdr, Identifier overlayId, Identifier batchId,
+      Identifier baseId, ConnConfig connConfig) {
       this.selfAdr = selfAdr;
       this.overlayId = overlayId;
-      this.ctrlBatchId = ctrlBatchId;
-      this.workBatchId = workBatchId;
+      this.batchId = batchId;
       this.baseId = baseId;
       this.connConfig = connConfig;
-      this.ctrlServerC = ctrlServerC;
     }
   }
 }

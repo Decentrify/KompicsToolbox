@@ -23,10 +23,12 @@ import se.sics.ktoolbox.nutil.conn.ConnState;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkState {
-  public static interface Server extends ConnState {
-  }
+public class WorkerState implements ConnState {
+  public final double load;
+  public final int ongoingTasks;
   
-  public static interface Client extends ConnState {
+  public WorkerState(double load, int ongoingTasks) {
+    this.load = load;
+    this.ongoingTasks = ongoingTasks;
   }
 }

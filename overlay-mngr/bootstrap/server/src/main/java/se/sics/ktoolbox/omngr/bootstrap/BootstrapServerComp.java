@@ -20,11 +20,9 @@ package se.sics.ktoolbox.omngr.bootstrap;
 
 import com.google.common.collect.HashBasedTable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -44,8 +42,9 @@ import se.sics.ktoolbox.nutil.conn.ConnMngrProxy;
 import se.sics.ktoolbox.nutil.conn.ConnStatus;
 import se.sics.ktoolbox.nutil.conn.Connection;
 import se.sics.ktoolbox.nutil.conn.ServerListener;
-import se.sics.ktoolbox.nutil.timer.TimerProxy;
-import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.trysf.Try;
 import se.sics.ktoolbox.util.trysf.TryHelper;
@@ -72,6 +71,7 @@ public class BootstrapServerComp extends ComponentDefinition {
   private HashBasedTable<Identifier, Integer, KAddress> samples = HashBasedTable.create();
   private UUID rebootstrapTId;
 
+  private final IdentifierFactory msgIds;
   public BootstrapServerComp(Init init) {
     selfAdr = init.selfAdr;
     loggingCtxPutAlways("nId", init.selfAdr.getId().toString());
@@ -81,9 +81,9 @@ public class BootstrapServerComp extends ComponentDefinition {
     overlayBootstrapConnBaseId = init.overlayBootstrapConnBaseId;
 
     rand = new Random(1234l);
-
+    msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
     connMngr = new ConnMngrProxy(selfAdr, serverListener());
-
+    
     subscribe(handleStart, control);
   }
 
@@ -100,8 +100,8 @@ public class BootstrapServerComp extends ComponentDefinition {
   private ServerListener serverListener() {
     return new ServerListener<BootstrapState.Init>() {
       @Override
-      public Pair<ConnStatus, Optional<Connection.Server>> connect(ConnIds.ConnId connId, ConnStatus peerStatus,
-        KAddress peer, Optional<BootstrapState.Init> peerState) {
+      public Pair<ConnStatus.Decision, Optional<Connection.Server>> connect(ConnIds.ConnId connId,
+        KAddress peer, BootstrapState.Init peerState) {
         ConnCtrl ctrl = connCtrl();
         BootstrapState.Sample initState = new BootstrapState.Sample(new LinkedList<>());
         ConnIds.InstanceId serverId = new ConnIds.InstanceId(connId.serverId.overlayId, selfAdr.getId(),
@@ -109,10 +109,10 @@ public class BootstrapServerComp extends ComponentDefinition {
         if (serverId.equals(connId.serverId)) {
           Connection.Server server = new Connection.Server(serverId, connCtrl(), connConfig, initState);
           connMngr.addServer(serverId, server);
-          return Pair.with(ConnStatus.Base.CONNECTED, Optional.of(server));
+          return Pair.with(ConnStatus.Decision.PROCEED, Optional.of(server));
         } else {
           logger.warn("bad server adr expected:{}, found:{}", serverId, connId.serverId);
-          return Pair.with(ConnStatus.Base.DISCONNECTED, Optional.empty());
+          return Pair.with(ConnStatus.Decision.PROCEED, Optional.empty());
         }
       }
     };
@@ -121,30 +121,35 @@ public class BootstrapServerComp extends ComponentDefinition {
   private ConnCtrl<BootstrapState.Sample, BootstrapState.Init> connCtrl() {
     return new ConnCtrl<BootstrapState.Sample, BootstrapState.Init>() {
       @Override
-      public Map<ConnIds.ConnId, ConnStatus> selfUpdate(ConnIds.InstanceId serverId, BootstrapState.Sample state) {
-        //nothing
-        //we do not partnerUpdate any of the connection states;
-        return new HashMap<>();
+      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Sample selfState,
+        Optional<BootstrapState.Init> partnerState) {
+        int pos = rand.nextInt(config.bootstrapSize);
+        Identifier overlayId = connId.serverId.overlayId;
+        samples.put(overlayId, pos, partnerAdr);
+        connMngr.updateServer(connId.serverId, new BootstrapState.Sample(sampleWithoutDuplicates(overlayId)));
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public Pair<ConnIds.ConnId, ConnStatus> partnerUpdate(ConnIds.ConnId connId, BootstrapState.Sample selfState,
-        ConnStatus peerStatus, KAddress peer, Optional<BootstrapState.Init> peerState) {
-        Identifier overlayId = connId.serverId.overlayId;
+      public ConnStatus.Decision connected(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Sample selfState,
+        BootstrapState.Init partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
+      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Sample selfState,
+        BootstrapState.Init partnerState) {
+        return ConnStatus.Decision.PROCEED;
+      }
+
+      @Override
+      public ConnStatus.Decision partnerUpdate(ConnIds.ConnId connId, KAddress partnerAdr, BootstrapState.Sample selfState,
+        BootstrapState.Init partnerState) {
         int pos = rand.nextInt(config.bootstrapSize);
-        if (ConnStatus.Base.CONNECT.equals(peerStatus)) {
-          samples.put(overlayId, pos, peer);
-          connMngr.updateServer(connId.serverId, new BootstrapState.Sample(sampleWithoutDuplicates(overlayId)));
-          return Pair.with(connId, ConnStatus.Base.CONNECTED);
-        } else if (ConnStatus.Base.HEARTBEAT.equals(peerStatus)) {
-          samples.put(overlayId, pos, peer);
-          connMngr.updateServer(connId.serverId, new BootstrapState.Sample(sampleWithoutDuplicates(overlayId)));
-          return Pair.with(connId, ConnStatus.Base.HEARTBEAT_ACK);
-        } else if (ConnStatus.Base.DISCONNECT.equals(peerStatus)) {
-          return Pair.with(connId, ConnStatus.Base.DISCONNECTED);
-        } else {
-          throw new RuntimeException("unknown:" + peerStatus);
-        }
+        Identifier overlayId = connId.serverId.overlayId;
+        samples.put(overlayId, pos, partnerAdr);
+        connMngr.updateServer(connId.serverId, new BootstrapState.Sample(sampleWithoutDuplicates(overlayId)));
+        return ConnStatus.Decision.PROCEED;
       }
 
       @Override
@@ -157,7 +162,7 @@ public class BootstrapServerComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      connMngr.setup(proxy, logger);
+      connMngr.setup(proxy, logger, msgIds);
     }
   };
 

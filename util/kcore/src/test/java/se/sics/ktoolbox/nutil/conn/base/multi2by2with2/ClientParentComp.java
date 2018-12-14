@@ -60,7 +60,7 @@ public class ClientParentComp extends ComponentDefinition {
       
       
       Map<String, MsgIdExtractorV2> channelSelectors = new HashMap<>();
-      channelSelectors.put(ConnMsgs.CONNECTION, new BatchIdExtractors.Client());
+      channelSelectors.put(ConnMsgs.MSG_TYPE, new BatchIdExtractors.Client());
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-client-channel", logger,
         network, new MsgTypeExtractorsV2.Base(), channelSelectors);
 

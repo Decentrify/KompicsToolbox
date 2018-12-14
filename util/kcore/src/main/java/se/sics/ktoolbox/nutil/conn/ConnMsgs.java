@@ -29,7 +29,7 @@ import se.sics.ktoolbox.nutil.network.portsv2.SelectableMsgV2;
  */
 public class ConnMsgs {
 
-  public static final String CONNECTION = "CONNECTION";
+  public static final String MSG_TYPE = "CONNECTION";
 
   public static abstract class Base<O extends ConnState> implements SelectableMsgV2, Identifiable {
 
@@ -50,7 +50,7 @@ public class ConnMsgs {
 
     @Override
     public String eventType() {
-      return CONNECTION;
+      return MSG_TYPE;
     }
   }
 

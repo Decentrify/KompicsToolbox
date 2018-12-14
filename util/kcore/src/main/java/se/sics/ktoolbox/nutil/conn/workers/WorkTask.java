@@ -18,14 +18,22 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.ktoolbox.nutil.conn.ConnIds;
-import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.kompics.util.Identifier;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkCtrl {
-  public static interface Server<C extends WorkState.Client> {
-    public void connected(ConnIds.ConnId connId, KAddress peer, WorkState.Client clientState);
+public class WorkTask {
+
+  public static interface Request {
+    public Identifier taskId();
+  }
+  
+  public static interface Status {
+    public Identifier taskId();
+  }
+  
+  public static interface Result {
+    public Identifier taskId();
   }
 }

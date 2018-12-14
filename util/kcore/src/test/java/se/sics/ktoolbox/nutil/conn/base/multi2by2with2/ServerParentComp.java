@@ -58,7 +58,7 @@ public class ServerParentComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       Map<String, MsgIdExtractorV2> channelSelectors = new HashMap<>();
-      channelSelectors.put(ConnMsgs.CONNECTION, new BatchIdExtractors.Server());
+      channelSelectors.put(ConnMsgs.MSG_TYPE, new BatchIdExtractors.Server());
       OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("test-server-channel", logger,
         network, new MsgTypeExtractorsV2.Base(), channelSelectors);
 

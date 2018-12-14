@@ -70,16 +70,15 @@ public class ConnProxy {
       proxy.subscribe(handleServer, network);
       return this;
     }
-
-    public void set(ConnIds.InstanceId clientId, Connection.Client client) {
+    
+    public void startClient(ConnIds.InstanceId clientId, Connection.Client client, 
+      InstanceId serverId, KAddress serverAddress) {
       this.clientId = clientId;
-      this.client = client.setup(timer, networkSend(), logger);
-      logger.info("conn proxy {}", clientId);
-    }
-
-    public void connect(InstanceId serverId, KAddress serverAddress) {
-      logger.info("conn mngr proxy client:{} connect to:{}", client.clientId, serverId);
-      client.connect(serverId, serverAddress, Optional.empty());
+      this.client = client
+        .setup(timer, networkSend(), logger)
+        .start()
+        .connect(serverId, serverAddress, Optional.empty());
+      logger.info("conn proxy client:{} connect to:{}", client.clientId, serverId);
     }
 
     public void close() {
@@ -130,7 +129,7 @@ public class ConnProxy {
       this.self = self;
     }
 
-    public ConnProxy.Server setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds) {
+    public Server setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds) {
       this.logger = logger;
       this.proxy = proxy;
       this.msgIds = msgIds;
@@ -143,10 +142,10 @@ public class ConnProxy {
 
       return this;
     }
-
-    public void add(ConnIds.InstanceId serverId, Connection.Server server) {
+    
+    public void startServer(ConnIds.InstanceId serverId, Connection.Server server) {
       this.serverId = serverId;
-      this.server = server.setup(timer, networkSend(), logger, msgIds);
+      this.server = server.setup(timer, networkSend(), logger, msgIds).start();
       logger.info("conn proxy {}", serverId);
     }
 
