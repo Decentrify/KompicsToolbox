@@ -29,10 +29,10 @@ import se.sics.ktoolbox.util.network.KAddress;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkerCtrl {
+public class WorkCtrl {
 
   private TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend;
-  private TupleHelper.PairConsumer<ConnIds.ConnId, WorkCenterEvents.NewTask> workDriverSend;
+  private TupleHelper.PairConsumer<ConnIds.ConnId, WorkCtrlCenterEvents.NewTask> workDriverSend;
   private IdentifierFactory msgIds;
   private IdentifierFactory eventIds;
 
@@ -40,7 +40,7 @@ public class WorkerCtrl {
 
   public void setup(IdentifierFactory msgIds, IdentifierFactory eventIds,
     TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend,
-    TupleHelper.PairConsumer<ConnIds.ConnId, WorkCenterEvents.NewTask> workDriverSend) {
+    TupleHelper.PairConsumer<ConnIds.ConnId, WorkCtrlCenterEvents.NewTask> workDriverSend) {
     this.msgIds = msgIds;
     this.eventIds = eventIds;
     this.networkSend = networkSend;
@@ -49,7 +49,7 @@ public class WorkerCtrl {
 
   public void taskNew(ConnIds.ConnId connId, KAddress partner, WorkTask.Request task) {
     tasks.put(task.taskId(), new TaskState(task.taskId(), partner, connId));
-    workDriverSend.accept(connId, new WorkCenterEvents.NewTask(eventIds.randomId(), task));
+    workDriverSend.accept(connId, new WorkCtrlCenterEvents.NewTask(eventIds.randomId(), task));
   }
 
   public void taskStatus(Identifier taskId, WorkTask.Status update) {

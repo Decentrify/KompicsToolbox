@@ -32,10 +32,10 @@ import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnConfig;
 import se.sics.ktoolbox.nutil.conn.ConnMsgs;
 import se.sics.ktoolbox.nutil.conn.util.NetworkEmulator;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCenterComp;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCenterComp;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCenterPort;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCenterPort;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMngrCenterComp;
+import se.sics.ktoolbox.nutil.conn.workers.WorkCtrlCenterComp;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMngrCenterPort;
+import se.sics.ktoolbox.nutil.conn.workers.WorkCtrlCenterPort;
 import se.sics.ktoolbox.nutil.conn.workers.WorkMsgs;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorV2;
 import se.sics.ktoolbox.nutil.network.portsv2.MsgIdExtractorsV2;
@@ -68,9 +68,9 @@ public class HostComp extends ComponentDefinition {
         networkEmulator.getPositive(Network.class), new MsgTypeExtractorsV2.Base(), channelSelectors);
 
       ConnConfig connConfig = new ConnConfig(1000);
-      Component workMngr = create(MngrCenterComp.class, new MngrCenterComp.Init(init.workMngrAdr, init.overlayId,
+      Component workMngr = create(WorkMngrCenterComp.class, new WorkMngrCenterComp.Init(init.workMngrAdr, init.overlayId,
         init.batchId, init.baseId, connConfig));
-      Component workCenter = create(WorkCenterComp.class, new WorkCenterComp.Init(init.workCenterAdr, init.overlayId,
+      Component workCenter = create(WorkCtrlCenterComp.class, new WorkCtrlCenterComp.Init(init.workCenterAdr, init.overlayId,
         init.batchId, init.baseId, connConfig, init.workMngrAdr));
 
       channel.addChannel(init.workMngrAdr.getId(), workMngr.getNegative(Network.class));
@@ -80,11 +80,11 @@ public class HostComp extends ComponentDefinition {
       connect(timer.getPositive(Timer.class), workCenter.getNegative(Timer.class), Channel.TWO_WAY);
 
       Component workMngrDriver = create(WorkMngrDriverComp.class, new WorkMngrDriverComp.Init(init.workMngrAdr));
-      connect(workMngr.getPositive(MngrCenterPort.class), workMngrDriver.getNegative(MngrCenterPort.class),
+      connect(workMngr.getPositive(WorkMngrCenterPort.class), workMngrDriver.getNegative(WorkMngrCenterPort.class),
         Channel.TWO_WAY);
 
       Component workCenterDriver = create(WorkCenterDriverComp.class, new WorkCenterDriverComp.Init(init.workMngrAdr));
-      connect(workCenter.getPositive(WorkCenterPort.class), workCenterDriver.getNegative(WorkCenterPort.class),
+      connect(workCenter.getPositive(WorkCtrlCenterPort.class), workCenterDriver.getNegative(WorkCtrlCenterPort.class),
         Channel.TWO_WAY);
       connect(timer.getPositive(Timer.class), workCenterDriver.getNegative(Timer.class), Channel.TWO_WAY);
 

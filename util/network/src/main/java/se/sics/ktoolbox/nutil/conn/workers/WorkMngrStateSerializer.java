@@ -18,17 +18,33 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.ktoolbox.nutil.conn.ConnState;
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import se.sics.kompics.network.netty.serialization.Serializer;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkerState implements ConnState {
-  public final double load;
-  public final int ongoingTasks;
-  
-  public WorkerState(double load, int ongoingTasks) {
-    this.load = load;
-    this.ongoingTasks = ongoingTasks;
+public class WorkMngrStateSerializer implements Serializer {
+
+    private final int id;
+
+    public WorkMngrStateSerializer(int id) {
+      this.id = id;
+    }
+
+    @Override
+    public int identifier() {
+      return id;
+    }
+
+  @Override
+  public void toBinary(Object o, ByteBuf buf) {
+    WorkMngrState obj = (WorkMngrState)o;
+  }
+
+  @Override
+  public WorkMngrState fromBinary(ByteBuf buf, Optional<Object> hint) {
+    return new WorkMngrState();
   }
 }

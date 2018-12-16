@@ -18,23 +18,17 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.conn.ConnState;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkTask {
-
-  public static interface Request {
-    public Identifier taskId();
-    public Result deadWorker();
-  }
+public class WorkCtrlState implements ConnState {
+  public final double load;
+  public final int ongoingTasks;
   
-  public static interface Status {
-    public Identifier taskId();
-  }
-  
-  public static interface Result {
-    public Identifier taskId();
+  public WorkCtrlState(double load, int ongoingTasks) {
+    this.load = load;
+    this.ongoingTasks = ongoingTasks;
   }
 }

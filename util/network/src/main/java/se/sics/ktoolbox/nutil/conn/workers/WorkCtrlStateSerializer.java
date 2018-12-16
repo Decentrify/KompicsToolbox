@@ -18,17 +18,38 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.kompics.PortType;
+import com.google.common.base.Optional;
+import io.netty.buffer.ByteBuf;
+import se.sics.kompics.network.netty.serialization.Serializer;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MngrCenterPort extends PortType {
-  {
-    indication(MngrCenterEvents.Ready.class);
-    indication(MngrCenterEvents.NoWorkers.class);
-    request(MngrCenterEvents.TaskNew.class);
-    indication(MngrCenterEvents.TaskStatus.class);
-    indication(MngrCenterEvents.TaskCompleted.class);
+public class WorkCtrlStateSerializer implements Serializer {
+
+    private final int id;
+
+    public WorkCtrlStateSerializer(int id) {
+      this.id = id;
+    }
+
+    @Override
+    public int identifier() {
+      return id;
+    }
+
+  @Override
+  public void toBinary(Object o, ByteBuf buf) {
+    WorkCtrlState obj = (WorkCtrlState)o;
+    buf.writeDouble(obj.load);
+    buf.writeInt(obj.ongoingTasks);
+  }
+
+  @Override
+  public WorkCtrlState fromBinary(ByteBuf buf, Optional<Object> hint) {
+    double load = buf.readDouble();
+    int ongoingTasks = buf.readInt();
+    return new WorkCtrlState(load, ongoingTasks);
   }
 }

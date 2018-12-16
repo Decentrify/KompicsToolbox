@@ -24,9 +24,8 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCenterEvents;
-import se.sics.ktoolbox.nutil.conn.workers.MngrCenterPort;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCenterEvents.TaskStatus;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMngrCenterEvents;
+import se.sics.ktoolbox.nutil.conn.workers.WorkMngrCenterPort;
 import se.sics.ktoolbox.nutil.conn.workers.WorkTask;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
@@ -39,7 +38,7 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class WorkMngrDriverComp extends ComponentDefinition {
 
-  Positive<MngrCenterPort> appPort = requires(MngrCenterPort.class);
+  Positive<WorkMngrCenterPort> appPort = requires(WorkMngrCenterPort.class);
 
   private final Init init;
 
@@ -64,17 +63,17 @@ public class WorkMngrDriverComp extends ComponentDefinition {
     }
   };
 
-  Handler handleNotReady = new Handler<MngrCenterEvents.NoWorkers>() {
+  Handler handleNotReady = new Handler<WorkMngrCenterEvents.NoWorkers>() {
     @Override
-    public void handle(MngrCenterEvents.NoWorkers event) {
+    public void handle(WorkMngrCenterEvents.NoWorkers event) {
       logger.info("not ready");
       requested = false;
     }
   };
 
-  Handler handleReady = new Handler<MngrCenterEvents.Ready>() {
+  Handler handleReady = new Handler<WorkMngrCenterEvents.Ready>() {
     @Override
-    public void handle(MngrCenterEvents.Ready event) {
+    public void handle(WorkMngrCenterEvents.Ready event) {
       logger.info("ready");
       if (!requested) {
         requested = true;
@@ -83,31 +82,24 @@ public class WorkMngrDriverComp extends ComponentDefinition {
     }
   };
   
-  Handler handleStatus = new Handler<MngrCenterEvents.TaskStatus>() {
+  Handler handleStatus = new Handler<WorkMngrCenterEvents.TaskStatus>() {
     @Override
-    public void handle(MngrCenterEvents.TaskStatus event) {
+    public void handle(WorkMngrCenterEvents.TaskStatus event) {
       logger.info("task:{} status", event.task.taskId());
     }
   };
 
-  Handler handleResult = new Handler<MngrCenterEvents.TaskCompleted>() {
+  Handler handleResult = new Handler<WorkMngrCenterEvents.TaskCompleted>() {
     @Override
-    public void handle(MngrCenterEvents.TaskCompleted event) {
+    public void handle(WorkMngrCenterEvents.TaskCompleted event) {
       logger.info("task:{} completed", event.task.taskId());
     }
   };
 
   private void test() {
-    WorkTask.Request task = new WorkTask.Request() {
-      public final Identifier taskId = eventIds.randomId();
-
-      @Override
-      public Identifier taskId() {
-        return taskId;
-      }
-    };
+    WorkTask.Request task = new TestWorkTask.Request(eventIds.randomId());
     logger.info("task:{}", task.taskId());
-    trigger(new MngrCenterEvents.TaskNew(eventIds.randomId(), task), appPort);
+    trigger(new WorkMngrCenterEvents.TaskNew(eventIds.randomId(), task), appPort);
   }
 
   public static class Init extends se.sics.kompics.Init<WorkMngrDriverComp> {

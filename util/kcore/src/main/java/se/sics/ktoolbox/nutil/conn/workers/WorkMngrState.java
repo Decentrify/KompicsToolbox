@@ -18,15 +18,11 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.kompics.PortType;
+import se.sics.ktoolbox.nutil.conn.ConnState;
 
 /**
+ *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkCenterPort extends PortType {
-  {
-    indication(WorkCenterEvents.NewTask.class);
-    request(WorkCenterEvents.TaskStatus.class);
-    request(WorkCenterEvents.TaskCompleted.class);
-  }
+public class WorkMngrState implements ConnState {
 }

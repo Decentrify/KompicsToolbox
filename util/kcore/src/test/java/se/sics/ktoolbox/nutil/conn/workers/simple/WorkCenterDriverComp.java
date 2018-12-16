@@ -27,8 +27,8 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCenterEvents;
-import se.sics.ktoolbox.nutil.conn.workers.WorkCenterPort;
+import se.sics.ktoolbox.nutil.conn.workers.WorkCtrlCenterEvents;
+import se.sics.ktoolbox.nutil.conn.workers.WorkCtrlCenterPort;
 import se.sics.ktoolbox.nutil.conn.workers.WorkTask;
 import se.sics.ktoolbox.nutil.timer.TimerProxy;
 import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
@@ -43,7 +43,7 @@ import se.sics.ktoolbox.util.network.KAddress;
  */
 public class WorkCenterDriverComp extends ComponentDefinition {
 
-  Positive<WorkCenterPort> appPort = requires(WorkCenterPort.class);
+  Positive<WorkCtrlCenterPort> appPort = requires(WorkCtrlCenterPort.class);
   Positive<Timer> timerPort = requires(Timer.class);
   TimerProxy timer;
 
@@ -65,9 +65,9 @@ public class WorkCenterDriverComp extends ComponentDefinition {
     }
   };
 
-  Handler handleNewTask = new Handler<WorkCenterEvents.NewTask>() {
+  Handler handleNewTask = new Handler<WorkCtrlCenterEvents.NewTask>() {
     @Override
-    public void handle(WorkCenterEvents.NewTask req) {
+    public void handle(WorkCtrlCenterEvents.NewTask req) {
       logger.info("task:{} new", req.task.taskId());
       counter = 0;
       taskTId = timer.schedulePeriodicTimer(1000, 1000, taskUpdate(req));
@@ -77,27 +77,13 @@ public class WorkCenterDriverComp extends ComponentDefinition {
   int counter = 0;
   UUID taskTId;
 
-  private Consumer<Boolean> taskUpdate(WorkCenterEvents.NewTask req) {
+  private Consumer<Boolean> taskUpdate(WorkCtrlCenterEvents.NewTask req) {
     return (_ignore) -> {
       if (counter++ < 5) {
-        WorkTask.Status status = new WorkTask.Status() {
-          Identifier taskId = req.task.taskId();
-
-          @Override
-          public Identifier taskId() {
-            return taskId;
-          }
-        };
+        WorkTask.Status status = new TestWorkTask.Status(req.task.taskId());
         trigger(req.update(status), appPort);
       } else {
-        WorkTask.Result result = new WorkTask.Result() {
-          Identifier taskId = req.task.taskId();
-
-          @Override
-          public Identifier taskId() {
-            return taskId;
-          }
-        };
+        WorkTask.Result result = new TestWorkTask.Result(req.task.taskId());
         trigger(req.completed(result), appPort);
         timer.cancelPeriodicTimer(taskTId);
       }

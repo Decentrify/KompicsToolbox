@@ -25,7 +25,7 @@ import se.sics.kompics.util.Identifier;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkCenterEvents {
+public class WorkMngrCenterEvents {
 
   public static abstract class Base implements KompicsEvent, Identifiable {
 
@@ -41,45 +41,54 @@ public class WorkCenterEvents {
     }
   }
 
-  public static class NewTask extends Base {
+  public static class NoWorkers extends Base {
+
+    public NoWorkers(Identifier eventId) {
+      super(eventId);
+    }
+  }
+
+  public static class Ready extends Base {
+
+    public Ready(Identifier eventId) {
+      super(eventId);
+    }
+  }
+
+  public static class TaskNew extends Base {
 
     public final WorkTask.Request task;
 
-    public NewTask(Identifier eventId, WorkTask.Request task) {
+    public TaskNew(Identifier eventId, WorkTask.Request task) {
       super(eventId);
       this.task = task;
     }
-
-    public TaskStatus update(WorkTask.Status status) {
-      return new TaskStatus(task, eventId, status);
+    
+    public TaskStatus status(WorkTask.Status status) {
+      return new TaskStatus(eventId, task, status);
     }
-
     public TaskCompleted completed(WorkTask.Result result) {
       return new TaskCompleted(eventId, task, result);
     }
   }
 
+  public static class TaskStatus extends Base {
+    public final WorkTask.Request task;
+    public final WorkTask.Status status;
+    public TaskStatus(Identifier eventId, WorkTask.Request task, WorkTask.Status status) {
+      super(eventId);
+      this.task = task;
+      this.status = status;
+    }
+  }
+  
   public static class TaskCompleted extends Base {
-
     public final WorkTask.Request task;
     public final WorkTask.Result result;
-
     public TaskCompleted(Identifier eventId, WorkTask.Request task, WorkTask.Result result) {
       super(eventId);
       this.task = task;
       this.result = result;
-    }
-  }
-
-  public static class TaskStatus extends Base {
-
-    public final WorkTask.Request task;
-    public final WorkTask.Status status;
-
-    public TaskStatus(WorkTask.Request task, Identifier eventId, WorkTask.Status status) {
-      super(eventId);
-      this.task = task;
-      this.status = status;
     }
   }
 }

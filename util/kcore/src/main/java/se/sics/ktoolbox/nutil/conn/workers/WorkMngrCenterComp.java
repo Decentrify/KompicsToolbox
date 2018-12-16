@@ -36,22 +36,22 @@ import se.sics.ktoolbox.util.network.KAddress;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MngrCenterComp extends ComponentDefinition {
+public class WorkMngrCenterComp extends ComponentDefinition {
 
   private final Positive<Network> network = requires(Network.class);
   private final Positive<Timer> timer = requires(Timer.class);
-  private final Negative<MngrCenterPort> appPort = provides(MngrCenterPort.class);
-  private MngrCenterProxy workMngr;
+  private final Negative<WorkMngrCenterPort> appPort = provides(WorkMngrCenterPort.class);
+  private WorkMngrCenterProxy workMngr;
   private final Init init;
   private IdentifierFactory eventIds;
   private IdentifierFactory msgIds;
 
-  public MngrCenterComp(Init init) {
+  public WorkMngrCenterComp(Init init) {
     this.init = init;
 
     msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
     eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(1234l));
-    workMngr = new MngrCenterProxy(init.selfAdr, init.overlayId, init.batchId, init.baseId);
+    workMngr = new WorkMngrCenterProxy(init.selfAdr, init.overlayId, init.batchId, init.baseId);
     workMngr.setup(proxy, logger, init.connConfig, msgIds, eventIds);
     subscribe(handleStart, control);
   }
@@ -59,13 +59,13 @@ public class MngrCenterComp extends ComponentDefinition {
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      MngrState initState = new MngrState() {
+      WorkMngrState initState = new WorkMngrState() {
       };
       workMngr.start(initState);
     }
   };
 
-  public static class Init extends se.sics.kompics.Init<MngrCenterComp> {
+  public static class Init extends se.sics.kompics.Init<WorkMngrCenterComp> {
 
     public final KAddress selfAdr;
     public final Identifier overlayId;

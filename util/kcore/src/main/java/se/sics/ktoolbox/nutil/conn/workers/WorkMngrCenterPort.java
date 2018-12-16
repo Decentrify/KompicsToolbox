@@ -18,11 +18,17 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.ktoolbox.nutil.conn.ConnState;
+import se.sics.kompics.PortType;
 
 /**
- *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public interface MngrState extends ConnState {
+public class WorkMngrCenterPort extends PortType {
+  {
+    indication(WorkMngrCenterEvents.Ready.class);
+    indication(WorkMngrCenterEvents.NoWorkers.class);
+    request(WorkMngrCenterEvents.TaskNew.class);
+    indication(WorkMngrCenterEvents.TaskStatus.class);
+    indication(WorkMngrCenterEvents.TaskCompleted.class);
+  }
 }

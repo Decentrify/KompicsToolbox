@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.util.TupleHelper;
@@ -35,7 +36,7 @@ import se.sics.ktoolbox.util.network.KAddress;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class Mngr {
+public class WorkMngr {
 
   private TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend;
   private IdentifierFactory msgIds;
@@ -44,7 +45,7 @@ public class Mngr {
   private final Map<ConnIds.ConnId, LocalWorkerState> workers = new HashMap<>();
   private final Map<Identifier, Pair<WorkTask.Request, Consumer<WorkTask.Result>>> tasks = new HashMap<>();
 
-  public Mngr() {
+  public WorkMngr() {
   }
 
   public void setup(IdentifierFactory msgIds, TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend) {
@@ -52,7 +53,7 @@ public class Mngr {
     this.networkSend = networkSend;
   }
 
-  public void connect(ConnIds.ConnId connId, KAddress workerAdr, WorkerState workerState) {
+  public void connect(ConnIds.ConnId connId, KAddress workerAdr, WorkCtrlState workerState) {
     pendingWorkers.put(connId, new LocalWorkerState(connId, workerAdr, workerState));
   }
 
@@ -62,7 +63,7 @@ public class Mngr {
     workers.put(connId, worker);
   }
 
-  public void update(ConnIds.ConnId connId, WorkerState workerState) {
+  public void update(ConnIds.ConnId connId, WorkCtrlState workerState) {
     workers.get(connId).updateState(workerState);
   }
 
@@ -82,7 +83,7 @@ public class Mngr {
     });
     //if the method was called - we have at least 1 worker
     LocalWorkerState worker = aux.iterator().next();
-    worker.allocateTask(task.taskId(), status, result);
+    worker.allocateTask(task, status, result);
     networkSend.accept(worker.address, new WorkMsgs.NewTask(msgIds.randomId(), worker.connId, task));
   }
 
@@ -97,11 +98,35 @@ public class Mngr {
   }
 
   public void close() {
-    throw new UnsupportedOperationException();
+    workers.values().forEach((worker) -> close(worker));
+    workers.clear();
   }
 
   public void close(ConnIds.ConnId connId) {
-    throw new UnsupportedOperationException();
+    LocalWorkerState worker = workers.remove(connId);
+    close(worker);
+  }
+
+  private void close(LocalWorkerState worker) {
+    if (workers.size() > 0) {
+      worker.allocatedTasks.values().forEach((task) -> taskNew(task.task, task.status, task.result));
+    } else {
+      worker.allocatedTasks.values().forEach((task) -> task.result.accept(task.task.deadWorker()));
+    }
+    worker.allocatedTasks.clear();
+  }
+
+  static class TaskAux {
+
+    public final WorkTask.Request task;
+    public final Consumer<WorkTask.Status> status;
+    public final Consumer<WorkTask.Result> result;
+
+    public TaskAux(WorkTask.Request task, Consumer<WorkTask.Status> status, Consumer<WorkTask.Result> result) {
+      this.task = task;
+      this.status = status;
+      this.result = result;
+    }
   }
 
   static class LocalWorkerState {
@@ -109,10 +134,10 @@ public class Mngr {
     final ConnIds.ConnId connId;
     final KAddress address;
     WorkerStatus status;
-    WorkerState state;
-    final Map<Identifier, Pair<Consumer<WorkTask.Status>, Consumer<WorkTask.Result>>> allocatedTasks = new HashMap<>();
+    WorkCtrlState state;
+    final Map<Identifier, TaskAux> allocatedTasks = new HashMap<>();
 
-    public LocalWorkerState(ConnIds.ConnId connId, KAddress workerAdr, WorkerState state) {
+    public LocalWorkerState(ConnIds.ConnId connId, KAddress workerAdr, WorkCtrlState state) {
       this.connId = connId;
       this.address = workerAdr;
       this.status = WorkerStatus.CONNECT;
@@ -123,20 +148,20 @@ public class Mngr {
       status = WorkerStatus.READY;
     }
 
-    public void updateState(WorkerState state) {
+    public void updateState(WorkCtrlState state) {
       this.state = state;
     }
 
-    public void allocateTask(Identifier taskId, Consumer<WorkTask.Status> status, Consumer<WorkTask.Result> result) {
-      allocatedTasks.put(taskId, Pair.with(status, result));
+    public void allocateTask(WorkTask.Request task, Consumer<WorkTask.Status> status, Consumer<WorkTask.Result> result) {
+      allocatedTasks.put(task.taskId(), new TaskAux(task, status, result));
     }
 
     public Consumer<WorkTask.Status> update(Identifier taskId) {
-      return allocatedTasks.get(taskId).getValue0();
+      return allocatedTasks.get(taskId).status;
     }
 
     public Consumer<WorkTask.Result> completed(Identifier taskId) {
-      return allocatedTasks.remove(taskId).getValue1();
+      return allocatedTasks.remove(taskId).result;
     }
   }
 

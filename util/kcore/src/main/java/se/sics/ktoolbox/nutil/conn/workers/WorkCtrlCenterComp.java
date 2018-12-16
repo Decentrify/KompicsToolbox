@@ -38,22 +38,22 @@ import se.sics.ktoolbox.util.network.KAddress;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkCenterComp extends ComponentDefinition {
+public class WorkCtrlCenterComp extends ComponentDefinition {
 
   private final Positive<Network> networkPort = requires(Network.class);
   private final Positive<Timer> timerPort = requires(Timer.class);
-  private final Negative<WorkCenterPort> workDriverPort = provides(WorkCenterPort.class);
+  private final Negative<WorkCtrlCenterPort> workDriverPort = provides(WorkCtrlCenterPort.class);
   private final TimerProxy timer;
-  private WorkCenterProxy workCenter;
+  private WorkCtrlCenterProxy workCenter;
   private final Init init;
 
-  public WorkCenterComp(Init init) {
+  public WorkCtrlCenterComp(Init init) {
     this.init = init;
     timer = new TimerProxyImpl();
     timer.setup(proxy, logger);
     IdentifierFactory msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, Optional.of(1234l));
     IdentifierFactory eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.EVENT, Optional.of(1234l));
-    workCenter = new WorkCenterProxy(init.selfAdr, init.overlayId, init.batchId, init.baseId);
+    workCenter = new WorkCtrlCenterProxy(init.selfAdr, init.overlayId, init.batchId, init.baseId);
     workCenter.setup(proxy, logger, init.connConfig, msgIds, eventIds);
     subscribe(handleStart, control);
   }
@@ -62,13 +62,13 @@ public class WorkCenterComp extends ComponentDefinition {
     @Override
     public void handle(Start event) {
       timer.scheduleTimer(1000, (_ignore) -> {
-        WorkerState initState = new WorkerState(0, 0);
+        WorkCtrlState initState = new WorkCtrlState(0, 0);
         workCenter.startClient(initState, init.ctrlCenterAdr);
       });
     }
   };
 
-  public static class Init extends se.sics.kompics.Init<WorkCenterComp> {
+  public static class Init extends se.sics.kompics.Init<WorkCtrlCenterComp> {
 
     public final KAddress selfAdr;
     private final Identifier overlayId;

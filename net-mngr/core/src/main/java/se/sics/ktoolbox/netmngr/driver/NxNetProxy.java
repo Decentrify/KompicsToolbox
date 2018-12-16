@@ -31,6 +31,7 @@ import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.config.Config;
+import se.sics.kompics.network.Network;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.netmngr.NetworkConfig;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolve;
@@ -41,8 +42,6 @@ import se.sics.ktoolbox.netmngr.nxnet.NxNetComp;
 import se.sics.ktoolbox.netmngr.nxnet.NxNetPort;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.trysf.Try;
-import se.sics.ktoolbox.util.trysf.TryHelper;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -108,6 +107,14 @@ public class NxNetProxy {
     NxNetBind.Request req = NxNetBind.Request.providedAdr(eventId, address, privateIp);
     proxy.trigger(req, nxNetPort);
     logger.debug("sending:{}", req);
+  }
+  
+  public void connect(Component comp) {
+    proxy.connect(nxNetComp.getPositive(Network.class), comp.getNegative(Network.class), Channel.TWO_WAY);
+  }
+  
+  public void disconnect(Component comp) {
+    proxy.disconnect(nxNetComp.getPositive(Network.class), comp.getNegative(Network.class));
   }
 
   private final Handler handlePrivateIpDetected = new Handler<IpSolve.Response>() {

@@ -50,7 +50,7 @@ public class ConnMsgsSerializer {
       Serializers.lookupSerializer(ConnStatus.BaseClient.class).toBinary(obj.status, buf);
       buf.writeBoolean(obj.state.isPresent());
       if (obj.state.isPresent()) {
-        Serializers.toBinary(obj.state, buf);
+        Serializers.toBinary(obj.state.get(), buf);
       }
     }
 
@@ -92,7 +92,7 @@ public class ConnMsgsSerializer {
       Serializers.lookupSerializer(ConnStatus.BaseServer.class).toBinary(obj.status, buf);
       buf.writeBoolean(obj.state.isPresent());
       if (obj.state.isPresent()) {
-        Serializers.toBinary(obj.state, buf);
+        Serializers.toBinary(obj.state.get(), buf);
       }
     }
 

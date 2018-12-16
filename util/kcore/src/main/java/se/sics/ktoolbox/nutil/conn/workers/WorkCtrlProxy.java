@@ -37,26 +37,26 @@ import se.sics.ktoolbox.util.network.basic.BasicHeader;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkerCtrlProxy {
+public class WorkCtrlProxy {
   public final KAddress selfAdr;
-  public WorkerCtrl workerCtrl;
+  public WorkCtrl workerCtrl;
   
   private Logger logger;
   private ComponentProxy proxy;
   private Positive<Network> network;
-  private Positive<WorkCenterPort> workDriver;  
+  private Positive<WorkCtrlCenterPort> workDriver;  
   
-  public WorkerCtrlProxy(KAddress selfAdr) {
+  public WorkCtrlProxy(KAddress selfAdr) {
     this.selfAdr = selfAdr;
-    this.workerCtrl = new WorkerCtrl();
+    this.workerCtrl = new WorkCtrl();
   }
   
-  public WorkerCtrlProxy setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds, IdentifierFactory eventIds) {
+  public WorkCtrlProxy setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds, IdentifierFactory eventIds) {
     this.proxy = proxy;
     this.logger = logger;
 
     network = proxy.getNegative(Network.class).getPair();
-    workDriver = proxy.getPositive(WorkCenterPort.class).getPair();
+    workDriver = proxy.getPositive(WorkCtrlCenterPort.class).getPair();
 
     workerCtrl.setup(msgIds, eventIds, networkSend(), workDriverSend());
     proxy.subscribe(handleNewTask, network);
@@ -79,7 +79,7 @@ public class WorkerCtrlProxy {
     });
   }
   
-  TupleHelper.PairConsumer<ConnIds.ConnId, WorkCenterEvents.NewTask> workDriverSend() {
+  TupleHelper.PairConsumer<ConnIds.ConnId, WorkCtrlCenterEvents.NewTask> workDriverSend() {
     return TupleHelper.pairConsumer((connId) -> (content) -> {
       logger.trace("n:{} c:{} worker ctrl send:{} to driver",
         new Object[]{selfAdr.getId(), connId, content});
@@ -99,16 +99,16 @@ public class WorkerCtrlProxy {
       }
     };
   
-  Handler handleTaskStatus = new Handler<WorkCenterEvents.TaskStatus>() {
+  Handler handleTaskStatus = new Handler<WorkCtrlCenterEvents.TaskStatus>() {
     @Override
-    public void handle(WorkCenterEvents.TaskStatus event) {
+    public void handle(WorkCtrlCenterEvents.TaskStatus event) {
       workerCtrl.taskStatus(event.task.taskId(), event.status);
     }
   };
   
-  Handler handleTaskCompleted = new Handler<WorkCenterEvents.TaskCompleted>() {
+  Handler handleTaskCompleted = new Handler<WorkCtrlCenterEvents.TaskCompleted>() {
     @Override
-    public void handle(WorkCenterEvents.TaskCompleted event) {
+    public void handle(WorkCtrlCenterEvents.TaskCompleted event) {
       workerCtrl.taskCompleted(event.task.taskId(), event.result);
     }
   };

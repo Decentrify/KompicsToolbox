@@ -18,23 +18,15 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
-import se.sics.kompics.util.Identifier;
+import se.sics.kompics.PortType;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkTask {
-
-  public static interface Request {
-    public Identifier taskId();
-    public Result deadWorker();
-  }
-  
-  public static interface Status {
-    public Identifier taskId();
-  }
-  
-  public static interface Result {
-    public Identifier taskId();
+public class WorkCtrlCenterPort extends PortType {
+  {
+    indication(WorkCtrlCenterEvents.NewTask.class);
+    request(WorkCtrlCenterEvents.TaskStatus.class);
+    request(WorkCtrlCenterEvents.TaskCompleted.class);
   }
 }

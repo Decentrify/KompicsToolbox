@@ -38,31 +38,31 @@ import se.sics.ktoolbox.util.network.basic.BasicHeader;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class MngrProxy {
+public class WorkMngrProxy {
 
   private final KAddress selfAdr;
 
   private Logger logger;
   private ComponentProxy proxy;
   private Positive<Network> network;
-  private Negative<MngrCenterPort> mngrDriver;
+  private Negative<WorkMngrCenterPort> mngrDriver;
 
-  private Mngr workerMngr;
+  private WorkMngr workerMngr;
   private IdentifierFactory eventIds;
 
-  public MngrProxy(KAddress selfAdr) {
+  public WorkMngrProxy(KAddress selfAdr) {
     this.selfAdr = selfAdr;
-    this.workerMngr = new Mngr();
+    this.workerMngr = new WorkMngr();
   }
 
-  public MngrProxy setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds, IdentifierFactory eventIds) {
+  public WorkMngrProxy setup(ComponentProxy proxy, Logger logger, IdentifierFactory msgIds, IdentifierFactory eventIds) {
     this.proxy = proxy;
     this.logger = logger;
 
     this.eventIds = eventIds;
 
     network = proxy.getNegative(Network.class).getPair();
-    mngrDriver = proxy.getPositive(MngrCenterPort.class).getPair();
+    mngrDriver = proxy.getPositive(WorkMngrCenterPort.class).getPair();
 
     workerMngr.setup(msgIds, networkSend());
     proxy.subscribe(handleNewTask, mngrDriver);
@@ -78,22 +78,22 @@ public class MngrProxy {
   public void close(ConnIds.ConnId connId) {
     workerMngr.close(connId);
     if (workerMngr.readyWorkers() == 0) {
-      proxy.trigger(new MngrCenterEvents.NoWorkers(eventIds.randomId()), mngrDriver);
+      proxy.trigger(new WorkMngrCenterEvents.NoWorkers(eventIds.randomId()), mngrDriver);
     }
   }
 
-  public void connect(ConnIds.ConnId connId, KAddress workerAdr, WorkerState workerState) {
+  public void connect(ConnIds.ConnId connId, KAddress workerAdr, WorkCtrlState workerState) {
     workerMngr.connect(connId, workerAdr, workerState);
   }
 
   public void connected(ConnIds.ConnId connId) {
     workerMngr.connected(connId);
     if (workerMngr.readyWorkers() == 1) {
-      proxy.trigger(new MngrCenterEvents.Ready(eventIds.randomId()), mngrDriver);
+      proxy.trigger(new WorkMngrCenterEvents.Ready(eventIds.randomId()), mngrDriver);
     }
   }
 
-  public void update(ConnIds.ConnId connId, WorkerState workerState) {
+  public void update(ConnIds.ConnId connId, WorkCtrlState workerState) {
     workerMngr.update(connId, workerState);
   }
 
@@ -111,9 +111,9 @@ public class MngrProxy {
     });
   }
 
-  Handler handleNewTask = new Handler<MngrCenterEvents.TaskNew>() {
+  Handler handleNewTask = new Handler<WorkMngrCenterEvents.TaskNew>() {
     @Override
-    public void handle(MngrCenterEvents.TaskNew req) {
+    public void handle(WorkMngrCenterEvents.TaskNew req) {
       logger.debug("new task:{}", req.task.taskId());
       if (workerMngr.readyWorkers() > 0) {
         workerMngr.taskNew(req.task,
@@ -126,7 +126,7 @@ public class MngrProxy {
           proxy.trigger(req.completed(result), mngrDriver);
         });
       } else {
-        proxy.trigger(new MngrCenterEvents.NoWorkers(eventIds.randomId()), mngrDriver);
+        proxy.trigger(new WorkMngrCenterEvents.NoWorkers(eventIds.randomId()), mngrDriver);
       }
     }
   };

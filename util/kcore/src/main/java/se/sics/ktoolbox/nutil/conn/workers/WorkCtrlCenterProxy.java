@@ -38,7 +38,7 @@ import se.sics.ktoolbox.util.network.KAddress;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class WorkCenterProxy extends ComponentDefinition {
+public class WorkCtrlCenterProxy extends ComponentDefinition {
 
   private final Positive<Network> network = requires(Network.class);
   private final Positive<Timer> timerPort = requires(Timer.class);
@@ -49,18 +49,18 @@ public class WorkCenterProxy extends ComponentDefinition {
   private final Identifier baseId;
 
   private final ConnProxy.Client workerConn;
-  private final WorkerCtrlProxy workerCtrl;
+  private final WorkCtrlProxy workerCtrl;
 
   private IdentifierFactory msgIds;
   private ConnConfig connConfig;
 
-  public WorkCenterProxy(KAddress selfAdr, Identifier overlayId, Identifier batchId, Identifier baseId) {
+  public WorkCtrlCenterProxy(KAddress selfAdr, Identifier overlayId, Identifier batchId, Identifier baseId) {
     this.selfAdr = selfAdr;
     this.overlayId = overlayId;
     this.batchId = batchId;
     this.baseId = baseId;
     workerConn = new ConnProxy.Client(selfAdr);
-    workerCtrl = new WorkerCtrlProxy(selfAdr);
+    workerCtrl = new WorkCtrlProxy(selfAdr);
   }
 
   public void setup(ComponentProxy proxy, Logger logger, ConnConfig connConfig,
@@ -71,7 +71,7 @@ public class WorkCenterProxy extends ComponentDefinition {
     workerCtrl.setup(proxy, logger, msgIds, eventIds);
   }
 
-  public void startClient(WorkerState clientInitState, KAddress ctrlCenterAdr) {
+  public void startClient(WorkCtrlState clientInitState, KAddress ctrlCenterAdr) {
     ConnIds.InstanceId clientId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), batchId, baseId, false);
     ConnIds.InstanceId serverId = new ConnIds.InstanceId(overlayId, selfAdr.getId(), batchId, baseId, true);
     ConnCtrl ctrl = ctrl();
@@ -86,30 +86,30 @@ public class WorkCenterProxy extends ComponentDefinition {
     workerCtrl.close();
   }
 
-  private ConnCtrl<WorkerState, MngrState> ctrl() {
-    return new ConnCtrl<WorkerState, MngrState>() {
+  private ConnCtrl<WorkCtrlState, WorkMngrState> ctrl() {
+    return new ConnCtrl<WorkCtrlState, WorkMngrState>() {
 
       @Override
-      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, WorkerState selfState,
-        Optional<MngrState> partnerState) {
+      public ConnStatus.Decision connect(ConnIds.ConnId connId, KAddress partnerAdr, WorkCtrlState selfState,
+        Optional<WorkMngrState> partnerState) {
         return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public ConnStatus.Decision connected(ConnIds.ConnId connId, KAddress partnerAdr, WorkerState selfState, 
-        MngrState partnerState) {
+      public ConnStatus.Decision connected(ConnIds.ConnId connId, KAddress partnerAdr, WorkCtrlState selfState, 
+        WorkMngrState partnerState) {
         return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, KAddress partnerAdr, WorkerState selfState, 
-        MngrState partnerState) {
+      public ConnStatus.Decision selfUpdate(ConnIds.ConnId connId, KAddress partnerAdr, WorkCtrlState selfState, 
+        WorkMngrState partnerState) {
         return ConnStatus.Decision.PROCEED;
       }
 
       @Override
-      public ConnStatus.Decision partnerUpdate(ConnIds.ConnId connId, KAddress partnerAdr, WorkerState selfState, 
-        MngrState partnerState) {
+      public ConnStatus.Decision partnerUpdate(ConnIds.ConnId connId, KAddress partnerAdr, WorkCtrlState selfState, 
+        WorkMngrState partnerState) {
         return ConnStatus.Decision.PROCEED;
       }
 
