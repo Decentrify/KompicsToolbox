@@ -27,6 +27,7 @@ public class WorkMngrCenterPort extends PortType {
   {
     indication(WorkMngrCenterEvents.Ready.class);
     indication(WorkMngrCenterEvents.NoWorkers.class);
+    indication(WorkMngrCenterEvents.Workers.class);
     request(WorkMngrCenterEvents.TaskNew.class);
     indication(WorkMngrCenterEvents.TaskStatus.class);
     indication(WorkMngrCenterEvents.TaskCompleted.class);

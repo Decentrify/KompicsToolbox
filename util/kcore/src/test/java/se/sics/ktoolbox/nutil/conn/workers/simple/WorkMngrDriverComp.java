@@ -23,7 +23,6 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
-import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.workers.WorkMngrCenterEvents;
 import se.sics.ktoolbox.nutil.conn.workers.WorkMngrCenterPort;
 import se.sics.ktoolbox.nutil.conn.workers.WorkTask;

@@ -18,9 +18,11 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
+import java.util.List;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.util.network.KAddress;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -52,6 +54,14 @@ public class WorkMngrCenterEvents {
 
     public Ready(Identifier eventId) {
       super(eventId);
+    }
+  }
+  
+  public static class Workers extends Base {
+    public final List<KAddress> workers;
+    public Workers(Identifier eventId, List<KAddress> workers) {
+      super(eventId);
+      this.workers = workers;
     }
   }
 

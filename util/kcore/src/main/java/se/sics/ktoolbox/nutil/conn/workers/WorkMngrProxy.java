@@ -18,6 +18,8 @@
  */
 package se.sics.ktoolbox.nutil.conn.workers;
 
+import java.util.List;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentProxy;
@@ -64,7 +66,7 @@ public class WorkMngrProxy {
     network = proxy.getNegative(Network.class).getPair();
     mngrDriver = proxy.getPositive(WorkMngrCenterPort.class).getPair();
 
-    workerMngr.setup(msgIds, networkSend());
+    workerMngr.setup(msgIds, networkSend(), workerSheet());
     proxy.subscribe(handleNewTask, mngrDriver);
     proxy.subscribe(handleTaskStatus, network);
     proxy.subscribe(handleTaskCompleted, network);
@@ -108,6 +110,15 @@ public class WorkMngrProxy {
       logger.trace("n:{} c:{} worker mngr send:{} to:{}",
         new Object[]{selfAdr.getId(), content.connId, content, client});
       proxy.trigger(msg, network);
+    });
+  }
+  
+  Consumer<List<KAddress>> workerSheet() {
+    return ((workers) -> {
+      WorkMngrCenterEvents.Workers event = new WorkMngrCenterEvents.Workers(eventIds.randomId(), workers);
+      logger.trace("n:{} worker mngr send workers:{}",
+        new Object[]{selfAdr.getId(), event});
+      proxy.trigger(event, mngrDriver);
     });
   }
 

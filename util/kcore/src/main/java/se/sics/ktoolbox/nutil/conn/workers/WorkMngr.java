@@ -23,10 +23,11 @@ import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.javatuples.Pair;
-import org.javatuples.Triplet;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.conn.ConnIds;
 import se.sics.ktoolbox.util.TupleHelper;
@@ -39,6 +40,7 @@ import se.sics.ktoolbox.util.network.KAddress;
 public class WorkMngr {
 
   private TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend;
+  private Consumer<List<KAddress>> workerSheet;
   private IdentifierFactory msgIds;
 
   private final Map<ConnIds.ConnId, LocalWorkerState> pendingWorkers = new HashMap<>();
@@ -48,9 +50,11 @@ public class WorkMngr {
   public WorkMngr() {
   }
 
-  public void setup(IdentifierFactory msgIds, TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend) {
+  public void setup(IdentifierFactory msgIds, TupleHelper.PairConsumer<KAddress, WorkMsgs.Base> networkSend, 
+    Consumer<List<KAddress>> workerSheet) {
     this.msgIds = msgIds;
     this.networkSend = networkSend;
+    this.workerSheet = workerSheet;
   }
 
   public void connect(ConnIds.ConnId connId, KAddress workerAdr, WorkCtrlState workerState) {
@@ -61,6 +65,7 @@ public class WorkMngr {
     LocalWorkerState worker = pendingWorkers.remove(connId);
     worker.connected();
     workers.put(connId, worker);
+    workerSheet.accept(getWorkers());
   }
 
   public void update(ConnIds.ConnId connId, WorkCtrlState workerState) {
@@ -114,6 +119,12 @@ public class WorkMngr {
       worker.allocatedTasks.values().forEach((task) -> task.result.accept(task.task.deadWorker()));
     }
     worker.allocatedTasks.clear();
+  }
+  
+  private List<KAddress> getWorkers() {
+    List<KAddress> result = new LinkedList<>();
+    workers.values().forEach((state) -> result.add(state.address));
+    return result;
   }
 
   static class TaskAux {
