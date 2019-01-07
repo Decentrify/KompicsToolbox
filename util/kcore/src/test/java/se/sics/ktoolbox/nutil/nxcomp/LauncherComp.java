@@ -92,7 +92,7 @@ public class LauncherComp extends ComponentDefinition {
   Handler handleKilled = new Handler<NxMngrEvents.KillAck>() {
     @Override
     public void handle(NxMngrEvents.KillAck event) {
-      logger.info("killed:", event.req.compId);
+      logger.info("killed:", event.req.stackId);
     }
   };
 

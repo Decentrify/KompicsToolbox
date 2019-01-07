@@ -18,20 +18,24 @@
  */
 package se.sics.ktoolbox.nutil.nxcomp;
 
-import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Direct;
-import se.sics.kompics.Init;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.network.portsv2.SelectableEventV2;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NxMngrEvents {
+  public static final String EVENT_TYPE = "NX_MNGR_EVENT";
+  
+  public static interface Base extends SelectableEventV2, Identifiable {
+    public Identifier stackId();
+  }
 
   public static class CreateReq extends Direct.Request<CreateAck>
-    implements Identifiable {
+    implements Base {
 
     public final Identifier eventId;
     public final Identifier stackId;
@@ -56,9 +60,19 @@ public class NxMngrEvents {
     public String toString() {
       return "CreateReq{" + "eventId=" + eventId + ", compId=" + stackId + '}';
     }
+
+    @Override
+    public String eventType() {
+      return EVENT_TYPE;
+    }
+    
+    @Override
+    public Identifier stackId() {
+      return stackId;
+    }
   }
 
-  public static class CreateAck implements Direct.Response, Identifiable {
+  public static class CreateAck implements Direct.Response, Base {
 
     public final CreateReq req;
 
@@ -75,16 +89,26 @@ public class NxMngrEvents {
     public String toString() {
       return "CreateAck{" + "eventId=" + req.eventId + ", compId=" + req.stackId + '}';
     }
+    
+    @Override
+    public String eventType() {
+      return EVENT_TYPE;
+    }
+    
+    @Override
+    public Identifier stackId() {
+      return req.stackId;
+    }
   }
 
-  public static class KillReq extends Direct.Request<KillAck> implements Identifiable {
+  public static class KillReq extends Direct.Request<KillAck> implements Base {
 
     public final Identifier eventId;
-    public final Identifier compId;
+    public final Identifier stackId;
 
-    public KillReq(Identifier eventId, Identifier compId) {
+    public KillReq(Identifier eventId, Identifier stackId) {
       this.eventId = eventId;
-      this.compId = compId;
+      this.stackId = stackId;
     }
 
     @Override
@@ -94,15 +118,25 @@ public class NxMngrEvents {
 
     @Override
     public String toString() {
-      return "KillReq{" + "eventId=" + eventId + ", compId=" + compId + '}';
+      return "KillReq{" + "eventId=" + eventId + ", compId=" + stackId + '}';
     }
-    
+
     public KillAck ack() {
       return new KillAck(this);
     }
+    
+    @Override
+    public String eventType() {
+      return EVENT_TYPE;
+    }
+    
+    @Override
+    public Identifier stackId() {
+      return stackId;
+    }
   }
 
-  public static class KillAck implements Direct.Response, Identifiable {
+  public static class KillAck implements Direct.Response, Base {
 
     public final KillReq req;
 
@@ -117,7 +151,17 @@ public class NxMngrEvents {
 
     @Override
     public String toString() {
-      return "KillAck{" + "eventId=" + req.eventId + ", compId=" + req.compId + '}';
+      return "KillAck{" + "eventId=" + req.eventId + ", compId=" + req.stackId + '}';
+    }
+    
+    @Override
+    public String eventType() {
+      return EVENT_TYPE;
+    }
+    
+    @Override
+    public Identifier stackId() {
+      return req.stackId;
     }
   }
 }

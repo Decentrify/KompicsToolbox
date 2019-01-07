@@ -69,7 +69,7 @@ public class NxMngrProxy {
   public NxMngrProxy setup(ComponentProxy proxy, Logger logger) {
     this.proxy = proxy;
     this.logger = logger;
-
+    
     mngrPort = proxy.provides(NxMngrPort.class);
     
     Iterator<Class<PortType>> negPortIt = negativePorts.iterator();
@@ -144,8 +144,8 @@ public class NxMngrProxy {
   Handler handleKillReq = new Handler<NxMngrEvents.KillReq>() {
     @Override
     public void handle(NxMngrEvents.KillReq req) {
-      if (instances.containsKey(req.compId)) {
-        kill(req.compId);
+      if (instances.containsKey(req.stackId)) {
+        kill(req.stackId);
       }
       proxy.answer(req, req.ack());
     }

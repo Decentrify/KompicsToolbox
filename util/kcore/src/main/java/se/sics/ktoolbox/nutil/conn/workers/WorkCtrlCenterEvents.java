@@ -57,6 +57,11 @@ public class WorkCtrlCenterEvents {
     public TaskCompleted completed(WorkTask.Result result) {
       return new TaskCompleted(eventId, task, result);
     }
+
+    @Override
+    public String toString() {
+      return "NewTask{" + "task=" + task + '}';
+    }
   }
 
   public static class TaskCompleted extends Base {
