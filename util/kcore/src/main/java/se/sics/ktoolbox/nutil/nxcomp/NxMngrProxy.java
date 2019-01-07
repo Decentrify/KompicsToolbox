@@ -32,6 +32,7 @@ import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 
 /**
@@ -41,9 +42,9 @@ public class NxMngrProxy {
 
   //setup only
   private final List<Class<PortType>> negativePorts;
-  private final List<NxChannelIdExtractor> negativeIdExtractors;
+  private final List<ChannelIdExtractor> negativeIdExtractors;
   private final List<Class<PortType>> positivePorts;
-  private final List<NxChannelIdExtractor> positiveIdExtractors;
+  private final List<ChannelIdExtractor> positiveIdExtractors;
   //
   private final List<One2NChannel> negativeChannels = new LinkedList<>();
   private final List<One2NChannel> positiveChannels = new LinkedList<>();
@@ -57,8 +58,8 @@ public class NxMngrProxy {
   private Map<Identifier, NxStackInstance> instances = new HashMap<>();
 
   public NxMngrProxy(NxStackDefinition stackDefinition,
-    List<Class<PortType>> negativePorts, List<NxChannelIdExtractor> negativeIdExtractors,
-    List<Class<PortType>> positivePorts, List<NxChannelIdExtractor> positiveIdExtractors) {
+    List<Class<PortType>> negativePorts, List<ChannelIdExtractor> negativeIdExtractors,
+    List<Class<PortType>> positivePorts, List<ChannelIdExtractor> positiveIdExtractors) {
     this.stackDefinition = stackDefinition;
     this.negativePorts = negativePorts;
     this.negativeIdExtractors = negativeIdExtractors;
@@ -73,10 +74,10 @@ public class NxMngrProxy {
     mngrPort = proxy.provides(NxMngrPort.class);
     
     Iterator<Class<PortType>> negPortIt = negativePorts.iterator();
-    Iterator<NxChannelIdExtractor> negIdExtractorsIt = negativeIdExtractors.iterator();
+    Iterator<ChannelIdExtractor> negIdExtractorsIt = negativeIdExtractors.iterator();
     while(negPortIt.hasNext()) {
       Class<PortType> portType = negPortIt.next();
-      NxChannelIdExtractor channelIdExtractor = negIdExtractorsIt.next();
+      ChannelIdExtractor channelIdExtractor = negIdExtractorsIt.next();
       Negative negativePort = proxy.provides(portType);
       One2NChannel channel
         = One2NChannel.getChannel("nxmngr negative port:" + portType, negativePort, channelIdExtractor);
@@ -84,10 +85,10 @@ public class NxMngrProxy {
     }
     
     Iterator<Class<PortType>> posPortIt = positivePorts.iterator();
-    Iterator<NxChannelIdExtractor> posIdExtractorsIt = positiveIdExtractors.iterator();
+    Iterator<ChannelIdExtractor> posIdExtractorsIt = positiveIdExtractors.iterator();
     while(posPortIt.hasNext()) {
       Class<PortType> portType = posPortIt.next();
-      NxChannelIdExtractor channelIdExtractor = posIdExtractorsIt.next();
+      ChannelIdExtractor channelIdExtractor = posIdExtractorsIt.next();
       Positive positivePort = proxy.requires(portType);
       One2NChannel channel
         = One2NChannel.getChannel("nxmngr positive port:" + portType, positivePort, channelIdExtractor);

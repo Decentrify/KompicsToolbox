@@ -33,6 +33,7 @@ import se.sics.ktoolbox.util.identifiable.BasicBuilders;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
+import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
  *
@@ -105,9 +106,9 @@ public class LauncherComp extends ComponentDefinition {
 
   private void createNxMngr() {
     List<Class<PortType>> negativePorts = new LinkedList<>();
-    List<NxChannelIdExtractor> negativeIdExtractors = new LinkedList<>();
+    List<ChannelIdExtractor> negativeIdExtractors = new LinkedList<>();
     List<Class<PortType>> positivePorts = new LinkedList<>();
-    List<NxChannelIdExtractor> positiveIdExtractors = new LinkedList<>();
+    List<ChannelIdExtractor> positiveIdExtractors = new LinkedList<>();
     negativePorts.add((Class) PortA.class);
     negativeIdExtractors.add(new TestChannelIdExtractor(TestEvent.class));
     positivePorts.add((Class) PortB.class);

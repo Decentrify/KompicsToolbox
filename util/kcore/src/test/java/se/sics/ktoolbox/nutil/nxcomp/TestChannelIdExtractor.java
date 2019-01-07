@@ -19,12 +19,13 @@
 package se.sics.ktoolbox.nutil.nxcomp;
 
 import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
  *
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class TestChannelIdExtractor extends NxChannelIdExtractor<TestEvent> {
+public class TestChannelIdExtractor extends ChannelIdExtractor<TestEvent, Identifier> {
 
   public TestChannelIdExtractor(Class<TestEvent> eventType) {
     super(eventType);

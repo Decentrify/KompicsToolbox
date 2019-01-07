@@ -21,6 +21,7 @@ package se.sics.ktoolbox.nutil.nxcomp;
 import java.util.List;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.PortType;
+import se.sics.ktoolbox.util.network.ports.ChannelIdExtractor;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -43,13 +44,13 @@ public class NxMngrComp extends ComponentDefinition {
 
     public final NxStackDefinition stackDefinition;
     public final List<Class<PortType>> negativePorts;
-    public final List<NxChannelIdExtractor> negativeIdExtractors;
+    public final List<ChannelIdExtractor> negativeIdExtractors;
     public final List<Class<PortType>> positivePorts;
-    public final List<NxChannelIdExtractor> positiveIdExtractors;
+    public final List<ChannelIdExtractor> positiveIdExtractors;
 
     public Init(NxStackDefinition stackDefinition,
-      List<Class<PortType>> negativePorts, List<NxChannelIdExtractor> negativeIdExtractors,
-      List<Class<PortType>> positivePorts, List<NxChannelIdExtractor> positiveIdExtractors) {
+      List<Class<PortType>> negativePorts, List<ChannelIdExtractor> negativeIdExtractors,
+      List<Class<PortType>> positivePorts, List<ChannelIdExtractor> positiveIdExtractors) {
       this.stackDefinition = stackDefinition;
       this.negativePorts = negativePorts;
       this.negativeIdExtractors = negativeIdExtractors;
