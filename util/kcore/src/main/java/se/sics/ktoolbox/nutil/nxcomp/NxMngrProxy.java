@@ -19,10 +19,12 @@
 package se.sics.ktoolbox.nutil.nxcomp;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
@@ -48,14 +50,14 @@ public class NxMngrProxy {
   //
   private final List<One2NChannel> negativeChannels = new LinkedList<>();
   private final List<One2NChannel> positiveChannels = new LinkedList<>();
-  
+
   //
   private final NxStackDefinition stackDefinition;
   private Negative<NxMngrPort> mngrPort;
   private ComponentProxy proxy;
   private Logger logger;
 
-  private Map<Identifier, NxStackInstance> instances = new HashMap<>();
+  private Map<Identifier, Instance> instances = new HashMap<>();
 
   public NxMngrProxy(NxStackDefinition stackDefinition,
     List<Class<PortType>> negativePorts, List<ChannelIdExtractor> negativeIdExtractors,
@@ -70,12 +72,12 @@ public class NxMngrProxy {
   public NxMngrProxy setup(ComponentProxy proxy, Logger logger) {
     this.proxy = proxy;
     this.logger = logger;
-    
+
     mngrPort = proxy.provides(NxMngrPort.class);
-    
+
     Iterator<Class<PortType>> negPortIt = negativePorts.iterator();
     Iterator<ChannelIdExtractor> negIdExtractorsIt = negativeIdExtractors.iterator();
-    while(negPortIt.hasNext()) {
+    while (negPortIt.hasNext()) {
       Class<PortType> portType = negPortIt.next();
       ChannelIdExtractor channelIdExtractor = negIdExtractorsIt.next();
       Negative negativePort = proxy.provides(portType);
@@ -83,10 +85,10 @@ public class NxMngrProxy {
         = One2NChannel.getChannel("nxmngr negative port:" + portType, negativePort, channelIdExtractor);
       negativeChannels.add(channel);
     }
-    
+
     Iterator<Class<PortType>> posPortIt = positivePorts.iterator();
     Iterator<ChannelIdExtractor> posIdExtractorsIt = positiveIdExtractors.iterator();
-    while(posPortIt.hasNext()) {
+    while (posPortIt.hasNext()) {
       Class<PortType> portType = posPortIt.next();
       ChannelIdExtractor channelIdExtractor = posIdExtractorsIt.next();
       Positive positivePort = proxy.requires(portType);
@@ -94,7 +96,7 @@ public class NxMngrProxy {
         = One2NChannel.getChannel("nxmngr positive port:" + portType, positivePort, channelIdExtractor);
       positiveChannels.add(channel);
     }
-    
+
     proxy.subscribe(handleCreateReq, mngrPort);
     proxy.subscribe(handleKillReq, mngrPort);
     return this;
@@ -103,7 +105,7 @@ public class NxMngrProxy {
   public void close() {
     if (!instances.isEmpty()) {
       logger.warn("kill components before nxmngr shutdown");
-      instances.keySet().forEach((compId) -> kill(compId));
+      instances.values().forEach((instance) -> kill(instance));
     }
     negativeChannels.forEach((channel) -> channel.disconnect());
     positiveChannels.forEach((channel) -> channel.disconnect());
@@ -113,16 +115,18 @@ public class NxMngrProxy {
     @Override
     public void handle(NxMngrEvents.CreateReq req) {
       if (!instances.containsKey(req.stackId)) {
-        NxStackInstance instance = stackDefinition.setup(proxy, req.stackId, req.stackInit, 
+        NxStackInstance stackInstance = stackDefinition.setup(proxy, req.stackId, req.stackInit,
           negativePorts, positivePorts);
+        Instance instance = new Instance(req.stackId, stackInstance);
+        instance.use(req.getId());
         instances.put(req.stackId, instance);
-        if (negativePorts.size() != instance.positivePorts.size()
-          || positivePorts.size() != instance.negativePorts.size()) {
+        if (negativePorts.size() != stackInstance.positivePorts.size()
+          || positivePorts.size() != stackInstance.negativePorts.size()) {
           throw new RuntimeException("bad logic - ports definition/instance");
         }
 
         Iterator<One2NChannel> negChannelIt = negativeChannels.iterator();
-        Iterator<Positive> stackPosIt = instance.positivePorts.iterator();
+        Iterator<Positive> stackPosIt = stackInstance.positivePorts.iterator();
         while (negChannelIt.hasNext()) {
           One2NChannel channel = negChannelIt.next();
           Positive stackPort = stackPosIt.next();
@@ -130,13 +134,15 @@ public class NxMngrProxy {
         }
 
         Iterator<One2NChannel> posChannelIt = positiveChannels.iterator();
-        Iterator<Negative> stackNegIt = instance.negativePorts.iterator();
+        Iterator<Negative> stackNegIt = stackInstance.negativePorts.iterator();
         while (posChannelIt.hasNext()) {
           One2NChannel channel = posChannelIt.next();
           Negative stackPort = stackNegIt.next();
           channel.addChannel(req.stackId, stackPort);
         }
-        instance.components.forEach((comp) -> proxy.trigger(Start.event, comp.getControl()));
+        stackInstance.components.forEach((comp) -> proxy.trigger(Start.event, comp.getControl()));
+      } else {
+        instances.get(req.stackId).use(req.getId());
       }
       proxy.answer(req, req.ack());
     }
@@ -145,30 +151,55 @@ public class NxMngrProxy {
   Handler handleKillReq = new Handler<NxMngrEvents.KillReq>() {
     @Override
     public void handle(NxMngrEvents.KillReq req) {
-      if (instances.containsKey(req.stackId)) {
-        kill(req.stackId);
+      if (instances.containsKey(req.stackId())) {
+        Instance instance = instances.get(req.stackId());
+        instance.endUse(req.getId());
+        if (instance.users.isEmpty()) {
+          kill(instance);
+          instances.remove(req.stackId());
+        }
       }
       proxy.answer(req, req.ack());
     }
   };
 
-  private void kill(Identifier stackId) {
-    NxStackInstance instance = instances.remove(stackId);
+  private void kill(Instance instance) {
+    NxStackInstance nxInstance = instance.instance;
     Iterator<One2NChannel> negChannelIt = negativeChannels.iterator();
-    Iterator<Positive> stackPosIt = instance.positivePorts.iterator();
+    Iterator<Positive> stackPosIt = nxInstance.positivePorts.iterator();
     while (negChannelIt.hasNext()) {
       One2NChannel channel = negChannelIt.next();
       Positive stackPort = stackPosIt.next();
-      channel.removeChannel(stackId, stackPort);
+      channel.removeChannel(instance.stackId, stackPort);
     }
 
     Iterator<One2NChannel> posChannelIt = positiveChannels.iterator();
-    Iterator<Negative> stackNegIt = instance.negativePorts.iterator();
+    Iterator<Negative> stackNegIt = nxInstance.negativePorts.iterator();
     while (posChannelIt.hasNext()) {
       One2NChannel channel = posChannelIt.next();
       Negative stackPort = stackNegIt.next();
-      channel.removeChannel(stackId, stackPort);
+      channel.removeChannel(instance.stackId, stackPort);
     }
-    instance.components.forEach((comp) -> proxy.trigger(Kill.event, comp.getControl()));
+    nxInstance.components.forEach((comp) -> proxy.trigger(Kill.event, comp.getControl()));
+  }
+
+  static class Instance {
+
+    final Identifier stackId;
+    final NxStackInstance instance;
+    Set<Identifier> users = new HashSet<>();
+
+    public Instance(Identifier stackId, NxStackInstance instance) {
+      this.stackId = stackId;
+      this.instance = instance;
+    }
+
+    public void use(Identifier user) {
+      users.add(user);
+    }
+
+    public void endUse(Identifier user) {
+      users.remove(user);
+    }
   }
 }

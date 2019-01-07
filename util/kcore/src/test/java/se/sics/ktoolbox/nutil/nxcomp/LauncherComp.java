@@ -48,6 +48,8 @@ public class LauncherComp extends ComponentDefinition {
   IdentifierFactory eventIds;
   int created = 0;
   Component nxMngr;
+  NxMngrEvents.CreateReq req1;
+  NxMngrEvents.CreateReq req2;
 
   public LauncherComp() {
     IdentifierFactory compIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.NODE, Optional.empty());
@@ -65,9 +67,11 @@ public class LauncherComp extends ComponentDefinition {
     public void handle(Start event) {
       createNxMngr();
       NxStackInit stackInit1 = new NxStackInit.OneComp<>(new TestComp.Init());
-      trigger(new NxMngrEvents.CreateReq(eventIds.randomId(), stackId1, stackInit1), mngrPort);
+      req1 = new NxMngrEvents.CreateReq(eventIds.randomId(), stackId1, stackInit1);
+      trigger(req1, mngrPort);
       NxStackInit stackInit2 = new NxStackInit.OneComp<>(new TestComp.Init());
-      trigger(new NxMngrEvents.CreateReq(eventIds.randomId(), stackId2, stackInit2), mngrPort);
+      req2 = new NxMngrEvents.CreateReq(eventIds.randomId(), stackId2, stackInit2);
+      trigger(req2, mngrPort);
     }
   };
 
@@ -85,15 +89,15 @@ public class LauncherComp extends ComponentDefinition {
   Handler handleDone = new Handler<DriverEvents.Done>() {
     @Override
     public void handle(DriverEvents.Done event) {
-      trigger(new NxMngrEvents.KillReq(eventIds.randomId(), stackId1), mngrPort);
-      trigger(new NxMngrEvents.KillReq(eventIds.randomId(), stackId2), mngrPort);
+      trigger(new NxMngrEvents.KillReq(req1), mngrPort);
+      trigger(new NxMngrEvents.KillReq(req2), mngrPort);
     }
   };
 
   Handler handleKilled = new Handler<NxMngrEvents.KillAck>() {
     @Override
     public void handle(NxMngrEvents.KillAck event) {
-      logger.info("killed:", event.req.stackId);
+      logger.info("killed:", event.req.stackId());
     }
   };
 

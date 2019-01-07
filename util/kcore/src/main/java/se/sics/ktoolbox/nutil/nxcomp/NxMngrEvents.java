@@ -102,23 +102,20 @@ public class NxMngrEvents {
   }
 
   public static class KillReq extends Direct.Request<KillAck> implements Base {
+    public final CreateReq req;
 
-    public final Identifier eventId;
-    public final Identifier stackId;
-
-    public KillReq(Identifier eventId, Identifier stackId) {
-      this.eventId = eventId;
-      this.stackId = stackId;
+    public KillReq(CreateReq req) {
+      this.req = req;
     }
 
     @Override
     public Identifier getId() {
-      return eventId;
+      return req.getId();
     }
 
     @Override
     public String toString() {
-      return "KillReq{" + "eventId=" + eventId + ", compId=" + stackId + '}';
+      return "KillReq{" + "eventId=" + req.getId() + ", compId=" + req.stackId() + '}';
     }
 
     public KillAck ack() {
@@ -132,7 +129,7 @@ public class NxMngrEvents {
     
     @Override
     public Identifier stackId() {
-      return stackId;
+      return req.stackId();
     }
   }
 
@@ -151,7 +148,7 @@ public class NxMngrEvents {
 
     @Override
     public String toString() {
-      return "KillAck{" + "eventId=" + req.eventId + ", compId=" + req.stackId + '}';
+      return "KillAck{" + "eventId=" + req.getId() + ", compId=" + req.stackId() + '}';
     }
     
     @Override
@@ -161,7 +158,7 @@ public class NxMngrEvents {
     
     @Override
     public Identifier stackId() {
-      return req.stackId;
+      return req.stackId();
     }
   }
 }
