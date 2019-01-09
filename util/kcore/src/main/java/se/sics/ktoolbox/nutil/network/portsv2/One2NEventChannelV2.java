@@ -51,19 +51,19 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
   // These are supposed to be immutable after channel creation
   private final PortCore<P> sourcePort;
   //both on the multi end
-  private final EventTypeExtractorV2 channelFilter;
+  private final EventTypeExtractorV2 eventTypeExtractor;
   private final Map<String, EventIdExtractorV2> channelSelectors;
   // These can change during the lifetime of a channel
   // Use HashMap for now and switch to a more efficient datastructure if necessary
   private final Multimap<Identifier, PortCore<P>> nPorts = HashMultimap.create();
 
   public One2NEventChannelV2(String channelName, String details, Logger logger, PortCore<P> sourcePort,
-    EventTypeExtractorV2 channelFilter, Map<String, EventIdExtractorV2> channelSelectors) {
+    EventTypeExtractorV2 eventTypeExtractor, Map<String, EventIdExtractorV2> channelSelectors) {
     this.channelName = channelName;
     this.details = details;
     this.sourcePort = sourcePort;
     this.logger = logger;
-    this.channelFilter = channelFilter;
+    this.eventTypeExtractor = eventTypeExtractor;
     this.channelSelectors = channelSelectors;
   }
 
@@ -126,7 +126,7 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
         eventType = Optional.empty();
       } else {
         SelectableEventV2 se = (SelectableEventV2)event;
-        eventType = channelFilter.type(se);
+        eventType = eventTypeExtractor.type(se);
         if (eventType.isPresent()) {
           EventIdExtractorV2 idExtractor = channelSelectors.get(eventType.get());
           if (idExtractor != null) {

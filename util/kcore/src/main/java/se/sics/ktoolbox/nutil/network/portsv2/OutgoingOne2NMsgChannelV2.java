@@ -203,7 +203,7 @@ public class OutgoingOne2NMsgChannelV2 implements ChannelCore<Network> {
   }
 
   public static OutgoingOne2NMsgChannelV2 getChannel(String channelName, Logger logger,
-    Positive<Network> parentPort, MsgTypeExtractorV2 filter, Map<String, MsgIdExtractorV2> channelSelectors) {
+    Positive<Network> parentPort, MsgTypeExtractorV2 msgTypeExtractor, Map<String, MsgIdExtractorV2> channelSelectors) {
     StringBuilder detailsSB = new StringBuilder();
     detailsSB.append("type:").append(parentPort.getPortType().getClass().getName()).append(" ");
     detailsSB.append("owner:").append(parentPort.getOwner().getComponent().getClass().getName()).append(" ");
@@ -211,7 +211,7 @@ public class OutgoingOne2NMsgChannelV2 implements ChannelCore<Network> {
     logger.info("creating:{} details:{}", channelName, detailsSB);
 
     OutgoingOne2NMsgChannelV2 one2NC = new OutgoingOne2NMsgChannelV2(channelName, details, logger,
-      parentPort, filter, channelSelectors);
+      parentPort, msgTypeExtractor, channelSelectors);
     parentPort.addChannel(one2NC);
     return one2NC;
   }
