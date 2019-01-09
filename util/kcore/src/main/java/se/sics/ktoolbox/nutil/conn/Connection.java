@@ -293,6 +293,11 @@ public class Connection {
               }
             }
             break;
+            case DISCONNECT: {
+              disconnectBase();
+              decision = ConnStatus.Decision.DISCONNECT;
+            }
+            break;
             default:
               throw new UnsupportedOperationException();
           }
