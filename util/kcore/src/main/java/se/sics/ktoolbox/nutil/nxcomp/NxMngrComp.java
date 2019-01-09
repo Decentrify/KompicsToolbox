@@ -32,7 +32,7 @@ public class NxMngrComp extends ComponentDefinition {
 
   public NxMngrComp(Init init) {
     this.mngrProxy = new NxMngrProxy(init.stackDefinition, init.negativePorts, init.negativeIdExtractors,
-      init.positivePorts, init.positiveIdExtractors).setup(proxy, logger);
+      init.positivePorts, init.positiveIdExtractors).setup(init.mngrName, proxy, logger);
   }
 
   @Override
@@ -47,8 +47,9 @@ public class NxMngrComp extends ComponentDefinition {
     public final List<ChannelIdExtractor> negativeIdExtractors;
     public final List<Class<PortType>> positivePorts;
     public final List<ChannelIdExtractor> positiveIdExtractors;
+    public final String mngrName;
 
-    public Init(NxStackDefinition stackDefinition,
+    public Init(String mngrName, NxStackDefinition stackDefinition,
       List<Class<PortType>> negativePorts, List<ChannelIdExtractor> negativeIdExtractors,
       List<Class<PortType>> positivePorts, List<ChannelIdExtractor> positiveIdExtractors) {
       this.stackDefinition = stackDefinition;
@@ -56,6 +57,7 @@ public class NxMngrComp extends ComponentDefinition {
       this.negativeIdExtractors = negativeIdExtractors;
       this.positivePorts = positivePorts;
       this.positiveIdExtractors = positiveIdExtractors;
+      this.mngrName = mngrName;
     }
   }
 }

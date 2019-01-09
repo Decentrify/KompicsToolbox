@@ -68,8 +68,8 @@ public class NxMngrProxy {
     this.positivePorts = positivePorts;
     this.positiveIdExtractors = positiveIdExtractors;
   }
-
-  public NxMngrProxy setup(ComponentProxy proxy, Logger logger) {
+  
+  public NxMngrProxy setup(String mngrName, ComponentProxy proxy, Logger logger) {
     this.proxy = proxy;
     this.logger = logger;
 
@@ -82,7 +82,7 @@ public class NxMngrProxy {
       ChannelIdExtractor channelIdExtractor = negIdExtractorsIt.next();
       Negative negativePort = proxy.provides(portType);
       One2NChannel channel
-        = One2NChannel.getChannel("nxmngr negative port:" + portType, negativePort, channelIdExtractor);
+        = One2NChannel.getChannel(mngrName + " negative port:" + portType, negativePort, channelIdExtractor);
       negativeChannels.add(channel);
     }
 
@@ -93,7 +93,7 @@ public class NxMngrProxy {
       ChannelIdExtractor channelIdExtractor = posIdExtractorsIt.next();
       Positive positivePort = proxy.requires(portType);
       One2NChannel channel
-        = One2NChannel.getChannel("nxmngr positive port:" + portType, positivePort, channelIdExtractor);
+        = One2NChannel.getChannel(mngrName + " positive port:" + portType, positivePort, channelIdExtractor);
       positiveChannels.add(channel);
     }
 

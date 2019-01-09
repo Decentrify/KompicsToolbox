@@ -119,7 +119,7 @@ public class LauncherComp extends ComponentDefinition {
     positiveIdExtractors.add(new TestChannelIdExtractor(TestEvent.class));
 
     NxStackDefinition stackDefintion = new NxStackDefinition.OneComp<>(TestComp.class);
-    nxMngr = create(NxMngrComp.class, new NxMngrComp.Init(stackDefintion, negativePorts, negativeIdExtractors, 
+    nxMngr = create(NxMngrComp.class, new NxMngrComp.Init("nxmngr", stackDefintion, negativePorts, negativeIdExtractors, 
       positivePorts, positiveIdExtractors));
     connect(nxMngr.getPositive(NxMngrPort.class), mngrPort.getPair(), Channel.TWO_WAY);
     trigger(Start.event, nxMngr.control());

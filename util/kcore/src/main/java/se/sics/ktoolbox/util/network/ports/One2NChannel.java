@@ -116,7 +116,6 @@ public class One2NChannel<P extends PortType> implements ChannelCore<P> {
 
   private void forwardTo(KompicsEvent event, int wid, boolean positive) {
     Identifier overlayId;
-
     if (filter.filter(event)) {
       LOG.debug("{}filtered:{}", logPrefix, event);
       return;

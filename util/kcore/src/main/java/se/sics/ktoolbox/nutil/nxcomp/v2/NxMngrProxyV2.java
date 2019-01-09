@@ -92,7 +92,7 @@ public class NxMngrProxyV2 {
     this.positiveNetwork = positiveNetwork;
   }
 
-  public NxMngrProxyV2 setup(ComponentProxy proxy, Logger logger) {
+  public NxMngrProxyV2 setup(String mngrName, ComponentProxy proxy, Logger logger) {
     this.proxy = proxy;
     this.logger = logger;
 
@@ -104,7 +104,7 @@ public class NxMngrProxyV2 {
       Class<PortType> portType = negPortIt.next();
       Map<String, EventIdExtractorV2> channelIdSelector = negIdSelectorsIt.next();
       Negative negativePort = proxy.provides(portType);
-      One2NEventChannelV2 channel = One2NEventChannelV2.getChannel("nxmngr negative", logger, negativePort,
+      One2NEventChannelV2 channel = One2NEventChannelV2.getChannel(mngrName + " negative", logger, negativePort,
         new EventTypeExtractorsV2.Base(), channelIdSelector);
       negativeChannels.add(channel);
     }
@@ -115,7 +115,7 @@ public class NxMngrProxyV2 {
       Class<PortType> portType = posPortIt.next();
       Map<String, EventIdExtractorV2> channelIdSelector = posIdSelectorsIt.next();
       Positive positivePort = proxy.requires(portType);
-      One2NEventChannelV2 channel = One2NEventChannelV2.getChannel("nxmngr positive", logger, positivePort,
+      One2NEventChannelV2 channel = One2NEventChannelV2.getChannel(mngrName + "positive", logger, positivePort,
         new EventTypeExtractorsV2.Base(), channelIdSelector);
       positiveChannels.add(channel);
     }
@@ -123,7 +123,7 @@ public class NxMngrProxyV2 {
     if (positiveNetwork.isPresent()) {
       Map<String, MsgIdExtractorV2> channelIdSelector = positiveNetwork.get().idSelectors;
       Positive positivePort = proxy.requires(Network.class);
-      OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel("nxmngr net positive", logger,
+      OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel(mngrName + "net positive", logger,
         positivePort, new MsgTypeExtractorsV2.Base(), channelIdSelector);
       positiveNetChannel = Optional.of(channel);
     }

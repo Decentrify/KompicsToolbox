@@ -31,18 +31,27 @@ import se.sics.kompics.timer.CancelTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
+import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.network.portsv2.SelectableEventV2;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class TimerProxyImpl implements TimerProxy {
+
   private Logger logger;
   private Positive<Timer> timer;
   private ComponentProxy proxy;
   private Map<UUID, Consumer<Boolean>> periodicCallbacks = new HashMap<>();
   private Map<UUID, Consumer<Boolean>> oneTimeCallbacks = new HashMap<>();
+  private final Identifier timerProxyId;
 
   public TimerProxyImpl() {
+    this(null);
+  }
+
+  public TimerProxyImpl(Identifier timerProxyId) {
+    this.timerProxyId = timerProxyId;
   }
 
   @Override
@@ -53,7 +62,7 @@ public class TimerProxyImpl implements TimerProxy {
     proxy.subscribe(handleTimeout, timer);
     return this;
   }
-  
+
   @Override
   public void cancel() {
     periodicCallbacks.keySet().forEach((timeoutId) -> cancelPeriodicTimer(timeoutId));
@@ -65,7 +74,7 @@ public class TimerProxyImpl implements TimerProxy {
   @Override
   public UUID scheduleTimer(long delay, Consumer<Boolean> callback) {
     ScheduleTimeout spt = new ScheduleTimeout(delay);
-    Timeout t = new Timeout(spt);
+    Timeout t = new Timeout(spt, timerProxyId);
     spt.setTimeoutEvent(t);
     oneTimeCallbacks.put(t.getTimeoutId(), callback);
     proxy.trigger(spt, timer);
@@ -82,7 +91,7 @@ public class TimerProxyImpl implements TimerProxy {
   @Override
   public UUID schedulePeriodicTimer(long delay, long period, Consumer<Boolean> callback) {
     SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(delay, period);
-    Timeout t = new Timeout(spt);
+    Timeout t = new Timeout(spt, timerProxyId);
     spt.setTimeoutEvent(t);
     periodicCallbacks.put(t.getTimeoutId(), callback);
     proxy.trigger(spt, timer);
@@ -115,14 +124,33 @@ public class TimerProxyImpl implements TimerProxy {
     }
   };
 
-  private static class Timeout extends se.sics.kompics.timer.Timeout {
+  public static class Timeout extends se.sics.kompics.timer.Timeout implements SelectableEventV2 {
 
-    public Timeout(SchedulePeriodicTimeout spt) {
+    public static final String EVENT_TYPE = "TIMEOUT";
+    private final Identifier timerProxyId;
+
+    public Timeout(SchedulePeriodicTimeout spt, Identifier timerProxyId) {
       super(spt);
+      this.timerProxyId = timerProxyId;
     }
 
-    public Timeout(ScheduleTimeout st) {
+    public Timeout(ScheduleTimeout st, Identifier timerProxyId) {
       super(st);
+      this.timerProxyId = timerProxyId;
+    }
+
+    @Override
+    public String toString() {
+      return "Timeout{" + getTimeoutId() + '}';
+    }
+
+    @Override
+    public String eventType() {
+      return EVENT_TYPE;
+    }
+
+    public Identifier timerProxyId() {
+      return timerProxyId;
     }
   }
 }
