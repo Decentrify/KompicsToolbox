@@ -141,7 +141,7 @@ public class TimerProxyImpl implements TimerProxy {
 
     @Override
     public String toString() {
-      return "Timeout{" + getTimeoutId() + '}';
+      return "Timeout{" + getTimeoutId() + (timerProxyId == null ? "" : ("," + timerProxyId.toString())) + '}';
     }
 
     @Override

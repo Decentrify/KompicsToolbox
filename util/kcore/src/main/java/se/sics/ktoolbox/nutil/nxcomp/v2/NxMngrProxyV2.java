@@ -115,7 +115,7 @@ public class NxMngrProxyV2 {
       Class<PortType> portType = posPortIt.next();
       Map<String, EventIdExtractorV2> channelIdSelector = posIdSelectorsIt.next();
       Positive positivePort = proxy.requires(portType);
-      One2NEventChannelV2 channel = One2NEventChannelV2.getChannel(mngrName + "positive", logger, positivePort,
+      One2NEventChannelV2 channel = One2NEventChannelV2.getChannel(mngrName + " positive", logger, positivePort,
         new EventTypeExtractorsV2.Base(), channelIdSelector);
       positiveChannels.add(channel);
     }
@@ -123,7 +123,7 @@ public class NxMngrProxyV2 {
     if (positiveNetwork.isPresent()) {
       Map<String, MsgIdExtractorV2> channelIdSelector = positiveNetwork.get().idSelectors;
       Positive positivePort = proxy.requires(Network.class);
-      OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel(mngrName + "net positive", logger,
+      OutgoingOne2NMsgChannelV2 channel = OutgoingOne2NMsgChannelV2.getChannel(mngrName + " net positive", logger,
         positivePort, new MsgTypeExtractorsV2.Base(), channelIdSelector);
       positiveNetChannel = Optional.of(channel);
     }

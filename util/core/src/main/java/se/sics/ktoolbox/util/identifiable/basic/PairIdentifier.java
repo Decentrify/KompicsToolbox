@@ -78,4 +78,9 @@ public class PairIdentifier<A extends Identifier,B extends Identifier> implement
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "<" + id1 + "," + id2 + ">";
+  }
 }

@@ -34,6 +34,7 @@ import se.sics.kompics.PortCore;
 import se.sics.kompics.PortCoreHelper;
 import se.sics.kompics.PortType;
 import se.sics.kompics.Positive;
+import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.util.Identifier;
 
 /**
@@ -117,6 +118,7 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
   }
 
   private void forwardTo(KompicsEvent event, int wid, boolean positive) {
+    logger.trace("{} channel event:{}", channelName, event);
     //TODO Alex - check if you can use bitwise XOR as there is no boolean XOR in java(aka ^^)
     boolean oneEnd = !(PortCoreHelper.isPositive(sourcePort) ^ positive);
     Optional<String> eventType = Optional.empty();
@@ -125,7 +127,7 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
       if (!(event instanceof SelectableEventV2)) {
         eventType = Optional.empty();
       } else {
-        SelectableEventV2 se = (SelectableEventV2)event;
+        SelectableEventV2 se = (SelectableEventV2) event;
         eventType = eventTypeExtractor.type(se);
         if (eventType.isPresent()) {
           EventIdExtractorV2 idExtractor = channelSelectors.get(eventType.get());
@@ -134,11 +136,11 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
           }
         }
       }
-      if(!eventType.isPresent()) {
+      if (!eventType.isPresent()) {
         logger.debug("{} port:{} event:{} filtered", new Object[]{channelName, details, event});
         return;
       }
-      if(channelId == null) {
+      if (channelId == null) {
         logger.debug("{} port:{} event:{} without an id extractor", new Object[]{channelName, details, event});
         return;
       }
@@ -154,7 +156,7 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
         return;
       }
       Collection<PortCore<P>> channelPorts = nPorts.get(channelId);
-      if(channelPorts.isEmpty()) {
+      if (channelPorts.isEmpty()) {
         logger.debug("{} port:{} event:{} without an id extractor", new Object[]{channelName, details, event});
         return;
       }
@@ -251,7 +253,7 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
     String details = detailsSB.toString();
     logger.info("creating:{} details:{}", channelName, detailsSB);
 
-    One2NEventChannelV2<P> one2NC = new One2NEventChannelV2(channelName, details, logger, 
+    One2NEventChannelV2<P> one2NC = new One2NEventChannelV2(channelName, details, logger,
       (PortCore) sourcePort, filter, channelSelectors);
     sourcePort.addChannel(one2NC);
     return one2NC;
