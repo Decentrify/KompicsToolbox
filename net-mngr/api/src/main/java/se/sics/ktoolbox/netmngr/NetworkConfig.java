@@ -43,7 +43,9 @@ public class NetworkConfig {
     if (sType.isPresent()) {
       ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.valueOf(sType.get()));
     } else {
-      ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.ALL);
+      ipTypes = EnumSet.of(IpSolve.NetworkInterfacesMask.PUBLIC, 
+        IpSolve.NetworkInterfacesMask.TEN_DOT_PRIVATE, 
+        IpSolve.NetworkInterfacesMask.PRIVATE);
     }
     return new Try.Success(new NetworkConfig(ipTypes));
   }

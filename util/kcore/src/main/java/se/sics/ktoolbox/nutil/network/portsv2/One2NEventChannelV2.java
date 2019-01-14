@@ -137,7 +137,7 @@ public class One2NEventChannelV2<P extends PortType> implements ChannelCore<P> {
         }
       }
       if (!eventType.isPresent()) {
-        logger.debug("{} port:{} event:{} filtered", new Object[]{channelName, details, event});
+        logger.trace("{} port:{} event:{} filtered", new Object[]{channelName, details, event});
         return;
       }
       if (channelId == null) {

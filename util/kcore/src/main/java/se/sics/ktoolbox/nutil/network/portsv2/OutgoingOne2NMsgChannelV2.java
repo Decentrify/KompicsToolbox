@@ -129,7 +129,7 @@ public class OutgoingOne2NMsgChannelV2 implements ChannelCore<Network> {
         return;
       }
       if (channelId == null) {
-        logger.debug("{} port:{} msg:{} without an id extractor", new Object[]{channelName, details, msg});
+        logger.info("{} port:{} msg:{} without an id extractor", new Object[]{channelName, details, msg});
         return;
       }
     rwlock.readLock().lock();
@@ -140,7 +140,7 @@ public class OutgoingOne2NMsgChannelV2 implements ChannelCore<Network> {
 
       Collection<Negative<Network>> channelPorts = childrenPorts.get(channelId);
       if (channelPorts.isEmpty()) {
-        logger.debug("{} port:{} msg:{} without an id extractor", new Object[]{channelName, details, msg});
+        logger.info("{} port:{} msg:{} without an id extractor", new Object[]{channelName, details, msg});
         return;
       }
       if (!childrenPorts.containsKey(channelId)) {
