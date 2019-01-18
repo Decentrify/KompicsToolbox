@@ -24,10 +24,15 @@ import se.sics.kompics.PortType;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NxNetPort extends PortType {
-    {
-        request(NxNetBind.Request.class);
-        indication(NxNetBind.Response.class);
-        request(NxNetUnbind.Request.class);
-        indication(NxNetUnbind.Response.class);
-    }
+
+  {
+    request(NxNetBind.Request.class);
+    indication(NxNetBind.Response.class);
+    request(NxNetUnbind.Request.class);
+    indication(NxNetUnbind.Response.class);
+    request(NxNetBind.LedbatRequest.class);
+    indication(NxNetBind.LedbatResponse.class);
+    request(NxNetUnbind.LedbatRequest.class);
+    indication(NxNetUnbind.LedbatResponse.class);
+  }
 }

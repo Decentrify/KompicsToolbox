@@ -79,6 +79,7 @@ public class NxNetProxy {
 
     proxy.subscribe(handlePrivateIpDetected, ipSolverPort);
     proxy.subscribe(handleBindResp, nxNetPort);
+    proxy.subscribe(handleBindLedbatResp, nxNetPort);
     return this;
   }
 
@@ -109,6 +110,14 @@ public class NxNetProxy {
     logger.debug("sending:{}", req);
   }
   
+  public void bindLedbat(KAddress address, Consumer<Boolean> networkReady) {
+    Identifier eventId = eventIds.randomId();
+    pendingNetworkReady.put(eventId, networkReady);
+    NxNetBind.LedbatRequest req = NxNetBind.LedbatRequest.providedAdr(eventId, address, privateIp);
+    proxy.trigger(req, nxNetPort);
+    logger.debug("sending:{}", req);
+  }
+  
   public void connect(Component comp) {
     proxy.connect(nxNetComp.getPositive(Network.class), comp.getNegative(Network.class), Channel.TWO_WAY);
   }
@@ -132,6 +141,14 @@ public class NxNetProxy {
   private final Handler handleBindResp = new Handler<NxNetBind.Response>() {
     @Override
     public void handle(NxNetBind.Response resp) {
+      logger.debug("received:{}", resp);
+      pendingNetworkReady.remove(resp.getId()).accept(true);
+    }
+  };
+  
+  private final Handler handleBindLedbatResp = new Handler<NxNetBind.LedbatResponse>() {
+    @Override
+    public void handle(NxNetBind.LedbatResponse resp) {
       logger.debug("received:{}", resp);
       pendingNetworkReady.remove(resp.getId()).accept(true);
     }

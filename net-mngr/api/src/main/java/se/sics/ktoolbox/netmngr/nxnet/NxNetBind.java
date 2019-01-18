@@ -56,15 +56,15 @@ public class NxNetBind {
     public Response answer() {
       return new Response(this);
     }
-    
+
     public static Request localAdr(Identifier eventId, KAddress adr) {
-      return new Request(eventId, adr, (Optional)Optional.empty());
+      return new Request(eventId, adr, (Optional) Optional.empty());
     }
-    
+
     public static Request providedAdr(Identifier eventId, KAddress providedAdr, InetAddress localInterface) {
       return new Request(eventId, providedAdr, Optional.of(localInterface));
     }
-    
+
     public Request withPort(Identifier eventId, int port) {
       return new Request(eventId, adr.withPort(port), bindAdr);
     }
@@ -86,6 +86,64 @@ public class NxNetBind {
     @Override
     public String toString() {
       return "NxNetBindResp<" + req.getId() + ">";
+    }
+  }
+
+  public static class LedbatRequest extends Direct.Request<LedbatResponse> implements NetMngrEvent {
+
+    public final Identifier eventId;
+    public final KAddress adr;
+    public final Optional<InetAddress> bindAdr;
+
+    public LedbatRequest(Identifier eventId, KAddress adr, Optional<InetAddress> bindAdr) {
+      this.eventId = eventId;
+      this.adr = adr;
+      this.bindAdr = bindAdr;
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetLedbatBindReq<" + eventId + ">";
+    }
+
+    public LedbatResponse answer() {
+      return new LedbatResponse(this);
+    }
+
+    public static LedbatRequest localAdr(Identifier eventId, KAddress adr) {
+      return new LedbatRequest(eventId, adr, (Optional) Optional.empty());
+    }
+
+    public static LedbatRequest providedAdr(Identifier eventId, KAddress providedAdr, InetAddress localInterface) {
+      return new LedbatRequest(eventId, providedAdr, Optional.of(localInterface));
+    }
+
+    public LedbatRequest withPort(Identifier eventId, int port) {
+      return new LedbatRequest(eventId, adr.withPort(port), bindAdr);
+    }
+  }
+
+  public static class LedbatResponse implements Direct.Response, NetMngrEvent {
+
+    public final LedbatRequest req;
+
+    public LedbatResponse(LedbatRequest req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetLedbatBindResp<" + req.getId() + ">";
     }
   }
 }

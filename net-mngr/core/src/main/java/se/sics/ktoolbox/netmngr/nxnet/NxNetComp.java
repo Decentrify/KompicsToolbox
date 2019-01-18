@@ -21,8 +21,6 @@ package se.sics.ktoolbox.netmngr.nxnet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -33,10 +31,10 @@ import se.sics.kompics.config.Config;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
-import se.sics.ktoolbox.netmngr.NetworkMngrComp;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.idextractor.SourcePortIdExtractor;
+import se.sics.ktoolbox.util.network.ledbat.LedbatNetwork;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 
 /**
@@ -44,7 +42,6 @@ import se.sics.ktoolbox.util.network.ports.One2NChannel;
  */
 public class NxNetComp extends ComponentDefinition {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NetworkMngrComp.class);
   private String logPrefix = "";
 
    //*****************************CONNECTIONS**********************************
@@ -62,7 +59,6 @@ public class NxNetComp extends ComponentDefinition {
   public NxNetComp(Init init) {
     systemConfig = new SystemKCWrapper(config());
     logPrefix = "<nid:" + systemConfig.id + "> ";
-    LOG.info("{}starting...", logPrefix);
 
     networkEnd = One2NChannel.getChannel("nxnet", networkPort, new SourcePortIdExtractor());
     this.portIds = new IntIdFactory(Optional.of(systemConfig.seed));
@@ -70,21 +66,23 @@ public class NxNetComp extends ComponentDefinition {
     subscribe(handleStart, control);
     subscribe(handleBindReq, nxNetPort);
     subscribe(handleUnbindReq, nxNetPort);
+    subscribe(handleBindLedbatReq, nxNetPort);
+    subscribe(handleUnbindLedbatReq, nxNetPort);
   }
 
   Handler handleStart = new Handler<Start>() {
     @Override
     public void handle(Start event) {
-      LOG.info("{}starting", logPrefix);
+      logger.info("{}starting", logPrefix);
     }
   };
 
   Handler handleBindReq = new Handler<NxNetBind.Request>() {
     @Override
     public void handle(NxNetBind.Request req) {
-      LOG.trace("{}received:{}", logPrefix, req);
+      logger.trace("{}received:{}", logPrefix, req);
       if (networks.containsKey(req.adr.getPort())) {
-        LOG.warn("{}port:{} already bound - will not bind again", logPrefix, req.adr.getPort());
+        logger.warn("{}port:{} already bound - will not bind again", logPrefix, req.adr.getPort());
         answer(req, req.answer());
         return;
       }
@@ -96,7 +94,7 @@ public class NxNetComp extends ComponentDefinition {
       networkEnd.addChannel(portIds.rawId(req.adr.getPort()), network.getPositive(Network.class));
       trigger(Start.event, network.control());
       networks.put(req.adr.getPort(), network);
-      LOG.info("{}binding port:{}", new Object[]{logPrefix, req.adr.getPort()});
+      logger.info("{}binding port:{}", new Object[]{logPrefix, req.adr.getPort()});
       answer(req, req.answer());
     }
   };
@@ -105,16 +103,56 @@ public class NxNetComp extends ComponentDefinition {
 
     @Override
     public void handle(NxNetUnbind.Request req) {
-      LOG.trace("{}received:{}", logPrefix, req);
+      logger.trace("{}received:{}", logPrefix, req);
       Component network = networks.remove(req.port);
       if (network == null) {
-        LOG.warn("{}port:{} not bound", logPrefix, req.port);
+        logger.warn("{}port:{} not bound", logPrefix, req.port);
         answer(req, req.answer());
         return;
       }
       networkEnd.removeChannel(portIds.rawId(req.port), network.getPositive(Network.class));
       trigger(Kill.event, network.control());
-      LOG.info("{}unbinding port:{}", new Object[]{logPrefix, req.port});
+      logger.info("{}unbinding port:{}", new Object[]{logPrefix, req.port});
+      answer(req, req.answer());
+    }
+  };
+  
+  Handler handleBindLedbatReq = new Handler<NxNetBind.LedbatRequest>() {
+    @Override
+    public void handle(NxNetBind.LedbatRequest req) {
+      logger.trace("{}received:{}", logPrefix, req);
+      if (networks.containsKey(req.adr.getPort())) {
+        logger.warn("{}port:{} already bound - will not bind again", logPrefix, req.adr.getPort());
+        answer(req, req.answer());
+        return;
+      }
+      Config.Builder c = config().modify(id());
+      if (req.bindAdr.isPresent()) {
+        c.setValue("netty.bindInterface", req.bindAdr.get());
+      }
+      Component network = create(LedbatNetwork.class, new LedbatNetwork.Init(req.adr), c.finalise());
+      networkEnd.addChannel(portIds.rawId(req.adr.getPort()), network.getPositive(Network.class));
+      trigger(Start.event, network.control());
+      networks.put(req.adr.getPort(), network);
+      logger.info("{}binding port:{}", new Object[]{logPrefix, req.adr.getPort()});
+      answer(req, req.answer());
+    }
+  };
+
+  Handler handleUnbindLedbatReq = new Handler<NxNetUnbind.LedbatRequest>() {
+
+    @Override
+    public void handle(NxNetUnbind.LedbatRequest req) {
+      logger.trace("{}received:{}", logPrefix, req);
+      Component network = networks.remove(req.port);
+      if (network == null) {
+        logger.warn("{}port:{} not bound", logPrefix, req.port);
+        answer(req, req.answer());
+        return;
+      }
+      networkEnd.removeChannel(portIds.rawId(req.port), network.getPositive(Network.class));
+      trigger(Kill.event, network.control());
+      logger.info("{}unbinding port:{}", new Object[]{logPrefix, req.port});
       answer(req, req.answer());
     }
   };

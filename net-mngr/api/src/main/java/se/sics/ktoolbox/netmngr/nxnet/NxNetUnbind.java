@@ -26,45 +26,92 @@ import se.sics.ktoolbox.netmngr.NetMngrEvent;
  * @author Alex Ormenisan <aaor@kth.se>
  */
 public class NxNetUnbind {
-     public static class Request extends Direct.Request<Response> implements NetMngrEvent {
-        public final Identifier eventId;
-        public final int port;
-        
-        public Request(Identifier eventId, int port) {
-            this.eventId = eventId;
-            this.port = port;
-        }
-        
-        @Override
-        public Identifier getId() {
-            return eventId;
-        }
-        
-        @Override
-        public String toString() {
-            return "NxNetUnbindReq<" + eventId + ">";
-        }
-        
-        public Response answer() {
-            return new Response(this);
-        }
+
+  public static class Request extends Direct.Request<Response> implements NetMngrEvent {
+
+    public final Identifier eventId;
+    public final int port;
+
+    public Request(Identifier eventId, int port) {
+      this.eventId = eventId;
+      this.port = port;
     }
-    
-    public static class Response implements Direct.Response, NetMngrEvent {
-        public final Request req;
-        
-        public Response(Request req) {
-            this.req = req;
-        }
-        
-        @Override
-        public Identifier getId() {
-            return req.getId();
-        }
-        
-        @Override
-        public String toString() {
-            return "NxNetUnbindResp<" + req.getId() + ">";
-        }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
     }
+
+    @Override
+    public String toString() {
+      return "NxNetUnbindReq<" + eventId + ">";
+    }
+
+    public Response answer() {
+      return new Response(this);
+    }
+  }
+
+  public static class Response implements Direct.Response, NetMngrEvent {
+
+    public final Request req;
+
+    public Response(Request req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetUnbindResp<" + req.getId() + ">";
+    }
+  }
+
+  public static class LedbatRequest extends Direct.Request<LedbatResponse> implements NetMngrEvent {
+
+    public final Identifier eventId;
+    public final int port;
+
+    public LedbatRequest(Identifier eventId, int port) {
+      this.eventId = eventId;
+      this.port = port;
+    }
+
+    @Override
+    public Identifier getId() {
+      return eventId;
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetLedbatUnbindReq<" + eventId + ">";
+    }
+
+    public LedbatResponse answer() {
+      return new LedbatResponse(this);
+    }
+  }
+
+  public static class LedbatResponse implements Direct.Response, NetMngrEvent {
+
+    public final LedbatRequest req;
+
+    public LedbatResponse(LedbatRequest req) {
+      this.req = req;
+    }
+
+    @Override
+    public Identifier getId() {
+      return req.getId();
+    }
+
+    @Override
+    public String toString() {
+      return "NxNetLedbatUnbindResp<" + req.getId() + ">";
+    }
+  }
 }
