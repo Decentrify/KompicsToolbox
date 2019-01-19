@@ -33,18 +33,24 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.concurrent.Future;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.Stop;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.ConnectionStatus;
 import se.sics.kompics.network.MessageNotify;
 import se.sics.kompics.network.Msg;
@@ -55,6 +61,21 @@ import se.sics.kompics.network.netty.AckRequestMsg;
 import se.sics.kompics.network.netty.NettyAddress;
 import se.sics.kompics.network.netty.NotifyAck;
 import se.sics.kompics.network.netty.serialization.Serializers;
+import se.sics.kompics.timer.Timer;
+import se.sics.kompics.util.Identifiable;
+import se.sics.kompics.util.Identifier;
+import se.sics.ktoolbox.nutil.timer.RingTimer;
+import se.sics.ktoolbox.nutil.timer.TimerProxy;
+import se.sics.ktoolbox.nutil.timer.TimerProxyImpl;
+import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
+import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
+import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
+import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.util.network.KContentMsg;
+import se.sics.ktoolbox.util.network.KHeader;
+import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
+import se.sics.ktoolbox.util.network.basic.BasicHeader;
+import static se.sics.ktoolbox.util.network.ledbat.LedbatNetwork.ledbatCwnd;
 
 /**
  *
@@ -62,12 +83,19 @@ import se.sics.kompics.network.netty.serialization.Serializers;
  */
 public class LedbatNetwork extends ComponentDefinition {
 
+  static final long FLOW_CONTROL_GRANULARITY = 5;
+
   static final int RECV_BUFFER_SIZE = 65536;
   static final int SEND_BUFFER_SIZE = 65536;
   static final int INITIAL_BUFFER_SIZE = 512;
   private static final int CONNECT_TIMEOUT_MS = 5000;
 
   Negative<Network> net = provides(Network.class);
+  Negative<LedbatStatus.Port> status = provides(LedbatStatus.Port.class);
+  Positive<Timer> timerPort = requires(Timer.class);
+  TimerProxy timer;
+  UUID flowControlTId;
+  UUID reportTid;
 
   private Bootstrap bootstrapUDP;
   private DatagramChannel udpChannel;
@@ -76,6 +104,9 @@ public class LedbatNetwork extends ComponentDefinition {
   private InetAddress alternativeBindIf = null;
 
   final MessageQueueManager messages = new MessageQueueManager(this);
+  LedbatFlowControl ledbatFlowControl;
+  LedbatConfigW ledbatConfig;
+  final KAddress selfAdr;
 
   public static final String MDC_KEY_PORT = "knet-port";
   public static final String MDC_KEY_IF = "knet-if";
@@ -99,6 +130,7 @@ public class LedbatNetwork extends ComponentDefinition {
     System.setProperty("java.net.preferIPv4Stack", "true");
 
     self = new NettyAddress(init.self);
+    selfAdr = init.self;
     customLogCtx.put(MDC_KEY_PORT, Integer.toString(self.getPort()));
     customLogCtx.put(MDC_KEY_IF, self.getIp().getHostAddress());
 
@@ -113,27 +145,43 @@ public class LedbatNetwork extends ComponentDefinition {
 
     initLoggingCtx();
 
+    Identifier noTimerProxyId = null;
+    timer = new TimerProxyImpl(noTimerProxyId).setup(proxy, logger);
+
     logger.info("Alternative Bind Interface set to {}", alternativeBindIf);
 
-    subscribe(startHandler, control);
-    subscribe(stopHandler, control);
-    subscribe(msgHandler, net);
+    subscribe(handleStart, control);
+    subscribe(handleStop, control);
+    subscribe(handleMsg, net);
   }
 
-  Handler<Start> startHandler = new Handler<Start>() {
+  Handler<Start> handleStart = new Handler<Start>() {
 
     @Override
     public void handle(Start event) {
+      try {
+        ledbatConfig = LedbatConfigW.instance(config()).checkedGet();
+      } catch (Throwable ex) {
+        throw new RuntimeException(ex);
+      }
+
+      ledbatFlowControl = new LedbatFlowControl(ledbatConfig);
+
       // Prepare listening sockets
       InetAddress bindIp = self.getIp();
       if (alternativeBindIf != null) {
         bindIp = alternativeBindIf;
       }
       bindUdpPort(bindIp, self.getPort());
+      flowControlTId = timer.schedulePeriodicTimer(FLOW_CONTROL_GRANULARITY, FLOW_CONTROL_GRANULARITY, flowControl());
+      if (ledbatConfig.reportPeriod.isPresent()) {
+        reportTid = timer.schedulePeriodicTimer(ledbatConfig.reportPeriod.get(), ledbatConfig.reportPeriod.get(),
+          flowControlReport());
+      }
     }
   };
 
-  Handler<Stop> stopHandler = new Handler<Stop>() {
+  Handler<Stop> handleStop = new Handler<Stop>() {
 
     @Override
     public void handle(Stop event) {
@@ -141,17 +189,24 @@ public class LedbatNetwork extends ComponentDefinition {
     }
   };
 
-  Handler<Msg> msgHandler = new Handler<Msg>() {
-
+  Handler handleMsg = new Handler<Msg>() {
     @Override
-    public void handle(Msg event) {
-      if (event.getDestination().sameHostAs(self)) {
-        logger.trace("Delivering message {} locally.", event);
-        trigger(event, net);
+    public void handle(Msg msg) {
+      if (msg.getHeader().getDestination().sameHostAs(self)) {
+        logger.trace("Delivering message {} locally.", msg);
+        trigger(msg, net);
         return;
       }
-
-      messages.send(event);
+      if (msg instanceof KContentMsg) {
+        KContentMsg contentMsg = (KContentMsg) msg;
+        if (contentMsg.getContent() instanceof LedbatMsg.Datum) {
+          ledbatFlowControl.buffer((KContentMsg<?, ?, LedbatMsg.Datum>) msg);
+        } else {
+          messages.send(msg);
+        }
+      } else {
+        messages.send(msg);
+      }
     }
   };
 
@@ -193,16 +248,28 @@ public class LedbatNetwork extends ComponentDefinition {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
-  protected void deliverMessage(Msg message, Channel c) {
-    if (message instanceof NotifyAck) {
-      NotifyAck ack = (NotifyAck) message;
+  protected void deliverMessage(Msg msg, Channel c) {
+    if (msg instanceof NotifyAck) {
+      NotifyAck ack = (NotifyAck) msg;
       logger.trace("Got NotifyAck for {}", ack.id);
       messages.ack(ack);
       return;
     }
     logger.debug("Delivering message {} from {} to {} protocol {}",
-      new Object[]{message.toString(), message.getSource(), message.getDestination(), message.getProtocol()});
-    trigger(message, net);
+      new Object[]{msg.toString(), msg.getSource(), msg.getDestination(), msg.getProtocol()});
+
+    if (msg instanceof KContentMsg) {
+      KContentMsg contentMsg = (KContentMsg) msg;
+      if (contentMsg.getContent() instanceof LedbatMsg.Datum) {
+        ledbatFlowControl.deliver(contentMsg);
+      } else if (contentMsg.getContent() instanceof LedbatMsg.MultiAck) {
+        ledbatFlowControl.ack(contentMsg);
+      } else {
+        trigger(msg, net);
+      }
+    } else {
+      trigger(msg, net);
+    }
   }
 
   ChannelFuture sendUdpMessage(MessageWrapper msgw) {
@@ -251,6 +318,7 @@ public class LedbatNetwork extends ComponentDefinition {
     endUdp.syncUninterruptibly();
     bootstrapUDP = null;
 
+    flowControlTearDown();
     long tend = System.currentTimeMillis();
 
     logger.info("Ledbat shutdown complete. It took {}ms", tend - tstart);
@@ -275,10 +343,507 @@ public class LedbatNetwork extends ComponentDefinition {
 
   public static class Init extends se.sics.kompics.Init<LedbatNetwork> {
 
-    public final Address self;
+    public final KAddress self;
 
-    public Init(Address self) {
+    public Init(KAddress self) {
       this.self = self;
+    }
+  }
+
+  private void flowControlTearDown() {
+    if (flowControlTId != null) {
+      timer.cancelPeriodicTimer(flowControlTId);
+      flowControlTId = null;
+    }
+    if (reportTid != null) {
+      timer.cancelPeriodicTimer(reportTid);
+      reportTid = null;
+    }
+  }
+
+  private Consumer<Boolean> flowControlReport() {
+    return (_input) -> {
+      ledbatFlowControl.sender.details(logger);
+    };
+  }
+
+  private Consumer<Boolean> flowControl() {
+    return (_ignore) -> {
+      ledbatFlowControl.sender.flowTick(logger, (msg) -> messages.send(msg));
+      ledbatFlowControl.receiver.sendBatches();
+    };
+  }
+
+  static Cwnd ledbatCwnd(LedbatConfig ledbatConfig) {
+    return new Cwnd(ledbatConfig.INIT_CWND, ledbatConfig.MSS, ledbatConfig.DTL_BETA, ledbatConfig.GAIN,
+      ledbatConfig.ALLOWED_INCREASE, ledbatConfig.MIN_CWND);
+  }
+
+  static RTTEstimator ledbatRTTEstimator(LedbatConfig ledbatConfig) {
+    return new RTTEstimator(ledbatConfig.ALPHA, ledbatConfig.BETA, ledbatConfig.K, ledbatConfig.G);
+  }
+
+  static DelayHistory ledbatDelayHistory(LedbatConfig ledbatConfig) {
+    return new DelayHistory(ledbatConfig.CURRENT_FILTER, ledbatConfig.BASE_HISTORY);
+  }
+
+  class LedbatFlowControl {
+
+    private final LedbatSender sender;
+    private final LedbatReceiver receiver;
+
+    public LedbatFlowControl(LedbatConfigW ledbatConfig) {
+      sender = new LedbatSender(ledbatConfig, (event) -> trigger(event, status));
+      receiver = new LedbatReceiver(selfAdr, (msg) -> messages.send(msg));
+    }
+
+    public void buffer(KContentMsg<?, ?, LedbatMsg.Datum> msg) {
+      sender.sendingBuffer.add(msg);
+    }
+
+    public void deliver(KContentMsg<?, ?, LedbatMsg.Datum> msg) {
+      receiver.deliver(msg);
+      trigger(msg, net);
+    }
+
+    public void ack(KContentMsg<?, ?, LedbatMsg.MultiAck> msg) {
+      sender.multiAck(logger, (LedbatMsg.MultiAck) msg.getContent());
+    }
+
+  }
+
+  static class LedbatSender {
+
+    private final LedbatConfigW ledbatConfig;
+    private DiscretizedSendingBuffer<KContentMsg<?, ?, LedbatMsg.Datum>> sendingBuffer;
+    private RingTimer<WheelContainer> wheelTimer;
+    private final LossCtrl lossCtrl;
+    private Cwnd cwnd;
+    private RTTEstimator rttEstimator;
+    private DelayHistory delayHistory;
+    private final IdentifierFactory eventIds;
+    private final Consumer<KompicsEvent> statusSender;
+
+    public LedbatSender(LedbatConfigW ledbatConfig, Consumer<KompicsEvent> statusSender) {
+      this.ledbatConfig = ledbatConfig;
+      this.sendingBuffer = new DiscretizedSendingBuffer<>(1);
+      this.wheelTimer = new RingTimer(FLOW_CONTROL_GRANULARITY, 3 * ledbatConfig.base.MAX_RTO);
+      this.lossCtrl = new LossCtrl();
+      this.cwnd = ledbatCwnd(ledbatConfig.base);
+      this.rttEstimator = ledbatRTTEstimator(ledbatConfig.base);
+      this.delayHistory = ledbatDelayHistory(ledbatConfig.base);
+      this.eventIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, java.util.Optional.of(1234l));
+      this.statusSender = statusSender;
+    }
+
+    public void tearDown() {
+    }
+
+    public void flowTick(Logger logger, Consumer<KContentMsg<?, ?, LedbatMsg.Datum>> sender) {
+      timeouts(logger);
+      long rto = rto();
+      int sendingPanes = (int) (rto / FLOW_CONTROL_GRANULARITY);
+      long maxSendingSize = (cwnd.size() / ledbatConfig.base.MSS) / sendingPanes;
+      int windowSize = 0;
+      for (int i = 0; i < maxSendingSize && i < sendingBuffer.buffer.size(); i++) {
+        if (cwnd.canSend(logger, ledbatConfig.base.MSS)) {
+          windowSize += ledbatConfig.base.MSS;
+          cwnd.send(logger, ledbatConfig.base.MSS);
+        }
+      }
+      sendingBuffer.setWindowSize(windowSize);
+      sendingBuffer.send((KContentMsg<?, ?, LedbatMsg.Datum> msg) -> {
+        wheelTimer.setTimeout(rto, new WheelContainer(msg));
+        sender.accept(msg);
+      });
+    }
+
+    private void timeouts(Logger logger) {
+      List<WheelContainer> timedOut = wheelTimer.windowTick();
+      long now = System.currentTimeMillis();
+      List<KContentMsg<?, ?, LedbatMsg.Datum>> reportT = new LinkedList<>();
+      for (WheelContainer c : timedOut) {
+        //mean 0.7 micros
+        WheelContainer rc = (WheelContainer) c;
+//        logger.debug("msg data:{} timed out", rc.req.datum.getId());
+        cwnd.loss(logger, ledbatConfig.base.MSS, lossCtrl.loss(logger, now, rto()));
+        //
+        reportT.add(rc.datumMsg);
+      }
+      statusSender.accept(new LedbatStatus.Timeout(eventIds.randomId(), reportT, maxAppMsgs()));
+    }
+
+    public void multiAck(Logger logger, LedbatMsg.MultiAck acks) {
+      long now = System.currentTimeMillis();
+      long bytesAcked = 0;
+      List<KContentMsg<?, ?, LedbatMsg.Datum>> acked = new LinkedList<>();
+      for (LedbatMsg.AckVal ack : acks.acks.acks) {
+        java.util.Optional<WheelContainer> ringContainer = wheelTimer.cancelTimeout(ack.msgId);
+        long dataDelay = updateRTT(logger, now, acks.acks, ack);
+        delayHistory.update(now, dataDelay);
+        if (!ringContainer.isPresent()) {
+          lossCtrl.acked(logger, now, rto());
+        } else {
+          acked.add(ringContainer.get().datumMsg);
+          bytesAcked += ledbatConfig.base.MSS;
+        }
+      }
+      statusSender.accept(new LedbatStatus.Ack(eventIds.randomId(), acked, maxAppMsgs()));
+      cwnd.ack(logger, delayHistory.offTarget(ledbatConfig.base.TARGET), bytesAcked, !sendingBuffer.buffer.isEmpty());
+    }
+
+    private long updateRTT(Logger logger, long now, LedbatMsg.BatchAckVal batch, LedbatMsg.AckVal ack) {
+      long batchT = batch.rt3 - ack.rt2;
+
+      long rtt = now - ack.st1 - batchT;
+      long dataDelay = ack.rt1 - ack.st1;
+      logger.debug("rtt:{} bt:{} dd:{}", new Object[]{rtt, batchT, dataDelay});
+      rttEstimator.update(rtt);
+      return dataDelay;
+    }
+
+    private int maxAppMsgs() {
+      int kompicsEventBatching = 20;
+      int ledbatEventBatching = 2;
+      int ledbatMaxIncreasePerAck = 1;
+      int cwndAsMsgs = (int) (cwnd.size() / ledbatConfig.base.MSS);
+      int requestReadyEvents = 2 * cwndAsMsgs + kompicsEventBatching * ledbatEventBatching * ledbatMaxIncreasePerAck;
+      return Math.min(ledbatConfig.bufferSize / ledbatConfig.base.MSS, requestReadyEvents);
+    }
+
+    private long rto() {
+      return rttEstimator.rto(ledbatConfig.base.INIT_RTO, ledbatConfig.base.MIN_RTO, ledbatConfig.base.MAX_RTO);
+    }
+
+    public void details(Logger logger) {
+      logger.info("rto:{} cwnd:{}",
+        new Object[]{rto(), cwnd.size()});
+    }
+  }
+
+  static class LedbatReceiver {
+
+    private final Map<Identifier, Batch> batches = new HashMap<>();
+    private final IdentifierFactory msgIds;
+    private final KAddress selfAdr;
+    private final Consumer<KContentMsg> networkSend;
+
+    public LedbatReceiver(KAddress selfAdr, Consumer<KContentMsg> networkSend) {
+      this.msgIds = IdentifierRegistryV2.instance(BasicIdentifiers.Values.MSG, java.util.Optional.of(1234l));
+      this.selfAdr = selfAdr;
+      this.networkSend = networkSend;
+    }
+
+    public void deliver(KContentMsg<?, ?, LedbatMsg.Datum> msg) {
+      Identifier batchId = msg.getHeader().getSource().getId();
+      Batch batch = batches.get(batchId);
+      if (batch == null) {
+        batch = new Batch(msg.getHeader().getSource());
+        batches.put(batchId, batch);
+      }
+      long now = System.currentTimeMillis();
+      batch.ack(now, msg.getContent());
+      if (batch.acks.size() == 10) {
+        sendBatch(now, batch);
+        batches.remove(batchId);
+      }
+    }
+
+    private void sendBatch(long now, Batch batch) {
+      LedbatMsg.MultiAck content = new LedbatMsg.MultiAck(msgIds.randomId(), batch.batch());
+      KHeader header = new BasicHeader<>(selfAdr, batch.sender, Transport.UDP);
+      KContentMsg msg = new BasicContentMsg(header, content);
+      networkSend.accept(msg);
+    }
+
+    public void sendBatches() {
+      Iterator<Batch> it = batches.values().iterator();
+      long now = System.currentTimeMillis();
+      while (it.hasNext()) {
+        Batch batch = it.next();
+        sendBatch(now, batch);
+        it.remove();
+      }
+    }
+  }
+
+  public static class WheelContainer implements RingTimer.Container {
+
+    public final KContentMsg<?, ?, LedbatMsg.Datum> datumMsg;
+
+    public WheelContainer(KContentMsg<?, ?, LedbatMsg.Datum> datumMsg) {
+      this.datumMsg = datumMsg;
+    }
+
+    @Override
+    public Identifier getId() {
+      return datumMsg.getContent().getId();
+    }
+  }
+
+  static class LossCtrl {
+
+    public boolean loss(Logger logger, long now, long rto) {
+      return true;
+    }
+
+    public void acked(Logger logger, long now, long rto) {
+
+    }
+  }
+
+  static class Cwnd {
+
+    private final double dtl_beta;
+    private final double gain;
+    private final double allowedIncrease;
+    private final int mss;
+    private final int minCwnd;
+
+    private long cwnd;
+    private long flightSize;
+
+    public Cwnd(int initCwnd, int mss, double dtl_beta, double gain, double allowedIncrease, int minCwnd) {
+      this.dtl_beta = dtl_beta;
+      this.gain = gain;
+      this.allowedIncrease = allowedIncrease;
+      this.mss = mss;
+      this.minCwnd = minCwnd;
+
+      cwnd = initCwnd * mss;
+    }
+
+    public void ack(Logger logger, double offTarget, long bytesNewlyAcked, boolean pendingInFlight) {
+      adjustCwnd(logger, offTarget, bytesNewlyAcked, pendingInFlight);
+      flightSize -= bytesNewlyAcked;
+    }
+
+    public long size() {
+      return cwnd;
+    }
+
+    public void loss(Logger logger, long bytesNotToBeRetransmitted, boolean adjustLoss) {
+      if (adjustLoss) {
+        cwnd = Math.max(cwnd / 2, minCwnd * mss);
+      }
+      flightSize -= bytesNotToBeRetransmitted;
+    }
+
+    public boolean canSend(Logger logger, long bytesToSend) {
+      return (flightSize + bytesToSend) <= cwnd;
+    }
+
+    public void send(Logger logger, long bytesToSend) {
+      flightSize += bytesToSend;
+    }
+
+    private void adjustCwnd(Logger logger, double offTarget, long bytesNewlyAcked, boolean pendingInFlight) {
+      long aux = cwnd;
+      if (offTarget < 0) {
+        cwnd = (long) (cwnd * dtl_beta);
+      } else {
+        cwnd = cwnd + (long) ((gain * offTarget * bytesNewlyAcked * mss) / cwnd);
+      }
+      long maxAllowedCwnd;
+      if (pendingInFlight) {
+        maxAllowedCwnd = aux + (long) (allowedIncrease * mss);
+      } else {
+        maxAllowedCwnd = flightSize + (long) (allowedIncrease * mss);
+      }
+      cwnd = Math.min(cwnd, maxAllowedCwnd);
+      cwnd = Math.max(cwnd, minCwnd * mss);
+      logger.info("cwnd pre:{} post:{} ot:{}", new Object[]{aux, cwnd, offTarget});
+    }
+
+  }
+
+  static class RTTEstimator {
+
+    public final int k;
+    public final double alpha;
+    public final double beta;
+    public final int g;
+
+    private long rto = -1;
+    private long srtt;
+    private long rttvar;
+
+    public RTTEstimator(double alpha, double beta, int k, int g) {
+      this.alpha = alpha;
+      this.beta = beta;
+      this.k = k;
+      this.g = g;
+    }
+
+    public RTTEstimator() {
+      this(0.125, 0.25, 4, Integer.MIN_VALUE);
+    }
+
+    public void update(long r) {
+      if (rto == -1) {
+        updateFirst(r);
+      } else {
+        updateNext(r);
+      }
+      rto = srtt + Math.max(g, k * rttvar);
+    }
+
+    private void updateFirst(long r) {
+      srtt = r;
+      rttvar = r / 2;
+    }
+
+    private void updateNext(long r) {
+      rttvar = (long) ((1 - beta) * rttvar + (beta * Math.abs(srtt - r)));
+      srtt = (long) ((1 - alpha) * srtt + alpha * r);
+    }
+
+    public long rto(long initRTO) {
+      if (rto == -1) {
+        return initRTO;
+      } else {
+        return rto;
+      }
+    }
+
+    public long rto(long initRTO, long minRTO, long maxRTO) {
+      return Math.min(maxRTO, Math.max(minRTO, rto(initRTO)));
+    }
+
+    public void details(Logger logger) {
+      logger.info("rto:{}, rrtvar:{}", new Object[]{rto, rttvar});
+    }
+  }
+
+  static class DelayHistory {
+
+    private final int currentDelaysSize;
+    private final int baseDelaysSize;
+    private final long[] currentDelays;
+    private int currentDelaysPointer = -1;
+    private final long[] baseDelays;
+    private int baseDelaysPointer = -1;
+    private long lastRolloverMinute;
+
+    public DelayHistory(int currentDelaysSize, int baseDelaysSize) {
+      this.currentDelaysSize = currentDelaysSize;
+      this.baseDelaysSize = baseDelaysSize;
+      this.currentDelays = new long[currentDelaysSize];
+      this.baseDelays = new long[baseDelaysSize];
+      resetDelays();
+    }
+
+    public DelayHistory resetDelays() {
+      lastRolloverMinute = Long.MIN_VALUE;
+      for (int i = 0; i < currentDelaysSize; i++) {
+        currentDelays[i] = Long.MAX_VALUE;
+      }
+      for (int i = 0; i < currentDelaysSize; i++) {
+        baseDelays[i] = Long.MAX_VALUE;
+      }
+      return this;
+    }
+
+    public void update(long now, long oneWayDelay) {
+      updateBaseDelay(now, oneWayDelay);
+      updateCurrentDelay(oneWayDelay);
+    }
+
+    public double offTarget(int target) {
+      long queuingDelay = queuingDelay();
+      double offTarget = offTarget(target, queuingDelay);
+      return offTarget;
+    }
+
+    public double offTarget(int target, long queuingDelay) {
+      return (target - queuingDelay) / target;
+    }
+
+    public long queuingDelay() {
+      return Arrays.stream(currentDelays).min().getAsLong()
+        - Arrays.stream(baseDelays).min().getAsLong();
+    }
+
+    private void updateCurrentDelay(long oneWayDelay) {
+      currentDelaysPointer += 1;
+      if (currentDelaysPointer >= currentDelaysSize) {
+        currentDelaysPointer = 0;
+      }
+      currentDelays[currentDelaysPointer] = oneWayDelay;
+    }
+
+    private void updateBaseDelay(long now, long oneWayDelay) {
+      long nowMinute = roundToMinute(now);
+      if (nowMinute > lastRolloverMinute) {
+        baseDelaysPointer += 1;
+        if (baseDelaysPointer >= baseDelaysSize) {
+          baseDelaysPointer = 0;
+        }
+        baseDelays[baseDelaysPointer] = oneWayDelay;
+        lastRolloverMinute = roundToMinute(lastRolloverMinute);
+      } else {
+        baseDelays[baseDelaysPointer] = Math.min(baseDelays[baseDelaysPointer], oneWayDelay);
+      }
+    }
+
+    private long roundToMinute(long timeInMillis) {
+      return timeInMillis / 60000;
+    }
+
+    public void details(Logger logger) {
+      long queuingDelay = queuingDelay();
+      logger.info("qd:{}", new Object[]{queuingDelay});
+    }
+  }
+
+  static class DiscretizedSendingBuffer<C extends Object> {
+
+    private final LinkedList<C> buffer = new LinkedList<>();
+    private int windowSize;
+
+    public DiscretizedSendingBuffer(int windowSize) {
+      this.windowSize = windowSize;
+    }
+
+    public void setWindowSize(int windowSize) {
+      this.windowSize = windowSize;
+    }
+
+    public void add(C content) {
+      buffer.add(content);
+    }
+
+    public void send(Consumer<C> sender) {
+      List<C> result = new LinkedList<>();
+      Iterator<C> it = buffer.iterator();
+      int sendingBatch = windowSize;
+      while (it.hasNext() && sendingBatch > 0) {
+        C next = it.next();
+        sender.accept(next);
+        it.remove();
+      }
+    }
+  }
+
+  static class Batch {
+
+    public List<LedbatMsg.AckVal> acks = new LinkedList<>();
+    public final KAddress sender;
+
+    public Batch(KAddress sender) {
+      this.sender = sender;
+    }
+
+    public void ack(long now, LedbatMsg.Datum<Identifiable<Identifier>> datum) {
+      LedbatMsg.AckVal ackVal = new LedbatMsg.AckVal(datum.getId());
+      ackVal.setRt2(now);
+      acks.add(ackVal);
+    }
+
+    public LedbatMsg.BatchAckVal batch() {
+      LedbatMsg.BatchAckVal batch = new LedbatMsg.BatchAckVal(new LinkedList<>(acks));
+      acks.clear();
+      return batch;
     }
   }
 }

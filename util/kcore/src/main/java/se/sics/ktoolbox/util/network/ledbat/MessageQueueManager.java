@@ -57,25 +57,14 @@ class MessageQueueManager {
   }
 
   private void send(MessageWrapper msg) {
-    switch (msg.msg.getProtocol()) {
-      case TCP:
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      case UDT:
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      case UDP: {
-        ChannelFuture cf = component.sendUdpMessage(msg);
-        if (msg.notify.isPresent()) {
-          if (cf != null) {
-            cf.addListener(new NotifyListener(msg.notify.get()));
-          } else {
-            msg.notify.get().prepareResponse(System.currentTimeMillis(), false, System.nanoTime());
-            component.notify(msg.notify.get());
-          }
-        }
+    ChannelFuture cf = component.sendUdpMessage(msg);
+    if (msg.notify.isPresent()) {
+      if (cf != null) {
+        cf.addListener(new NotifyListener(msg.notify.get()));
+      } else {
+        msg.notify.get().prepareResponse(System.currentTimeMillis(), false, System.nanoTime());
+        component.notify(msg.notify.get());
       }
-      break;
-      default:
-        throw new Error("Unknown Transport type");
     }
   }
 
