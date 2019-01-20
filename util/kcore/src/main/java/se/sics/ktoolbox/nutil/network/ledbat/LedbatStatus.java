@@ -16,13 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.network.ledbat;
+package se.sics.ktoolbox.nutil.network.ledbat;
 
 import java.util.List;
 import se.sics.kompics.PortType;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.network.portsv2.SelectableEventV2;
+import se.sics.ktoolbox.nutil.nxcomp.NxStackId;
 import se.sics.ktoolbox.util.network.KContentMsg;
 
 /**
@@ -34,9 +35,11 @@ public class LedbatStatus {
 
     public static final String EVENT_TYPE = "LOW_LEDBAT_EVENT";
     public final Identifier id;
+    public final NxStackId dataStreamId;
 
-    public Event(Identifier id) {
+    public Event(Identifier id, NxStackId dataStreamId) {
       this.id = id;
+      this.dataStreamId = dataStreamId;
     }
 
     @Override
@@ -53,8 +56,8 @@ public class LedbatStatus {
   public static class Timeout extends Event {
     public final List<KContentMsg<?,?,LedbatMsg.Datum>> timedOut;
     public final int maxInFlight;
-    public Timeout(Identifier id, List<KContentMsg<?,?,LedbatMsg.Datum>> timedOut, int maxInFlight) {
-      super(id);
+    public Timeout(Identifier id, NxStackId dataStreamId, List<KContentMsg<?,?,LedbatMsg.Datum>> timedOut, int maxInFlight) {
+      super(id, dataStreamId);
       this.timedOut = timedOut;
       this.maxInFlight = maxInFlight;
     }
@@ -63,8 +66,8 @@ public class LedbatStatus {
   public static class Ack extends Event {
     public final List<KContentMsg<?,?,LedbatMsg.Datum>> acked;
     public final int maxInFlight;
-    public Ack(Identifier id, List<KContentMsg<?,?,LedbatMsg.Datum>> acked, int maxInFlight) {
-      super(id);
+    public Ack(Identifier id, NxStackId dataStreamId, List<KContentMsg<?,?,LedbatMsg.Datum>> acked, int maxInFlight) {
+      super(id, dataStreamId);
       this.acked = acked;
       this.maxInFlight = maxInFlight;
     }

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.network.ledbat;
+package se.sics.ktoolbox.nutil.network.ledbat;
 
 import se.sics.kompics.config.Config;
 import se.sics.ktoolbox.util.trysf.Try;
@@ -44,7 +44,7 @@ public class LedbatConfig {
    * https://tools.ietf.org/html/rfc6298
    */
   public final long INIT_RTO = 1000;
-  public final long MIN_RTO = 20; //0.2s
+  public final long MIN_RTO = 10; //0.1s
   public final long MAX_RTO = 60000;//60s
   public final int K = 4;
   public final double ALPHA = 0.125;

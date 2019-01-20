@@ -16,12 +16,15 @@
  * along with this program; if not, loss to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.network.ledbat;
+package se.sics.ktoolbox.nutil.network.ledbat;
 
 import java.util.List;
 import se.sics.kompics.util.Identifiable;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.nutil.network.portsv2.SelectableMsgV2;
+import se.sics.ktoolbox.nutil.nxcomp.NxStackId;
+import se.sics.ktoolbox.util.identifiable.BasicBuilders;
+import se.sics.ktoolbox.util.identifiable.basic.SimpleByteIdFactory;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -29,13 +32,29 @@ import se.sics.ktoolbox.nutil.network.portsv2.SelectableMsgV2;
 public interface LedbatMsg extends Identifiable, SelectableMsgV2 {
 
   public static final String MSG_TYPE = "LEDBAT_MSG";
+  
+  public static enum StackType {
+  SENDER((byte) 1),
+  RECEIVER((byte) 2);
 
+  private final byte id;
+
+  StackType(byte id) {
+    this.id = id;
+  }
+
+  public Identifier getId(SimpleByteIdFactory ids) {
+    return ids.id(new BasicBuilders.ByteBuilder(new byte[]{id}));
+  }
+}
   public static abstract class Basic implements LedbatMsg {
 
     public final Identifier id;
+    public final NxStackId dataStreamId;
 
-    public Basic(Identifier id) {
+    public Basic(Identifier id, NxStackId dataStreamId) {
       this.id = id;
+      this.dataStreamId = dataStreamId;
     }
 
     @Override
@@ -55,8 +74,8 @@ public interface LedbatMsg extends Identifiable, SelectableMsgV2 {
     public long senderT1;
     public long receiverT1;
 
-    public Datum(Identifier msgId, D datum) {
-      super(msgId);
+    public Datum(Identifier msgId, NxStackId dataStreamId,  D datum) {
+      super(msgId, dataStreamId);
       this.datum = datum;
     }
 
@@ -78,14 +97,14 @@ public interface LedbatMsg extends Identifiable, SelectableMsgV2 {
 
     public final BatchAckVal acks;
 
-    public MultiAck(Identifier id, BatchAckVal acks) {
-      super(id);
+    public MultiAck(Identifier id, NxStackId dataStreamId, BatchAckVal acks) {
+      super(id, dataStreamId);
       this.acks = acks;
     }
 
     @Override
     public String toString() {
-      return "LowLedbatMsgMultiAck{" + "datumId=" + getId() + '}';
+      return "LowLedbatMsgMultiAck{" + "acks:" + acks.acks.size() + '}';
     }
   }
 

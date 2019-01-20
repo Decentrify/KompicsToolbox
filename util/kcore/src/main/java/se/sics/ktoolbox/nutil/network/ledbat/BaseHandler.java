@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.sics.ktoolbox.util.network.ledbat;
+package se.sics.ktoolbox.nutil.network.ledbat;
 
 import com.google.common.base.Optional;
 import io.netty.channel.Channel;

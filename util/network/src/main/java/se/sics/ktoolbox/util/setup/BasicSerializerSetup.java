@@ -33,6 +33,8 @@ import se.sics.ktoolbox.nutil.conn.workers.WorkMsgsSerializer;
 import se.sics.ktoolbox.nutil.conn.workers.WorkCtrlState;
 import se.sics.ktoolbox.nutil.conn.workers.WorkCtrlStateSerializer;
 import se.sics.ktoolbox.nutil.conn.workers.WorkMngrStateSerializer;
+import se.sics.ktoolbox.nutil.network.ledbat.LedbatMsg;
+import se.sics.ktoolbox.nutil.network.ledbat.LedbatMsgSerializer;
 import se.sics.ktoolbox.util.identifiable.BasicIdentifiers;
 import se.sics.ktoolbox.util.identifiable.IdentifierRegistryV2;
 import se.sics.ktoolbox.util.identifiable.basic.IntId;
@@ -64,167 +66,187 @@ import se.sics.ktoolbox.util.result.ResultSerializer;
  */
 public class BasicSerializerSetup {
 
-     //You may add up to max serializers without the need to recompile all the projects that use the serializer space after gvod
-    public static int maxSerializers = 30;
-    public static final int serializerIds = 25;
+  //You may add up to max serializers without the need to recompile all the projects that use the serializer space after gvod
+  public static int maxSerializers = 30;
+  public static final int serializerIds = 27;
 
-    public static enum BasicSerializers {
-        SimpleByteIdentifier(SimpleByteId.class, "simpleByteIdentifierSerializer"),
-        StringByteIdentifier(StringByteId.class, "stringByteIdentifierSerializer"),
-        IntIdentifier(IntId.class, "intIdentifierSerializer"),
-        UUIDIdentifier(UUIDId.class, "uuidIdentifierSerializer"),
-        OverlayIdentifier(OverlayId.class, "overlayIdentifierSerializer"),
-        BasicAddress(BasicAddress.class, "basicAddressSerializer"),
-        NatAwareAddressImpl(NatAwareAddressImpl.class, "strippedNAAddressSerializer"),
-        BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
-        DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
-        BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
-        NatType(NatType.class, "natTypeSerializer"),
-        ResultStatusSerializer(ResultSerializer.class, "resultSerializer"),
-        ConnIdsInstanceId(ConnIds.InstanceId.class, "connIdsInstanceIdSerializer"),
-        ConnIdsConnId(ConnIds.ConnId.class, "connIdsConnIdSerializer"),
-        ConnBaseClientStatus(ConnStatus.BaseClient.class, "connBaseClientStatus"),
-        ConnBaseServerStatus(ConnStatus.BaseServer.class, "connBaseServerStatus"),
-        ConnMsgsClient(ConnMsgs.Client.class, "connMsgsClientSerializer"),
-        ConnMsgsServer(ConnMsgs.Server.class, "connMsgsServerSerializer"),
-        ConnEmptyState(ConnState.Empty.class, "connEmptyState"),
-        WorkMsgNew(WorkMsgs.NewTask.class, "workMsgNew"),
-        WorkMsgStatus(WorkMsgs.StatusTask.class, "workMsgStatus"),
-        WorkMsgCompleted(WorkMsgs.CompletedTask.class, "workMsgCompleted"),
-        WorkMsgCancel(WorkMsgs.CancelTask.class, "workMsgCancel"),
-        WorkCtrlState(WorkCtrlState.class, "workCtrlState"),
-        WorkMngrState(WorkMngrState.class, "workMngrState");
-                
-        public final Class serializedClass;
-        public final String serializerName;
+  public static enum BasicSerializers {
+    SimpleByteIdentifier(SimpleByteId.class, "simpleByteIdentifierSerializer"),
+    StringByteIdentifier(StringByteId.class, "stringByteIdentifierSerializer"),
+    IntIdentifier(IntId.class, "intIdentifierSerializer"),
+    UUIDIdentifier(UUIDId.class, "uuidIdentifierSerializer"),
+    OverlayIdentifier(OverlayId.class, "overlayIdentifierSerializer"),
+    BasicAddress(BasicAddress.class, "basicAddressSerializer"),
+    NatAwareAddressImpl(NatAwareAddressImpl.class, "strippedNAAddressSerializer"),
+    BasicHeader(BasicHeader.class, "basicHeaderSerializer"),
+    DecoratedHeader(DecoratedHeader.class, "decoratedHeaderSerializer"),
+    BasicContentMsg(BasicContentMsg.class, "basicContentMsgSerializer"),
+    NatType(NatType.class, "natTypeSerializer"),
+    ResultStatusSerializer(ResultSerializer.class, "resultSerializer"),
+    ConnIdsInstanceId(ConnIds.InstanceId.class, "connIdsInstanceIdSerializer"),
+    ConnIdsConnId(ConnIds.ConnId.class, "connIdsConnIdSerializer"),
+    ConnBaseClientStatus(ConnStatus.BaseClient.class, "connBaseClientStatus"),
+    ConnBaseServerStatus(ConnStatus.BaseServer.class, "connBaseServerStatus"),
+    ConnMsgsClient(ConnMsgs.Client.class, "connMsgsClientSerializer"),
+    ConnMsgsServer(ConnMsgs.Server.class, "connMsgsServerSerializer"),
+    ConnEmptyState(ConnState.Empty.class, "connEmptyState"),
+    WorkMsgNew(WorkMsgs.NewTask.class, "workMsgNew"),
+    WorkMsgStatus(WorkMsgs.StatusTask.class, "workMsgStatus"),
+    WorkMsgCompleted(WorkMsgs.CompletedTask.class, "workMsgCompleted"),
+    WorkMsgCancel(WorkMsgs.CancelTask.class, "workMsgCancel"),
+    WorkCtrlState(WorkCtrlState.class, "workCtrlState"),
+    WorkMngrState(WorkMngrState.class, "workMngrState"),
+    LedbatMsgDatum(LedbatMsg.Datum.class, "lowLedbatMsgDatum"),
+    LedbatMsgMultiAck(LedbatMsg.MultiAck.class, "lowLedbatMsgMultiAck");
 
-        BasicSerializers(Class serializedClass, String serializerName) {
-            this.serializedClass = serializedClass;
-            this.serializerName = serializerName;
-        }
+    public final Class serializedClass;
+    public final String serializerName;
+
+    BasicSerializers(Class serializedClass, String serializerName) {
+      this.serializedClass = serializedClass;
+      this.serializerName = serializerName;
     }
+  }
 
-    public static boolean checkSetup() {
-        for (BasicSerializers bs : BasicSerializers.values()) {
-            if (Serializers.lookupSerializer(bs.serializedClass) == null) {
-                return false;
-            }
-        }
-        return true;
+  public static boolean checkSetup() {
+    for (BasicSerializers bs : BasicSerializers.values()) {
+      if (Serializers.lookupSerializer(bs.serializedClass) == null) {
+        return false;
+      }
     }
+    return true;
+  }
 
-    public static int registerBasicSerializers(int startingId) {
-        if (startingId < 128) {
-            throw new RuntimeException("start your serializer ids at 128");
-        }
-        int currentId = startingId;
-        
-        SimpleByteIdSerializer simpleByteIdentifierSerializer = new SimpleByteIdSerializer(currentId++);
-        Serializers.register(simpleByteIdentifierSerializer, BasicSerializers.SimpleByteIdentifier.serializerName);
-        Serializers.register(BasicSerializers.SimpleByteIdentifier.serializedClass, BasicSerializers.SimpleByteIdentifier.serializerName);
-        
-        StringByteIdSerializer stringByteIdentifierSerializer = new StringByteIdSerializer(currentId++);
-        Serializers.register(stringByteIdentifierSerializer, BasicSerializers.StringByteIdentifier.serializerName);
-        Serializers.register(BasicSerializers.StringByteIdentifier.serializedClass, BasicSerializers.StringByteIdentifier.serializerName);
-
-        IntIdSerializer intIdentifierSerializer = new IntIdSerializer(currentId++);
-        Serializers.register(intIdentifierSerializer, BasicSerializers.IntIdentifier.serializerName);
-        Serializers.register(BasicSerializers.IntIdentifier.serializedClass, BasicSerializers.IntIdentifier.serializerName);
-
-        UUIDIdSerializer uuidIdentifierSerializer = new UUIDIdSerializer(currentId++);
-        Serializers.register(uuidIdentifierSerializer, BasicSerializers.UUIDIdentifier.serializerName);
-        Serializers.register(BasicSerializers.UUIDIdentifier.serializedClass, BasicSerializers.UUIDIdentifier.serializerName);
-
-        Class overlayIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.OVERLAY);
-        OverlayIdSerializer overlayIdentifierSerializer = new OverlayIdSerializer(currentId++, overlayIdType);
-        Serializers.register(overlayIdentifierSerializer, BasicSerializers.OverlayIdentifier.serializerName);
-        Serializers.register(BasicSerializers.OverlayIdentifier.serializedClass, BasicSerializers.OverlayIdentifier.serializerName);
-
-        Class nodeIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.NODE);
-        BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(currentId++, nodeIdType);
-        Serializers.register(basicAddressSerializer, BasicSerializers.BasicAddress.serializerName);
-        Serializers.register(BasicSerializers.BasicAddress.serializedClass, BasicSerializers.BasicAddress.serializerName);
-
-        NatAwareAddressImplSerializer natAwareAddressSerializer = new NatAwareAddressImplSerializer(currentId++);
-        Serializers.register(natAwareAddressSerializer, BasicSerializers.NatAwareAddressImpl.serializerName);
-        Serializers.register(BasicSerializers.NatAwareAddressImpl.serializedClass, BasicSerializers.NatAwareAddressImpl.serializerName);
-
-        BasicHeaderSerializer basicHeaderSerializer = new BasicHeaderSerializer(currentId++);
-        Serializers.register(basicHeaderSerializer, BasicSerializers.BasicHeader.serializerName);
-        Serializers.register(BasicSerializers.BasicHeader.serializedClass, BasicSerializers.BasicHeader.serializerName);
-
-        DecoratedHeaderSerializer decoratedHeaderSerializer = new DecoratedHeaderSerializer(currentId++);
-        Serializers.register(decoratedHeaderSerializer, BasicSerializers.DecoratedHeader.serializerName);
-        Serializers.register(BasicSerializers.DecoratedHeader.serializedClass, BasicSerializers.DecoratedHeader.serializerName);
-
-        BasicContentMsgSerializer basicContentMsgSerializer = new BasicContentMsgSerializer(currentId++);
-        Serializers.register(basicContentMsgSerializer, BasicSerializers.BasicContentMsg.serializerName);
-        Serializers.register(BasicSerializers.BasicContentMsg.serializedClass, BasicSerializers.BasicContentMsg.serializerName);
-
-        NatTypeSerializer natTypeSerializer = new NatTypeSerializer(currentId++);
-        Serializers.register(natTypeSerializer, BasicSerializers.NatType.serializerName);
-        Serializers.register(BasicSerializers.NatType.serializedClass, BasicSerializers.NatType.serializerName);
-        
-        ResultSerializer.Status resultSerializer = new ResultSerializer.Status(currentId++);
-        Serializers.register(resultSerializer, BasicSerializers.ResultStatusSerializer.serializerName);
-        Serializers.register(BasicSerializers.ResultStatusSerializer.serializedClass, BasicSerializers.ResultStatusSerializer.serializerName);
-        
-        Serializers.register(new ConnIdsSerializer.InstanceId(currentId++), BasicSerializers.ConnIdsInstanceId.serializerName);
-        Serializers.register(BasicSerializers.ConnIdsInstanceId.serializedClass, 
-          BasicSerializers.ConnIdsInstanceId.serializerName);
-        
-        Serializers.register(new ConnIdsSerializer.ConnId(currentId++), BasicSerializers.ConnIdsConnId.serializerName);
-        Serializers.register(BasicSerializers.ConnIdsConnId.serializedClass, 
-          BasicSerializers.ConnIdsConnId.serializerName);
-        
-        Serializers.register(new ConnStatusSerializer.BaseClient(currentId++), 
-          BasicSerializers.ConnBaseClientStatus.serializerName);
-        Serializers.register(BasicSerializers.ConnBaseClientStatus.serializedClass, 
-          BasicSerializers.ConnBaseClientStatus.serializerName);
-        
-        Serializers.register(new ConnStatusSerializer.BaseServer(currentId++), 
-          BasicSerializers.ConnBaseServerStatus.serializerName);
-        Serializers.register(BasicSerializers.ConnBaseServerStatus.serializedClass, 
-          BasicSerializers.ConnBaseServerStatus.serializerName);
-        
-        Serializers.register(new ConnMsgsSerializer.Client(currentId++), BasicSerializers.ConnMsgsClient.serializerName);
-        Serializers.register(BasicSerializers.ConnMsgsClient.serializedClass, 
-          BasicSerializers.ConnMsgsClient.serializerName);
-        
-        Serializers.register(new ConnMsgsSerializer.Server(currentId++), BasicSerializers.ConnMsgsServer.serializerName);
-        Serializers.register(BasicSerializers.ConnMsgsServer.serializedClass, 
-          BasicSerializers.ConnMsgsServer.serializerName);
-        
-        Serializers.register(new EmptyConnStateSerializer(currentId++), BasicSerializers.ConnEmptyState.serializerName);
-        Serializers.register(BasicSerializers.ConnEmptyState.serializedClass, 
-          BasicSerializers.ConnEmptyState.serializerName);
-        
-        Serializers.register(new WorkMsgsSerializer.NewTask(currentId++), BasicSerializers.WorkMsgNew.serializerName);
-        Serializers.register(BasicSerializers.WorkMsgNew.serializedClass, 
-          BasicSerializers.WorkMsgNew.serializerName);
-        
-        Serializers.register(new WorkMsgsSerializer.StatusTask(currentId++), BasicSerializers.WorkMsgStatus.serializerName);
-        Serializers.register(BasicSerializers.WorkMsgStatus.serializedClass, 
-          BasicSerializers.WorkMsgStatus.serializerName);
-        
-        Serializers.register(new WorkMsgsSerializer.CompletedTask(currentId++), BasicSerializers.WorkMsgCompleted.serializerName);
-        Serializers.register(BasicSerializers.WorkMsgCompleted.serializedClass, 
-          BasicSerializers.WorkMsgCompleted.serializerName);
-        
-        Serializers.register(new WorkMsgsSerializer.CancelTask(currentId++), BasicSerializers.WorkMsgCancel.serializerName);
-        Serializers.register(BasicSerializers.WorkMsgCancel.serializedClass, 
-          BasicSerializers.WorkMsgCancel.serializerName);
-        
-        Serializers.register(new WorkCtrlStateSerializer(currentId++), BasicSerializers.WorkCtrlState.serializerName);
-        Serializers.register(BasicSerializers.WorkCtrlState.serializedClass, 
-          BasicSerializers.WorkCtrlState.serializerName);
-        
-        Serializers.register(new WorkMngrStateSerializer(currentId++), BasicSerializers.WorkMngrState.serializerName);
-        Serializers.register(BasicSerializers.WorkMngrState.serializedClass, 
-          BasicSerializers.WorkMngrState.serializerName);
-        
-        assert startingId + serializerIds == currentId;
-        assert serializerIds <= maxSerializers;
-        return startingId + maxSerializers;
+  public static int registerBasicSerializers(int startingId) {
+    if (startingId < 128) {
+      throw new RuntimeException("start your serializer ids at 128");
     }
+    int currentId = startingId;
+
+    SimpleByteIdSerializer simpleByteIdentifierSerializer = new SimpleByteIdSerializer(currentId++);
+    Serializers.register(simpleByteIdentifierSerializer, BasicSerializers.SimpleByteIdentifier.serializerName);
+    Serializers.register(BasicSerializers.SimpleByteIdentifier.serializedClass,
+      BasicSerializers.SimpleByteIdentifier.serializerName);
+
+    StringByteIdSerializer stringByteIdentifierSerializer = new StringByteIdSerializer(currentId++);
+    Serializers.register(stringByteIdentifierSerializer, BasicSerializers.StringByteIdentifier.serializerName);
+    Serializers.register(BasicSerializers.StringByteIdentifier.serializedClass,
+      BasicSerializers.StringByteIdentifier.serializerName);
+
+    IntIdSerializer intIdentifierSerializer = new IntIdSerializer(currentId++);
+    Serializers.register(intIdentifierSerializer, BasicSerializers.IntIdentifier.serializerName);
+    Serializers.register(BasicSerializers.IntIdentifier.serializedClass, BasicSerializers.IntIdentifier.serializerName);
+
+    UUIDIdSerializer uuidIdentifierSerializer = new UUIDIdSerializer(currentId++);
+    Serializers.register(uuidIdentifierSerializer, BasicSerializers.UUIDIdentifier.serializerName);
+    Serializers.
+      register(BasicSerializers.UUIDIdentifier.serializedClass, BasicSerializers.UUIDIdentifier.serializerName);
+
+    Class overlayIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.OVERLAY);
+    OverlayIdSerializer overlayIdentifierSerializer = new OverlayIdSerializer(currentId++, overlayIdType);
+    Serializers.register(overlayIdentifierSerializer, BasicSerializers.OverlayIdentifier.serializerName);
+    Serializers.register(BasicSerializers.OverlayIdentifier.serializedClass,
+      BasicSerializers.OverlayIdentifier.serializerName);
+
+    Class nodeIdType = IdentifierRegistryV2.idType(BasicIdentifiers.Values.NODE);
+    BasicAddressSerializer basicAddressSerializer = new BasicAddressSerializer(currentId++, nodeIdType);
+    Serializers.register(basicAddressSerializer, BasicSerializers.BasicAddress.serializerName);
+    Serializers.register(BasicSerializers.BasicAddress.serializedClass, BasicSerializers.BasicAddress.serializerName);
+
+    NatAwareAddressImplSerializer natAwareAddressSerializer = new NatAwareAddressImplSerializer(currentId++);
+    Serializers.register(natAwareAddressSerializer, BasicSerializers.NatAwareAddressImpl.serializerName);
+    Serializers.register(BasicSerializers.NatAwareAddressImpl.serializedClass,
+      BasicSerializers.NatAwareAddressImpl.serializerName);
+
+    BasicHeaderSerializer basicHeaderSerializer = new BasicHeaderSerializer(currentId++);
+    Serializers.register(basicHeaderSerializer, BasicSerializers.BasicHeader.serializerName);
+    Serializers.register(BasicSerializers.BasicHeader.serializedClass, BasicSerializers.BasicHeader.serializerName);
+
+    DecoratedHeaderSerializer decoratedHeaderSerializer = new DecoratedHeaderSerializer(currentId++);
+    Serializers.register(decoratedHeaderSerializer, BasicSerializers.DecoratedHeader.serializerName);
+    Serializers.register(BasicSerializers.DecoratedHeader.serializedClass,
+      BasicSerializers.DecoratedHeader.serializerName);
+
+    BasicContentMsgSerializer basicContentMsgSerializer = new BasicContentMsgSerializer(currentId++);
+    Serializers.register(basicContentMsgSerializer, BasicSerializers.BasicContentMsg.serializerName);
+    Serializers.register(BasicSerializers.BasicContentMsg.serializedClass,
+      BasicSerializers.BasicContentMsg.serializerName);
+
+    NatTypeSerializer natTypeSerializer = new NatTypeSerializer(currentId++);
+    Serializers.register(natTypeSerializer, BasicSerializers.NatType.serializerName);
+    Serializers.register(BasicSerializers.NatType.serializedClass, BasicSerializers.NatType.serializerName);
+
+    ResultSerializer.Status resultSerializer = new ResultSerializer.Status(currentId++);
+    Serializers.register(resultSerializer, BasicSerializers.ResultStatusSerializer.serializerName);
+    Serializers.register(BasicSerializers.ResultStatusSerializer.serializedClass,
+      BasicSerializers.ResultStatusSerializer.serializerName);
+
+    Serializers.register(new ConnIdsSerializer.InstanceId(currentId++),
+      BasicSerializers.ConnIdsInstanceId.serializerName);
+    Serializers.register(BasicSerializers.ConnIdsInstanceId.serializedClass,
+      BasicSerializers.ConnIdsInstanceId.serializerName);
+
+    Serializers.register(new ConnIdsSerializer.ConnId(currentId++), BasicSerializers.ConnIdsConnId.serializerName);
+    Serializers.register(BasicSerializers.ConnIdsConnId.serializedClass,
+      BasicSerializers.ConnIdsConnId.serializerName);
+
+    Serializers.register(new ConnStatusSerializer.BaseClient(currentId++),
+      BasicSerializers.ConnBaseClientStatus.serializerName);
+    Serializers.register(BasicSerializers.ConnBaseClientStatus.serializedClass,
+      BasicSerializers.ConnBaseClientStatus.serializerName);
+
+    Serializers.register(new ConnStatusSerializer.BaseServer(currentId++),
+      BasicSerializers.ConnBaseServerStatus.serializerName);
+    Serializers.register(BasicSerializers.ConnBaseServerStatus.serializedClass,
+      BasicSerializers.ConnBaseServerStatus.serializerName);
+
+    Serializers.register(new ConnMsgsSerializer.Client(currentId++), BasicSerializers.ConnMsgsClient.serializerName);
+    Serializers.register(BasicSerializers.ConnMsgsClient.serializedClass,
+      BasicSerializers.ConnMsgsClient.serializerName);
+
+    Serializers.register(new ConnMsgsSerializer.Server(currentId++), BasicSerializers.ConnMsgsServer.serializerName);
+    Serializers.register(BasicSerializers.ConnMsgsServer.serializedClass,
+      BasicSerializers.ConnMsgsServer.serializerName);
+
+    Serializers.register(new EmptyConnStateSerializer(currentId++), BasicSerializers.ConnEmptyState.serializerName);
+    Serializers.register(BasicSerializers.ConnEmptyState.serializedClass,
+      BasicSerializers.ConnEmptyState.serializerName);
+
+    Serializers.register(new WorkMsgsSerializer.NewTask(currentId++), BasicSerializers.WorkMsgNew.serializerName);
+    Serializers.register(BasicSerializers.WorkMsgNew.serializedClass,
+      BasicSerializers.WorkMsgNew.serializerName);
+
+    Serializers.register(new WorkMsgsSerializer.StatusTask(currentId++), BasicSerializers.WorkMsgStatus.serializerName);
+    Serializers.register(BasicSerializers.WorkMsgStatus.serializedClass,
+      BasicSerializers.WorkMsgStatus.serializerName);
+
+    Serializers.register(new WorkMsgsSerializer.CompletedTask(currentId++),
+      BasicSerializers.WorkMsgCompleted.serializerName);
+    Serializers.register(BasicSerializers.WorkMsgCompleted.serializedClass,
+      BasicSerializers.WorkMsgCompleted.serializerName);
+
+    Serializers.register(new WorkMsgsSerializer.CancelTask(currentId++), BasicSerializers.WorkMsgCancel.serializerName);
+    Serializers.register(BasicSerializers.WorkMsgCancel.serializedClass,
+      BasicSerializers.WorkMsgCancel.serializerName);
+
+    Serializers.register(new WorkCtrlStateSerializer(currentId++), BasicSerializers.WorkCtrlState.serializerName);
+    Serializers.register(BasicSerializers.WorkCtrlState.serializedClass,
+      BasicSerializers.WorkCtrlState.serializerName);
+
+    Serializers.register(new WorkMngrStateSerializer(currentId++), BasicSerializers.WorkMngrState.serializerName);
+    Serializers.register(BasicSerializers.WorkMngrState.serializedClass,
+      BasicSerializers.WorkMngrState.serializerName);
+
+    Serializers.register(new LedbatMsgSerializer.Datum(currentId++), BasicSerializers.LedbatMsgDatum.serializerName);
+    Serializers.register(BasicSerializers.LedbatMsgDatum.serializedClass,
+      BasicSerializers.LedbatMsgDatum.serializerName);
+    
+    Serializers.register(new LedbatMsgSerializer.MultiAck(currentId++), BasicSerializers.LedbatMsgMultiAck.serializerName);
+    Serializers.register(BasicSerializers.LedbatMsgMultiAck.serializedClass,
+      BasicSerializers.LedbatMsgMultiAck.serializerName);
+
+    assert startingId + serializerIds == currentId;
+    assert serializerIds <= maxSerializers;
+    return startingId + maxSerializers;
+  }
 }

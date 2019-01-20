@@ -21,20 +21,24 @@ package se.sics.ktoolbox.netmngr.nxnet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import se.sics.kompics.Channel;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
 import se.sics.kompics.Kill;
 import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.config.Config;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.netty.NettyInit;
 import se.sics.kompics.network.netty.NettyNetwork;
+import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.util.config.impl.SystemKCWrapper;
 import se.sics.ktoolbox.util.identifiable.basic.IntIdFactory;
 import se.sics.ktoolbox.util.idextractor.SourcePortIdExtractor;
-import se.sics.ktoolbox.util.network.ledbat.LedbatNetwork;
+import se.sics.ktoolbox.nutil.network.ledbat.LedbatNetwork;
+import se.sics.ktoolbox.nutil.network.ledbat.LedbatStatus;
 import se.sics.ktoolbox.util.network.ports.One2NChannel;
 
 /**
@@ -48,6 +52,8 @@ public class NxNetComp extends ComponentDefinition {
   //***************************EXTERNAL_CONNECT*******************************
   Negative<NxNetPort> nxNetPort = provides(NxNetPort.class);
   Negative<Network> networkPort = provides(Network.class);
+  Negative<LedbatStatus.Port> ledbatStatusPort = provides(LedbatStatus.Port.class);
+  Positive<Timer> timerPort = requires(Timer.class);
   //*******************************CONFIG*************************************
   private SystemKCWrapper systemConfig;
   //*************************INTERNAL_NO_CONNECT******************************
@@ -132,6 +138,9 @@ public class NxNetComp extends ComponentDefinition {
       }
       Component network = create(LedbatNetwork.class, new LedbatNetwork.Init(req.adr), c.finalise());
       networkEnd.addChannel(portIds.rawId(req.adr.getPort()), network.getPositive(Network.class));
+      connect(network.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
+      //TODO Alex - create channel
+      connect(network.getPositive(LedbatStatus.Port.class), ledbatStatusPort, Channel.TWO_WAY);
       trigger(Start.event, network.control());
       networks.put(req.adr.getPort(), network);
       logger.info("{}binding port:{}", new Object[]{logPrefix, req.adr.getPort()});
@@ -151,6 +160,9 @@ public class NxNetComp extends ComponentDefinition {
         return;
       }
       networkEnd.removeChannel(portIds.rawId(req.port), network.getPositive(Network.class));
+      disconnect(network.getNegative(Timer.class), timerPort);
+      //TODO Alex disconnect channel
+      disconnect(network.getPositive(LedbatStatus.Port.class), ledbatStatusPort);
       trigger(Kill.event, network.control());
       logger.info("{}unbinding port:{}", new Object[]{logPrefix, req.port});
       answer(req, req.answer());

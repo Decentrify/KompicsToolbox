@@ -28,10 +28,12 @@ import se.sics.kompics.Channel;
 import se.sics.kompics.Component;
 import se.sics.kompics.ComponentProxy;
 import se.sics.kompics.Handler;
+import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.Start;
 import se.sics.kompics.config.Config;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.Timer;
 import se.sics.kompics.util.Identifier;
 import se.sics.ktoolbox.netmngr.NetworkConfig;
 import se.sics.ktoolbox.netmngr.ipsolver.IpSolve;
@@ -42,6 +44,7 @@ import se.sics.ktoolbox.netmngr.nxnet.NxNetComp;
 import se.sics.ktoolbox.netmngr.nxnet.NxNetPort;
 import se.sics.ktoolbox.util.identifiable.IdentifierFactory;
 import se.sics.ktoolbox.util.network.KAddress;
+import se.sics.ktoolbox.nutil.network.ledbat.LedbatStatus;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -95,13 +98,18 @@ public class NxNetProxy {
     proxy.connect(nxNetComp.getPositive(NxNetPort.class), nxNetPort.getPair(), Channel.TWO_WAY);
   }
 
+  public NxNetProxy ledbatSetup(Positive<Timer> timerPort) {
+    proxy.connect(timerPort, nxNetComp.getNegative(Timer.class), Channel.TWO_WAY);
+    return this;
+  }
+
   public NxNetProxy start() {
     proxy.trigger(Start.event, ipSolverComp.control());
     proxy.trigger(Start.event, nxNetComp.control());
     proxy.trigger(new IpSolve.Request(networkConfig.ipTypes), ipSolverPort);
     return this;
   }
-  
+
   public void bind(KAddress address, Consumer<Boolean> networkReady) {
     Identifier eventId = eventIds.randomId();
     pendingNetworkReady.put(eventId, networkReady);
@@ -109,7 +117,7 @@ public class NxNetProxy {
     proxy.trigger(req, nxNetPort);
     logger.debug("sending:{}", req);
   }
-  
+
   public void bindLedbat(KAddress address, Consumer<Boolean> networkReady) {
     Identifier eventId = eventIds.randomId();
     pendingNetworkReady.put(eventId, networkReady);
@@ -117,13 +125,26 @@ public class NxNetProxy {
     proxy.trigger(req, nxNetPort);
     logger.debug("sending:{}", req);
   }
-  
-  public void connect(Component comp) {
+
+  public NxNetProxy connectNetwork(Component comp) {
     proxy.connect(nxNetComp.getPositive(Network.class), comp.getNegative(Network.class), Channel.TWO_WAY);
+    return this;
   }
-  
-  public void disconnect(Component comp) {
+
+  public NxNetProxy connectLedbat(Component comp) {
+    proxy.connect(nxNetComp.getPositive(LedbatStatus.Port.class), comp.getNegative(LedbatStatus.Port.class),
+      Channel.TWO_WAY);
+    return this;
+  }
+
+  public NxNetProxy disconnectNetwork(Component comp) {
     proxy.disconnect(nxNetComp.getPositive(Network.class), comp.getNegative(Network.class));
+    return this;
+  }
+
+  public NxNetProxy disconnectLedbat(Component comp) {
+    proxy.disconnect(nxNetComp.getPositive(LedbatStatus.Port.class), comp.getNegative(LedbatStatus.Port.class));
+    return this;
   }
 
   private final Handler handlePrivateIpDetected = new Handler<IpSolve.Response>() {
@@ -145,7 +166,7 @@ public class NxNetProxy {
       pendingNetworkReady.remove(resp.getId()).accept(true);
     }
   };
-  
+
   private final Handler handleBindLedbatResp = new Handler<NxNetBind.LedbatResponse>() {
     @Override
     public void handle(NxNetBind.LedbatResponse resp) {
